@@ -39,16 +39,16 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${STXXL_CXX_FLAGS}")
 # configure the version.h.in file
 add_custom_target(
     cm_config_version ALL
-    COMMAND ${CMAKE_SOURCE_DIR}/src/conf_version.h.in.sh
-        "${CMAKE_SOURCE_DIR}/inc/cm/version.h.in"
+    COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/src/conf_version.h.in.sh
+        "${CMAKE_CURRENT_SOURCE_DIR}/inc/cm/version.h.in"
         "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}"
         "${CMAKE_BINARY_DIR}/generated/inc/cm/version.h"
     VERBATIM)
 
 add_custom_target(
     cm_config_build_time ALL
-    COMMAND ${CMAKE_SOURCE_DIR}/src/conf_build_time.h.in.sh
-        "${CMAKE_SOURCE_DIR}/inc/cm/build_time.h.in"
+    COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/src/conf_build_time.h.in.sh
+        "${CMAKE_CURRENT_SOURCE_DIR}/inc/cm/build_time.h.in"
         "${CMAKE_BINARY_DIR}/generated/inc/cm/build_time.h"
     VERBATIM)
 
@@ -59,6 +59,7 @@ if(WITH_PYTHON)
     pybind11_add_module( ContactMapping src/main.cpp )
     target_include_directories( ContactMapping PUBLIC inc )
     target_link_libraries( ContactMapping PUBLIC libSps )
+    target_compile_definitions( ContactMapping PRIVATE WITH_PYTHON )
     add_dependencies(ContactMapping cm_config_version cm_config_build_time)
 endif()
 
