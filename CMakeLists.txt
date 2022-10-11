@@ -53,12 +53,15 @@ add_custom_target(
     VERBATIM)
 
 add_subdirectory(../libSps ${CMAKE_BINARY_DIR}/libSps EXCLUDE_FROM_ALL)
+set(JSON_BuildTests OFF CACHE INTERNAL "")
+add_subdirectory(contrib/json EXCLUDE_FROM_ALL)
+#add_subdirectory(contrib/pybind11_json EXCLUDE_FROM_ALL)
 
 # create python module if python has been found
 if(WITH_PYTHON)
     pybind11_add_module( ContactMapping src/main.cpp )
     target_include_directories( ContactMapping PUBLIC inc )
-    target_link_libraries( ContactMapping PUBLIC libSps )
+    target_link_libraries( ContactMapping PUBLIC libSps nlohmann_json::nlohmann_json )
     target_compile_definitions( ContactMapping PRIVATE WITH_PYTHON )
     add_dependencies(ContactMapping cm_config_version cm_config_build_time)
 endif()

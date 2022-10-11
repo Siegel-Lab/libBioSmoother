@@ -1,4 +1,4 @@
 #pragma once
 
 
-#define BUILD_TIME "@BUILD_TIME@"
+#define CM_BUILD_TIME "@BUILD_TIME@"
