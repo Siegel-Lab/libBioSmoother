@@ -1,0 +1,22 @@
+name: libContactMapping
+channels:
+  - conda-forge 
+dependencies:
+  - python=3.6.15
+  - cmake=3.19
+  - gcc=9.4.0
+  - gxx=9.4.0
+  - git=2.23.0
+  - make=4.3
+  - gdb
+  - sphinx
+  - sphinx_rtd_theme
+  - expect
+  - doxygen
+  - graphviz
+  - pip
+  - pip:
+    - sphinx-mdinclude
+  - breathe
+  - tectonic
+  - clang-format

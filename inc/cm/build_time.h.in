@@ -1,0 +1,4 @@
+#pragma once
+
+
+#define BUILD_TIME "@BUILD_TIME@"
