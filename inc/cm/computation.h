@@ -1,3 +1,4 @@
+#include "cm/sps_interface.h"
 #include <nlohmann/json.hpp>
 
 #pragma once
@@ -7,44 +8,93 @@ using json = nlohmann::json;
 namespace cm
 {
 
-struct AxisCoord{
-    std::string sChromosome;
-    size_t uiRenderPos;
-    size_t uiSize;
-    size_t uiChromPos;
+struct ChromDesc
+{
+    std::string sName;
+    size_t uiLength;
 };
 
-class Computation
+struct AxisCoord
 {
-  public:
+    std::string sChromosome;
+    size_t uiScreenPos;
+    size_t uiIndexPos;
+    size_t uiSize;
+};
+
+struct BinCoord
+{
+    std::string sChromosomeX, sChromosomeY;
+    size_t uiScreenX, uiScreenY;
+    size_t uiIndexX, uiIndexY;
+    size_t uiW, uiH;
+};
+
+class ContactMapping
+{
+  private:
+    SpsInterface<false> xIndices;
+
     json xRenderSettings, xSession;
 
     size_t uiBinWidth, uiBinHeight;
     int64_t iStartX, iStartY, iEndX, iEndY;
 
-    std::array<std::vector<>, 2> vAxisCords;
+    std::array<std::vector<ChromDesc>, 2> vActiveChromosomes;
+    std::array<std::vector<AxisCoord>, 2> vAxisCords;
 
-    Computation( json xRenderSettings, json xSession ) : xRenderSettings( xRenderSettings ), xSession( xSession )
-    {}
+    std::vector<std::string> vActiveReplicates;
+    std::vector<std::array<BinCoord, 2>> vBinCoords;
 
-  private:
+    std::vector<std::vector<size_t>> vvBinValues;
+    std::vector << std::array < size_t, 2 >> vvFlatValues;
+
     // bin_size.h
     size_t nextEvenNumber( double fX );
 
-  public:
     // bin_size.h
     void setBinSize( );
     // bin_size.h
     void setRenderArea( );
     // coords.h
-    void setAxisCoords( bool bX );
+    void setActiveChrom( );
+    // coords.h
+    void setAxisCoords( );
 
-    void computeAll( )
+    // coords.h
+    size_t getSymmetry( );
+    // coords.h
+    void setBinCoords( );
+
+    // replicates.h
+    void setActiveReplicates( );
+
+    // replicates.h
+    void setBinValues( );
+
+    // replicates.h
+    void setFlatValues( );
+
+  public:
+    ContactMapping( std::string sPrefix ) : xIndices( sPrefix )
+    {}
+
+    void computeAll( json xRenderSettings, json xSession )
     {
+        this->xRenderSettings = xRenderSettings;
+        this->xSession = xSession;
         setBinSize( );
         setRenderArea( );
-        setAxisCoords(true);
-        setAxisCoords(false);
+
+        setActiveChrom( );
+        setAxisCoords( );
+
+        setBinCoords( );
+
+        setActiveReplicates( );
+
+        setBinValues( );
+        setFlatValues( );
     }
 };
 

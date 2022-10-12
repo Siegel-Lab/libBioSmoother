@@ -66,8 +66,8 @@ void Computation::setRenderArea( )
         iStartX = 0;
         iStartY = 0;
 
-        iEndX = this->xSession[ "contig_sizes" ][ "genome_size" ].get<size_t>( );
-        iEndY = this->xSession[ "contig_sizes" ][ "genome_size" ].get<size_t>( );
+        iEndX = this->xSession[ "contigs" ][ "genome_size" ].get<size_t>( );
+        iEndY = this->xSession[ "contigs" ][ "genome_size" ].get<size_t>( );
     }
     else
     {
@@ -82,5 +82,6 @@ void Computation::setRenderArea( )
                 ( this->xSession[ "area" ][ "y_end" ].get<size_t>( ) % uiBinHeight );
     }
 }
+
 
 } // namespace cm
