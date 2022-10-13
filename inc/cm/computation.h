@@ -44,10 +44,21 @@ class ContactMapping
     std::array<std::vector<AxisCoord>, 2> vAxisCords;
 
     std::vector<std::string> vActiveReplicates;
+
+    sps::IntersectionType xIntersect;
+
     std::vector<std::array<BinCoord, 2>> vBinCoords;
 
+    std::array<std::vector<std::pair<std::string, bool>>, 2> vActiveCoverage;
+    size_t uiSymmetry;
+    size_t iInGroupSetting;
+
     std::vector<std::vector<size_t>> vvBinValues;
-    std::vector << std::array < size_t, 2 >> vvFlatValues;
+    std::vector<std::array<size_t, 2>> vvFlatValues;
+    std::vector<std::array<double, 2>> vvNormalized;
+
+    std::array<std::vector<std::vector<size_t>>, 2> vvCoverageValues;
+    std::array<std::vector<size_t>, 2> vvFlatCoverageValues;
 
     // bin_size.h
     size_t nextEvenNumber( double fX );
@@ -62,18 +73,48 @@ class ContactMapping
     void setAxisCoords( );
 
     // coords.h
-    size_t getSymmetry( );
+    void setSymmetry( );
     // coords.h
     void setBinCoords( );
 
     // replicates.h
+    void setIntersectionType( );
+
+    // replicates.h
     void setActiveReplicates( );
+
+    // coverage.h
+    void setActiveCoverage( );
+
+    // coverage.h
+    void setCoverageValues( );
+
+    // coverage.h
+    void setFlatCoverageValues( );
+
+    // replicates.h
+    size_t symmetry( size_t uiA, size_t uiB );
 
     // replicates.h
     void setBinValues( );
 
     // replicates.h
+    size_t getFlatValue( std::vector<size_t> vCollected );
+
+    // replicates.h
     void setFlatValues( );
+
+    // replicates.h
+    void setInGroup( );
+
+    // normalization.h
+    void doNotNormalize( );
+    // normalization.h
+    void normalizeSize( size_t uiSize );
+    // normalization.h
+    void normalizeMaxBin( );
+    // normalization.h
+    void normalize( );
 
   public:
     ContactMapping( std::string sPrefix ) : xIndices( sPrefix )
@@ -92,6 +133,14 @@ class ContactMapping
         setBinCoords( );
 
         setActiveReplicates( );
+        setIntersectionType( );
+
+        setSymmetry( );
+        setInGroup( );
+
+        setActiveCoverage( );
+        setCoverageValues( );
+        setFlatCoverageValues( );
 
         setBinValues( );
         setFlatValues( );

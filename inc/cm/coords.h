@@ -151,7 +151,7 @@ std::vector<ChromDesc> activeChromList( json& xChromList, json& xChromInfo, std:
     return vRet;
 }
 
-void Computation::setActiveChrom( )
+void ContactMapping::setActiveChrom( )
 {
     for( bool bX : { true, false } )
         this->vActiveChromosomes[ bX ? 0 : 1 ] = activeChromList( this->xSession[ "contigs" ][ "list" ],
@@ -159,7 +159,7 @@ void Computation::setActiveChrom( )
                                                                   bX ? "displayed_on_x" : "displayed_on_y" );
 }
 
-void Computation::setAxisCoords( )
+void ContactMapping::setAxisCoords( )
 {
     for( bool bX : { true, false } )
         this->vAxisCords[ bX ? 0 : 1 ] = axisCoordsHelper(
@@ -171,59 +171,61 @@ void Computation::setAxisCoords( )
             this->vActiveChromosomes[ bX ? 0 : 1 ] );
 }
 
-size_t Computation::getSymmetry( )
+void ContactMapping::setSymmetry( )
 {
-    std::string sSymmetry = this->xRenderSettings[ 'filters' ][ 'symmetry' ].get<std::string>( );
+    std::string sSymmetry = this->xRenderSettings[ "filters" ][ "symmetry" ].get<std::string>( );
     if( sSymmetry == "all" )
-        return 0;
+        uiSymmetry = 0;
     else if( sSymmetry == "sym" )
-        return 1;
+        uiSymmetry = 1;
     else if( sSymmetry == "asym" )
-        return 2;
+        uiSymmetry = 2;
     else if( sSymmetry == "topToBot" )
-        return 3;
+        uiSymmetry = 3;
     else if( sSymmetry == "botToTop" )
-        return 4;
+        uiSymmetry = 4;
     else
         throw std::runtime_error( "unknown symmetry setting" );
 }
-void Computation::setBinCoords( )
+void ContactMapping::setBinCoords( )
 {
     size_t uiManhattenDist = 1000 * this->xRenderSettings[ "filters" ][ "min_diag_dist" ][ "val" ].get<size_t>( ) /
                              this->xSession[ "dividend" ].get<size_t>( );
-
-    size_t uiSymmetry = this->getSymmetry( );
 
     vBinCoords.reserve( vAxisCords[ 0 ].size( ) * vAxisCords[ 1 ].size( ) );
     for( AxisCoord& xX : vAxisCords[ 0 ] )
         for( AxisCoord& xY : vAxisCords[ 1 ] )
             if( xX.sChromosome != xY.sChromosome ||
-                std::abs( xX.uiIndexPos - (int64_t)xY.uiIndexPos ) >= uiManhattenDist )
+                (size_t)std::abs( (int64_t)xX.uiIndexPos - (int64_t)xY.uiIndexPos ) >= uiManhattenDist )
                 switch( uiSymmetry )
                 {
                     case 0:
                         vBinCoords.push_back( { BinCoord{ .sChromosomeX = xX.sChromosome,
-                                                          .uiIndexX = xX.uiIndexPos,
-                                                          .uiW = xX.uiSize,
-                                                          .uiScreenX = xX.uiScreenPos,
-
                                                           .sChromosomeY = xY.sChromosome,
+
+                                                          .uiScreenX = xX.uiScreenPos,
+                                                          .uiScreenY = xY.uiScreenPos,
+
+                                                          .uiIndexX = xX.uiIndexPos,
                                                           .uiIndexY = xY.uiIndexPos,
-                                                          .uiH = xY.uiSize,
-                                                          .uiScreenY = xY.uiScreenPos },
+
+                                                          .uiW = xX.uiSize,
+                                                          .uiH = xY.uiSize },
                                                 BinCoord{} } );
                         break;
                     case 1:
                     case 2:
                         vBinCoords.push_back( { BinCoord{ .sChromosomeX = xX.sChromosome,
-                                                          .uiIndexX = xX.uiIndexPos,
-                                                          .uiW = xX.uiSize,
-                                                          .uiScreenX = xX.uiScreenPos,
-
                                                           .sChromosomeY = xY.sChromosome,
+
+                                                          .uiScreenX = xX.uiScreenPos,
+                                                          .uiScreenY = xY.uiScreenPos,
+
+                                                          .uiIndexX = xX.uiIndexPos,
                                                           .uiIndexY = xY.uiIndexPos,
-                                                          .uiH = xY.uiSize,
-                                                          .uiScreenY = xY.uiScreenPos },
+
+                                                          .uiW = xX.uiSize,
+                                                          .uiH = xY.uiSize },
                                                 BinCoord{ .sChromosomeX = xY.sChromosome,
                                                           .sChromosomeY = xX.sChromosome,
 
@@ -237,7 +239,6 @@ void Computation::setBinCoords( )
                                                           .uiH = xX.uiSize } } );
                         break;
                     case 3:
-                        xCoord1 = xCoord;
                         if( xY.uiIndexPos + xY.uiSize > xX.uiIndexPos )
                         {
                             size_t uiDiagIntersect1Y = std::max( xX.uiIndexPos, xY.uiIndexPos );
@@ -250,14 +251,17 @@ void Computation::setBinCoords( )
                             size_t uiH = uiDiagIntersect2Y - uiDiagIntersect1Y;
 
                             vBinCoords.push_back( { BinCoord{ .sChromosomeX = xX.sChromosome,
-                                                              .uiIndexX = xX.uiIndexPos,
-                                                              .uiW = xX.uiSize,
-                                                              .uiScreenX = xX.uiScreenPos,
-
                                                               .sChromosomeY = xY.sChromosome,
+
+                                                              .uiScreenX = xX.uiScreenPos,
+                                                              .uiScreenY = xY.uiScreenPos,
+
+                                                              .uiIndexX = xX.uiIndexPos,
                                                               .uiIndexY = xY.uiIndexPos,
-                                                              .uiH = xY.uiSize,
-                                                              .uiScreenY = xY.uiScreenPos },
+
+                                                              .uiW = xX.uiSize,
+                                                              .uiH = xY.uiSize },
+
                                                     BinCoord{ .sChromosomeX = xY.sChromosome,
                                                               .sChromosomeY = xX.sChromosome,
 
@@ -271,10 +275,20 @@ void Computation::setBinCoords( )
                                                               .uiH = uiW } } );
                         }
                         else
-                            xCoord2 = BinCoord{ };
+                            vBinCoords.push_back( { BinCoord{ .sChromosomeX = xX.sChromosome,
+                                                              .sChromosomeY = xY.sChromosome,
+
+                                                              .uiScreenX = xX.uiScreenPos,
+                                                              .uiScreenY = xY.uiScreenPos,
+
+                                                              .uiIndexX = xX.uiIndexPos,
+                                                              .uiIndexY = xY.uiIndexPos,
+
+                                                              .uiW = xX.uiSize,
+                                                              .uiH = xY.uiSize },
+                                                    BinCoord{} } );
                         break;
                     case 4:
-                        xCoord1 = xCoord;
                         if( xX.uiIndexPos + xX.uiSize > xY.uiIndexPos )
                         {
                             size_t uiDiagIntersect1X = std::max( xY.uiIndexPos, xX.uiIndexPos );
@@ -287,14 +301,16 @@ void Computation::setBinCoords( )
                             size_t uiH = uiDiagIntersect2Y - uiDiagIntersect1Y;
 
                             vBinCoords.push_back( { BinCoord{ .sChromosomeX = xX.sChromosome,
-                                                              .uiIndexX = xX.uiIndexPos,
-                                                              .uiW = xX.uiSize,
-                                                              .uiScreenX = xX.uiScreenPos,
-
                                                               .sChromosomeY = xY.sChromosome,
+
+                                                              .uiScreenX = xX.uiScreenPos,
+                                                              .uiScreenY = xY.uiScreenPos,
+
+                                                              .uiIndexX = xX.uiIndexPos,
                                                               .uiIndexY = xY.uiIndexPos,
-                                                              .uiH = xY.uiSize,
-                                                              .uiScreenY = xY.uiScreenPos },
+
+                                                              .uiW = xX.uiSize,
+                                                              .uiH = xY.uiSize },
                                                     BinCoord{ .sChromosomeX = xY.sChromosome,
                                                               .sChromosomeY = xX.sChromosome,
 
@@ -308,7 +324,18 @@ void Computation::setBinCoords( )
                                                               .uiH = uiW } } );
                         }
                         else
-                            xCoord2 = BinCoord{ };
+                            vBinCoords.push_back( { BinCoord{ .sChromosomeX = xX.sChromosome,
+                                                              .sChromosomeY = xY.sChromosome,
+
+                                                              .uiScreenX = xX.uiScreenPos,
+                                                              .uiScreenY = xY.uiScreenPos,
+
+                                                              .uiIndexX = xX.uiIndexPos,
+                                                              .uiIndexY = xY.uiIndexPos,
+
+                                                              .uiW = xX.uiSize,
+                                                              .uiH = xY.uiSize },
+                                                    BinCoord{} } );
                         break;
                     default:
                         throw std::runtime_error( "unknown symmetry setting" );

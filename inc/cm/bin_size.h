@@ -6,7 +6,7 @@
 namespace cm
 {
 
-size_t Computation::nextEvenNumber( double fX )
+size_t ContactMapping::nextEvenNumber( double fX )
 {
     if( this->xRenderSettings[ "interface" ][ "snap_bin_size" ] == "no" )
         return std::ceil( fX );
@@ -22,7 +22,7 @@ size_t Computation::nextEvenNumber( double fX )
 }
 
 
-void Computation::setBinSize( )
+void ContactMapping::setBinSize( )
 {
     size_t uiT = this->xRenderSettings[ "interface" ][ "min_bin_size" ][ "val" ].get<size_t>( );
     size_t uiMinBinSize = std::max( (size_t)1,
@@ -59,7 +59,7 @@ void Computation::setBinSize( )
         throw std::runtime_error( "invlaid bin_aspect_ratio value" );
 }
 
-void Computation::setRenderArea( )
+void ContactMapping::setRenderArea( )
 {
     if( this->xRenderSettings[ "export" ][ "do_export_full" ] )
     {

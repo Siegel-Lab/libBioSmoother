@@ -21,5 +21,5 @@ PYBIND11_MODULE( libContactMapping, m )
     m.attr( "SPS_VERSION" ) = SPS_VERSION;
     m.attr( "SPS_BUILD_TIME" ) = SPS_BUILD_TIME;
 
-    pybind11::class_<cm::Computation>( m, "Computation" ).def( "all", &cm::Computation::computeAll );
+    pybind11::class_<cm::ContactMapping>( m, "Computation" ).def( "all", &cm::ContactMapping::computeAll );
 }

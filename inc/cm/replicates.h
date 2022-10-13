@@ -6,7 +6,7 @@
 namespace cm
 {
 
-void Computation::setActiveReplicates( )
+void ContactMapping::setActiveReplicates( )
 {
     for( auto& xRepl : this->xSession[ "replicates" ][ "list" ] )
     {
@@ -17,14 +17,10 @@ void Computation::setActiveReplicates( )
     }
 }
 
-void Computation::setBinValues( )
+
+void ContactMapping::setIntersectionType( )
 {
-    vvBinValues.reserve( vActiveReplicates.size( ) );
-
-    size_t uiSymmetry = this->getSymmetry( );
-
-    std::string sRenderSettings = this->xRenderSettings[ "filters" ][ "ambiguous_mapping" ].get<std::string>( );
-    sps::IntersectionType xIntersect;
+    std::string sRenderSetting = this->xRenderSettings[ "filters" ][ "ambiguous_mapping" ].get<std::string>( );
     if( sRenderSetting == "enclosed" )
         xIntersect = sps::IntersectionType::enclosed;
     else if( sRenderSetting == "encloses" )
@@ -39,6 +35,30 @@ void Computation::setBinValues( )
         xIntersect = sps::IntersectionType::points_only;
     else
         throw std::runtime_error( "unknown ambiguous_mapping value" );
+}
+
+size_t ContactMapping::symmetry( size_t uiA, size_t uiB )
+{
+    switch( uiSymmetry )
+    {
+        case 0:
+            return uiA;
+        case 1:
+            return std::min( uiA, uiB );
+        case 2:
+            return (size_t)std::abs( (int64_t)uiA - (int64_t)uiB );
+        case 3:
+        case 4:
+            return uiA + uiB;
+        default:
+            throw std::runtime_error( "unknown symmetry setting" );
+            break;
+    }
+}
+
+void ContactMapping::setBinValues( )
+{
+    vvBinValues.reserve( vActiveReplicates.size( ) );
 
     for( std::string& sRep : vActiveReplicates )
     {
@@ -65,7 +85,7 @@ void Computation::setBinValues( )
                     {
                         if( bHasMapQ && bHasMultiMap )
                             vVals[ uiI ] = xIndices.getIndex<3, 2>( ).count(
-                                iDatasetId,
+                                iDataSetId,
                                 { vCoords[ uiI ].uiIndexY, vCoords[ uiI ].uiIndexX, uiMapQMax },
                                 { vCoords[ uiI ].uiIndexY + vCoords[ uiI ].uiH,
                                   vCoords[ uiI ].uiIndexX + vCoords[ uiI ].uiW, uiMapQMin },
@@ -73,7 +93,7 @@ void Computation::setBinValues( )
                                 0 );
                         else if( !bHasMapQ && bHasMultiMap )
                             vVals[ uiI ] =
-                                xIndices.getIndex<2, 2>( ).count( iDatasetId,
+                                xIndices.getIndex<2, 2>( ).count( iDataSetId,
                                                                   { vCoords[ uiI ].uiIndexY, vCoords[ uiI ].uiIndexX },
                                                                   { vCoords[ uiI ].uiIndexY + vCoords[ uiI ].uiH,
                                                                     vCoords[ uiI ].uiIndexX + vCoords[ uiI ].uiW },
@@ -81,7 +101,7 @@ void Computation::setBinValues( )
                                                                   0 );
                         else if( bHasMapQ && !bHasMultiMap )
                             vVals[ uiI ] = xIndices.getIndex<3, 0>( ).count(
-                                iDatasetId,
+                                iDataSetId,
                                 { vCoords[ uiI ].uiIndexY, vCoords[ uiI ].uiIndexX, uiMapQMax },
                                 { vCoords[ uiI ].uiIndexY + vCoords[ uiI ].uiH,
                                   vCoords[ uiI ].uiIndexX + vCoords[ uiI ].uiW, uiMapQMin },
@@ -89,7 +109,7 @@ void Computation::setBinValues( )
                                 0 );
                         else // if(!bHasMapQ && !bHasMultiMap)
                             vVals[ uiI ] =
-                                xIndices.getIndex<2, 0>( ).count( iDatasetId,
+                                xIndices.getIndex<2, 0>( ).count( iDataSetId,
                                                                   { vCoords[ uiI ].uiIndexY, vCoords[ uiI ].uiIndexX },
                                                                   { vCoords[ uiI ].uiIndexY + vCoords[ uiI ].uiH,
                                                                     vCoords[ uiI ].uiIndexX + vCoords[ uiI ].uiW },
@@ -100,125 +120,84 @@ void Computation::setBinValues( )
                         vVals[ uiI ] = 0;
                 }
 
-            switch( uiSymmetry )
-            {
-                case 0:
-                    vvBinValues.back( ).push_back( vVals[ 0 ] );
-                    break;
-                case 1:
-                    vvBinValues.back( ).push_back( std::min( vVals[ 0 ], vVals[ 1 ] ) );
-                case 2:
-                    vvBinValues.back( ).push_back( (size_t)std::abs( vVals[ 0 ] - (int64_t)vVals[ 1 ] ) );
-                    break;
-                case 3:
-                case 4:
-                    vvBinValues.back( ).push_back( vVals[ 0 ] + vVals[ 1 ] );
-                    break;
-                default:
-                    throw std::runtime_error( "unknown symmetry setting" );
-                    break;
-            }
+            vvBinValues.back( ).push_back( symmetry( vVals[ 0 ], vVals[ 1 ] ) );
         }
     }
 }
 
-/*
-
-    def flatten_bins(self, bins):
-        if len(bins) > 0:
-            self.render_step_log("flatten_bins", 0, len(bins[0]))
-            group_a = range(len(self.group_a))
-            group_b = range(len(self.group_a), len(self.group_a) + len(self.group_b))
-            ret = [[], []]
-            for idx, _ in enumerate(bins[0]):
-                self.render_step_log("flatten_bins", idx, len(bins[0]))
-                a = []
-                b = []
-                for idx_2 in group_a:
-                    a.append(bins[idx_2][idx])
-                for idx_2 in group_b:
-                    b.append(bins[idx_2][idx])
-                if self.settings['replicates']['in_group'] == "min":
-                    aa = min(a) if len(a) > 0 else 0
-                    bb = min(b) if len(b) > 0 else 0
-                elif self.settings['replicates']['in_group'] == "sum":
-                    aa = sum(a)
-                    bb = sum(b)
-                elif self.settings['replicates']['in_group'] == "dif":
-                    aa = sum(abs(x-y) for x in a for y in a)
-                    bb = sum(abs(x-y) for x in b for y in b)
-                else:
-                    raise RuntimeError("Unknown in group value")
-                ret[0].append(aa)
-                ret[1].append(bb)
-            return ret
-        return [[], []]
-
-*/
+void ContactMapping::setInGroup( )
+{
+    std::string sInGroupSetting = this->xRenderSettings[ "replicates" ][ "in_group" ].get<std::string>( );
+    if( sInGroupSetting == "min" )
+        iInGroupSetting = 0;
+    else if( sInGroupSetting == "sum" )
+        iInGroupSetting = 1;
+    else if( sInGroupSetting == "dif" )
+        iInGroupSetting = 2;
+    else if( sInGroupSetting == "max" )
+        iInGroupSetting = 3;
+    else
+        throw std::runtime_error( "invalid value for in_group" );
+}
 
 
-void Computation::setFlatValues( )
+size_t ContactMapping::getFlatValue( std::vector<size_t> vCollected )
+{
+    size_t uiVal = 0;
+    if( iInGroupSetting == 0 && vCollected.size( ) > 0 )
+        uiVal = std::numeric_limits<size_t>::max( );
+
+    for( size_t uiC : vCollected )
+        switch( iInGroupSetting )
+        {
+            case 0:
+                uiVal = std::min( uiVal, uiC );
+                break;
+            case 1:
+                uiVal += uiC;
+                break;
+            case 2:
+                for( size_t uiC2 : vCollected )
+                    uiVal += (size_t)std::abs( (int64_t)uiC - (int64_t)uiC2 );
+                break;
+            case 3:
+                uiVal = std::max( uiVal, uiC );
+                break;
+            default:
+                throw std::runtime_error( "invalid value for in_group" );
+        }
+    return uiVal;
+}
+
+void ContactMapping::setFlatValues( )
 {
     if( vvBinValues.size( ) > 0 )
     {
         vvFlatValues.reserve( vvBinValues[ 0 ].size( ) );
         std::array<std::vector<size_t>, 2> vInGroup;
-        vInGroup[0].reserve( vActiveReplicates.size( ) );
-        vInGroup[1].reserve( vActiveReplicates.size( ) );
-        for(size_t uiI = 0; uiI < vActiveReplicates.size(); uiI++)
+        vInGroup[ 0 ].reserve( vActiveReplicates.size( ) );
+        vInGroup[ 1 ].reserve( vActiveReplicates.size( ) );
+        for( size_t uiI = 0; uiI < vActiveReplicates.size( ); uiI++ )
         {
-            if(this->xSession[ "replicates" ][ "by_name" ][ vActiveReplicates[uiI] ][ "in_group_a" ].get<bool>( ))
-                vInGroup[0].push_back( uiI );
-            if(this->xSession[ "replicates" ][ "by_name" ][ vActiveReplicates[uiI] ][ "in_group_b" ].get<bool>( ))
-                vInGroup[1].push_back( uiI );
+            if( this->xSession[ "replicates" ][ "by_name" ][ vActiveReplicates[ uiI ] ][ "in_group_a" ].get<bool>( ) )
+                vInGroup[ 0 ].push_back( uiI );
+            if( this->xSession[ "replicates" ][ "by_name" ][ vActiveReplicates[ uiI ] ][ "in_group_b" ].get<bool>( ) )
+                vInGroup[ 1 ].push_back( uiI );
         }
 
-        std::string sInGroupSetting = this->xRenderSettings[ "replicates" ][ "in_group" ].get<std::string>( );
-        size_t iInGroupSetting;
-        if(sInGroupSetting == "min")
-            iInGroupSetting = 0;
-        else if(sInGroupSetting == "sum")
-            iInGroupSetting = 1;
-        else if(sInGroupSetting == "dif")
-            iInGroupSetting = 2;
-        else if(sInGroupSetting == "max")
-            iInGroupSetting = 3;
-        else
-            throw std::runtime_error("invalid value for in_group");
-
-        for(size_t uiI = 0; uiI < vvFlatValues.size(); uiI++)
-            for(size_t uiJ = 0; uiJ < 2; uiJ++)
+        for( size_t uiI = 0; uiI < vvFlatValues.size( ); uiI++ )
+        {
+            vvFlatValues.push_back( { } );
+            for( size_t uiJ = 0; uiJ < 2; uiJ++ )
             {
                 std::vector<size_t> vCollected;
-                vCollected.reserve(vInGroup[uiJ].size());
-                for( size_t uiX : vInGroup[uiJ] )
-                    vCollected.push_back(vvBinValues[uiX][uiI]);
-                
-                size_t uiVal = 0;
-                if(iInGroupSetting == 0 && vCollected.size() > 0)
-                    uiVal = std::numeric_limits<size_t>::max();
+                vCollected.reserve( vInGroup[ uiJ ].size( ) );
+                for( size_t uiX : vInGroup[ uiJ ] )
+                    vCollected.push_back( vvBinValues[ uiX ][ uiI ] );
 
-                for(size_t uiC : vCollected)
-                    switch(iInGroupSetting)
-                    {
-                        case 0:
-                            uiVal = std::min(uiVal, uiC);
-                            break;
-                        case 1:
-                            uiVal += uiC;
-                            break;
-                        case 2:
-                            for(size_t uiC2 : vCollected)
-                                uiVal += (size_t)std::abs(uiC - (int64_t)uiC2);
-                            break;
-                        case 3:
-                            uiVal = std::max(uiVal, uiC);
-                            break;
-                        default:
-                            throw std::runtime_error("invalid value for in_group");
-                    }
-
+                vvFlatValues.back( )[ uiJ ] = getFlatValue( vCollected );
             }
+        }
     }
     else
         vvFlatValues.clear( );
