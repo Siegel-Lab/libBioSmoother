@@ -120,10 +120,10 @@ class ContactMapping
     ContactMapping( std::string sPrefix ) : xIndices( sPrefix )
     {}
 
-    void computeAll( json xRenderSettings, json xSession )
+    void computeAll( /*json xRenderSettings, json xSession*/ )
     {
-        this->xRenderSettings = xRenderSettings;
-        this->xSession = xSession;
+        //this->xRenderSettings = xRenderSettings;
+        //this->xSession = xSession;
         setBinSize( );
         setRenderArea( );
 
