@@ -27,15 +27,20 @@ void ContactMapping::doNotNormalize( )
         vvNormalized.push_back( std::array<double, 2>{ (double)vVal[ 0 ], (double)vVal[ 1 ] } );
 }
 
-void ContactMapping::normalizeMaxBin( )
+/*
+
+            elif self.settings['normalization']['normalize_by'] == "column":
+                ret.append([x / max(ns[idx][idx_2 // len(rows)], 1) for idx_2, x in enumerate(bins)])
+            elif self.settings['normalization']['normalize_by'] == "row":
+                ret.append([x / max(ns[idx][idx_2 % len(rows)], 1) for idx_2, x in enumerate(bins)])
+
+*/
+
+void ContactMapping::normalizeTracks( )
 {
-    std::array<size_t, 2> vfMaxVal = { 0, 0 };
-    for( auto& vVal : vvFlatValues )
-        for( size_t uiJ = 0; uiJ < 2; uiJ++ )
-            vfMaxVal[ uiJ ] = std::max( vfMaxVal[ uiJ ], vVal[ uiJ ] );
-    for( auto& vVal : vvFlatValues )
-        vvNormalized.push_back(
-            std::array<double, 2>{ vVal[ 0 ] / (double)vfMaxVal[ 0 ], vVal[ 1 ] / (double)vfMaxVal[ 1 ] } );
+    for( size_t uiI = 0; uiI < vvFlatValues.size(); uiI++ )
+        vvNormalized.push_back( std::array<double, 2>{ (double)vvFlatValues[uiI][ 0 ], 
+                                                       (double)vvFlatValues[uiI][ 1 ] } );
 }
 
 void ContactMapping::normalize( )
@@ -43,18 +48,10 @@ void ContactMapping::normalize( )
     vvNormalized.reserve( vvFlatValues.size( ) );
     if( this->xRenderSettings[ "normalization" ][ "normalize_by" ].get<std::string>( ) == "dont" )
         doNotNormalize( );
-    else if( this->xRenderSettings[ "normalization" ][ "normalize_by" ].get<std::string>( ) == "tracks_abs" )
-        ;
-    else if( this->xRenderSettings[ "normalization" ][ "normalize_by" ].get<std::string>( ) == "tracks_rel" )
-        ;
-    else if( this->xRenderSettings[ "normalization" ][ "normalize_by" ].get<std::string>( ) == "column" )
-        ;
-    else if( this->xRenderSettings[ "normalization" ][ "normalize_by" ].get<std::string>( ) == "row" )
-        ;
+    else if( this->xRenderSettings[ "normalization" ][ "normalize_by" ].get<std::string>( ) == "tracks" )
+        normalizeTracks();
     else if( this->xRenderSettings[ "normalization" ][ "normalize_by" ].get<std::string>( ) == "radicl-seq" )
         ;
-    else if( this->xRenderSettings[ "normalization" ][ "normalize_by" ].get<std::string>( ) == "max_bin_visible" )
-        normalizeMaxBin( );
     else if( this->xRenderSettings[ "normalization" ][ "normalize_by" ].get<std::string>( ) == "rpm" )
         normalizeSize( 1000000 );
     else if( this->xRenderSettings[ "normalization" ][ "normalize_by" ].get<std::string>( ) == "rpk" )

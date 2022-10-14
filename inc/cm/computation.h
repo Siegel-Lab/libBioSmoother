@@ -110,9 +110,9 @@ class ContactMapping
     // normalization.h
     void doNotNormalize( );
     // normalization.h
-    void normalizeSize( size_t uiSize );
+    void normalizeTracks( );
     // normalization.h
-    void normalizeMaxBin( );
+    void normalizeSize( size_t uiSize );
     // normalization.h
     void normalize( );
 

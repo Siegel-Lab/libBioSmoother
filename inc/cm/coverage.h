@@ -13,11 +13,13 @@ void ContactMapping::setActiveCoverage( )
         {
             std::string sName = xName.get<std::string>( );
             if( this->xSession[ bB ? "coverage" : "replicates" ][ "by_name" ][ sName ][ "in_column" ].get<bool>( ) ||
-                this->xSession[ bB ? "coverage" : "replicates" ][ "by_name" ][ sName ][ "norm_column" ].get<bool>( ) )
+                this->xSession[ bB ? "coverage" : "replicates" ][ "by_name" ][ sName ][ "cov_column_a" ].get<bool>( ) ||
+                this->xSession[ bB ? "coverage" : "replicates" ][ "by_name" ][ sName ][ "cov_column_b" ].get<bool>( ) )
                 vActiveCoverage[ 0 ].push_back( std::make_pair( sName, bB ) );
 
             if( this->xSession[ bB ? "coverage" : "replicates" ][ "by_name" ][ sName ][ "in_row" ].get<bool>( ) ||
-                this->xSession[ bB ? "coverage" : "replicates" ][ "by_name" ][ sName ][ "norm_row" ].get<bool>( ) )
+                this->xSession[ bB ? "coverage" : "replicates" ][ "by_name" ][ sName ][ "cov_row_a" ].get<bool>( ) ||
+                this->xSession[ bB ? "coverage" : "replicates" ][ "by_name" ][ sName ][ "cov_row_b" ].get<bool>( ) )
                 vActiveCoverage[ 1 ].push_back( std::make_pair( sName, bB ) );
         }
 }
@@ -92,6 +94,7 @@ void ContactMapping::setCoverageValues( )
         }
 }
 
+ // @todo @continue_here create a cov a and b for each, the rows and the columns
 void ContactMapping::setFlatCoverageValues( )
 {
     for( size_t uiJ = 0; uiJ < 2; uiJ++ )
