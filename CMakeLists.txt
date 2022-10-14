@@ -54,8 +54,9 @@ add_custom_target(
 
 add_subdirectory(../libSps ${CMAKE_BINARY_DIR}/libSps EXCLUDE_FROM_ALL)
 set(JSON_BuildTests OFF CACHE INTERNAL "")
-add_subdirectory(contrib/json EXCLUDE_FROM_ALL)
-#add_subdirectory(contrib/pybind11_json EXCLUDE_FROM_ALL)
+find_package(pybind11 REQUIRED)
+find_package(nlohmann_json REQUIRED)
+find_package(pybind11_json REQUIRED)
 
 # create python module if python has been found
 if(WITH_PYTHON)

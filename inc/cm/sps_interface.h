@@ -5,7 +5,11 @@
 namespace cm
 {
 
+template <bool CACHED> class SpsInterface;
 
+template <template <size_t D, bool dependant_dim, bool uniform_overlay_grid, size_t orthope> typename storage_t, 
+          size_t D, size_t O, bool CACHED>
+sps::Index<storage_t<D, false, true, O>>& getIndexHelper( SpsInterface<CACHED>* );
 
 template <bool CACHED> class SpsInterface
 {
@@ -24,6 +28,7 @@ template <bool CACHED> class SpsInterface
     using I30_t = sps::Index<storage_t<3, false, true, 0>>;
     using I52_t = sps::Index<storage_t<5, false, true, 2>>;
 
+  public:
     I10_t xIndex10;
     I21_t xIndex21;
     I20_t xIndex20;
@@ -33,11 +38,6 @@ template <bool CACHED> class SpsInterface
     I52_t xIndex52;
 
 
-    template <template <size_t D, bool dependant_dim, bool uniform_overlay_grid, size_t orthope> typename storage_t, 
-          size_t D, size_t O>
-friend sps::Index<storage_t<D, false, true, O>>& getIndexHelper();
-
-  public:
     SpsInterface( std::string sFilePrefix )
         : xIndex10( sFilePrefix + ".1.0" ),
           xIndex21( sFilePrefix + ".2.1" ),
@@ -50,40 +50,23 @@ friend sps::Index<storage_t<D, false, true, O>>& getIndexHelper();
 
     template <size_t D, size_t O> sps::Index<storage_t<D + O, false, true, O>>& getIndex( )
     {
-        return getIndexHelper<storage_t, D + O, O>(
-            xIndex10, xIndex21, xIndex20, xIndex31, xIndex42, xIndex30, xIndex52 );
+        return getIndexHelper<storage_t, D + O, O>( this );
     }
 };
 
-template <template <size_t D, bool dependant_dim, bool uniform_overlay_grid, size_t orthope> typename storage_t, 
-          size_t D, size_t O>
-sps::Index<storage_t<D, false, true, O>>& getIndexHelper( //
-    sps::Index<storage_t<1, false, true, 0>>&, //
-    sps::Index<storage_t<2, false, true, 1>>&, //
-    sps::Index<storage_t<2, false, true, 0>>&, //
-    sps::Index<storage_t<3, false, true, 1>>&, //
-    sps::Index<storage_t<4, false, true, 2>>&, //
-    sps::Index<storage_t<3, false, true, 0>>&, //
-    sps::Index<storage_t<5, false, true, 2>>& //
- );
 
-#pragma GCC diagnostic push
-// vPos not used with DEPENDANT_DIMENSION == false
-#pragma GCC diagnostic ignored "-Wunused-parameter"
 #define IMPLEMENT_GET_INDEX_HELPER(D, O) \
     template <> \
     sps::Index<CachedTypeDef<D, false, true, O>>& \
-    getIndexHelper<CachedTypeDef, D, O>(  \
-        sps::Index<CachedTypeDef<1, false, true, 0>>& xIndex10,  \
-        sps::Index<CachedTypeDef<2, false, true, 1>>& xIndex21,  \
-        sps::Index<CachedTypeDef<2, false, true, 0>>& xIndex20,  \
-        sps::Index<CachedTypeDef<3, false, true, 1>>& xIndex31,  \
-        sps::Index<CachedTypeDef<4, false, true, 2>>& xIndex42,  \
-        sps::Index<CachedTypeDef<3, false, true, 0>>& xIndex30,  \
-        sps::Index<CachedTypeDef<5, false, true, 2>>& xIndex52  \
-        ) \
+    getIndexHelper<CachedTypeDef, D, O, true>( SpsInterface<true>* pInterface ) \
     { \
-        return xIndex##D##O; \
+        return pInterface->xIndex##D##O; \
+    } \
+    template <> \
+    sps::Index<DiskTypeDef<D, false, true, O>>& \
+    getIndexHelper<DiskTypeDef, D, O, false>( SpsInterface<false>* pInterface ) \
+    { \
+        return pInterface->xIndex##D##O; \
     }
 
 IMPLEMENT_GET_INDEX_HELPER(1,0)
@@ -95,6 +78,5 @@ IMPLEMENT_GET_INDEX_HELPER(4,2)
 
 IMPLEMENT_GET_INDEX_HELPER(3,0)
 IMPLEMENT_GET_INDEX_HELPER(5,2)
-#pragma GCC diagnostic pop
 
 } // namespace cm
