@@ -60,11 +60,11 @@ find_package(pybind11_json REQUIRED)
 
 # create python module if python has been found
 if(WITH_PYTHON)
-    pybind11_add_module( ContactMapping src/main.cpp )
-    target_include_directories( ContactMapping PUBLIC inc )
-    target_link_libraries( ContactMapping PUBLIC libSps nlohmann_json::nlohmann_json )
-    target_compile_definitions( ContactMapping PRIVATE WITH_PYTHON )
-    add_dependencies(ContactMapping cm_config_version cm_config_build_time)
+    pybind11_add_module( libContactMapping src/main.cpp )
+    target_include_directories( libContactMapping PUBLIC inc )
+    target_link_libraries( libContactMapping PUBLIC libSps nlohmann_json::nlohmann_json )
+    target_compile_definitions( libContactMapping PRIVATE WITH_PYTHON )
+    add_dependencies( libContactMapping cm_config_version cm_config_build_time )
 endif()
 
 

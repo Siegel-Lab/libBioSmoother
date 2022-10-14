@@ -144,6 +144,8 @@ class ContactMapping
 
         setBinValues( );
         setFlatValues( );
+
+        normalize();
     }
 };
 
