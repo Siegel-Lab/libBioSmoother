@@ -1,0 +1,130 @@
+{
+    "dividend": 1000,
+    "contigs": {
+        "list": [
+            "chr_1",
+            "chr_2"
+        ],
+        "lengths": {
+            "chr_1": 10,
+            "chr_2": 50
+        },
+        "displayed": {
+            "chr_1": {
+                "displayed_on_x": true,
+                "displayed_on_y": true
+            },
+            "chr_2": {
+                "displayed_on_x": true,
+                "displayed_on_y": true
+            }
+        },
+        "genome_size": 60
+    },
+    "area": {
+        "x_start": 0,
+        "y_start": 5,
+        "x_end": 10,
+        "y_end": 15
+    },
+    "replicates": {
+        "list": [
+            "rep_1",
+            "rep_2"
+        ],
+        "in_group":{
+            "rep_1": {
+                "in_group_a": true,
+                "in_group_b": false
+            },
+            "rep_2": {
+                "in_group_a": true,
+                "in_group_b": false
+            }
+        },
+        "coverage": {
+            "rep_1": {
+                "in_column": false,
+                "in_row": false,
+                "cov_column_a": false,
+                "cov_row_a": false,
+                "cov_column_b": false,
+                "cov_row_b": false
+            },
+            "rep_2": {
+                "in_column": false,
+                "in_row": false,
+                "cov_column_a": false,
+                "cov_row_a": false,
+                "cov_column_b": false,
+                "cov_row_b": false
+            }
+        },
+        "by_name": {
+            "rep_1": {
+                "ids": {
+                    "chr_1": {
+                        "chr_1": 0,
+                        "chr_2": 1,
+                        "row": 0,
+                        "col": 1
+                    },
+                    "chr_2": {
+                        "chr_1": 2,
+                        "chr_2": 3,
+                        "row": 2,
+                        "col": 3
+                    }
+                },
+                "has_map_q": true,
+                "has_multimapping": false,
+                "total_reads": 1000
+            },
+            "rep_2": {
+                "ids": {
+                    "chr_1": {
+                        "chr_1": 4,
+                        "chr_2": 5,
+                        "row": 4,
+                        "col": 5
+                    },
+                    "chr_2": {
+                        "chr_1": 6,
+                        "chr_2": 7,
+                        "row": 6,
+                        "col": 7
+                    }
+                },
+                "has_map_q": false,
+                "has_multimapping": false,
+                "total_reads": 1503
+            }
+        }
+    },
+    "coverage": {
+        "list": [
+            "norm_1"
+        ],
+        "by_name": {
+            "norm_1": {
+                "ids": {
+                    "chr_1": 8,
+                    "chr_2": 9
+                },
+                "has_map_q": true,
+                "has_multimapping": false,
+                "total_reads": 1000
+            }
+        },
+        "coverage": {
+            "norm_1": {
+                "in_column": true,
+                "in_row": true,
+                "cov_column_a": false,
+                "cov_row_a": false,
+                "cov_column_b": false,
+                "cov_row_b": false
+            }
+        }
+    }
+}

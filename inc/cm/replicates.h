@@ -11,8 +11,8 @@ void ContactMapping::setActiveReplicates( )
     for( auto& xRepl : this->xSession[ "replicates" ][ "list" ] )
     {
         std::string sRepl = xRepl.get<std::string>( );
-        if( this->xSession[ "replicates" ][ "by_name" ][ sRepl ][ "in_group_a" ].get<bool>( ) ||
-            this->xSession[ "replicates" ][ "by_name" ][ sRepl ][ "in_group_b" ].get<bool>( ) )
+        if( this->xSession[ "replicates" ][ "in_group" ][ sRepl ][ "in_group_a" ].get<bool>( ) ||
+            this->xSession[ "replicates" ][ "in_group" ][ sRepl ][ "in_group_b" ].get<bool>( ) )
             vActiveReplicates.push_back( sRepl );
     }
 }
@@ -34,7 +34,7 @@ void ContactMapping::setIntersectionType( )
     else if( sRenderSetting == "points_only" )
         xIntersect = sps::IntersectionType::points_only;
     else
-        throw std::runtime_error( "unknown ambiguous_mapping value" );
+        throw std::logic_error( "unknown ambiguous_mapping value" );
 }
 
 size_t ContactMapping::symmetry( size_t uiA, size_t uiB )
@@ -51,7 +51,7 @@ size_t ContactMapping::symmetry( size_t uiA, size_t uiB )
         case 4:
             return uiA + uiB;
         default:
-            throw std::runtime_error( "unknown symmetry setting" );
+            throw std::logic_error( "unknown symmetry setting" );
             break;
     }
 }
@@ -137,7 +137,7 @@ void ContactMapping::setInGroup( )
     else if( sInGroupSetting == "max" )
         iInGroupSetting = 3;
     else
-        throw std::runtime_error( "invalid value for in_group" );
+        throw std::logic_error( "invalid value for in_group" );
 }
 
 
@@ -164,7 +164,7 @@ size_t ContactMapping::getFlatValue( std::vector<size_t> vCollected )
                 uiVal = std::max( uiVal, uiC );
                 break;
             default:
-                throw std::runtime_error( "invalid value for in_group" );
+                throw std::logic_error( "invalid value for in_group" );
         }
     return uiVal;
 }
@@ -179,9 +179,9 @@ void ContactMapping::setFlatValues( )
         vInGroup[ 1 ].reserve( vActiveReplicates.size( ) );
         for( size_t uiI = 0; uiI < vActiveReplicates.size( ); uiI++ )
         {
-            if( this->xSession[ "replicates" ][ "by_name" ][ vActiveReplicates[ uiI ] ][ "in_group_a" ].get<bool>( ) )
+            if( this->xSession[ "replicates" ][ "in_group" ][ vActiveReplicates[ uiI ] ][ "in_group_a" ].get<bool>( ) )
                 vInGroup[ 0 ].push_back( uiI );
-            if( this->xSession[ "replicates" ][ "by_name" ][ vActiveReplicates[ uiI ] ][ "in_group_b" ].get<bool>( ) )
+            if( this->xSession[ "replicates" ][ "in_group" ][ vActiveReplicates[ uiI ] ][ "in_group_b" ].get<bool>( ) )
                 vInGroup[ 1 ].push_back( uiI );
         }
 
@@ -201,6 +201,51 @@ void ContactMapping::setFlatValues( )
     }
     else
         vvFlatValues.clear( );
+}
+
+void ContactMapping::regReplicates( )
+{
+    registerNode( NodeNames::ActiveReplicates,
+                  ComputeNode{ .sNodeName = "active_replicates",
+                               .fFunc = &ContactMapping::setActiveReplicates,
+                               .vIncomingFunctions = { },
+                               .vIncomingSession = { { "replicates", "in_group" } },
+                               .vIncomingRender = { },
+                               .uiLastUpdated = uiCurrTime } );
+
+    registerNode( NodeNames::IntersectionType,
+                  ComputeNode{ .sNodeName = "intersection_type",
+                               .fFunc = &ContactMapping::setIntersectionType,
+                               .vIncomingFunctions = { },
+                               .vIncomingSession = { },
+                               .vIncomingRender = { { "filters", "ambiguous_mapping" } },
+                               .uiLastUpdated = uiCurrTime } );
+
+    registerNode( NodeNames::BinValues,
+                  ComputeNode{ .sNodeName = "bin_values",
+                               .fFunc = &ContactMapping::setBinValues,
+                               .vIncomingFunctions = { NodeNames::BinCoords, NodeNames::ActiveReplicates,
+                                                       NodeNames::IntersectionType, NodeNames::Symmetry },
+                               .vIncomingSession = { },
+                               .vIncomingRender = { { "filters", "mapping_q", "val_min" },
+                                                    { "filters", "mapping_q", "val_max" } },
+                               .uiLastUpdated = uiCurrTime } );
+
+    registerNode( NodeNames::InGroup,
+                  ComputeNode{ .sNodeName = "replicate_groups",
+                               .fFunc = &ContactMapping::setInGroup,
+                               .vIncomingFunctions = { },
+                               .vIncomingSession = { },
+                               .vIncomingRender = { { "replicates", "in_group" } },
+                               .uiLastUpdated = uiCurrTime } );
+
+    registerNode( NodeNames::FlatValues,
+                  ComputeNode{ .sNodeName = "flat_bins",
+                               .fFunc = &ContactMapping::setFlatValues,
+                               .vIncomingFunctions = { NodeNames::BinValues, NodeNames::InGroup },
+                               .vIncomingSession = { { "replicates", "in_group" } },
+                               .vIncomingRender = { },
+                               .uiLastUpdated = uiCurrTime } );
 }
 
 } // namespace cm

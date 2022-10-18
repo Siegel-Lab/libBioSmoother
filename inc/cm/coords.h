@@ -63,7 +63,7 @@ std::vector<AxisCoord> axisCoordsHelper( size_t uiBinSize, size_t uiScreenStartP
                     uiCurrBinSize = uiBinSize;
                     break;
                 default:
-                    throw std::runtime_error( "unknown iSmallerBins value" );
+                    throw std::logic_error( "unknown iSmallerBins value" );
             }
             bool bAddBin;
             switch( iSmallerBins )
@@ -81,7 +81,7 @@ std::vector<AxisCoord> axisCoordsHelper( size_t uiBinSize, size_t uiScreenStartP
                     bAddBin = uiIndexPos + uiCurrBinSize <= uiChromosomeEndPos;
                     break;
                 default:
-                    throw std::runtime_error( "unknown iSmallerBins value" );
+                    throw std::logic_error( "unknown iSmallerBins value" );
             }
             if( bAddBin )
                 vRet.push_back( AxisCoord{
@@ -104,7 +104,7 @@ std::vector<AxisCoord> axisCoordsHelper( size_t uiBinSize, size_t uiScreenStartP
                     bIncScreenPos = uiIndexPos + uiCurrBinSize <= uiChromosomeEndPos;
                     break;
                 default:
-                    throw std::runtime_error( "unknown iSmallerBins value" );
+                    throw std::logic_error( "unknown iSmallerBins value" );
             }
             if( bIncScreenPos )
                 uiCurrScreenPos += uiCurrBinSize;
@@ -134,19 +134,18 @@ size_t smaller_bin_to_num( std::string sVal )
         return 4;
     if( sVal == "fit_chrom_larger" )
         return 5;
-    throw std::runtime_error( "unknown iSmallerBins value" );
+    throw std::logic_error( "unknown iSmallerBins value" );
 }
 
-std::vector<ChromDesc> activeChromList( json& xChromList, json& xChromInfo, std::string sExistenceKey )
+std::vector<ChromDesc> activeChromList( json& xChromList, json& xChromLen, json& xChromDisp, std::string sExistenceKey )
 {
     std::vector<ChromDesc> vRet;
     vRet.reserve( xChromList.size( ) );
     for( auto& xChrom : xChromList )
     {
         std::string sChrom = xChrom.get<std::string>( );
-        if( xChromInfo[ sChrom ][ sExistenceKey ].get<bool>( ) )
-            vRet.emplace_back(
-                ChromDesc{ .sName = sChrom, .uiLength = xChromInfo[ sChrom ][ "length" ].get<size_t>( ) } );
+        if( xChromDisp[ sChrom ][ sExistenceKey ].get<bool>( ) )
+            vRet.emplace_back( ChromDesc{ .sName = sChrom, .uiLength = xChromLen[ sChrom ].get<size_t>( ) } );
     }
     return vRet;
 }
@@ -155,7 +154,8 @@ void ContactMapping::setActiveChrom( )
 {
     for( bool bX : { true, false } )
         this->vActiveChromosomes[ bX ? 0 : 1 ] = activeChromList( this->xSession[ "contigs" ][ "list" ],
-                                                                  this->xSession[ "contigs" ][ "by_name" ],
+                                                                  this->xSession[ "contigs" ][ "lengths" ],
+                                                                  this->xSession[ "contigs" ][ "displayed" ],
                                                                   bX ? "displayed_on_x" : "displayed_on_y" );
 }
 
@@ -185,7 +185,7 @@ void ContactMapping::setSymmetry( )
     else if( sSymmetry == "botToTop" )
         uiSymmetry = 4;
     else
-        throw std::runtime_error( "unknown symmetry setting" );
+        throw std::logic_error( "unknown symmetry setting" );
 }
 void ContactMapping::setBinCoords( )
 {
@@ -195,6 +195,7 @@ void ContactMapping::setBinCoords( )
     vBinCoords.reserve( vAxisCords[ 0 ].size( ) * vAxisCords[ 1 ].size( ) );
     for( AxisCoord& xX : vAxisCords[ 0 ] )
         for( AxisCoord& xY : vAxisCords[ 1 ] )
+        {
             if( xX.sChromosome != xY.sChromosome ||
                 (size_t)std::abs( (int64_t)xX.uiIndexPos - (int64_t)xY.uiIndexPos ) >= uiManhattenDist )
                 switch( uiSymmetry )
@@ -338,9 +339,45 @@ void ContactMapping::setBinCoords( )
                                                     BinCoord{} } );
                         break;
                     default:
-                        throw std::runtime_error( "unknown symmetry setting" );
+                        throw std::logic_error( "unknown symmetry setting" );
                         break;
                 }
+            else
+                vBinCoords.push_back( { BinCoord{ }, BinCoord{} } );
+        }
+}
+
+void ContactMapping::regCoords( )
+{
+    registerNode( NodeNames::ActiveChrom, ComputeNode{ .sNodeName = "active_chroms",
+                                                       .fFunc = &ContactMapping::setActiveChrom,
+                                                       .vIncomingFunctions = { },
+                                                       .vIncomingSession = { { "contigs", "displayed" } },
+                                                       .vIncomingRender = { },
+                                                       .uiLastUpdated = uiCurrTime } );
+
+    registerNode( NodeNames::AxisCoords,
+                  ComputeNode{ .sNodeName = "axis_coords",
+                               .fFunc = &ContactMapping::setAxisCoords,
+                               .vIncomingFunctions = { NodeNames::ActiveChrom, NodeNames::RenderArea },
+                               .vIncomingSession = { },
+                               .vIncomingRender = { { "filters", "cut_off_bin" } },
+                               .uiLastUpdated = uiCurrTime } );
+
+    registerNode( NodeNames::Symmetry, ComputeNode{ .sNodeName = "symmetry",
+                                                    .fFunc = &ContactMapping::setSymmetry,
+                                                    .vIncomingFunctions = { },
+                                                    .vIncomingSession = { },
+                                                    .vIncomingRender = { { "filters", "symmetry" } },
+                                                    .uiLastUpdated = uiCurrTime } );
+
+    registerNode( NodeNames::BinCoords,
+                  ComputeNode{ .sNodeName = "bin_coords",
+                               .fFunc = &ContactMapping::setBinCoords,
+                               .vIncomingFunctions = { NodeNames::AxisCoords, NodeNames::Symmetry },
+                               .vIncomingSession = { },
+                               .vIncomingRender = { { "filters", "min_diag_dist", "val" } },
+                               .uiLastUpdated = uiCurrTime } );
 }
 
 } // namespace cm

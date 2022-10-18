@@ -11,9 +11,9 @@ void ContactMapping::normalizeSize( size_t uiSize )
     std::array<size_t, 2> vTotalReads = { 0, 0 };
     for( std::string& rRep : this->vActiveReplicates )
     {
-        if( this->xSession[ "replicates" ][ "by_name" ][ rRep ][ "in_group_a" ].get<bool>( ) )
+        if( this->xSession[ "replicates" ][ "in_group" ][ rRep ][ "in_group_a" ].get<bool>( ) )
             vTotalReads[ 0 ] += this->xSession[ "replicates" ][ "by_name" ][ rRep ][ "total_reads" ].get<size_t>( );
-        if( this->xSession[ "replicates" ][ "by_name" ][ rRep ][ "in_group_b" ].get<bool>( ) )
+        if( this->xSession[ "replicates" ][ "in_group" ][ rRep ][ "in_group_b" ].get<bool>( ) )
             vTotalReads[ 1 ] += this->xSession[ "replicates" ][ "by_name" ][ rRep ][ "total_reads" ].get<size_t>( );
     }
     for( auto& vVal : vvFlatValues )
@@ -27,39 +27,59 @@ void ContactMapping::doNotNormalize( )
         vvNormalized.push_back( std::array<double, 2>{ (double)vVal[ 0 ], (double)vVal[ 1 ] } );
 }
 
-/*
-
-            elif self.settings['normalization']['normalize_by'] == "column":
-                ret.append([x / max(ns[idx][idx_2 // len(rows)], 1) for idx_2, x in enumerate(bins)])
-            elif self.settings['normalization']['normalize_by'] == "row":
-                ret.append([x / max(ns[idx][idx_2 % len(rows)], 1) for idx_2, x in enumerate(bins)])
-
-*/
 
 void ContactMapping::normalizeTracks( )
 {
-    for( size_t uiI = 0; uiI < vvFlatValues.size(); uiI++ )
-        vvNormalized.push_back( std::array<double, 2>{ (double)vvFlatValues[uiI][ 0 ], 
-                                                       (double)vvFlatValues[uiI][ 1 ] } );
+    for( size_t uiI = 0; uiI < vvFlatValues.size( ); uiI++ )
+        vvNormalized.push_back( std::array<double, 2>{
+            (double)vvFlatValues[ uiI ][ 0 ] /
+                std::max( (size_t)1, vvFlatCoverageValues[ 0 ][ uiI / vAxisCords[ 0 ].size( ) ] ),
+            (double)vvFlatValues[ uiI ][ 1 ] /
+                std::max( (size_t)1, vvFlatCoverageValues[ 1 ][ uiI % vAxisCords[ 0 ].size( ) ] ) } );
 }
 
-void ContactMapping::normalize( )
+void ContactMapping::normalizeBinominalTest( )
+{
+    size_t uiNumBinsInRowTotal = ( this->xSession[ "contigs" ][ "genome_size" ].get<size_t>( ) - 1 ) / uiBinWidth + 1;
+    vvNormalized = normalizeBinominalTestTrampoline(
+        vvFlatValues, '?', uiNumBinsInRowTotal,
+        this->xRenderSettings[ "normalization" ][ "p_accept" ][ "val" ].get<double>( ) );
+}
+
+void ContactMapping::normalizeIC( )
+{
+    throw std::logic_error( "Function not implemented" );
+}
+
+void ContactMapping::setNormalized( )
 {
     vvNormalized.reserve( vvFlatValues.size( ) );
     if( this->xRenderSettings[ "normalization" ][ "normalize_by" ].get<std::string>( ) == "dont" )
         doNotNormalize( );
     else if( this->xRenderSettings[ "normalization" ][ "normalize_by" ].get<std::string>( ) == "tracks" )
-        normalizeTracks();
+        normalizeTracks( );
     else if( this->xRenderSettings[ "normalization" ][ "normalize_by" ].get<std::string>( ) == "radicl-seq" )
-        ;
+        normalizeBinominalTest( );
     else if( this->xRenderSettings[ "normalization" ][ "normalize_by" ].get<std::string>( ) == "rpm" )
         normalizeSize( 1000000 );
     else if( this->xRenderSettings[ "normalization" ][ "normalize_by" ].get<std::string>( ) == "rpk" )
         normalizeSize( 1000 );
     else if( this->xRenderSettings[ "normalization" ][ "normalize_by" ].get<std::string>( ) == "hi-c" )
-        ;
+        normalizeIC( );
     else
-        throw std::runtime_error( "invalid value for normalize_by" );
+        throw std::logic_error( "invalid value for normalize_by" );
+}
+
+void ContactMapping::regNormalization( )
+{
+    registerNode(
+        NodeNames::Normalized,
+        ComputeNode{ .sNodeName = "normalization",
+                     .fFunc = &ContactMapping::setNormalized,
+                     .vIncomingFunctions = { NodeNames::FlatValues, NodeNames::FlatCoverageValues },
+                     .vIncomingSession = { { "normalization", "normalize_by" }, { "replicates", "in_group" } },
+                     .vIncomingRender = { { "normalization", "p_accept", "val" } },
+                     .uiLastUpdated = uiCurrTime } );
 }
 
 } // namespace cm

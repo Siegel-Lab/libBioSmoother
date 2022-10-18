@@ -56,7 +56,7 @@ void ContactMapping::setBinSize( )
         uiBinWidth = uiBinHeight;
     }
     else
-        throw std::runtime_error( "invlaid bin_aspect_ratio value" );
+        throw std::logic_error( "invlaid bin_aspect_ratio value" );
 }
 
 void ContactMapping::setRenderArea( )
@@ -81,6 +81,38 @@ void ContactMapping::setRenderArea( )
         iEndY = this->xSession[ "area" ][ "y_end" ].get<size_t>( ) + uiBinHeight -
                 ( this->xSession[ "area" ][ "y_end" ].get<size_t>( ) % uiBinHeight );
     }
+}
+
+void ContactMapping::regBinSize( )
+{
+    registerNode( NodeNames::BinSize,
+                  ComputeNode{ .sNodeName = "bin_size",
+                               .fFunc = &ContactMapping::setBinSize,
+                               .vIncomingFunctions = { },
+                               .vIncomingSession = { { "interface", "snap_bin_size" },
+                                                     { "interface", "snap_factors" },
+                                                     { "interface", "min_bin_size", "val" },
+                                                     { "interface", "max_num_bins", "val" },
+                                                     { "interface", "max_num_bins_factor" },
+                                                     { "interface", "bin_aspect_ratio" } },
+                               .vIncomingRender = { { "dividend" },
+                                                    { "area", "y_end" },
+                                                    { "area", "y_start" },
+                                                    { "area", "x_end" },
+                                                    { "area", "x_start" } },
+                               .uiLastUpdated = uiCurrTime } );
+
+    registerNode( NodeNames::RenderArea,
+                  ComputeNode{ .sNodeName = "render_area",
+                               .fFunc = &ContactMapping::setRenderArea,
+                               .vIncomingFunctions = { NodeNames::BinSize },
+                               .vIncomingSession = { { "export", "do_export_full" } },
+                               .vIncomingRender = { { "contigs", "genome_size" },
+                                                    { "area", "y_end" },
+                                                    { "area", "y_start" },
+                                                    { "area", "x_end" },
+                                                    { "area", "x_start" } },
+                               .uiLastUpdated = uiCurrTime } );
 }
 
 

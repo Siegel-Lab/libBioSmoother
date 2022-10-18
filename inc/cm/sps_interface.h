@@ -7,7 +7,7 @@ namespace cm
 
 template <bool CACHED> class SpsInterface;
 
-template <template <size_t D, bool dependant_dim, bool uniform_overlay_grid, size_t orthope> typename storage_t, 
+template <template <size_t D, bool dependant_dim, bool uniform_overlay_grid, size_t orthope> typename storage_t,
           size_t D, size_t O, bool CACHED>
 sps::Index<storage_t<D, false, true, O>>& getIndexHelper( SpsInterface<CACHED>* );
 
@@ -55,28 +55,28 @@ template <bool CACHED> class SpsInterface
 };
 
 
-#define IMPLEMENT_GET_INDEX_HELPER(D, O) \
-    template <> \
-    sps::Index<CachedTypeDef<D, false, true, O>>& \
-    getIndexHelper<CachedTypeDef, D, O, true>( SpsInterface<true>* pInterface ) \
-    { \
-        return pInterface->xIndex##D##O; \
-    } \
-    template <> \
-    sps::Index<DiskTypeDef<D, false, true, O>>& \
-    getIndexHelper<DiskTypeDef, D, O, false>( SpsInterface<false>* pInterface ) \
-    { \
-        return pInterface->xIndex##D##O; \
+#define IMPLEMENT_GET_INDEX_HELPER( D, O )                                                                             \
+    template <>                                                                                                        \
+    sps::Index<CachedTypeDef<D, false, true, O>>& getIndexHelper<CachedTypeDef, D, O, true>( SpsInterface<true> *      \
+                                                                                             pInterface )              \
+    {                                                                                                                  \
+        return pInterface->xIndex##D##O;                                                                               \
+    }                                                                                                                  \
+    template <>                                                                                                        \
+    sps::Index<DiskTypeDef<D, false, true, O>>& getIndexHelper<DiskTypeDef, D, O, false>( SpsInterface<false> *        \
+                                                                                          pInterface )                 \
+    {                                                                                                                  \
+        return pInterface->xIndex##D##O;                                                                               \
     }
 
-IMPLEMENT_GET_INDEX_HELPER(1,0)
-IMPLEMENT_GET_INDEX_HELPER(2,1)
+IMPLEMENT_GET_INDEX_HELPER( 1, 0 )
+IMPLEMENT_GET_INDEX_HELPER( 2, 1 )
 
-IMPLEMENT_GET_INDEX_HELPER(2,0)
-IMPLEMENT_GET_INDEX_HELPER(3,1)
-IMPLEMENT_GET_INDEX_HELPER(4,2)
+IMPLEMENT_GET_INDEX_HELPER( 2, 0 )
+IMPLEMENT_GET_INDEX_HELPER( 3, 1 )
+IMPLEMENT_GET_INDEX_HELPER( 4, 2 )
 
-IMPLEMENT_GET_INDEX_HELPER(3,0)
-IMPLEMENT_GET_INDEX_HELPER(5,2)
+IMPLEMENT_GET_INDEX_HELPER( 3, 0 )
+IMPLEMENT_GET_INDEX_HELPER( 5, 2 )
 
 } // namespace cm

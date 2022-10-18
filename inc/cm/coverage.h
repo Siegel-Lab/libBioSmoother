@@ -12,14 +12,15 @@ void ContactMapping::setActiveCoverage( )
         for( auto& xName : this->xSession[ bB ? "coverage" : "replicates" ][ "list" ] )
         {
             std::string sName = xName.get<std::string>( );
-            if( this->xSession[ bB ? "coverage" : "replicates" ][ "by_name" ][ sName ][ "in_column" ].get<bool>( ) ||
-                this->xSession[ bB ? "coverage" : "replicates" ][ "by_name" ][ sName ][ "cov_column_a" ].get<bool>( ) ||
-                this->xSession[ bB ? "coverage" : "replicates" ][ "by_name" ][ sName ][ "cov_column_b" ].get<bool>( ) )
+            if( this->xSession[ bB ? "coverage" : "replicates" ][ "coverage" ][ sName ][ "in_column" ].get<bool>( ) ||
+                this->xSession[ bB ? "coverage" : "replicates" ][ "coverage" ][ sName ][ "cov_column_a" ]
+                    .get<bool>( ) ||
+                this->xSession[ bB ? "coverage" : "replicates" ][ "coverage" ][ sName ][ "cov_column_b" ].get<bool>( ) )
                 vActiveCoverage[ 0 ].push_back( std::make_pair( sName, bB ) );
 
-            if( this->xSession[ bB ? "coverage" : "replicates" ][ "by_name" ][ sName ][ "in_row" ].get<bool>( ) ||
-                this->xSession[ bB ? "coverage" : "replicates" ][ "by_name" ][ sName ][ "cov_row_a" ].get<bool>( ) ||
-                this->xSession[ bB ? "coverage" : "replicates" ][ "by_name" ][ sName ][ "cov_row_b" ].get<bool>( ) )
+            if( this->xSession[ bB ? "coverage" : "replicates" ][ "coverage" ][ sName ][ "in_row" ].get<bool>( ) ||
+                this->xSession[ bB ? "coverage" : "replicates" ][ "coverage" ][ sName ][ "cov_row_a" ].get<bool>( ) ||
+                this->xSession[ bB ? "coverage" : "replicates" ][ "coverage" ][ sName ][ "cov_row_b" ].get<bool>( ) )
                 vActiveCoverage[ 1 ].push_back( std::make_pair( sName, bB ) );
         }
 }
@@ -94,34 +95,73 @@ void ContactMapping::setCoverageValues( )
         }
 }
 
- // @todo @continue_here create a cov a and b for each, the rows and the columns
+// @todo between group approach should be applied here immediateley
 void ContactMapping::setFlatCoverageValues( )
 {
     for( size_t uiJ = 0; uiJ < 2; uiJ++ )
     {
-        std::vector<size_t> vInGroup;
+        std::array<std::vector<size_t>, 2> vInGroup;
         vInGroup.reserve( vvCoverageValues[ uiJ ].size( ) );
 
         for( size_t uiI = 0; uiI < vvCoverageValues[ uiJ ].size( ); uiI++ )
         {
-            if( this->xSession[ vActiveCoverage[ uiJ ][ uiI ].second ? "coverage" : "replicates" ][ "by_name" ]
-                              [ vActiveCoverage[ uiJ ][ uiI ].first ][ uiJ == 0 ? "norm_column" : "norm_row" ]
-                                  .get<bool>( ) )
-                vInGroup.push_back( uiI );
+            for( size_t uiK = 0; uiK < 2; uiK++ )
+                if( this->xSession[ vActiveCoverage[ uiJ ][ uiI ].second ? "coverage" : "replicates" ][ "coverage" ]
+                                  [ vActiveCoverage[ uiJ ][ uiI ].first ][ uiJ == 0 ? ( uiK == 1 "cov_column_a"
+                                                                                        : "cov_column_b" )
+                                                                                    : ( uiK == 1 "cov_row_a"
+                                                                                        : "cov_row_b" ) ]
+                                      .get<bool>( ) )
+                    vInGroup[ uiK ].push_back( uiI );
         }
 
         vvFlatCoverageValues[ uiJ ].reserve( vvCoverageValues[ uiJ ][ 0 ].size( ) );
         for( size_t uiI = 0; uiI < vvFlatCoverageValues[ uiJ ].size( ); uiI++ )
             for( size_t uiJ = 0; uiJ < 2; uiJ++ )
             {
-                std::vector<size_t> vCollected;
-                vCollected.reserve( vInGroup.size( ) );
-                for( size_t uiX : vInGroup )
-                    vCollected.push_back( vvCoverageValues[ uiJ ][ uiX ][ uiI ] );
+                std::array<size_t, 2> vVal;
+                for( size_t uiK = 0; uiK < 2; uiK++ )
+                {
+                    std::vector<size_t> vCollected;
+                    vCollected.reserve( vInGroup[ uiK ].size( ) );
+                    for( size_t uiX : vInGroup[ uiK ] )
+                        vCollected.push_back( vvCoverageValues[ uiJ ][ uiX ][ uiI ] );
 
-                vvFlatCoverageValues[ uiJ ].push_back( getFlatValue( vCollected ) );
+                    vVal[ uiK ] = getFlatValue( vCollected );
+                }
+                vvFlatCoverageValues[ uiJ ].push_back( "???" );
             }
     }
+}
+
+
+void ContactMapping::regCoverage( )
+{
+    registerNode( NodeNames::ActiveCoverage,
+                  ComputeNode{ .sNodeName = "active_coverage",
+                               .fFunc = &ContactMapping::setActiveCoverage,
+                               .vIncomingFunctions = { },
+                               .vIncomingSession = { { "coverage", "coverage" }, { "replicates", "coverage" } },
+                               .vIncomingRender = { },
+                               .uiLastUpdated = uiCurrTime } );
+
+    registerNode( NodeNames::CoverageValues,
+                  ComputeNode{ .sNodeName = "coverage_values",
+                               .fFunc = &ContactMapping::setCoverageValues,
+                               .vIncomingFunctions = { NodeNames::ActiveCoverage, NodeNames::AxisCoords,
+                                                       NodeNames::IntersectionType, NodeNames::Symmetry },
+                               .vIncomingSession = { },
+                               .vIncomingRender = { { "filters", "mapping_q", "val_min" },
+                                                    { "filters", "mapping_q", "val_max" } },
+                               .uiLastUpdated = uiCurrTime } );
+
+    registerNode( NodeNames::FlatCoverageValues,
+                  ComputeNode{ .sNodeName = "flat_coverage",
+                               .fFunc = &ContactMapping::setFlatCoverageValues,
+                               .vIncomingFunctions = { NodeNames::CoverageValues },
+                               .vIncomingSession = { { "coverage", "coverage" }, { "replicates", "coverage" } },
+                               .vIncomingRender = { },
+                               .uiLastUpdated = uiCurrTime } );
 }
 
 
