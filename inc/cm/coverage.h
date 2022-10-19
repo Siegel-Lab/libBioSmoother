@@ -1,4 +1,4 @@
-#include "cm/computation.h"
+#include "cm/partial_quarry.h"
 #include <cmath>
 
 #pragma once
@@ -6,7 +6,7 @@
 namespace cm
 {
 
-void ContactMapping::setActiveCoverage( )
+void PartialQuarry::setActiveCoverage( )
 {
     size_t uiSize = this->xSession[ "coverage" ][ "list" ].size( ) + this->xSession[ "replicates" ][ "list" ].size( );
     vActiveCoverage[ 0 ].reserve( uiSize );
@@ -31,7 +31,7 @@ void ContactMapping::setActiveCoverage( )
         }
 }
 
-void ContactMapping::setCoverageValues( )
+void PartialQuarry::setCoverageValues( )
 {
     for( size_t uiJ = 0; uiJ < 2; uiJ++ )
     {
@@ -107,21 +107,20 @@ void ContactMapping::setCoverageValues( )
     }
 }
 
-void ContactMapping::setFlatCoverageValues( )
+void PartialQuarry::setFlatCoverageValues( )
 {
     for( size_t uiJ = 0; uiJ < 2; uiJ++ )
     {
         std::array<std::vector<size_t>, 2> vInGroup;
-        vInGroup[uiJ].reserve( vvCoverageValues[ uiJ ].size( ) );
+        vInGroup[ uiJ ].reserve( vvCoverageValues[ uiJ ].size( ) );
 
         for( size_t uiI = 0; uiI < vvCoverageValues[ uiJ ].size( ); uiI++ )
         {
             for( size_t uiK = 0; uiK < 2; uiK++ )
                 if( this->xSession[ vActiveCoverage[ uiJ ][ uiI ].second ? "coverage" : "replicates" ][ "coverage" ]
-                                  [ vActiveCoverage[ uiJ ][ uiI ].first ][ uiJ == 0 ? ( uiK == 1 ? "cov_column_a"
-                                                                                        : "cov_column_b" )
-                                                                                    : ( uiK == 1 ? "cov_row_a"
-                                                                                        : "cov_row_b" ) ]
+                                  [ vActiveCoverage[ uiJ ][ uiI ].first ]
+                                  [ uiJ == 0 ? ( uiK == 1 ? "cov_column_a" : "cov_column_b" )
+                                             : ( uiK == 1 ? "cov_row_a" : "cov_row_b" ) ]
                                       .get<bool>( ) )
                     vInGroup[ uiK ].push_back( uiI );
         }
@@ -147,18 +146,18 @@ void ContactMapping::setFlatCoverageValues( )
 }
 
 
-void ContactMapping::regCoverage( )
+void PartialQuarry::regCoverage( )
 {
     registerNode( NodeNames::ActiveCoverage,
                   ComputeNode{ .sNodeName = "active_coverage",
-                               .fFunc = &ContactMapping::setActiveCoverage,
+                               .fFunc = &PartialQuarry::setActiveCoverage,
                                .vIncomingFunctions = { },
                                .vIncomingSession = { { "coverage", "coverage" }, { "replicates", "coverage" } },
                                .uiLastUpdated = uiCurrTime } );
 
     registerNode( NodeNames::CoverageValues,
                   ComputeNode{ .sNodeName = "coverage_values",
-                               .fFunc = &ContactMapping::setCoverageValues,
+                               .fFunc = &PartialQuarry::setCoverageValues,
                                .vIncomingFunctions = { NodeNames::ActiveCoverage, NodeNames::AxisCoords,
                                                        NodeNames::IntersectionType, NodeNames::Symmetry },
                                .vIncomingSession = { { "settings", "filters", "mapping_q", "val_min" },
@@ -167,7 +166,7 @@ void ContactMapping::regCoverage( )
 
     registerNode( NodeNames::FlatCoverageValues,
                   ComputeNode{ .sNodeName = "flat_coverage",
-                               .fFunc = &ContactMapping::setFlatCoverageValues,
+                               .fFunc = &PartialQuarry::setFlatCoverageValues,
                                .vIncomingFunctions = { NodeNames::CoverageValues, NodeNames::BetweenGroup },
                                .vIncomingSession = { { "coverage", "coverage" }, { "replicates", "coverage" } },
                                .uiLastUpdated = uiCurrTime } );

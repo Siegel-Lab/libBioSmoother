@@ -1,4 +1,4 @@
-#include "cm/computation.h"
+#include "cm/partial_quarry.h"
 #include <cmath>
 
 #pragma once
@@ -6,7 +6,7 @@
 namespace cm
 {
 
-void ContactMapping::normalizeSize( size_t uiSize )
+void PartialQuarry::normalizeSize( size_t uiSize )
 {
     std::array<size_t, 2> vTotalReads = { 0, 0 };
     for( std::string& rRep : this->vActiveReplicates )
@@ -21,14 +21,14 @@ void ContactMapping::normalizeSize( size_t uiSize )
                                                        uiSize * vVal[ 1 ] / (double)vTotalReads[ 1 ] } );
 }
 
-void ContactMapping::doNotNormalize( )
+void PartialQuarry::doNotNormalize( )
 {
     for( auto& vVal : vvFlatValues )
         vvNormalized.push_back( std::array<double, 2>{ (double)vVal[ 0 ], (double)vVal[ 1 ] } );
 }
 
 
-void ContactMapping::normalizeTracks( )
+void PartialQuarry::normalizeTracks( )
 {
     for( size_t uiI = 0; uiI < vvFlatValues.size( ); uiI++ )
         vvNormalized.push_back(
@@ -38,7 +38,7 @@ void ContactMapping::normalizeTracks( )
                                        std::max( 1.0, vvFlatCoverageValues[ 1 ][ uiI % vAxisCords[ 0 ].size( ) ] ) } );
 }
 
-void ContactMapping::normalizeBinominalTest( )
+void PartialQuarry::normalizeBinominalTest( )
 {
     size_t uiNumBinsInRowTotal = ( this->xSession[ "contigs" ][ "genome_size" ].get<size_t>( ) - 1 ) / uiBinWidth + 1;
     vvNormalized = normalizeBinominalTestTrampoline(
@@ -46,12 +46,12 @@ void ContactMapping::normalizeBinominalTest( )
         this->xSession[ "settings" ][ "normalization" ][ "p_accept" ][ "val" ].get<double>( ) );
 }
 
-void ContactMapping::normalizeIC( )
+void PartialQuarry::normalizeIC( )
 {
     throw std::logic_error( "Function not implemented" );
 }
 
-void ContactMapping::setNormalized( )
+void PartialQuarry::setNormalized( )
 {
     vvNormalized.reserve( vvFlatValues.size( ) );
     vvNormalized.clear( );
@@ -72,11 +72,11 @@ void ContactMapping::setNormalized( )
         throw std::logic_error( "invalid value for normalize_by" );
 }
 
-void ContactMapping::regNormalization( )
+void PartialQuarry::regNormalization( )
 {
     registerNode( NodeNames::Normalized,
                   ComputeNode{ .sNodeName = "normalization",
-                               .fFunc = &ContactMapping::setNormalized,
+                               .fFunc = &PartialQuarry::setNormalized,
                                .vIncomingFunctions = { NodeNames::FlatValues, NodeNames::FlatCoverageValues },
                                .vIncomingSession = { { "normalization", "normalize_by" },
                                                      { "replicates", "in_group" },

@@ -50,7 +50,10 @@ template <bool CACHED> class SpsInterface
 
     template <size_t D, size_t O> sps::Index<storage_t<D + O, false, true, O>>& getIndex( )
     {
-        return getIndexHelper<storage_t, D + O, O>( this );
+        if constexpr( CACHED )
+            return getIndexHelper<CachedTypeDef, D + O, O, true>( this );
+        else
+            return getIndexHelper<DiskTypeDef, D + O, O, false>( this );
     }
 };
 

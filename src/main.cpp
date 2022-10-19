@@ -11,11 +11,11 @@
 namespace cm
 {
 
-class PyContactMapping : public ContactMapping
+class PyPartialQuarry : public PartialQuarry
 {
   public:
     /* Inherit the constructors */
-    using ContactMapping::ContactMapping;
+    using PartialQuarry::PartialQuarry;
 
     using ret_t = std::vector<std::array<double, 2>>;
     /* Trampoline (need one for each virtual function) */
@@ -24,7 +24,7 @@ class PyContactMapping : public ContactMapping
                                             double fPAccept ) override
     {
         PYBIND11_OVERRIDE( ret_t, /* Return type */
-                           ContactMapping, /* Parent class */
+                           PartialQuarry, /* Parent class */
                            normalizeBinominalTestTrampoline, /* Name of function in C++ (must match Python name) */
                            vFlatValues, /* Argument(s) */
                            uiNumInteractionsTotal, /* Argument(s) */
@@ -33,26 +33,28 @@ class PyContactMapping : public ContactMapping
         );
     }
 
-    std::vector<std::string> colorPalette( std::string sPaletteName ) override
+    std::vector<std::string> colorPalette( std::string sPaletteName, std::string sColorLow, std::string sColorHigh ) override
     {
         PYBIND11_OVERRIDE( std::vector<std::string>, /* Return type */
-                           ContactMapping, /* Parent class */
+                           PartialQuarry, /* Parent class */
                            colorPalette, /* Name of function in C++ (must match Python name) */
-                           sPaletteName /* Argument(s) */
+                           sPaletteName, /* Argument(s) */
+                           sColorLow, /* Argument(s) */
+                           sColorHigh /* Argument(s) */
         );
     }
 };
 
-class ContectMappingPublicist : public ContactMapping
+class ContectMappingPublicist : public PartialQuarry
 {
   public:
-    using ContactMapping::normalizeBinominalTestTrampoline;
-    using ContactMapping::colorPalette;
+    using PartialQuarry::colorPalette;
+    using PartialQuarry::normalizeBinominalTestTrampoline;
 };
 
 } // namespace cm
 
-PYBIND11_MODULE( libContactMapping, m )
+PYBIND11_MODULE( libPartialQuarry, m )
 {
     // prevent creation of stxxl log files
     if( getenv( (char*)"STXXLLOGFILE" ) == nullptr )
@@ -65,9 +67,9 @@ PYBIND11_MODULE( libContactMapping, m )
     m.attr( "SPS_VERSION" ) = SPS_VERSION;
     m.attr( "SPS_BUILD_TIME" ) = SPS_BUILD_TIME;
 
-    pybind11::class_<cm::ContactMapping, cm::PyContactMapping>( m, "ContactMapping" ) //
+    pybind11::class_<cm::PartialQuarry, cm::PyPartialQuarry>( m, "PartialQuarry" ) //
         .def( pybind11::init<std::string>( ) ) //
-        .def( "get_colors", &cm::ContactMapping::getColors ) //
+        .def( "get_colors", &cm::PartialQuarry::getColors ) //
         .def( "normalizeBinominalTestTrampoline", &cm::ContectMappingPublicist::normalizeBinominalTestTrampoline ) //
         .def( "colorPalette", &cm::ContectMappingPublicist::colorPalette ) //
         ;

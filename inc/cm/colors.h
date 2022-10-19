@@ -1,4 +1,4 @@
-#include "cm/computation.h"
+#include "cm/partial_quarry.h"
 #include <cmath>
 
 #pragma once
@@ -6,12 +6,14 @@
 namespace cm
 {
 
-void ContactMapping::setColors( )
+void PartialQuarry::setColors( )
 {
-    vColorPalette = colorPalette( this->xSession[ "settings" ][ "interface" ][ "color_palette" ].get<std::string>( ) );
+    vColorPalette = colorPalette( this->xSession[ "settings" ][ "interface" ][ "color_palette" ].get<std::string>( ),
+                                  this->xSession[ "settings" ][ "interface" ][ "color_low" ].get<std::string>( ),
+                                  this->xSession[ "settings" ][ "interface" ][ "color_high" ].get<std::string>( ) );
 }
 
-void ContactMapping::setCombined( )
+void PartialQuarry::setCombined( )
 {
     vCombined.reserve( vvNormalized.size( ) );
     vCombined.clear( );
@@ -20,7 +22,7 @@ void ContactMapping::setCombined( )
         vCombined.push_back( getMixedValue( vArr[ 0 ], vArr[ 1 ] ) );
 }
 
-double ContactMapping::logScale( double fX )
+double PartialQuarry::logScale( double fX )
 {
     bool bLargerZero = fX > 0;
     if( iBetweenGroupSetting == 2 ) // between_groups == sub
@@ -38,7 +40,7 @@ double ContactMapping::logScale( double fX )
     return fRet;
 }
 
-size_t ContactMapping::colorRange( double fX )
+size_t PartialQuarry::colorRange( double fX )
 {
     double fMin = this->xSession[ "settings" ][ "normalization" ][ "color_range" ][ "val_min" ].get<double>( );
     double fMax = this->xSession[ "settings" ][ "normalization" ][ "color_range" ][ "val_max" ].get<double>( );
@@ -49,7 +51,7 @@ size_t ContactMapping::colorRange( double fX )
                      std::max( (size_t)0, (size_t)( (double)( vColorPalette.size( ) - 1 ) * fX ) ) );
 }
 
-void ContactMapping::setColored( )
+void PartialQuarry::setColored( )
 {
     vColored.reserve( vCombined.size( ) );
     vColored.clear( );
@@ -59,17 +61,17 @@ void ContactMapping::setColored( )
 }
 
 
-std::vector<std::string> ContactMapping::getColors()
+std::vector<std::string> PartialQuarry::getColors( )
 {
-    update(NodeNames::Colored);
+    update( NodeNames::Colored );
     return vColored;
 }
 
-void ContactMapping::regColors( )
+void PartialQuarry::regColors( )
 {
     registerNode( NodeNames::Colors,
                   ComputeNode{ .sNodeName = "color_palette",
-                               .fFunc = &ContactMapping::setColors,
+                               .fFunc = &PartialQuarry::setColors,
                                .vIncomingFunctions = { },
                                .vIncomingSession = { { "settings", "interface", "color_palette" },
                                                      { "settings", "interface", "color_low" },
@@ -78,7 +80,7 @@ void ContactMapping::regColors( )
 
     registerNode( NodeNames::Combined,
                   ComputeNode{ .sNodeName = "combined",
-                               .fFunc = &ContactMapping::setCombined,
+                               .fFunc = &PartialQuarry::setCombined,
                                .vIncomingFunctions = { NodeNames::Normalized, NodeNames::BetweenGroup },
                                .vIncomingSession = { },
                                .uiLastUpdated = uiCurrTime } );
@@ -86,7 +88,7 @@ void ContactMapping::regColors( )
     registerNode(
         NodeNames::Colored,
         ComputeNode{ .sNodeName = "colored",
-                     .fFunc = &ContactMapping::setColored,
+                     .fFunc = &PartialQuarry::setColored,
                      .vIncomingFunctions = { NodeNames::Colors, NodeNames::Combined, NodeNames::BetweenGroup },
                      .vIncomingSession = { { "settings", "normalization", "log_base", "val" },
                                            { "settings", "normalization", "color_range", "val_max" },

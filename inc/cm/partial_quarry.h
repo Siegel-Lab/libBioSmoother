@@ -31,7 +31,7 @@ struct BinCoord
 };
 
 
-class ContactMapping
+class PartialQuarry
 {
   public:
     size_t uiVerbosity = 1;
@@ -63,7 +63,7 @@ class ContactMapping
     struct ComputeNode
     {
         std::string sNodeName;
-        void ( ContactMapping::*fFunc )( void );
+        void ( PartialQuarry::*fFunc )( void );
         std::vector<NodeNames> vIncomingFunctions;
         std::vector<std::vector<std::string>> vIncomingSession;
         size_t uiLastUpdated;
@@ -270,7 +270,7 @@ class ContactMapping
     std::vector<std::string> vColorPalette;
 
     // bin_size.h
-    size_t nextEvenNumber( double fX );
+    size_t nextEvenNumber( double );
 
 
     // bin_size.h
@@ -316,15 +316,15 @@ class ContactMapping
     void regCoverage( );
 
     // replicates.h
-    size_t symmetry( size_t uiA, size_t uiB );
+    size_t symmetry( size_t, size_t );
 
     // replicates.h
     void setBinValues( );
 
     // replicates.h
-    size_t getFlatValue( std::vector<size_t> vCollected );
+    size_t getFlatValue( std::vector<size_t> );
     // replicates.h
-    double getMixedValue( double uiA, double uiB );
+    double getMixedValue( double, double );
 
     // replicates.h
     void setFlatValues( );
@@ -340,7 +340,7 @@ class ContactMapping
     // normalization.h
     void normalizeTracks( );
     // normalization.h
-    void normalizeSize( size_t uiSize );
+    void normalizeSize( size_t );
     // normalization.h
     void normalizeBinominalTest( );
     // normalization.h
@@ -360,7 +360,7 @@ class ContactMapping
     // colors.h
     double logScale( double );
     // colors.h
-    size_t colorRange( double fX );
+    size_t colorRange( double );
 
     // colors.h
     void regColors( );
@@ -372,13 +372,13 @@ class ContactMapping
         throw std::logic_error( "Function not implemented" );
     }
 
-    virtual std::vector<std::string> colorPalette( std::string )
+    virtual std::vector<std::string> colorPalette( std::string, std::string, std::string )
     {
         throw std::logic_error( "Function not implemented" );
     }
 
   public:
-    ContactMapping( std::string sPrefix ) : uiCurrTime( 0 ), vGraph( NodeNames::SIZE ), xIndices( sPrefix )
+    PartialQuarry( std::string sPrefix ) : uiCurrTime( 0 ), vGraph( NodeNames::SIZE ), xIndices( sPrefix )
     {
         regBinSize( );
         regCoords( );
@@ -388,11 +388,11 @@ class ContactMapping
         regColors( );
     }
 
-    virtual ~ContactMapping( )
+    virtual ~PartialQuarry( )
     {}
-    
+
     // colors.h
-    std::vector<std::string> getColors();
+    std::vector<std::string> getColors( );
 };
 
 

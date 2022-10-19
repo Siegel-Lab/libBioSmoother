@@ -1,4 +1,4 @@
-#include "cm/computation.h"
+#include "cm/partial_quarry.h"
 #include <cmath>
 
 #pragma once
@@ -142,7 +142,7 @@ std::vector<ChromDesc> activeChromList( json& xChromList, json& xChromLen, json&
     return vRet;
 }
 
-void ContactMapping::setActiveChrom( )
+void PartialQuarry::setActiveChrom( )
 {
     for( bool bX : { true, false } )
         this->vActiveChromosomes[ bX ? 0 : 1 ] = activeChromList( this->xSession[ "contigs" ][ "list" ],
@@ -151,7 +151,7 @@ void ContactMapping::setActiveChrom( )
                                                                   bX ? "displayed_on_x" : "displayed_on_y" );
 }
 
-void ContactMapping::setAxisCoords( )
+void PartialQuarry::setAxisCoords( )
 {
     for( bool bX : { true, false } )
         this->vAxisCords[ bX ? 0 : 1 ] = axisCoordsHelper(
@@ -162,7 +162,7 @@ void ContactMapping::setAxisCoords( )
             this->vActiveChromosomes[ bX ? 0 : 1 ] );
 }
 
-void ContactMapping::setSymmetry( )
+void PartialQuarry::setSymmetry( )
 {
     std::string sSymmetry = this->xSession[ "settings" ][ "filters" ][ "symmetry" ].get<std::string>( );
     if( sSymmetry == "all" )
@@ -178,7 +178,7 @@ void ContactMapping::setSymmetry( )
     else
         throw std::logic_error( "unknown symmetry setting" );
 }
-void ContactMapping::setBinCoords( )
+void PartialQuarry::setBinCoords( )
 {
     size_t uiManhattenDist = 1000 *
                              this->xSession[ "settings" ][ "filters" ][ "min_diag_dist" ][ "val" ].get<size_t>( ) /
@@ -340,30 +340,30 @@ void ContactMapping::setBinCoords( )
         }
 }
 
-void ContactMapping::regCoords( )
+void PartialQuarry::regCoords( )
 {
     registerNode( NodeNames::ActiveChrom, ComputeNode{ .sNodeName = "active_chroms",
-                                                       .fFunc = &ContactMapping::setActiveChrom,
+                                                       .fFunc = &PartialQuarry::setActiveChrom,
                                                        .vIncomingFunctions = { },
                                                        .vIncomingSession = { { "contigs", "displayed" } },
                                                        .uiLastUpdated = uiCurrTime } );
 
     registerNode( NodeNames::AxisCoords,
                   ComputeNode{ .sNodeName = "axis_coords",
-                               .fFunc = &ContactMapping::setAxisCoords,
+                               .fFunc = &PartialQuarry::setAxisCoords,
                                .vIncomingFunctions = { NodeNames::ActiveChrom, NodeNames::RenderArea },
                                .vIncomingSession = { { "settings", "filters", "cut_off_bin" } },
                                .uiLastUpdated = uiCurrTime } );
 
     registerNode( NodeNames::Symmetry, ComputeNode{ .sNodeName = "symmetry",
-                                                    .fFunc = &ContactMapping::setSymmetry,
+                                                    .fFunc = &PartialQuarry::setSymmetry,
                                                     .vIncomingFunctions = { },
                                                     .vIncomingSession = { { "settings", "filters", "symmetry" } },
                                                     .uiLastUpdated = uiCurrTime } );
 
     registerNode( NodeNames::BinCoords,
                   ComputeNode{ .sNodeName = "bin_coords",
-                               .fFunc = &ContactMapping::setBinCoords,
+                               .fFunc = &PartialQuarry::setBinCoords,
                                .vIncomingFunctions = { NodeNames::AxisCoords, NodeNames::Symmetry },
                                .vIncomingSession = { { "settings", "filters", "min_diag_dist", "val" } },
                                .uiLastUpdated = uiCurrTime } );

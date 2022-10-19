@@ -1,4 +1,4 @@
-#include "cm/computation.h"
+#include "cm/partial_quarry.h"
 #include <cmath>
 
 #pragma once
@@ -6,7 +6,7 @@
 namespace cm
 {
 
-void ContactMapping::setActiveReplicates( )
+void PartialQuarry::setActiveReplicates( )
 {
     auto& rList = this->xSession[ "replicates" ][ "list" ];
     vActiveReplicates.resize( rList.size( ) );
@@ -22,7 +22,7 @@ void ContactMapping::setActiveReplicates( )
 }
 
 
-void ContactMapping::setIntersectionType( )
+void PartialQuarry::setIntersectionType( )
 {
     std::string sRenderSetting = this->xSession[ "settings" ][ "filters" ][ "ambiguous_mapping" ].get<std::string>( );
 
@@ -42,7 +42,7 @@ void ContactMapping::setIntersectionType( )
         throw std::logic_error( "unknown ambiguous_mapping value" );
 }
 
-size_t ContactMapping::symmetry( size_t uiA, size_t uiB )
+size_t PartialQuarry::symmetry( size_t uiA, size_t uiB )
 {
     switch( uiSymmetry )
     {
@@ -61,7 +61,7 @@ size_t ContactMapping::symmetry( size_t uiA, size_t uiB )
     }
 }
 
-void ContactMapping::setBinValues( )
+void PartialQuarry::setBinValues( )
 {
     vvBinValues.reserve( vActiveReplicates.size( ) );
     vvBinValues.clear( );
@@ -131,7 +131,7 @@ void ContactMapping::setBinValues( )
     }
 }
 
-void ContactMapping::setInGroup( )
+void PartialQuarry::setInGroup( )
 {
     std::string sInGroupSetting = this->xSession[ "settings" ][ "replicates" ][ "in_group" ].get<std::string>( );
     if( sInGroupSetting == "min" )
@@ -146,7 +146,7 @@ void ContactMapping::setInGroup( )
         throw std::logic_error( "invalid value for in_group" );
 }
 
-void ContactMapping::setBetweenGroup( )
+void PartialQuarry::setBetweenGroup( )
 {
     std::string sBetwGroupSetting = this->xSession[ "settings" ][ "replicates" ][ "between_group" ].get<std::string>( );
     if( sBetwGroupSetting == "1st" )
@@ -168,7 +168,7 @@ void ContactMapping::setBetweenGroup( )
 }
 
 
-size_t ContactMapping::getFlatValue( std::vector<size_t> vCollected )
+size_t PartialQuarry::getFlatValue( std::vector<size_t> vCollected )
 {
     size_t uiVal = 0;
     if( iInGroupSetting == 0 && vCollected.size( ) > 0 )
@@ -196,7 +196,7 @@ size_t ContactMapping::getFlatValue( std::vector<size_t> vCollected )
     return uiVal;
 }
 
-double ContactMapping::getMixedValue( double uiA, double uiB )
+double PartialQuarry::getMixedValue( double uiA, double uiB )
 {
     switch( iBetweenGroupSetting )
     {
@@ -219,7 +219,7 @@ double ContactMapping::getMixedValue( double uiA, double uiB )
     }
 }
 
-void ContactMapping::setFlatValues( )
+void PartialQuarry::setFlatValues( )
 {
     vvFlatValues.clear( );
 
@@ -253,25 +253,25 @@ void ContactMapping::setFlatValues( )
     }
 }
 
-void ContactMapping::regReplicates( )
+void PartialQuarry::regReplicates( )
 {
     registerNode( NodeNames::ActiveReplicates,
                   ComputeNode{ .sNodeName = "active_replicates",
-                               .fFunc = &ContactMapping::setActiveReplicates,
+                               .fFunc = &PartialQuarry::setActiveReplicates,
                                .vIncomingFunctions = { },
                                .vIncomingSession = { { "replicates", "in_group" } },
                                .uiLastUpdated = uiCurrTime } );
 
     registerNode( NodeNames::IntersectionType,
                   ComputeNode{ .sNodeName = "intersection_type",
-                               .fFunc = &ContactMapping::setIntersectionType,
+                               .fFunc = &PartialQuarry::setIntersectionType,
                                .vIncomingFunctions = { },
                                .vIncomingSession = { { "settings", "filters", "ambiguous_mapping" } },
                                .uiLastUpdated = uiCurrTime } );
 
     registerNode( NodeNames::BinValues,
                   ComputeNode{ .sNodeName = "bin_values",
-                               .fFunc = &ContactMapping::setBinValues,
+                               .fFunc = &PartialQuarry::setBinValues,
                                .vIncomingFunctions = { NodeNames::BinCoords, NodeNames::ActiveReplicates,
                                                        NodeNames::IntersectionType, NodeNames::Symmetry },
                                .vIncomingSession = { { "settings", "filters", "mapping_q", "val_min" },
@@ -280,21 +280,21 @@ void ContactMapping::regReplicates( )
 
     registerNode( NodeNames::InGroup,
                   ComputeNode{ .sNodeName = "in_group_setting",
-                               .fFunc = &ContactMapping::setInGroup,
+                               .fFunc = &PartialQuarry::setInGroup,
                                .vIncomingFunctions = { },
                                .vIncomingSession = { { "settings", "replicates", "in_group" } },
                                .uiLastUpdated = uiCurrTime } );
 
     registerNode( NodeNames::BetweenGroup,
                   ComputeNode{ .sNodeName = "between_group_setting",
-                               .fFunc = &ContactMapping::setBetweenGroup,
+                               .fFunc = &PartialQuarry::setBetweenGroup,
                                .vIncomingFunctions = { },
                                .vIncomingSession = { { "settings", "replicates", "between_group" } },
                                .uiLastUpdated = uiCurrTime } );
 
     registerNode( NodeNames::FlatValues,
                   ComputeNode{ .sNodeName = "flat_bins",
-                               .fFunc = &ContactMapping::setFlatValues,
+                               .fFunc = &PartialQuarry::setFlatValues,
                                .vIncomingFunctions = { NodeNames::BinValues, NodeNames::InGroup },
                                .vIncomingSession = { { "replicates", "in_group" } },
                                .uiLastUpdated = uiCurrTime } );

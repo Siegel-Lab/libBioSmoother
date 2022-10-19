@@ -1,4 +1,4 @@
-#include "cm/computation.h"
+#include "cm/partial_quarry.h"
 #include <cmath>
 
 #pragma once
@@ -6,7 +6,7 @@
 namespace cm
 {
 
-size_t ContactMapping::nextEvenNumber( double fX )
+size_t PartialQuarry::nextEvenNumber( double fX )
 {
     if( this->xSession[ "settings" ][ "interface" ][ "snap_bin_size" ] == "no" )
         return std::ceil( fX );
@@ -22,7 +22,7 @@ size_t ContactMapping::nextEvenNumber( double fX )
 }
 
 
-void ContactMapping::setBinSize( )
+void PartialQuarry::setBinSize( )
 {
     size_t uiT = this->xSession[ "settings" ][ "interface" ][ "min_bin_size" ][ "val" ].get<size_t>( );
     size_t uiMinBinSize = std::max( (size_t)1,
@@ -59,7 +59,7 @@ void ContactMapping::setBinSize( )
         throw std::logic_error( "invlaid bin_aspect_ratio value" );
 }
 
-void ContactMapping::setRenderArea( )
+void PartialQuarry::setRenderArea( )
 {
     if( this->xSession[ "settings" ][ "export" ][ "do_export_full" ] )
     {
@@ -83,11 +83,11 @@ void ContactMapping::setRenderArea( )
     }
 }
 
-void ContactMapping::regBinSize( )
+void PartialQuarry::regBinSize( )
 {
     registerNode( NodeNames::BinSize,
                   ComputeNode{ .sNodeName = "bin_size",
-                               .fFunc = &ContactMapping::setBinSize,
+                               .fFunc = &PartialQuarry::setBinSize,
                                .vIncomingFunctions = { },
                                .vIncomingSession = { { "interface", "snap_bin_size" },
                                                      { "interface", "snap_factors" },
@@ -104,7 +104,7 @@ void ContactMapping::regBinSize( )
 
     registerNode( NodeNames::RenderArea,
                   ComputeNode{ .sNodeName = "render_area",
-                               .fFunc = &ContactMapping::setRenderArea,
+                               .fFunc = &PartialQuarry::setRenderArea,
                                .vIncomingFunctions = { NodeNames::BinSize },
                                .vIncomingSession = { { "export", "do_export_full" },
                                                      { "settings", "contigs", "genome_size" },
