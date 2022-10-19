@@ -9,9 +9,7 @@ class Indexer
 
   public:
     Indexer( std::string sPrefix ) : xIndices( sPrefix )
-    {
-
-    }
+    {}
 };
 
 } // namespace cm

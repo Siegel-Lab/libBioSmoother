@@ -37,6 +37,14 @@ template <bool CACHED> class SpsInterface
     I30_t xIndex30;
     I52_t xIndex52;
 
+    size_t uiSize10;
+    size_t uiSize21;
+    size_t uiSize20;
+    size_t uiSize31;
+    size_t uiSize42;
+    size_t uiSize30;
+    size_t uiSize52;
+
 
     SpsInterface( std::string sFilePrefix )
         : xIndex10( sFilePrefix + ".1.0" ),
@@ -45,7 +53,14 @@ template <bool CACHED> class SpsInterface
           xIndex31( sFilePrefix + ".3.1" ),
           xIndex42( sFilePrefix + ".4.2" ),
           xIndex30( sFilePrefix + ".3.0" ),
-          xIndex52( sFilePrefix + ".5.2" )
+          xIndex52( sFilePrefix + ".5.2" ),
+          uiSize10( xIndex10.numPoints( ) ),
+          uiSize21( xIndex21.numPoints( ) ),
+          uiSize20( xIndex20.numPoints( ) ),
+          uiSize31( xIndex31.numPoints( ) ),
+          uiSize42( xIndex42.numPoints( ) ),
+          uiSize30( xIndex30.numPoints( ) ),
+          uiSize52( xIndex52.numPoints( ) )
     {}
 
     template <size_t D, size_t O> sps::Index<storage_t<D + O, false, true, O>>& getIndex( )
@@ -54,6 +69,50 @@ template <bool CACHED> class SpsInterface
             return getIndexHelper<CachedTypeDef, D + O, O, true>( this );
         else
             return getIndexHelper<DiskTypeDef, D + O, O, false>( this );
+    }
+
+  private:
+#define D_INC 8
+    uint16_t combine( uint16_t uiD, uint16_t uiO )
+    {
+        if( uiO >= 1 << D_INC )
+            throw std::logic_error( "number of orthotope dimensions too high" );
+        if( uiD >= 1 << D_INC )
+            throw std::logic_error( "number of dimensions too high" );
+        return ( uiD << D_INC ) | uiO;
+    }
+
+  public:
+    void insertCount( size_t uiD, size_t uiO, std::vector<size_t> vStart, std::vector<size_t> vEnd )
+    {
+        size_t uiX = combine( uiD, uiO );
+        switch( uiX )
+        {
+            case combine( 1, 0 ):
+                std::array<size_t, 1> aStart( vStart );
+                std::array<size_t, 1> aEnd( vEnd );
+                getIndex<1, 0>( ).addPoint( aStart, aEnd );
+            // @todo @continue_here
+
+            default:
+                break;
+        }
+    }
+
+    size_t generate( size_t uiD, size_t uiO, double fFac = -1, size_t uiVerbosity = 1 )
+    {
+        size_t uiX = combine( uiD, uiO );
+        switch( uiX )
+        {
+            case combine( 1, 0 ):
+                getIndex<1, 0>( ).generate( uiSize10, getIndex<1, 0>( ).numPoints( ), fFac, uiVerbosity );
+                uiSize10 = getIndex<1, 0>( ).numPoints( ); 
+            // @todo @continue_here
+                break;
+
+            default:
+                break;
+        }
     }
 };
 

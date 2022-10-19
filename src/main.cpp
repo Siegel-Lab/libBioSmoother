@@ -33,7 +33,8 @@ class PyPartialQuarry : public PartialQuarry
         );
     }
 
-    std::vector<std::string> colorPalette( std::string sPaletteName, std::string sColorLow, std::string sColorHigh ) override
+    std::vector<std::string> colorPalette( std::string sPaletteName, std::string sColorLow,
+                                           std::string sColorHigh ) override
     {
         PYBIND11_OVERRIDE( std::vector<std::string>, /* Return type */
                            PartialQuarry, /* Parent class */
@@ -72,5 +73,13 @@ PYBIND11_MODULE( libPartialQuarry, m )
         .def( "get_colors", &cm::PartialQuarry::getColors ) //
         .def( "normalizeBinominalTestTrampoline", &cm::ContectMappingPublicist::normalizeBinominalTestTrampoline ) //
         .def( "colorPalette", &cm::ContectMappingPublicist::colorPalette ) //
+        ;
+
+    pybind11::class_<cm::SpsInterface<true>>( m, "CachedSpsInterface" ) //
+        .def( pybind11::init<std::string>( ) ) //
+        ;
+
+    pybind11::class_<cm::SpsInterface<false>>( m, "DiskSpsInterface" ) //
+        .def( pybind11::init<std::string>( ) ) //
         ;
 }
