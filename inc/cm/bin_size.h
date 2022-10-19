@@ -8,13 +8,13 @@ namespace cm
 
 size_t ContactMapping::nextEvenNumber( double fX )
 {
-    if( this->xRenderSettings[ "interface" ][ "snap_bin_size" ] == "no" )
+    if( this->xSession[ "settings" ][ "interface" ][ "snap_bin_size" ] == "no" )
         return std::ceil( fX );
 
     size_t uiN = 0;
     while( true )
     {
-        for( size_t uiI : this->xRenderSettings[ "interface" ][ "snap_factors" ] )
+        for( size_t uiI : this->xSession[ "settings" ][ "interface" ][ "snap_factors" ] )
             if( std::pow( uiI * 10, uiN ) > fX )
                 return std::pow( uiI * 10, uiN );
         uiN += 1;
@@ -24,14 +24,14 @@ size_t ContactMapping::nextEvenNumber( double fX )
 
 void ContactMapping::setBinSize( )
 {
-    size_t uiT = this->xRenderSettings[ "interface" ][ "min_bin_size" ][ "val" ].get<size_t>( );
+    size_t uiT = this->xSession[ "settings" ][ "interface" ][ "min_bin_size" ][ "val" ].get<size_t>( );
     size_t uiMinBinSize = std::max( (size_t)1,
                                     (size_t)std::ceil( ( 1 + uiT % 9 ) * std::pow( 10, uiT / 9 ) ) /
                                         this->xSession[ "dividend" ].get<size_t>( ) );
-    size_t uiMaxNumBins = this->xRenderSettings[ "interface" ][ "max_num_bins" ][ "val" ].get<size_t>( ) *
-                          this->xRenderSettings[ "interface" ][ "max_num_bins_factor" ].get<size_t>( );
+    size_t uiMaxNumBins = this->xSession[ "settings" ][ "interface" ][ "max_num_bins" ][ "val" ].get<size_t>( ) *
+                          this->xSession[ "settings" ][ "interface" ][ "max_num_bins_factor" ].get<size_t>( );
 
-    if( this->xRenderSettings[ "interface" ][ "bin_aspect_ratio" ] == "view" )
+    if( this->xSession[ "settings" ][ "interface" ][ "bin_aspect_ratio" ] == "view" )
     {
         uiBinHeight = nextEvenNumber( ( this->xSession[ "area" ][ "y_end" ].get<size_t>( ) -
                                         this->xSession[ "area" ][ "y_start" ].get<size_t>( ) ) /
@@ -43,7 +43,7 @@ void ContactMapping::setBinSize( )
                                      uiMaxNumBins );
         uiBinWidth = std::max( uiBinWidth, uiMinBinSize );
     }
-    else if( this->xRenderSettings[ "interface" ][ "bin_aspect_ratio" ].get<std::string>( ) == "coord" )
+    else if( this->xSession[ "settings" ][ "interface" ][ "bin_aspect_ratio" ].get<std::string>( ) == "coord" )
     {
         size_t uiArea = ( this->xSession[ "area" ][ "x_end" ].get<size_t>( ) -
                           this->xSession[ "area" ][ "x_start" ].get<size_t>( ) ) *
@@ -61,7 +61,7 @@ void ContactMapping::setBinSize( )
 
 void ContactMapping::setRenderArea( )
 {
-    if( this->xRenderSettings[ "export" ][ "do_export_full" ] )
+    if( this->xSession[ "settings" ][ "export" ][ "do_export_full" ] )
     {
         iStartX = 0;
         iStartY = 0;
@@ -94,24 +94,24 @@ void ContactMapping::regBinSize( )
                                                      { "interface", "min_bin_size", "val" },
                                                      { "interface", "max_num_bins", "val" },
                                                      { "interface", "max_num_bins_factor" },
-                                                     { "interface", "bin_aspect_ratio" } },
-                               .vIncomingRender = { { "dividend" },
-                                                    { "area", "y_end" },
-                                                    { "area", "y_start" },
-                                                    { "area", "x_end" },
-                                                    { "area", "x_start" } },
+                                                     { "interface", "bin_aspect_ratio" },
+                                                     { "settings", "dividend" },
+                                                     { "settings", "area", "y_end" },
+                                                     { "settings", "area", "y_start" },
+                                                     { "settings", "area", "x_end" },
+                                                     { "settings", "area", "x_start" } },
                                .uiLastUpdated = uiCurrTime } );
 
     registerNode( NodeNames::RenderArea,
                   ComputeNode{ .sNodeName = "render_area",
                                .fFunc = &ContactMapping::setRenderArea,
                                .vIncomingFunctions = { NodeNames::BinSize },
-                               .vIncomingSession = { { "export", "do_export_full" } },
-                               .vIncomingRender = { { "contigs", "genome_size" },
-                                                    { "area", "y_end" },
-                                                    { "area", "y_start" },
-                                                    { "area", "x_end" },
-                                                    { "area", "x_start" } },
+                               .vIncomingSession = { { "export", "do_export_full" },
+                                                     { "settings", "contigs", "genome_size" },
+                                                     { "settings", "area", "y_end" },
+                                                     { "settings", "area", "y_start" },
+                                                     { "settings", "area", "x_end" },
+                                                     { "settings", "area", "x_start" } },
                                .uiLastUpdated = uiCurrTime } );
 }
 

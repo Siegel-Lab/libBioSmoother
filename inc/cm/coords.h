@@ -26,8 +26,7 @@ namespace cm
  * @return std::vector<AxisCoord>
  */
 std::vector<AxisCoord> axisCoordsHelper( size_t uiBinSize, size_t uiScreenStartPos, size_t uiScreenEndPos,
-                                         bool bEmptyBinForChromBorder, size_t iSmallerBins,
-                                         std::vector<ChromDesc> vChromosomes )
+                                         size_t iSmallerBins, std::vector<ChromDesc> vChromosomes )
 {
     std::vector<AxisCoord> vRet;
     vRet.reserve( 2 * ( uiScreenEndPos - uiScreenStartPos ) / uiBinSize );
@@ -35,13 +34,6 @@ std::vector<AxisCoord> axisCoordsHelper( size_t uiBinSize, size_t uiScreenStartP
     size_t uiChromosomeStartPos = 0;
     for( auto xChr : vChromosomes )
     {
-        if( uiChromosomeStartPos > 0 && bEmptyBinForChromBorder )
-            vRet.push_back( AxisCoord{
-                .sChromosome = "", //
-                .uiScreenPos = uiCurrScreenPos, //
-                .uiIndexPos = 0, //
-                .uiSize = 0 //
-            } );
         size_t uiChromosomeEndPos = uiChromosomeStartPos + xChr.uiLength;
         size_t uiIndexPos = 0;
         size_t uiItrEndPos = std::min( uiScreenEndPos, uiChromosomeEndPos );
@@ -166,14 +158,13 @@ void ContactMapping::setAxisCoords( )
             bX ? this->uiBinWidth : this->uiBinHeight,
             bX ? std::max( 0l, this->iStartX ) : std::max( 0l, this->iStartY ),
             bX ? std::max( 0l, this->iEndX ) : std::max( 0l, this->iEndY ),
-            false,
-            smaller_bin_to_num( this->xRenderSettings[ "filters" ][ "cut_off_bin" ].get<std::string>( ) ),
+            smaller_bin_to_num( this->xSession[ "settings" ][ "filters" ][ "cut_off_bin" ].get<std::string>( ) ),
             this->vActiveChromosomes[ bX ? 0 : 1 ] );
 }
 
 void ContactMapping::setSymmetry( )
 {
-    std::string sSymmetry = this->xRenderSettings[ "filters" ][ "symmetry" ].get<std::string>( );
+    std::string sSymmetry = this->xSession[ "settings" ][ "filters" ][ "symmetry" ].get<std::string>( );
     if( sSymmetry == "all" )
         uiSymmetry = 0;
     else if( sSymmetry == "sym" )
@@ -189,10 +180,12 @@ void ContactMapping::setSymmetry( )
 }
 void ContactMapping::setBinCoords( )
 {
-    size_t uiManhattenDist = 1000 * this->xRenderSettings[ "filters" ][ "min_diag_dist" ][ "val" ].get<size_t>( ) /
+    size_t uiManhattenDist = 1000 *
+                             this->xSession[ "settings" ][ "filters" ][ "min_diag_dist" ][ "val" ].get<size_t>( ) /
                              this->xSession[ "dividend" ].get<size_t>( );
 
     vBinCoords.reserve( vAxisCords[ 0 ].size( ) * vAxisCords[ 1 ].size( ) );
+    vBinCoords.clear( );
     for( AxisCoord& xX : vAxisCords[ 0 ] )
         for( AxisCoord& xY : vAxisCords[ 1 ] )
         {
@@ -353,30 +346,26 @@ void ContactMapping::regCoords( )
                                                        .fFunc = &ContactMapping::setActiveChrom,
                                                        .vIncomingFunctions = { },
                                                        .vIncomingSession = { { "contigs", "displayed" } },
-                                                       .vIncomingRender = { },
                                                        .uiLastUpdated = uiCurrTime } );
 
     registerNode( NodeNames::AxisCoords,
                   ComputeNode{ .sNodeName = "axis_coords",
                                .fFunc = &ContactMapping::setAxisCoords,
                                .vIncomingFunctions = { NodeNames::ActiveChrom, NodeNames::RenderArea },
-                               .vIncomingSession = { },
-                               .vIncomingRender = { { "filters", "cut_off_bin" } },
+                               .vIncomingSession = { { "settings", "filters", "cut_off_bin" } },
                                .uiLastUpdated = uiCurrTime } );
 
     registerNode( NodeNames::Symmetry, ComputeNode{ .sNodeName = "symmetry",
                                                     .fFunc = &ContactMapping::setSymmetry,
                                                     .vIncomingFunctions = { },
-                                                    .vIncomingSession = { },
-                                                    .vIncomingRender = { { "filters", "symmetry" } },
+                                                    .vIncomingSession = { { "settings", "filters", "symmetry" } },
                                                     .uiLastUpdated = uiCurrTime } );
 
     registerNode( NodeNames::BinCoords,
                   ComputeNode{ .sNodeName = "bin_coords",
                                .fFunc = &ContactMapping::setBinCoords,
                                .vIncomingFunctions = { NodeNames::AxisCoords, NodeNames::Symmetry },
-                               .vIncomingSession = { },
-                               .vIncomingRender = { { "filters", "min_diag_dist", "val" } },
+                               .vIncomingSession = { { "settings", "filters", "min_diag_dist", "val" } },
                                .uiLastUpdated = uiCurrTime } );
 }
 

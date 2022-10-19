@@ -32,12 +32,22 @@ class PyContactMapping : public ContactMapping
                            fPAccept /* Argument(s) */
         );
     }
+
+    std::vector<std::string> colorPalette( std::string sPaletteName ) override
+    {
+        PYBIND11_OVERRIDE( std::vector<std::string>, /* Return type */
+                           ContactMapping, /* Parent class */
+                           colorPalette, /* Name of function in C++ (must match Python name) */
+                           sPaletteName /* Argument(s) */
+        );
+    }
 };
 
 class ContectMappingPublicist : public ContactMapping
 {
   public:
     using ContactMapping::normalizeBinominalTestTrampoline;
+    using ContactMapping::colorPalette;
 };
 
 } // namespace cm
@@ -57,7 +67,8 @@ PYBIND11_MODULE( libContactMapping, m )
 
     pybind11::class_<cm::ContactMapping, cm::PyContactMapping>( m, "ContactMapping" ) //
         .def( pybind11::init<std::string>( ) ) //
-        .def( "all", &cm::ContactMapping::computeAll ) //
+        .def( "get_colors", &cm::ContactMapping::getColors ) //
         .def( "normalizeBinominalTestTrampoline", &cm::ContectMappingPublicist::normalizeBinominalTestTrampoline ) //
+        .def( "colorPalette", &cm::ContectMappingPublicist::colorPalette ) //
         ;
 }

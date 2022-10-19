@@ -54,6 +54,10 @@ class ContactMapping
         FlatValues,
         InGroup,
         Normalized,
+        Colors,
+        BetweenGroup,
+        Combined,
+        Colored,
         SIZE
     };
     struct ComputeNode
@@ -62,37 +66,37 @@ class ContactMapping
         void ( ContactMapping::*fFunc )( void );
         std::vector<NodeNames> vIncomingFunctions;
         std::vector<std::vector<std::string>> vIncomingSession;
-        std::vector<std::vector<std::string>> vIncomingRender;
         size_t uiLastUpdated;
     };
 
     size_t uiCurrTime;
     std::vector<ComputeNode> vGraph;
 
-    json xRenderSettings, xSession;
-    std::map<std::vector<std::string>, size_t> xRenderTime;
+    json xSession;
     std::map<std::vector<std::string>, size_t> xSessionTime;
 
 
-    bool updateSettings( std::map<std::vector<std::string>, size_t>& xMap, json& xSettings, json& xOldSettings,
-                         std::vector<std::string> vPrefix = { } )
+    bool updateSettings( json& xSettings, json& xOldSettings, std::vector<std::string> vPrefix = { } )
     {
         bool bUpdated = false;
         for( auto& xEle : xSettings.items( ) )
         {
-            std::vector<std::string> vPrefix2( vPrefix );
-            vPrefix2.push_back( xEle.key( ) );
-
-            if( xEle.value( ).is_object( ) )
-                bUpdated = updateSettings( xMap, xEle.value( ), xOldSettings[ xEle.key( ) ], vPrefix2 ) || bUpdated;
-            else if( xOldSettings[ xEle.key( ) ] != xEle.value( ) )
+            if( xEle.key( ) != "previous" && xEle.key( ) != "next" )
             {
-                xMap[ vPrefix2 ] = uiCurrTime;
-                bUpdated = true;
+                std::vector<std::string> vPrefix2( vPrefix );
+                vPrefix2.push_back( xEle.key( ) );
+
+                if( xEle.value( ).is_object( ) )
+                    bUpdated = updateSettings( xEle.value( ), xOldSettings[ xEle.key( ) ], vPrefix2 ) || bUpdated;
+                else if( xOldSettings[ xEle.key( ) ] != xEle.value( ) )
+                {
+                    xSessionTime[ vPrefix2 ] = uiCurrTime;
+                    bUpdated = true;
+                }
             }
         }
         if( bUpdated )
-            xMap[ vPrefix ] = uiCurrTime;
+            xSessionTime[ vPrefix ] = uiCurrTime;
         return bUpdated;
     }
 
@@ -129,11 +133,7 @@ class ContactMapping
 
         for( std::vector<std::string> vSetting : xNode.vIncomingSession )
             if( xSessionTime.count( vSetting ) == 0 || xSessionTime[ vSetting ] > xNode.uiLastUpdated )
-                vOutOfDateReason.push_back( "change in session value " + vec2str( vSetting ) );
-
-        for( std::vector<std::string> vSetting : xNode.vIncomingRender )
-            if( xRenderTime.count( vSetting ) == 0 || xRenderTime[ vSetting ] > xNode.uiLastUpdated )
-                vOutOfDateReason.push_back( "change in setting " + vec2str( vSetting ) );
+                vOutOfDateReason.push_back( "change in variable " + vec2str( vSetting ) );
 
         if( vOutOfDateReason.size( ) > 0 )
         {
@@ -159,19 +159,83 @@ class ContactMapping
         return vOutOfDateReason.size( ) > 0;
     }
 
-  public:
-    void setRenderSettings( json& xRenderSettings )
-    {
-        ++uiCurrTime;
-        updateSettings( xRenderTime, xRenderSettings, this->xRenderSettings );
-        this->xRenderSettings = xRenderSettings;
-    }
 
+  public:
     void setSession( json& xSession )
     {
         ++uiCurrTime;
-        updateSettings( xSessionTime, xSession, this->xSession );
+        updateSettings( xSession, this->xSession );
         this->xSession = xSession;
+    }
+
+    const json& getSession( )
+    {
+        return this->xSession;
+    }
+
+    template <typename T> const T& getSession( std::vector<std::string> vKeys )
+    {
+        json& rCurr = this->xSession;
+        for( std::string sKey : vKeys )
+            rCurr = rCurr[ sKey ];
+        return rCurr.get<T>( );
+    }
+
+    template <typename T> void changeSession( std::vector<std::string> vKeys, T xVal )
+    {
+        ++uiCurrTime;
+
+        // remove old redo
+        this->xSession[ "next" ] = nullptr;
+
+        // deep copy json
+        json xNew = json::parse( this->xSession.dump( ) ); // is this necessary or is a normal copy enough
+        xNew[ "previous" ] = this->xSession; // back up previous
+
+        // change setting
+        json& rCurr = this->xSession;
+        std::vector<std::string> vCurrKey;
+        for( std::string sKey : vKeys )
+        {
+            xSessionTime[ vCurrKey ] = uiCurrTime;
+            rCurr = rCurr[ sKey ];
+            vCurrKey.push_back( sKey );
+        }
+        xSessionTime[ vCurrKey ] = uiCurrTime;
+        rCurr = xVal;
+
+        // make sure undo's and redo's do not pile up infinitely
+        int uiMaxRedo = this->xSession[ "settings" ][ "interface" ][ "max_undo" ][ "val" ].get<int>( );
+        json& rToNull = this->xSession;
+        while( --uiMaxRedo >= 0 && !rToNull[ "previous" ].is_null( ) )
+            rToNull = rToNull[ "previous" ];
+        rToNull[ "previous" ] = nullptr;
+    }
+
+    bool hasUndo( )
+    {
+        return !this->xSession[ "previous" ].is_null( );
+    }
+
+    void undo( )
+    {
+        if( hasUndo( ) )
+        {
+            json xNow = json::parse( this->xSession.dump( ) ); // is this necessary of is a normal copy enough
+            setSession( this->xSession[ "previous" ] );
+            this->xSession[ "next" ] = xNow;
+        }
+    }
+
+    bool hasRedo( )
+    {
+        return !this->xSession[ "next" ].is_null( );
+    }
+
+    void redo( )
+    {
+        if( hasRedo( ) )
+            setSession( this->xSession[ "next" ] );
     }
 
   private:
@@ -191,15 +255,17 @@ class ContactMapping
 
     std::array<std::vector<std::pair<std::string, bool>>, 2> vActiveCoverage;
     size_t uiSymmetry;
-    size_t iInGroupSetting;
+    size_t iInGroupSetting, iBetweenGroupSetting;
 
     std::vector<std::vector<size_t>> vvBinValues;
     std::vector<std::array<size_t, 2>> vvFlatValues;
     std::vector<std::array<double, 2>> vvNormalized;
+    std::vector<double> vCombined;
+    std::vector<std::string> vColored;
 
     std::array<std::vector<std::vector<size_t>>, 2> vvCoverageValues;
     // outer array: column / row
-    std::array<std::vector<size_t>, 2> vvFlatCoverageValues;
+    std::array<std::vector<double>, 2> vvFlatCoverageValues;
 
     std::vector<std::string> vColorPalette;
 
@@ -257,12 +323,17 @@ class ContactMapping
 
     // replicates.h
     size_t getFlatValue( std::vector<size_t> vCollected );
+    // replicates.h
+    double getMixedValue( double uiA, double uiB );
 
     // replicates.h
     void setFlatValues( );
 
     // replicates.h
     void setInGroup( );
+
+    // replicates.h
+    void setBetweenGroup( );
 
     // normalization.h
     void doNotNormalize( );
@@ -280,9 +351,28 @@ class ContactMapping
     // normalization.h
     void regNormalization( );
 
+    // colors.h
+    void setColors( );
+    // colors.h
+    void setCombined( );
+    // colors.h
+    void setColored( );
+    // colors.h
+    double logScale( double );
+    // colors.h
+    size_t colorRange( double fX );
+
+    // colors.h
+    void regColors( );
+
   protected:
     virtual std::vector<std::array<double, 2>> normalizeBinominalTestTrampoline( std::vector<std::array<size_t, 2>>&,
                                                                                  size_t, size_t, double )
+    {
+        throw std::logic_error( "Function not implemented" );
+    }
+
+    virtual std::vector<std::string> colorPalette( std::string )
     {
         throw std::logic_error( "Function not implemented" );
     }
@@ -295,38 +385,14 @@ class ContactMapping
         regReplicates( );
         regCoverage( );
         regNormalization( );
+        regColors( );
     }
 
     virtual ~ContactMapping( )
     {}
-
-    void computeAll( json xRenderSettings, json xSession )
-    {
-        this->xRenderSettings = xRenderSettings;
-        this->xSession = xSession;
-        setBinSize( );
-        setRenderArea( );
-
-        setActiveChrom( );
-        setAxisCoords( );
-
-        setBinCoords( );
-
-        setActiveReplicates( );
-        setIntersectionType( );
-
-        setSymmetry( );
-        setInGroup( );
-
-        setActiveCoverage( );
-        setCoverageValues( );
-        setFlatCoverageValues( );
-
-        setBinValues( );
-        setFlatValues( );
-
-        setNormalized( );
-    }
+    
+    // colors.h
+    std::vector<std::string> getColors();
 };
 
 

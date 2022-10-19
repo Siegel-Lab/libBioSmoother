@@ -8,6 +8,12 @@ namespace cm
 
 void ContactMapping::setActiveCoverage( )
 {
+    size_t uiSize = this->xSession[ "coverage" ][ "list" ].size( ) + this->xSession[ "replicates" ][ "list" ].size( );
+    vActiveCoverage[ 0 ].reserve( uiSize );
+    vActiveCoverage[ 0 ].clear( );
+    vActiveCoverage[ 1 ].reserve( uiSize );
+    vActiveCoverage[ 1 ].clear( );
+
     for( bool bB : { true, false } )
         for( auto& xName : this->xSession[ bB ? "coverage" : "replicates" ][ "list" ] )
         {
@@ -28,6 +34,9 @@ void ContactMapping::setActiveCoverage( )
 void ContactMapping::setCoverageValues( )
 {
     for( size_t uiJ = 0; uiJ < 2; uiJ++ )
+    {
+        vvCoverageValues[ uiJ ].reserve( vActiveCoverage[ uiJ ].size( ) );
+        vvCoverageValues[ uiJ ].clear( );
         for( auto& sRep : vActiveCoverage[ uiJ ] )
         {
             vvCoverageValues[ uiJ ].emplace_back( );
@@ -37,8 +46,10 @@ void ContactMapping::setCoverageValues( )
             bool bHasMapQ = xRep[ "has_map_q" ];
             bool bHasMultiMap = xRep[ "has_multimapping" ];
 
-            size_t uiMapQMin = 255 - this->xRenderSettings[ "filters" ][ "mapping_q" ][ "val_min" ].get<size_t>( );
-            size_t uiMapQMax = 255 - this->xRenderSettings[ "filters" ][ "mapping_q" ][ "val_max" ].get<size_t>( );
+            size_t uiMapQMin =
+                255 - this->xSession[ "settings" ][ "filters" ][ "mapping_q" ][ "val_min" ].get<size_t>( );
+            size_t uiMapQMax =
+                255 - this->xSession[ "settings" ][ "filters" ][ "mapping_q" ][ "val_max" ].get<size_t>( );
 
             for( AxisCoord& xCoords : vAxisCords[ uiJ ] )
             {
@@ -93,29 +104,30 @@ void ContactMapping::setCoverageValues( )
                     vvCoverageValues[ uiJ ].back( ).push_back( symmetry( vVals[ 0 ], vVals[ 1 ] ) );
             }
         }
+    }
 }
 
-// @todo between group approach should be applied here immediateley
 void ContactMapping::setFlatCoverageValues( )
 {
     for( size_t uiJ = 0; uiJ < 2; uiJ++ )
     {
         std::array<std::vector<size_t>, 2> vInGroup;
-        vInGroup.reserve( vvCoverageValues[ uiJ ].size( ) );
+        vInGroup[uiJ].reserve( vvCoverageValues[ uiJ ].size( ) );
 
         for( size_t uiI = 0; uiI < vvCoverageValues[ uiJ ].size( ); uiI++ )
         {
             for( size_t uiK = 0; uiK < 2; uiK++ )
                 if( this->xSession[ vActiveCoverage[ uiJ ][ uiI ].second ? "coverage" : "replicates" ][ "coverage" ]
-                                  [ vActiveCoverage[ uiJ ][ uiI ].first ][ uiJ == 0 ? ( uiK == 1 "cov_column_a"
+                                  [ vActiveCoverage[ uiJ ][ uiI ].first ][ uiJ == 0 ? ( uiK == 1 ? "cov_column_a"
                                                                                         : "cov_column_b" )
-                                                                                    : ( uiK == 1 "cov_row_a"
+                                                                                    : ( uiK == 1 ? "cov_row_a"
                                                                                         : "cov_row_b" ) ]
                                       .get<bool>( ) )
                     vInGroup[ uiK ].push_back( uiI );
         }
 
         vvFlatCoverageValues[ uiJ ].reserve( vvCoverageValues[ uiJ ][ 0 ].size( ) );
+        vvFlatCoverageValues[ uiJ ].clear( );
         for( size_t uiI = 0; uiI < vvFlatCoverageValues[ uiJ ].size( ); uiI++ )
             for( size_t uiJ = 0; uiJ < 2; uiJ++ )
             {
@@ -129,7 +141,7 @@ void ContactMapping::setFlatCoverageValues( )
 
                     vVal[ uiK ] = getFlatValue( vCollected );
                 }
-                vvFlatCoverageValues[ uiJ ].push_back( "???" );
+                vvFlatCoverageValues[ uiJ ].push_back( getMixedValue( (double)vVal[ 0 ], (double)vVal[ 1 ] ) );
             }
     }
 }
@@ -142,7 +154,6 @@ void ContactMapping::regCoverage( )
                                .fFunc = &ContactMapping::setActiveCoverage,
                                .vIncomingFunctions = { },
                                .vIncomingSession = { { "coverage", "coverage" }, { "replicates", "coverage" } },
-                               .vIncomingRender = { },
                                .uiLastUpdated = uiCurrTime } );
 
     registerNode( NodeNames::CoverageValues,
@@ -150,17 +161,15 @@ void ContactMapping::regCoverage( )
                                .fFunc = &ContactMapping::setCoverageValues,
                                .vIncomingFunctions = { NodeNames::ActiveCoverage, NodeNames::AxisCoords,
                                                        NodeNames::IntersectionType, NodeNames::Symmetry },
-                               .vIncomingSession = { },
-                               .vIncomingRender = { { "filters", "mapping_q", "val_min" },
-                                                    { "filters", "mapping_q", "val_max" } },
+                               .vIncomingSession = { { "settings", "filters", "mapping_q", "val_min" },
+                                                     { "settings", "filters", "mapping_q", "val_max" } },
                                .uiLastUpdated = uiCurrTime } );
 
     registerNode( NodeNames::FlatCoverageValues,
                   ComputeNode{ .sNodeName = "flat_coverage",
                                .fFunc = &ContactMapping::setFlatCoverageValues,
-                               .vIncomingFunctions = { NodeNames::CoverageValues },
+                               .vIncomingFunctions = { NodeNames::CoverageValues, NodeNames::BetweenGroup },
                                .vIncomingSession = { { "coverage", "coverage" }, { "replicates", "coverage" } },
-                               .vIncomingRender = { },
                                .uiLastUpdated = uiCurrTime } );
 }
 

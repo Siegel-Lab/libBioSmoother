@@ -8,7 +8,11 @@ namespace cm
 
 void ContactMapping::setActiveReplicates( )
 {
-    for( auto& xRepl : this->xSession[ "replicates" ][ "list" ] )
+    auto& rList = this->xSession[ "replicates" ][ "list" ];
+    vActiveReplicates.resize( rList.size( ) );
+    vActiveReplicates.clear( );
+
+    for( auto& xRepl : rList )
     {
         std::string sRepl = xRepl.get<std::string>( );
         if( this->xSession[ "replicates" ][ "in_group" ][ sRepl ][ "in_group_a" ].get<bool>( ) ||
@@ -20,7 +24,8 @@ void ContactMapping::setActiveReplicates( )
 
 void ContactMapping::setIntersectionType( )
 {
-    std::string sRenderSetting = this->xRenderSettings[ "filters" ][ "ambiguous_mapping" ].get<std::string>( );
+    std::string sRenderSetting = this->xSession[ "settings" ][ "filters" ][ "ambiguous_mapping" ].get<std::string>( );
+
     if( sRenderSetting == "enclosed" )
         xIntersect = sps::IntersectionType::enclosed;
     else if( sRenderSetting == "encloses" )
@@ -59,6 +64,7 @@ size_t ContactMapping::symmetry( size_t uiA, size_t uiB )
 void ContactMapping::setBinValues( )
 {
     vvBinValues.reserve( vActiveReplicates.size( ) );
+    vvBinValues.clear( );
 
     for( std::string& sRep : vActiveReplicates )
     {
@@ -69,8 +75,8 @@ void ContactMapping::setBinValues( )
         bool bHasMapQ = xRep[ "has_map_q" ];
         bool bHasMultiMap = xRep[ "has_multimapping" ];
 
-        size_t uiMapQMin = 255 - this->xRenderSettings[ "filters" ][ "mapping_q" ][ "val_min" ].get<size_t>( );
-        size_t uiMapQMax = 255 - this->xRenderSettings[ "filters" ][ "mapping_q" ][ "val_max" ].get<size_t>( );
+        size_t uiMapQMin = 255 - this->xSession[ "settings" ][ "filters" ][ "mapping_q" ][ "val_min" ].get<size_t>( );
+        size_t uiMapQMax = 255 - this->xSession[ "settings" ][ "filters" ][ "mapping_q" ][ "val_max" ].get<size_t>( );
 
         for( std::array<BinCoord, 2>& vCoords : vBinCoords )
         {
@@ -127,7 +133,7 @@ void ContactMapping::setBinValues( )
 
 void ContactMapping::setInGroup( )
 {
-    std::string sInGroupSetting = this->xRenderSettings[ "replicates" ][ "in_group" ].get<std::string>( );
+    std::string sInGroupSetting = this->xSession[ "settings" ][ "replicates" ][ "in_group" ].get<std::string>( );
     if( sInGroupSetting == "min" )
         iInGroupSetting = 0;
     else if( sInGroupSetting == "sum" )
@@ -138,6 +144,27 @@ void ContactMapping::setInGroup( )
         iInGroupSetting = 3;
     else
         throw std::logic_error( "invalid value for in_group" );
+}
+
+void ContactMapping::setBetweenGroup( )
+{
+    std::string sBetwGroupSetting = this->xSession[ "settings" ][ "replicates" ][ "between_group" ].get<std::string>( );
+    if( sBetwGroupSetting == "1st" )
+        iBetweenGroupSetting = 0;
+    else if( sBetwGroupSetting == "2nd" )
+        iBetweenGroupSetting = 1;
+    else if( sBetwGroupSetting == "sub" )
+        iBetweenGroupSetting = 2;
+    else if( sBetwGroupSetting == "min" )
+        iBetweenGroupSetting = 3;
+    else if( sBetwGroupSetting == "max" )
+        iBetweenGroupSetting = 4;
+    else if( sBetwGroupSetting == "dif" )
+        iBetweenGroupSetting = 5;
+    else if( sBetwGroupSetting == "sum" )
+        iBetweenGroupSetting = 6;
+    else
+        throw std::logic_error( "invalid value for between_group" );
 }
 
 
@@ -169,8 +196,33 @@ size_t ContactMapping::getFlatValue( std::vector<size_t> vCollected )
     return uiVal;
 }
 
+double ContactMapping::getMixedValue( double uiA, double uiB )
+{
+    switch( iBetweenGroupSetting )
+    {
+        case 0:
+            return uiA;
+        case 1:
+            return uiB;
+        case 2:
+            return uiA - uiB;
+        case 3:
+            return std::min( uiA, uiB );
+        case 4:
+            return std::max( uiA, uiB );
+        case 5:
+            return std::abs( uiA - uiB );
+        case 6:
+            return uiA + uiB;
+        default:
+            throw std::logic_error( "invalid value for between_group" );
+    }
+}
+
 void ContactMapping::setFlatValues( )
 {
+    vvFlatValues.clear( );
+
     if( vvBinValues.size( ) > 0 )
     {
         vvFlatValues.reserve( vvBinValues[ 0 ].size( ) );
@@ -199,8 +251,6 @@ void ContactMapping::setFlatValues( )
             }
         }
     }
-    else
-        vvFlatValues.clear( );
 }
 
 void ContactMapping::regReplicates( )
@@ -210,15 +260,13 @@ void ContactMapping::regReplicates( )
                                .fFunc = &ContactMapping::setActiveReplicates,
                                .vIncomingFunctions = { },
                                .vIncomingSession = { { "replicates", "in_group" } },
-                               .vIncomingRender = { },
                                .uiLastUpdated = uiCurrTime } );
 
     registerNode( NodeNames::IntersectionType,
                   ComputeNode{ .sNodeName = "intersection_type",
                                .fFunc = &ContactMapping::setIntersectionType,
                                .vIncomingFunctions = { },
-                               .vIncomingSession = { },
-                               .vIncomingRender = { { "filters", "ambiguous_mapping" } },
+                               .vIncomingSession = { { "settings", "filters", "ambiguous_mapping" } },
                                .uiLastUpdated = uiCurrTime } );
 
     registerNode( NodeNames::BinValues,
@@ -226,17 +274,22 @@ void ContactMapping::regReplicates( )
                                .fFunc = &ContactMapping::setBinValues,
                                .vIncomingFunctions = { NodeNames::BinCoords, NodeNames::ActiveReplicates,
                                                        NodeNames::IntersectionType, NodeNames::Symmetry },
-                               .vIncomingSession = { },
-                               .vIncomingRender = { { "filters", "mapping_q", "val_min" },
-                                                    { "filters", "mapping_q", "val_max" } },
+                               .vIncomingSession = { { "settings", "filters", "mapping_q", "val_min" },
+                                                     { "settings", "filters", "mapping_q", "val_max" } },
                                .uiLastUpdated = uiCurrTime } );
 
     registerNode( NodeNames::InGroup,
-                  ComputeNode{ .sNodeName = "replicate_groups",
+                  ComputeNode{ .sNodeName = "in_group_setting",
                                .fFunc = &ContactMapping::setInGroup,
                                .vIncomingFunctions = { },
-                               .vIncomingSession = { },
-                               .vIncomingRender = { { "replicates", "in_group" } },
+                               .vIncomingSession = { { "settings", "replicates", "in_group" } },
+                               .uiLastUpdated = uiCurrTime } );
+
+    registerNode( NodeNames::BetweenGroup,
+                  ComputeNode{ .sNodeName = "between_group_setting",
+                               .fFunc = &ContactMapping::setBetweenGroup,
+                               .vIncomingFunctions = { },
+                               .vIncomingSession = { { "settings", "replicates", "between_group" } },
                                .uiLastUpdated = uiCurrTime } );
 
     registerNode( NodeNames::FlatValues,
@@ -244,7 +297,6 @@ void ContactMapping::regReplicates( )
                                .fFunc = &ContactMapping::setFlatValues,
                                .vIncomingFunctions = { NodeNames::BinValues, NodeNames::InGroup },
                                .vIncomingSession = { { "replicates", "in_group" } },
-                               .vIncomingRender = { },
                                .uiLastUpdated = uiCurrTime } );
 }
 
