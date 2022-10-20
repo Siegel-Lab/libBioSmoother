@@ -55,6 +55,18 @@ class ContectMappingPublicist : public PartialQuarry
 
 } // namespace cm
 
+template <bool CACHE> void exportSpsInterface( pybind11::module& m )
+{
+    pybind11::class_<cm::SpsInterface<CACHE>>( m, CACHE ? "CachedSpsInterface" : "DiskSpsInterface" ) //
+        .def( pybind11::init<std::string>( ) ) //
+        .def( "loaded", &cm::SpsInterface<CACHE>::loaded )
+        .def( "insert", &cm::SpsInterface<CACHE>::insert, //
+              pybind11::arg( "d" ), pybind11::arg( "o" ), pybind11::arg( "start" ), pybind11::arg( "end" ) )
+        .def( "generate", &cm::SpsInterface<CACHE>::generate, //
+              pybind11::arg( "d" ), pybind11::arg( "o" ), pybind11::arg( "fac" ) = -1,
+              pybind11::arg( "verbosity" ) = 1 );
+}
+
 PYBIND11_MODULE( libPartialQuarry, m )
 {
     // prevent creation of stxxl log files
@@ -75,11 +87,6 @@ PYBIND11_MODULE( libPartialQuarry, m )
         .def( "colorPalette", &cm::ContectMappingPublicist::colorPalette ) //
         ;
 
-    pybind11::class_<cm::SpsInterface<true>>( m, "CachedSpsInterface" ) //
-        .def( pybind11::init<std::string>( ) ) //
-        ;
-
-    pybind11::class_<cm::SpsInterface<false>>( m, "DiskSpsInterface" ) //
-        .def( pybind11::init<std::string>( ) ) //
-        ;
+    exportSpsInterface<true>( m );
+    exportSpsInterface<false>( m );
 }

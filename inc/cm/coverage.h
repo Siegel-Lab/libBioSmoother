@@ -66,7 +66,7 @@ void PartialQuarry::setCoverageValues( )
                         if( iDataSetId != -1 )
                         {
                             if( bHasMapQ && bHasMultiMap )
-                                vVals[ uiI ] = xIndices.getIndex<2, 1>( ).count(
+                                vVals[ uiI ] = xIndices.getIndex<2, 1>( )->count(
                                     iDataSetId,
                                     { xCoords.uiIndexPos, uiMapQMax },
                                     { xCoords.uiIndexPos + xCoords.uiSize, uiMapQMin },
@@ -74,13 +74,13 @@ void PartialQuarry::setCoverageValues( )
                                     0 );
                             else if( !bHasMapQ && bHasMultiMap )
                                 vVals[ uiI ] =
-                                    xIndices.getIndex<1, 1>( ).count( iDataSetId,
-                                                                      { xCoords.uiIndexPos },
-                                                                      { xCoords.uiIndexPos + xCoords.uiSize },
-                                                                      xIntersect,
-                                                                      0 );
+                                    xIndices.getIndex<1, 1>( )->count( iDataSetId,
+                                                                       { xCoords.uiIndexPos },
+                                                                       { xCoords.uiIndexPos + xCoords.uiSize },
+                                                                       xIntersect,
+                                                                       0 );
                             else if( bHasMapQ && !bHasMultiMap )
-                                vVals[ uiI ] = xIndices.getIndex<2, 0>( ).count(
+                                vVals[ uiI ] = xIndices.getIndex<2, 0>( )->count(
                                     iDataSetId,
                                     { xCoords.uiIndexPos, uiMapQMax },
                                     { xCoords.uiIndexPos + xCoords.uiSize, uiMapQMin },
@@ -88,11 +88,11 @@ void PartialQuarry::setCoverageValues( )
                                     0 );
                             else // if(!bHasMapQ && !bHasMultiMap)
                                 vVals[ uiI ] =
-                                    xIndices.getIndex<1, 0>( ).count( iDataSetId,
-                                                                      { xCoords.uiIndexPos },
-                                                                      { xCoords.uiIndexPos + xCoords.uiSize },
-                                                                      xIntersect,
-                                                                      0 );
+                                    xIndices.getIndex<1, 0>( )->count( iDataSetId,
+                                                                       { xCoords.uiIndexPos },
+                                                                       { xCoords.uiIndexPos + xCoords.uiSize },
+                                                                       xIntersect,
+                                                                       0 );
                         }
                     }
                 else

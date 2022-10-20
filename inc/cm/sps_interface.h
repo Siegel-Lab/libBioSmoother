@@ -1,5 +1,12 @@
+#pragma GCC diagnostic push
+// couldnt get rid of warning via -isystem
+#pragma GCC diagnostic ignored "-Wdeprecated-copy"
+
 #include "sps/default.h"
 #include "sps/index.h"
+
+#pragma GCC diagnostic pop
+
 #include <type_traits>
 
 namespace cm
@@ -9,7 +16,67 @@ template <bool CACHED> class SpsInterface;
 
 template <template <size_t D, bool dependant_dim, bool uniform_overlay_grid, size_t orthope> typename storage_t,
           size_t D, size_t O, bool CACHED>
-sps::Index<storage_t<D, false, true, O>>& getIndexHelper( SpsInterface<CACHED>* );
+std::shared_ptr<sps::Index<storage_t<D, false, true, O>>> getIndexHelper( SpsInterface<CACHED>* );
+
+
+#define RELEVANT_COMBINATIONS( MACRO )                                                                                 \
+    MACRO( 1, 0 )                                                                                                      \
+    MACRO( 2, 1 )                                                                                                      \
+                                                                                                                       \
+    MACRO( 2, 0 )                                                                                                      \
+    MACRO( 3, 1 )                                                                                                      \
+    MACRO( 4, 2 )                                                                                                      \
+                                                                                                                       \
+    MACRO( 3, 0 )                                                                                                      \
+    MACRO( 5, 2 )
+
+
+#define DECLARE_INDEX_TYPE( D, O ) using I##D##O##_t = sps::Index<storage_t<D, false, true, O>>;
+
+#define DECLARE_INDEX_OBJECT( D, O ) std::shared_ptr<I##D##O##_t> pIndex##D##O = nullptr;
+
+#define DECLARE_INDEX_SIZE( D, O ) size_t uiSize##D##O;
+
+#define INDEX_LOADED( D, O )                                                                                           \
+    if( pIndex##D##O == nullptr )                                                                                      \
+        return false;
+
+#define INIT_INDEX_OBJECT( D, O )                                                                                      \
+    this->pIndex##D##O =                                                                                               \
+        std::make_shared<I##D##O##_t>( sFilePrefix + "." + std::to_string( D ) + "." + std::to_string( O ) );          \
+    this->uiSize##D##O = this->pIndex##D##O->numPoints( );
+
+
+#define D_INC 8
+
+#define COMBINE( D, O ) ( D << D_INC ) | O
+
+#define GENERATE( D, O )                                                                                               \
+    case COMBINE( D, O ):                                                                                              \
+        uiId = pIndex##D##O->generate( uiSize##D##O, pIndex##D##O->numPoints( ), fFac, uiVerbosity );                  \
+        uiSize##D##O = pIndex##D##O->numPoints( );                                                                     \
+        break;
+
+#define INSERT_COUNT( D, O )                                                                                           \
+    case COMBINE( D, O ):                                                                                              \
+        if( vStart.size( ) != D )                                                                                      \
+            throw std::logic_error( "start position of count must have dimensionality equal to uiD" );                 \
+        if( vEnd.size( ) != D )                                                                                        \
+            throw std::logic_error( "end position of count must have dimensionality equal to uiD" );                   \
+                                                                                                                       \
+        std::array<uint64_t, D - O> aStart##D##O;                                                                      \
+        std::copy_n( vStart.begin( ), D - O, aStart##D##O.begin( ) );                                                  \
+                                                                                                                       \
+        if constexpr( O == 0 )                                                                                         \
+            pIndex##D##O->addPoint( aStart##D##O );                                                                    \
+        else                                                                                                           \
+        {                                                                                                              \
+            std::array<uint64_t, D - O> aEnd##D##O;                                                                    \
+            std::copy_n( vEnd.begin( ), D - O, aEnd##D##O.begin( ) );                                                  \
+                                                                                                                       \
+            pIndex##D##O->addPoint( aStart##D##O, aEnd##D##O );                                                        \
+        }                                                                                                              \
+        break;
 
 template <bool CACHED> class SpsInterface
 {
@@ -18,52 +85,27 @@ template <bool CACHED> class SpsInterface
     using storage_t = typename std::conditional<CACHED, CachedTypeDef<D, dependant_dim, uniform_overlay_grid, orthope>,
                                                 DiskTypeDef<D, dependant_dim, uniform_overlay_grid, orthope>>::type;
 
-    using I10_t = sps::Index<storage_t<1, false, true, 0>>;
-    using I21_t = sps::Index<storage_t<2, false, true, 1>>;
-
-    using I20_t = sps::Index<storage_t<2, false, true, 0>>;
-    using I31_t = sps::Index<storage_t<3, false, true, 1>>;
-    using I42_t = sps::Index<storage_t<4, false, true, 2>>;
-
-    using I30_t = sps::Index<storage_t<3, false, true, 0>>;
-    using I52_t = sps::Index<storage_t<5, false, true, 2>>;
+    RELEVANT_COMBINATIONS( DECLARE_INDEX_TYPE )
 
   public:
-    I10_t xIndex10;
-    I21_t xIndex21;
-    I20_t xIndex20;
-    I31_t xIndex31;
-    I42_t xIndex42;
-    I30_t xIndex30;
-    I52_t xIndex52;
+    RELEVANT_COMBINATIONS( DECLARE_INDEX_OBJECT )
 
-    size_t uiSize10;
-    size_t uiSize21;
-    size_t uiSize20;
-    size_t uiSize31;
-    size_t uiSize42;
-    size_t uiSize30;
-    size_t uiSize52;
+    RELEVANT_COMBINATIONS( DECLARE_INDEX_SIZE )
 
 
     SpsInterface( std::string sFilePrefix )
-        : xIndex10( sFilePrefix + ".1.0" ),
-          xIndex21( sFilePrefix + ".2.1" ),
-          xIndex20( sFilePrefix + ".2.0" ),
-          xIndex31( sFilePrefix + ".3.1" ),
-          xIndex42( sFilePrefix + ".4.2" ),
-          xIndex30( sFilePrefix + ".3.0" ),
-          xIndex52( sFilePrefix + ".5.2" ),
-          uiSize10( xIndex10.numPoints( ) ),
-          uiSize21( xIndex21.numPoints( ) ),
-          uiSize20( xIndex20.numPoints( ) ),
-          uiSize31( xIndex31.numPoints( ) ),
-          uiSize42( xIndex42.numPoints( ) ),
-          uiSize30( xIndex30.numPoints( ) ),
-          uiSize52( xIndex52.numPoints( ) )
-    {}
+    {
+        RELEVANT_COMBINATIONS( INIT_INDEX_OBJECT )
+    }
 
-    template <size_t D, size_t O> sps::Index<storage_t<D + O, false, true, O>>& getIndex( )
+    bool loaded( )
+    {
+        RELEVANT_COMBINATIONS( INDEX_LOADED )
+
+        return true;
+    }
+
+    template <size_t D, size_t O> std::shared_ptr<sps::Index<storage_t<D + O, false, true, O>>> getIndex( )
     {
         if constexpr( CACHED )
             return getIndexHelper<CachedTypeDef, D + O, O, true>( this );
@@ -72,73 +114,59 @@ template <bool CACHED> class SpsInterface
     }
 
   private:
-#define D_INC 8
-    uint16_t combine( uint16_t uiD, uint16_t uiO )
+    constexpr uint16_t combine( uint16_t uiD, uint16_t uiO )
     {
         if( uiO >= 1 << D_INC )
             throw std::logic_error( "number of orthotope dimensions too high" );
         if( uiD >= 1 << D_INC )
             throw std::logic_error( "number of dimensions too high" );
-        return ( uiD << D_INC ) | uiO;
+        return COMBINE( uiD, uiO );
     }
 
   public:
-    void insertCount( size_t uiD, size_t uiO, std::vector<size_t> vStart, std::vector<size_t> vEnd )
+    void insert( size_t uiD, size_t uiO, std::vector<uint64_t> vStart, std::vector<uint64_t> vEnd )
     {
-        size_t uiX = combine( uiD, uiO );
-        switch( uiX )
+        switch( combine( uiD, uiO ) )
         {
-            case combine( 1, 0 ):
-                std::array<size_t, 1> aStart( vStart );
-                std::array<size_t, 1> aEnd( vEnd );
-                getIndex<1, 0>( ).addPoint( aStart, aEnd );
-            // @todo @continue_here
+            RELEVANT_COMBINATIONS( INSERT_COUNT )
 
             default:
+                throw std::logic_error( "invalid combination of dimensions and orthotope dimensions" );
                 break;
         }
     }
 
+
     size_t generate( size_t uiD, size_t uiO, double fFac = -1, size_t uiVerbosity = 1 )
     {
-        size_t uiX = combine( uiD, uiO );
-        switch( uiX )
+        size_t uiId;
+        switch( combine( uiD, uiO ) )
         {
-            case combine( 1, 0 ):
-                getIndex<1, 0>( ).generate( uiSize10, getIndex<1, 0>( ).numPoints( ), fFac, uiVerbosity );
-                uiSize10 = getIndex<1, 0>( ).numPoints( ); 
-            // @todo @continue_here
-                break;
+            RELEVANT_COMBINATIONS( GENERATE )
 
             default:
+                throw std::logic_error( "invalid combination of dimensions and orthotope dimensions" );
                 break;
         }
+        return uiId;
     }
 };
 
 
 #define IMPLEMENT_GET_INDEX_HELPER( D, O )                                                                             \
     template <>                                                                                                        \
-    sps::Index<CachedTypeDef<D, false, true, O>>& getIndexHelper<CachedTypeDef, D, O, true>( SpsInterface<true> *      \
-                                                                                             pInterface )              \
+    std::shared_ptr<sps::Index<CachedTypeDef<D, false, true, O>>> getIndexHelper<CachedTypeDef, D, O, true>(           \
+        SpsInterface<true> * pInterface )                                                                              \
     {                                                                                                                  \
-        return pInterface->xIndex##D##O;                                                                               \
+        return pInterface->pIndex##D##O;                                                                               \
     }                                                                                                                  \
     template <>                                                                                                        \
-    sps::Index<DiskTypeDef<D, false, true, O>>& getIndexHelper<DiskTypeDef, D, O, false>( SpsInterface<false> *        \
-                                                                                          pInterface )                 \
+    std::shared_ptr<sps::Index<DiskTypeDef<D, false, true, O>>> getIndexHelper<DiskTypeDef, D, O, false>(              \
+        SpsInterface<false> * pInterface )                                                                             \
     {                                                                                                                  \
-        return pInterface->xIndex##D##O;                                                                               \
+        return pInterface->pIndex##D##O;                                                                               \
     }
 
-IMPLEMENT_GET_INDEX_HELPER( 1, 0 )
-IMPLEMENT_GET_INDEX_HELPER( 2, 1 )
-
-IMPLEMENT_GET_INDEX_HELPER( 2, 0 )
-IMPLEMENT_GET_INDEX_HELPER( 3, 1 )
-IMPLEMENT_GET_INDEX_HELPER( 4, 2 )
-
-IMPLEMENT_GET_INDEX_HELPER( 3, 0 )
-IMPLEMENT_GET_INDEX_HELPER( 5, 2 )
+RELEVANT_COMBINATIONS( IMPLEMENT_GET_INDEX_HELPER )
 
 } // namespace cm

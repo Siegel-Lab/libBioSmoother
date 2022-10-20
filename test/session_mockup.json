@@ -78,7 +78,8 @@
                 },
                 "has_map_q": true,
                 "has_multimapping": false,
-                "total_reads": 1000
+                "total_reads": 1000,
+                "path": "some some some"
             },
             "rep_2": {
                 "ids": {

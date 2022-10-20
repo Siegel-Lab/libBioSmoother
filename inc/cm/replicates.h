@@ -90,7 +90,7 @@ void PartialQuarry::setBinValues( )
                     if( iDataSetId != -1 )
                     {
                         if( bHasMapQ && bHasMultiMap )
-                            vVals[ uiI ] = xIndices.getIndex<3, 2>( ).count(
+                            vVals[ uiI ] = xIndices.getIndex<3, 2>( )->count(
                                 iDataSetId,
                                 { vCoords[ uiI ].uiIndexY, vCoords[ uiI ].uiIndexX, uiMapQMax },
                                 { vCoords[ uiI ].uiIndexY + vCoords[ uiI ].uiH,
@@ -99,14 +99,14 @@ void PartialQuarry::setBinValues( )
                                 0 );
                         else if( !bHasMapQ && bHasMultiMap )
                             vVals[ uiI ] =
-                                xIndices.getIndex<2, 2>( ).count( iDataSetId,
-                                                                  { vCoords[ uiI ].uiIndexY, vCoords[ uiI ].uiIndexX },
-                                                                  { vCoords[ uiI ].uiIndexY + vCoords[ uiI ].uiH,
-                                                                    vCoords[ uiI ].uiIndexX + vCoords[ uiI ].uiW },
-                                                                  xIntersect,
-                                                                  0 );
+                                xIndices.getIndex<2, 2>( )->count( iDataSetId,
+                                                                   { vCoords[ uiI ].uiIndexY, vCoords[ uiI ].uiIndexX },
+                                                                   { vCoords[ uiI ].uiIndexY + vCoords[ uiI ].uiH,
+                                                                     vCoords[ uiI ].uiIndexX + vCoords[ uiI ].uiW },
+                                                                   xIntersect,
+                                                                   0 );
                         else if( bHasMapQ && !bHasMultiMap )
-                            vVals[ uiI ] = xIndices.getIndex<3, 0>( ).count(
+                            vVals[ uiI ] = xIndices.getIndex<3, 0>( )->count(
                                 iDataSetId,
                                 { vCoords[ uiI ].uiIndexY, vCoords[ uiI ].uiIndexX, uiMapQMax },
                                 { vCoords[ uiI ].uiIndexY + vCoords[ uiI ].uiH,
@@ -115,12 +115,12 @@ void PartialQuarry::setBinValues( )
                                 0 );
                         else // if(!bHasMapQ && !bHasMultiMap)
                             vVals[ uiI ] =
-                                xIndices.getIndex<2, 0>( ).count( iDataSetId,
-                                                                  { vCoords[ uiI ].uiIndexY, vCoords[ uiI ].uiIndexX },
-                                                                  { vCoords[ uiI ].uiIndexY + vCoords[ uiI ].uiH,
-                                                                    vCoords[ uiI ].uiIndexX + vCoords[ uiI ].uiW },
-                                                                  xIntersect,
-                                                                  0 );
+                                xIndices.getIndex<2, 0>( )->count( iDataSetId,
+                                                                   { vCoords[ uiI ].uiIndexY, vCoords[ uiI ].uiIndexX },
+                                                                   { vCoords[ uiI ].uiIndexY + vCoords[ uiI ].uiH,
+                                                                     vCoords[ uiI ].uiIndexX + vCoords[ uiI ].uiW },
+                                                                   xIntersect,
+                                                                   0 );
                     }
                     else
                         vVals[ uiI ] = 0;
