@@ -102,6 +102,7 @@ PYBIND11_MODULE( libPartialQuarry, m )
         .def( "set_value", &cm::PartialQuarry::setValue<std::string> ) //
         .def( "set_value", &cm::PartialQuarry::setValue<bool> ) //
         .def( "set_value", &cm::PartialQuarry::setValue<double> ) //
+        .def( "set_value", &cm::PartialQuarry::setValue<json> ) //
         .def( "set_value", &cm::PartialQuarry::setValue<std::vector<std::string>> ) //
         .def( "has_undo", &cm::PartialQuarry::hasUndo ) //
         .def( "undo", &cm::PartialQuarry::undo ) //

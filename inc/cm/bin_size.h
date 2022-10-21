@@ -96,10 +96,7 @@ void PartialQuarry::regBinSize( )
                                                      { "interface", "max_num_bins_factor" },
                                                      { "interface", "bin_aspect_ratio" },
                                                      { "settings", "dividend" },
-                                                     { "settings", "area", "y_end" },
-                                                     { "settings", "area", "y_start" },
-                                                     { "settings", "area", "x_end" },
-                                                     { "settings", "area", "x_start" } },
+                                                     { "settings", "area" } },
                                .uiLastUpdated = uiCurrTime } );
 
     registerNode( NodeNames::RenderArea,
@@ -108,10 +105,7 @@ void PartialQuarry::regBinSize( )
                                .vIncomingFunctions = { NodeNames::BinSize },
                                .vIncomingSession = { { "export", "do_export_full" },
                                                      { "settings", "contigs", "genome_size" },
-                                                     { "settings", "area", "y_end" },
-                                                     { "settings", "area", "y_start" },
-                                                     { "settings", "area", "x_end" },
-                                                     { "settings", "area", "x_start" } },
+                                                     { "settings", "area" } },
                                .uiLastUpdated = uiCurrTime } );
 }
 

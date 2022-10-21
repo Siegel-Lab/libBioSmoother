@@ -48,6 +48,45 @@ void PartialQuarry::normalizeBinominalTest( )
 
 void PartialQuarry::normalizeIC( )
 {
+    /*
+    
+    def hi_c_normalization(self, bins, cols, rows):
+        # max 50 iterations
+        for num_itr in range(50): 
+            assert len(bins) == len(cols) * len(rows)
+            # compute coverage & width
+            cov_rows = [(sum(bins[y + len(cols) * x] for y in range(len(cols))), v[1]) for x, v in enumerate(rows)]
+            cov_cols = [(sum(bins[y + len(cols) * x] for x in range(len(rows))), v[1]) for y, v in enumerate(cols)]
+            def unit_mean(l):
+                total_width = sum(w for v, w in l if v > 0)
+                cnt = 0
+                m = 1
+                for m, w in sorted([(v, w) for v, w in l if v > 0]):
+                    if cnt + w > total_width / 2:
+                        break
+                    cnt += w
+                return [r if r != 0 else 1 for r in [x / m for x, _ in l]]
+
+            cov_cols = unit_mean(cov_cols)
+            cov_rows = unit_mean(cov_rows)
+            assert len(cov_cols) == len(cols)
+            assert len(cov_rows) == len(rows)
+            assert len(bins) == len(cov_cols) * len(cov_rows)
+
+            max_bias_delta = 0
+            for idx in range(len(bins)):
+                bias_delta = cov_cols[idx % len(cols)] * cov_rows[idx // len(cols)]
+                bins[idx] = bins[idx] / bias_delta
+                max_bias_delta = max(max_bias_delta, abs(1-bias_delta))
+
+            if max_bias_delta < 0.01:
+                print("stopped at iteration", num_itr, "since max_bias_delta is", max_bias_delta)
+                break
+        
+        n = max(bins + [1])
+        return [x/n for x in bins]
+
+    */
     throw std::logic_error( "Function not implemented" );
 }
 

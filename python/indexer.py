@@ -27,7 +27,7 @@ class Indexer:
         self.session_default["dividend"] = dividend
         self.session_default["previous"] = None
         self.session_default["next"] = None
-        self.session_default["settings"] = None  # @todo get fac default
+        self.session_default["settings"] = None # @todo get fac default
         self.session_default["replicates"] = {
             "list": [],
             "by_name": {},
@@ -104,6 +104,12 @@ class Indexer:
             else:
                 raise RuntimeError("annotation with this name already exists")
 
+        self.session_default["replicates"] = {
+            "list": [],
+            "by_name": {},
+            "in_group": {},
+            "coverage": {},
+        }
         self.save_session()
 
     def name_unique(self, name):
