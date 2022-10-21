@@ -61,7 +61,7 @@ void PartialQuarry::setColored( )
 }
 
 
-std::vector<std::string> PartialQuarry::getColors( )
+const std::vector<std::string>& PartialQuarry::getColors( )
 {
     update( NodeNames::Colored );
     return vColored;

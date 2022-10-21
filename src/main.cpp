@@ -60,8 +60,10 @@ template <bool CACHE> void exportSpsInterface( pybind11::module& m )
     pybind11::class_<cm::SpsInterface<CACHE>>( m, CACHE ? "CachedSpsInterface" : "DiskSpsInterface" ) //
         .def( pybind11::init<std::string>( ) ) //
         .def( "loaded", &cm::SpsInterface<CACHE>::loaded )
+        .def( "clear_points_and_desc", &cm::SpsInterface<CACHE>::clearPointsAndDesc )
         .def( "insert", &cm::SpsInterface<CACHE>::insert, //
-              pybind11::arg( "d" ), pybind11::arg( "o" ), pybind11::arg( "start" ), pybind11::arg( "end" ) )
+              pybind11::arg( "d" ), pybind11::arg( "o" ), pybind11::arg( "start" ), pybind11::arg( "end" ),
+              pybind11::arg( "desc" ) = "" )
         .def( "generate", &cm::SpsInterface<CACHE>::generate, //
               pybind11::arg( "d" ), pybind11::arg( "o" ), pybind11::arg( "fac" ) = -1,
               pybind11::arg( "verbosity" ) = 1 );
@@ -80,9 +82,33 @@ PYBIND11_MODULE( libPartialQuarry, m )
     m.attr( "SPS_VERSION" ) = SPS_VERSION;
     m.attr( "SPS_BUILD_TIME" ) = SPS_BUILD_TIME;
 
+    pybind11::class_<cm::BinCoord>( m, "BinCoord" ) //
+        .def( pybind11::init<>( ) ) //
+        .def_readwrite( "chr_x", &cm::BinCoord::sChromosomeX ) //
+        .def_readwrite( "chr_y", &cm::BinCoord::sChromosomeY ) //
+        .def_readwrite( "screen_x", &cm::BinCoord::uiScreenX ) //
+        .def_readwrite( "screen_y", &cm::BinCoord::uiScreenY ) //
+        .def_readwrite( "index_x", &cm::BinCoord::uiIndexX ) //
+        .def_readwrite( "index_y", &cm::BinCoord::uiIndexY ) //
+        .def_readwrite( "w", &cm::BinCoord::uiW ) //
+        .def_readwrite( "h", &cm::BinCoord::uiH ) //
+        ;
+
     pybind11::class_<cm::PartialQuarry, cm::PyPartialQuarry>( m, "PartialQuarry" ) //
         .def( pybind11::init<std::string>( ) ) //
+        .def( "set_session", &cm::PartialQuarry::setSession ) //
+        .def( "get_value", &cm::PartialQuarry::getValue<pybind11::object> ) //
+        .def( "set_value", &cm::PartialQuarry::setValue<int> ) //
+        .def( "set_value", &cm::PartialQuarry::setValue<std::string> ) //
+        .def( "set_value", &cm::PartialQuarry::setValue<bool> ) //
+        .def( "set_value", &cm::PartialQuarry::setValue<double> ) //
+        .def( "set_value", &cm::PartialQuarry::setValue<std::vector<std::string>> ) //
+        .def( "has_undo", &cm::PartialQuarry::hasUndo ) //
+        .def( "undo", &cm::PartialQuarry::undo ) //
+        .def( "has_redo", &cm::PartialQuarry::hasRedo ) //
+        .def( "redo", &cm::PartialQuarry::redo ) //
         .def( "get_colors", &cm::PartialQuarry::getColors ) //
+        .def( "get_bin_coords", &cm::PartialQuarry::getBinCoords ) //
         .def( "normalizeBinominalTestTrampoline", &cm::ContectMappingPublicist::normalizeBinominalTestTrampoline ) //
         .def( "colorPalette", &cm::ContectMappingPublicist::colorPalette ) //
         ;

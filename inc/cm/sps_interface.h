@@ -68,15 +68,17 @@ std::shared_ptr<sps::Index<storage_t<D, false, true, O>>> getIndexHelper( SpsInt
         std::copy_n( vStart.begin( ), D - O, aStart##D##O.begin( ) );                                                  \
                                                                                                                        \
         if constexpr( O == 0 )                                                                                         \
-            pIndex##D##O->addPoint( aStart##D##O );                                                                    \
+            pIndex##D##O->addPoint( aStart##D##O, sDesc );                                                             \
         else                                                                                                           \
         {                                                                                                              \
             std::array<uint64_t, D - O> aEnd##D##O;                                                                    \
             std::copy_n( vEnd.begin( ), D - O, aEnd##D##O.begin( ) );                                                  \
                                                                                                                        \
-            pIndex##D##O->addPoint( aStart##D##O, aEnd##D##O );                                                        \
+            pIndex##D##O->addPoint( aStart##D##O, aEnd##D##O, sDesc );                                                 \
         }                                                                                                              \
         break;
+
+#define CLEAR_P_D( D, O ) pIndex##D##O->clearPoints( );
 
 template <bool CACHED> class SpsInterface
 {
@@ -124,7 +126,7 @@ template <bool CACHED> class SpsInterface
     }
 
   public:
-    void insert( size_t uiD, size_t uiO, std::vector<uint64_t> vStart, std::vector<uint64_t> vEnd )
+    void insert( size_t uiD, size_t uiO, std::vector<uint64_t> vStart, std::vector<uint64_t> vEnd, std::string sDesc )
     {
         switch( combine( uiD, uiO ) )
         {
@@ -149,6 +151,11 @@ template <bool CACHED> class SpsInterface
                 break;
         }
         return uiId;
+    }
+
+    void clearPointsAndDesc( )
+    {
+        RELEVANT_COMBINATIONS( CLEAR_P_D )
     }
 };
 

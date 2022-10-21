@@ -1,5 +1,6 @@
 #include "cm/sps_interface.h"
 #include <nlohmann/json.hpp>
+#include <pybind11_json/pybind11_json.hpp>
 
 #pragma once
 
@@ -173,7 +174,7 @@ class PartialQuarry
         return this->xSession;
     }
 
-    template <typename T> const T& getSession( std::vector<std::string> vKeys )
+    template <typename T> T getValue( std::vector<std::string> vKeys )
     {
         json& rCurr = this->xSession;
         for( std::string sKey : vKeys )
@@ -181,7 +182,7 @@ class PartialQuarry
         return rCurr.get<T>( );
     }
 
-    template <typename T> void changeSession( std::vector<std::string> vKeys, T xVal )
+    template <typename T> void setValue( std::vector<std::string> vKeys, T xVal )
     {
         ++uiCurrTime;
 
@@ -392,8 +393,18 @@ class PartialQuarry
     {}
 
     // colors.h
-    std::vector<std::string> getColors( );
+    const std::vector<std::string>& getColors( );
+
+    // coords.h
+    const std::vector<std::array<BinCoord, 2>>& getBinCoords( );
 };
 
+template <> pybind11::object PartialQuarry::getValue( std::vector<std::string> vKeys )
+{
+    json& rCurr = this->xSession;
+    for( std::string sKey : vKeys )
+        rCurr = rCurr[ sKey ];
+    return pyjson::from_json( rCurr );
+}
 
 } // namespace cm

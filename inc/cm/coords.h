@@ -340,6 +340,13 @@ void PartialQuarry::setBinCoords( )
         }
 }
 
+
+const std::vector<std::array<BinCoord, 2>>& PartialQuarry::getBinCoords( )
+{
+    update( NodeNames::BinCoords );
+    return vBinCoords;
+}
+
 void PartialQuarry::regCoords( )
 {
     registerNode( NodeNames::ActiveChrom, ComputeNode{ .sNodeName = "active_chroms",

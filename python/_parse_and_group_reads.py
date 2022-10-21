@@ -110,7 +110,7 @@ def parse_heatmap(in_filename, test, chr_filter):
                 break
             cnt += 1
 
-            yield read_name, chr_1, int(pos_1), chr_2, int(
+            yield line, read_name, chr_1, int(pos_1), chr_2, int(
                 pos_2
             ), mapq_1, mapq_2, tag_a, tag_b
 
@@ -120,7 +120,7 @@ def has_map_q_and_multi_map(in_filename, test, chr_filter):
     multi_map = False
     last_map_q = None
     last_read_name = None
-    for read_name, _, _, _, _, mapq_1, mapq_2, tag_a, tag_b in parse_heatmap(
+    for _, read_name, _, _, _, _, mapq_1, mapq_2, tag_a, tag_b in parse_heatmap(
         in_filename, test, chr_filter
     ):
         if last_read_name is None:
@@ -185,6 +185,7 @@ def group_heatmap(in_filename, file_size, chr_filter, no_groups=False, test=Fals
         group_2 = []
 
     for idx_2, (
+        _,
         read_name,
         chr_1,
         pos_1,
@@ -226,6 +227,91 @@ def group_heatmap(in_filename, file_size, chr_filter, no_groups=False, test=Fals
     yield from deal_with_group()
 
 
+class ChrOrderHeatmapIterator:
+    def __init__(self, chrs, prefix):
+        self.chrs = chrs
+        self.prefix = prefix
+
+    def cleanup(self):
+        for chr_1 in chrs:
+            for chr_2 in chrs:
+                os.remove(prefix + "." + chr_1 + "." + chr_2, "x")
+
+    def itr_x_axis(self):
+        for x in set(self.chrs.keys()):
+            yield x
+
+    def itr_y_axis(self):
+        for y in set([chr_y for vals in self.chrs.values() for chr_y in vals]):
+            yield y
+
+    def itr_heatmap(self):
+        for chr_x in self.yield_x_axis():
+            for chr_y in self.yield_y_axis():
+                yield chr_x, chr_y
+
+    def itr_cell(self, chr_x, chr_y):
+        with open(prefix + "." + chr_1 + "." + chr_2, "r") as in_file:
+            for line in in_file:
+                yield line.split()
+
+    def itr_row(self, chr_y):
+        for chr_x in self.itr_x_axis():
+            yield from self.itr_cell(chr_x, chr_y)
+
+    def itr_col(self, chr_x):
+        for chr_Y in self.itr_y_axis():
+            yield from self.itr_cell(chr_x, chr_y)
+
+
+def chr_order_heatmap(
+    index_prefix,
+    dataset_name,
+    in_filename,
+    file_size,
+    chr_filter,
+    no_groups=False,
+    test=False,
+):
+    prefix = index_prefix + "/." + dataset_name
+    out_files = {}
+    chrs = {}
+    for (
+        read_name,
+        chr_1,
+        pos_1_s,
+        pos_1_e,
+        chr_2,
+        pos_2_s,
+        pos_2_e,
+        map_q,
+    ) in group_heatmap(in_filename, file_size, chr_filter, no_groups, test):
+        if chr_1 not in out_files:
+            out_files[chr_1] = {}
+            chrs[chr_1] = set()
+        if chr_2 not in out_files[chr_1]:
+            out_files[chr_1][chr_2] = open(prefix + "." + chr_1 + "." + chr_2, "x")
+            chrs[chr_1].add(chr_2)
+
+        out_files[chr_1][chr_2].write(
+            "\t".join(
+                read_name,
+                str(pos_1_s),
+                str(pos_1_e),
+                str(pos_2_s),
+                str(pos_2_e),
+                str(map_q),
+            )
+            + "\n"
+        )
+
+    for vals in out_files.values():
+        for val in vals.values():
+            val.close()
+
+    return ChrOrderHeatmapIterator(chrs, prefix)
+
+
 def get_filesize(path):
     if not os.path.exists(path):
         raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), path)
@@ -234,3 +320,26 @@ def get_filesize(path):
         .stdout.decode("utf-8")
         .split(" ")[0]
     )
+
+
+def parse_annotations(annotation_file):
+    with open(annotation_file, "r") as in_file_1:
+        for line in in_file_1:
+            if line[0] == "#":
+                continue
+            # parse file colum
+            (
+                chrom,
+                db_name,
+                annotation_type,
+                from_pos,
+                to_pos,
+                _,
+                strand,
+                _,
+                extras,
+                *opt,
+            ) = line.split()
+            yield annotation_type, chrom, int(from_pos), int(to_pos), extras.replace(
+                ";", "\n"
+            )
