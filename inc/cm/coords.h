@@ -129,15 +129,14 @@ size_t smaller_bin_to_num( std::string sVal )
     throw std::logic_error( "unknown iSmallerBins value" );
 }
 
-std::vector<ChromDesc> activeChromList( json& xChromList, json& xChromLen, json& xChromDisp, std::string sExistenceKey )
+std::vector<ChromDesc> activeChromList( json& xChromLen, json& xChromDisp, std::string sExistenceKey )
 {
     std::vector<ChromDesc> vRet;
-    vRet.reserve( xChromList.size( ) );
-    for( auto& xChrom : xChromList )
+    vRet.reserve( xChromDisp[ sExistenceKey ].size( ) );
+    for( auto& xChrom : xChromDisp[ sExistenceKey ] )
     {
         std::string sChrom = xChrom.get<std::string>( );
-        if( xChromDisp[ sChrom ][ sExistenceKey ].get<bool>( ) )
-            vRet.emplace_back( ChromDesc{ .sName = sChrom, .uiLength = xChromLen[ sChrom ].get<size_t>( ) } );
+        vRet.emplace_back( ChromDesc{ .sName = sChrom, .uiLength = xChromLen[ sChrom ].get<size_t>( ) } );
     }
     return vRet;
 }
@@ -145,9 +144,8 @@ std::vector<ChromDesc> activeChromList( json& xChromList, json& xChromLen, json&
 void PartialQuarry::setActiveChrom( )
 {
     for( bool bX : { true, false } )
-        this->vActiveChromosomes[ bX ? 0 : 1 ] = activeChromList( this->xSession[ "contigs" ][ "list" ],
-                                                                  this->xSession[ "contigs" ][ "lengths" ],
-                                                                  this->xSession[ "contigs" ][ "displayed" ],
+        this->vActiveChromosomes[ bX ? 0 : 1 ] = activeChromList( this->xSession[ "contigs" ][ "lengths" ],
+                                                                  this->xSession[ "contigs" ],
                                                                   bX ? "displayed_on_x" : "displayed_on_y" );
 }
 
@@ -349,11 +347,12 @@ const std::vector<std::array<BinCoord, 2>>& PartialQuarry::getBinCoords( )
 
 void PartialQuarry::regCoords( )
 {
-    registerNode( NodeNames::ActiveChrom, ComputeNode{ .sNodeName = "active_chroms",
-                                                       .fFunc = &PartialQuarry::setActiveChrom,
-                                                       .vIncomingFunctions = { },
-                                                       .vIncomingSession = { { "contigs", "displayed" } },
-                                                       .uiLastUpdated = uiCurrTime } );
+    registerNode( NodeNames::ActiveChrom,
+                  ComputeNode{ .sNodeName = "active_chroms",
+                               .fFunc = &PartialQuarry::setActiveChrom,
+                               .vIncomingFunctions = { },
+                               .vIncomingSession = { { "contigs", "displayed_on_x" }, { "contigs", "displayed_on_y" } },
+                               .uiLastUpdated = uiCurrTime } );
 
     registerNode( NodeNames::AxisCoords,
                   ComputeNode{ .sNodeName = "axis_coords",

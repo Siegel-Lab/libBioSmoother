@@ -27,7 +27,7 @@ class Indexer:
         self.session_default["dividend"] = dividend
         self.session_default["previous"] = None
         self.session_default["next"] = None
-        self.session_default["settings"] = None # @todo get fac default
+        self.session_default["settings"] = None  # @todo get fac default
         self.session_default["replicates"] = {
             "list": [],
             "by_name": {},

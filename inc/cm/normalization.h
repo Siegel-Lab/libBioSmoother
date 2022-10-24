@@ -11,9 +11,9 @@ void PartialQuarry::normalizeSize( size_t uiSize )
     std::array<size_t, 2> vTotalReads = { 0, 0 };
     for( std::string& rRep : this->vActiveReplicates )
     {
-        if( this->xSession[ "replicates" ][ "in_group" ][ rRep ][ "in_group_a" ].get<bool>( ) )
+        if( this->xSession[ "replicates" ][ "in_group_a" ].contains( rRep ) )
             vTotalReads[ 0 ] += this->xSession[ "replicates" ][ "by_name" ][ rRep ][ "total_reads" ].get<size_t>( );
-        if( this->xSession[ "replicates" ][ "in_group" ][ rRep ][ "in_group_b" ].get<bool>( ) )
+        if( this->xSession[ "replicates" ][ "in_group_b" ].contains( rRep ) )
             vTotalReads[ 1 ] += this->xSession[ "replicates" ][ "by_name" ][ rRep ][ "total_reads" ].get<size_t>( );
     }
     for( auto& vVal : vvFlatValues )
@@ -49,10 +49,10 @@ void PartialQuarry::normalizeBinominalTest( )
 void PartialQuarry::normalizeIC( )
 {
     /*
-    
+
     def hi_c_normalization(self, bins, cols, rows):
         # max 50 iterations
-        for num_itr in range(50): 
+        for num_itr in range(50):
             assert len(bins) == len(cols) * len(rows)
             # compute coverage & width
             cov_rows = [(sum(bins[y + len(cols) * x] for y in range(len(cols))), v[1]) for x, v in enumerate(rows)]
@@ -82,7 +82,7 @@ void PartialQuarry::normalizeIC( )
             if max_bias_delta < 0.01:
                 print("stopped at iteration", num_itr, "since max_bias_delta is", max_bias_delta)
                 break
-        
+
         n = max(bins + [1])
         return [x/n for x in bins]
 
@@ -117,8 +117,9 @@ void PartialQuarry::regNormalization( )
                   ComputeNode{ .sNodeName = "normalization",
                                .fFunc = &PartialQuarry::setNormalized,
                                .vIncomingFunctions = { NodeNames::FlatValues, NodeNames::FlatCoverageValues },
-                               .vIncomingSession = { { "normalization", "normalize_by" },
-                                                     { "replicates", "in_group" },
+                               .vIncomingSession = { { "settings", "normalization", "normalize_by" },
+                                                     { "replicates", "in_group_a" },
+                                                     { "replicates", "in_group_b" },
                                                      { "settings", "normalization", "p_accept", "val" } },
                                .uiLastUpdated = uiCurrTime } );
 }

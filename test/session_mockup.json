@@ -9,17 +9,17 @@
             "chr_1": 10,
             "chr_2": 50
         },
-        "displayed": {
-            "chr_1": {
-                "displayed_on_x": true,
-                "displayed_on_y": true
-            },
-            "chr_2": {
-                "displayed_on_x": true,
-                "displayed_on_y": true
-            }
-        },
-        "genome_size": 60
+        "displayed_on_x": [
+            "chr_1",
+            "chr_2"
+        ],
+        "displayed_on_y": [
+            "chr_1",
+            "chr_2"
+        ],
+        "genome_size": 60,
+        "column_coordinates": "full_genome",
+        "row_coordinates": "full_genome"
     },
     "area": {
         "x_start": 0,
@@ -38,34 +38,18 @@
             "rep_1",
             "rep_2"
         ],
-        "in_group":{
-            "rep_1": {
-                "in_group_a": true,
-                "in_group_b": false
-            },
-            "rep_2": {
-                "in_group_a": true,
-                "in_group_b": false
-            }
-        },
-        "coverage": {
-            "rep_1": {
-                "in_column": false,
-                "in_row": false,
-                "cov_column_a": false,
-                "cov_row_a": false,
-                "cov_column_b": false,
-                "cov_row_b": false
-            },
-            "rep_2": {
-                "in_column": false,
-                "in_row": false,
-                "cov_column_a": false,
-                "cov_row_a": false,
-                "cov_column_b": false,
-                "cov_row_b": false
-            }
-        },
+        "in_group_a" : [
+            "rep1"
+        ],
+        "in_group_b" : [
+            "rep2"
+        ],
+        "in_column": [],
+        "in_row": [],
+        "cov_column_a": [],
+        "cov_column_b": [],
+        "cov_row_a": [],
+        "cov_row_b": [],
         "by_name": {
             "rep_1": {
                 "ids": {
@@ -104,7 +88,8 @@
                 },
                 "has_map_q": false,
                 "has_multimapping": false,
-                "total_reads": 1503
+                "total_reads": 1503,
+                "path": "other other other"
             }
         }
     },
@@ -123,27 +108,21 @@
                 "total_reads": 1000
             }
         },
-        "coverage": {
-            "norm_1": {
-                "in_column": true,
-                "in_row": true,
-                "cov_column_a": false,
-                "cov_row_a": false,
-                "cov_column_b": false,
-                "cov_row_b": false
-            }
-        }
+        "in_column": [],
+        "in_row": [],
+        "cov_column_a": [],
+        "cov_column_b": [],
+        "cov_row_a": [],
+        "cov_row_b": []
     },
     "annotation":{
         "list": [
             "gene"
         ],
-        "visible": {
-            "gene": {
-                "x": true,
-                "y": true
-            }
-        },
+        "visible_x": [],
+        "visible_y": [],
+        "row_filter": [],
+        "col_filter": [],
         "ids":{
             "gene": {
                 "chr1": 0,
@@ -151,6 +130,7 @@
             }
         }
     },
+    "export_prefix": "blub",
     "previous": null,
     "next": null,
     "settings": {

@@ -12,13 +12,12 @@ void PartialQuarry::setActiveReplicates( )
     vActiveReplicates.resize( rList.size( ) );
     vActiveReplicates.clear( );
 
-    for( auto& xRepl : rList )
-    {
-        std::string sRepl = xRepl.get<std::string>( );
-        if( this->xSession[ "replicates" ][ "in_group" ][ sRepl ][ "in_group_a" ].get<bool>( ) ||
-            this->xSession[ "replicates" ][ "in_group" ][ sRepl ][ "in_group_b" ].get<bool>( ) )
-            vActiveReplicates.push_back( sRepl );
-    }
+    std::set<std::string> xHave{ };
+    for( std::string sX : { "in_group_a", "in_group_b" } )
+        for( auto& xRepl : this->xSession[ "replicates" ][ sX ] )
+            xHave.insert( xRepl.get<std::string>( ) );
+
+    std::copy( xHave.begin( ), xHave.end( ), vActiveReplicates.begin( ) );
 }
 
 
@@ -142,6 +141,8 @@ void PartialQuarry::setInGroup( )
         iInGroupSetting = 2;
     else if( sInGroupSetting == "max" )
         iInGroupSetting = 3;
+    else if( sInGroupSetting == "mean" )
+        iInGroupSetting = 4;
     else
         throw std::logic_error( "invalid value for in_group" );
 }
@@ -163,6 +164,8 @@ void PartialQuarry::setBetweenGroup( )
         iBetweenGroupSetting = 5;
     else if( sBetwGroupSetting == "sum" )
         iBetweenGroupSetting = 6;
+    else if( sBetwGroupSetting == "div" )
+        iBetweenGroupSetting = 7;
     else
         throw std::logic_error( "invalid value for between_group" );
 }
@@ -190,6 +193,10 @@ size_t PartialQuarry::getFlatValue( std::vector<size_t> vCollected )
             case 3:
                 uiVal = std::max( uiVal, uiC );
                 break;
+            case 4:
+                std::sort( vCollected.begin( ), vCollected.end( ) );
+                uiVal = vCollected[ vCollected.size( ) / 2 ];
+                break;
             default:
                 throw std::logic_error( "invalid value for in_group" );
         }
@@ -214,6 +221,8 @@ double PartialQuarry::getMixedValue( double uiA, double uiB )
             return std::abs( uiA - uiB );
         case 6:
             return uiA + uiB;
+        case 7:
+            return uiA / uiB;
         default:
             throw std::logic_error( "invalid value for between_group" );
     }
@@ -231,9 +240,9 @@ void PartialQuarry::setFlatValues( )
         vInGroup[ 1 ].reserve( vActiveReplicates.size( ) );
         for( size_t uiI = 0; uiI < vActiveReplicates.size( ); uiI++ )
         {
-            if( this->xSession[ "replicates" ][ "in_group" ][ vActiveReplicates[ uiI ] ][ "in_group_a" ].get<bool>( ) )
+            if( this->xSession[ "replicates" ][ "in_group_a" ].contains( vActiveReplicates[ uiI ] ) )
                 vInGroup[ 0 ].push_back( uiI );
-            if( this->xSession[ "replicates" ][ "in_group" ][ vActiveReplicates[ uiI ] ][ "in_group_b" ].get<bool>( ) )
+            if( this->xSession[ "replicates" ][ "in_group_b" ].contains( vActiveReplicates[ uiI ] ) )
                 vInGroup[ 1 ].push_back( uiI );
         }
 
@@ -259,7 +268,7 @@ void PartialQuarry::regReplicates( )
                   ComputeNode{ .sNodeName = "active_replicates",
                                .fFunc = &PartialQuarry::setActiveReplicates,
                                .vIncomingFunctions = { },
-                               .vIncomingSession = { { "replicates", "in_group" } },
+                               .vIncomingSession = { { "replicates", "in_group_a" }, { "replicates", "in_group_b" } },
                                .uiLastUpdated = uiCurrTime } );
 
     registerNode( NodeNames::IntersectionType,
@@ -296,7 +305,7 @@ void PartialQuarry::regReplicates( )
                   ComputeNode{ .sNodeName = "flat_bins",
                                .fFunc = &PartialQuarry::setFlatValues,
                                .vIncomingFunctions = { NodeNames::BinValues, NodeNames::InGroup },
-                               .vIncomingSession = { { "replicates", "in_group" } },
+                               .vIncomingSession = { { "replicates", "in_group_a" }, { "replicates", "in_group_b" } },
                                .uiLastUpdated = uiCurrTime } );
 }
 
