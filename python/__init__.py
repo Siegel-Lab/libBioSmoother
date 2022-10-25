@@ -1,2 +1,3 @@
-from indexer import Indexer
-from quarry import Quarry
+from .indexer import Indexer
+from .indexer_parser import *
+from .quarry import Quarry

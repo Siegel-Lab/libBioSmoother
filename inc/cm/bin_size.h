@@ -83,6 +83,12 @@ void PartialQuarry::setRenderArea( )
     }
 }
 
+const std::array<int64_t, 4> PartialQuarry::getDrawingArea( )
+{
+    update( NodeNames::RenderArea );
+    return std::array<int64_t, 4>{ { iStartX, iStartY, iEndX, iEndY } };
+}
+
 void PartialQuarry::regBinSize( )
 {
     registerNode( NodeNames::BinSize,

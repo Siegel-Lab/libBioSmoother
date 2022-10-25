@@ -233,9 +233,9 @@ class ChrOrderHeatmapIterator:
         self.prefix = prefix
 
     def cleanup(self):
-        for chr_1 in chrs:
-            for chr_2 in chrs:
-                os.remove(prefix + "." + chr_1 + "." + chr_2, "x")
+        for chr_1 in self.chrs:
+            for chr_2 in self.chrs:
+                os.remove(self.prefix + "." + chr_1 + "." + chr_2)
 
     def itr_x_axis(self):
         for x in set(self.chrs.keys()):
@@ -251,7 +251,7 @@ class ChrOrderHeatmapIterator:
                 yield chr_x, chr_y
 
     def itr_cell(self, chr_x, chr_y):
-        with open(prefix + "." + chr_1 + "." + chr_2, "r") as in_file:
+        with open(self.prefix + "." + chr_x + "." + chr_y, "r") as in_file:
             for line in in_file:
                 yield line.split()
 
@@ -260,7 +260,7 @@ class ChrOrderHeatmapIterator:
             yield from self.itr_cell(chr_x, chr_y)
 
     def itr_col(self, chr_x):
-        for chr_Y in self.itr_y_axis():
+        for chr_y in self.itr_y_axis():
             yield from self.itr_cell(chr_x, chr_y)
 
 
@@ -273,7 +273,7 @@ def chr_order_heatmap(
     no_groups=False,
     test=False,
 ):
-    prefix = index_prefix + "/." + dataset_name
+    prefix = index_prefix + "/.tmp." + dataset_name
     out_files = {}
     chrs = {}
     for (
@@ -295,12 +295,14 @@ def chr_order_heatmap(
 
         out_files[chr_1][chr_2].write(
             "\t".join(
-                read_name,
-                str(pos_1_s),
-                str(pos_1_e),
-                str(pos_2_s),
-                str(pos_2_e),
-                str(map_q),
+                [
+                    read_name,
+                    str(pos_1_s),
+                    str(pos_1_e),
+                    str(pos_2_s),
+                    str(pos_2_e),
+                    str(map_q),
+                ]
             )
             + "\n"
         )

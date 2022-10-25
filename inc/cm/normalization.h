@@ -92,8 +92,8 @@ void PartialQuarry::normalizeIC( )
 
 void PartialQuarry::setNormalized( )
 {
-    vvNormalized.reserve( vvFlatValues.size( ) );
     vvNormalized.clear( );
+    vvNormalized.reserve( vvFlatValues.size( ) );
 
     if( this->xSession[ "settings" ][ "normalization" ][ "normalize_by" ].get<std::string>( ) == "dont" )
         doNotNormalize( );
@@ -114,12 +114,13 @@ void PartialQuarry::setNormalized( )
 void PartialQuarry::regNormalization( )
 {
     registerNode( NodeNames::Normalized,
-                  ComputeNode{ .sNodeName = "normalization",
+                  ComputeNode{ .sNodeName = "normalized_bins",
                                .fFunc = &PartialQuarry::setNormalized,
                                .vIncomingFunctions = { NodeNames::FlatValues, NodeNames::FlatCoverageValues },
                                .vIncomingSession = { { "settings", "normalization", "normalize_by" },
                                                      { "replicates", "in_group_a" },
                                                      { "replicates", "in_group_b" },
+                                                     { "replicates", "by_name" },
                                                      { "settings", "normalization", "p_accept", "val" } },
                                .uiLastUpdated = uiCurrTime } );
 }

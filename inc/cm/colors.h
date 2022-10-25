@@ -13,10 +13,19 @@ void PartialQuarry::setColors( )
                                   this->xSession[ "settings" ][ "interface" ][ "color_high" ].get<std::string>( ) );
 }
 
+void PartialQuarry::setAnnotationColors( )
+{
+    vColorPaletteAnnotation.clear( );
+    auto& rList = this->xSession[ "settings" ][ "interface" ][ "annotation_color_palette" ];
+    vColorPaletteAnnotation.reserve( rList.size( ) );
+    for( auto& rC : rList )
+        vColorPaletteAnnotation.push_back( rC.get<std::string>( ) );
+}
+
 void PartialQuarry::setCombined( )
 {
-    vCombined.reserve( vvNormalized.size( ) );
     vCombined.clear( );
+    vCombined.reserve( vvNormalized.size( ) );
 
     for( auto& vArr : vvNormalized )
         vCombined.push_back( getMixedValue( vArr[ 0 ], vArr[ 1 ] ) );
@@ -53,8 +62,8 @@ size_t PartialQuarry::colorRange( double fX )
 
 void PartialQuarry::setColored( )
 {
-    vColored.reserve( vCombined.size( ) );
     vColored.clear( );
+    vColored.reserve( vCombined.size( ) );
 
     for( double fC : vCombined )
         vColored.push_back( vColorPalette[ colorRange( logScale( fC ) ) ] );
@@ -78,8 +87,15 @@ void PartialQuarry::regColors( )
                                                      { "settings", "interface", "color_high" } },
                                .uiLastUpdated = uiCurrTime } );
 
+    registerNode( NodeNames::AnnotationColors,
+                  ComputeNode{ .sNodeName = "annotation_color_palette",
+                               .fFunc = &PartialQuarry::setAnnotationColors,
+                               .vIncomingFunctions = { },
+                               .vIncomingSession = { { "settings", "interface", "annotation_color_palette" } },
+                               .uiLastUpdated = uiCurrTime } );
+
     registerNode( NodeNames::Combined,
-                  ComputeNode{ .sNodeName = "combined",
+                  ComputeNode{ .sNodeName = "combined_bins",
                                .fFunc = &PartialQuarry::setCombined,
                                .vIncomingFunctions = { NodeNames::Normalized, NodeNames::BetweenGroup },
                                .vIncomingSession = { },
@@ -87,7 +103,7 @@ void PartialQuarry::regColors( )
 
     registerNode(
         NodeNames::Colored,
-        ComputeNode{ .sNodeName = "colored",
+        ComputeNode{ .sNodeName = "colored_bins",
                      .fFunc = &PartialQuarry::setColored,
                      .vIncomingFunctions = { NodeNames::Colors, NodeNames::Combined, NodeNames::BetweenGroup },
                      .vIncomingSession = { { "settings", "normalization", "log_base", "val" },

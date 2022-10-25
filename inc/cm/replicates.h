@@ -9,8 +9,8 @@ namespace cm
 void PartialQuarry::setActiveReplicates( )
 {
     auto& rList = this->xSession[ "replicates" ][ "list" ];
-    vActiveReplicates.resize( rList.size( ) );
     vActiveReplicates.clear( );
+    vActiveReplicates.reserve( rList.size( ) );
 
     std::set<std::string> xHave{ };
     for( std::string sX : { "in_group_a", "in_group_b" } )
@@ -62,8 +62,8 @@ size_t PartialQuarry::symmetry( size_t uiA, size_t uiB )
 
 void PartialQuarry::setBinValues( )
 {
-    vvBinValues.reserve( vActiveReplicates.size( ) );
     vvBinValues.clear( );
+    vvBinValues.reserve( vActiveReplicates.size( ) );
 
     for( std::string& sRep : vActiveReplicates )
     {

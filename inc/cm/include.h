@@ -1,3 +1,4 @@
+#include "cm/annotation.h"
 #include "cm/bin_size.h"
 #include "cm/colors.h"
 #include "cm/coords.h"

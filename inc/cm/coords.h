@@ -182,8 +182,8 @@ void PartialQuarry::setBinCoords( )
                              this->xSession[ "settings" ][ "filters" ][ "min_diag_dist" ][ "val" ].get<size_t>( ) /
                              this->xSession[ "dividend" ].get<size_t>( );
 
-    vBinCoords.reserve( vAxisCords[ 0 ].size( ) * vAxisCords[ 1 ].size( ) );
     vBinCoords.clear( );
+    vBinCoords.reserve( vAxisCords[ 0 ].size( ) * vAxisCords[ 1 ].size( ) );
     for( AxisCoord& xX : vAxisCords[ 0 ] )
         for( AxisCoord& xY : vAxisCords[ 1 ] )
         {
@@ -345,6 +345,14 @@ const std::vector<std::array<BinCoord, 2>>& PartialQuarry::getBinCoords( )
     return vBinCoords;
 }
 
+
+const std::vector<AxisCoord>& PartialQuarry::getAxisCoords( bool bXAxis )
+{
+    update( NodeNames::AxisCoords );
+    return vAxisCords[ bXAxis ? 0 : 1 ];
+}
+
+
 void PartialQuarry::regCoords( )
 {
     registerNode( NodeNames::ActiveChrom,
@@ -361,7 +369,7 @@ void PartialQuarry::regCoords( )
                                .vIncomingSession = { { "settings", "filters", "cut_off_bin" } },
                                .uiLastUpdated = uiCurrTime } );
 
-    registerNode( NodeNames::Symmetry, ComputeNode{ .sNodeName = "symmetry",
+    registerNode( NodeNames::Symmetry, ComputeNode{ .sNodeName = "symmetry_setting",
                                                     .fFunc = &PartialQuarry::setSymmetry,
                                                     .vIncomingFunctions = { },
                                                     .vIncomingSession = { { "settings", "filters", "symmetry" } },

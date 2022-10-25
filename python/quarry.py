@@ -1,7 +1,7 @@
 from bokeh.palettes import Viridis256, Colorblind, Plasma256, Turbo256
 from statsmodels.stats.multitest import multipletests
 from scipy.stats import binom_test
-from libContactMapping import PartialQuarry
+from .libContactMapping import PartialQuarry, SPS_VERSION
 
 
 class Quarry(PartialQuarry):
@@ -43,3 +43,7 @@ class Quarry(PartialQuarry):
             ]
         else:
             raise RuntimeError("invalid value for color_palette")
+
+    @staticmethod
+    def get_libSps_version():
+        return SPS_VERSION

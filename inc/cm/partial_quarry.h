@@ -59,6 +59,10 @@ class PartialQuarry
         BetweenGroup,
         Combined,
         Colored,
+        ActivateAnnotation,
+        AnnotationValues,
+        AnnotationCDS,
+        AnnotationColors,
         SIZE
     };
     struct ComputeNode
@@ -269,6 +273,10 @@ class PartialQuarry
     std::array<std::vector<double>, 2> vvFlatCoverageValues;
 
     std::vector<std::string> vColorPalette;
+    std::vector<std::string> vColorPaletteAnnotation;
+    std::array<std::vector<std::string>, 2> vActiveAnnotation;
+    std::array<std::vector<std::vector<size_t>>, 2> vAnnotationValues;
+    std::array<pybind11::dict, 2> vAnnotationCDS;
 
     // bin_size.h
     size_t nextEvenNumber( double );
@@ -355,6 +363,8 @@ class PartialQuarry
     // colors.h
     void setColors( );
     // colors.h
+    void setAnnotationColors( );
+    // colors.h
     void setCombined( );
     // colors.h
     void setColored( );
@@ -365,6 +375,16 @@ class PartialQuarry
 
     // colors.h
     void regColors( );
+
+
+    // annotation.h
+    void setActivateAnnotation( );
+    // annotation.h
+    void setAnnotationValues( );
+    // annotation.h
+    void setAnnotationCDS( );
+    // annotation.h
+    void regAnnotation( );
 
   protected:
     virtual std::vector<std::array<double, 2>> normalizeBinominalTestTrampoline( std::vector<std::array<size_t, 2>>&,
@@ -379,7 +399,7 @@ class PartialQuarry
     }
 
   public:
-    PartialQuarry( std::string sPrefix ) : uiCurrTime( 0 ), vGraph( NodeNames::SIZE ), xIndices( sPrefix )
+    PartialQuarry( ) : uiCurrTime( 0 ), vGraph( NodeNames::SIZE ), xSession( ), xIndices( )
     {
         regBinSize( );
         regCoords( );
@@ -387,6 +407,22 @@ class PartialQuarry
         regCoverage( );
         regNormalization( );
         regColors( );
+        regAnnotation( );
+    }
+
+    PartialQuarry( std::string sPrefix )
+        : uiCurrTime( 0 ),
+          vGraph( NodeNames::SIZE ),
+          xSession( json::parse( std::ifstream( sPrefix + "/session.json" ) ) ),
+          xIndices( sPrefix )
+    {
+        regBinSize( );
+        regCoords( );
+        regReplicates( );
+        regCoverage( );
+        regNormalization( );
+        regColors( );
+        regAnnotation( );
     }
 
     virtual ~PartialQuarry( )
@@ -397,6 +433,42 @@ class PartialQuarry
 
     // coords.h
     const std::vector<std::array<BinCoord, 2>>& getBinCoords( );
+
+    // coords.h
+    const std::vector<AxisCoord>& getAxisCoords( bool bXAxis );
+
+    // annotation.h
+    const pybind11::dict& getAnnotation( bool bXAxis );
+
+    // bin_size.h
+    const std::array<int64_t, 4> getDrawingArea( );
+
+    std::string getDOT( )
+    {
+        std::string sRet = "digraph libContactMappingFlowDiagram {\n";
+        for( const ComputeNode& rNode : vGraph )
+        {
+            std::string sJoined = "";
+            for( std::vector<std::string> vParam : rNode.vIncomingSession )
+            {
+                for( std::string rS : vParam )
+                {
+                    if( sJoined.size( ) > 0 && sJoined.back( ) != '>' )
+                        sJoined += ".";
+                    sJoined += rS;
+                }
+                sJoined += "<br/>";
+            }
+            if( sJoined.size( ) > 0 )
+            {
+                sRet += "\t" + rNode.sNodeName + "_in [shape=box, label=<" + sJoined + ">];\n";
+                sRet += "\t" + rNode.sNodeName + "_in -> " + rNode.sNodeName + ";\n";
+            }
+            for( const NodeNames& rIncoming : rNode.vIncomingFunctions )
+                sRet += "\t" + vGraph[ rIncoming ].sNodeName + " -> " + rNode.sNodeName + ";\n";
+        }
+        return sRet + "}";
+    }
 };
 
 template <> pybind11::object PartialQuarry::getValue( std::vector<std::string> vKeys )

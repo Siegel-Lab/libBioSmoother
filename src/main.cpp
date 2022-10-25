@@ -69,7 +69,7 @@ template <bool CACHE> void exportSpsInterface( pybind11::module& m )
               pybind11::arg( "verbosity" ) = 1 );
 }
 
-PYBIND11_MODULE( libPartialQuarry, m )
+PYBIND11_MODULE( libContactMapping, m )
 {
     // prevent creation of stxxl log files
     if( getenv( (char*)"STXXLLOGFILE" ) == nullptr )
@@ -94,8 +94,17 @@ PYBIND11_MODULE( libPartialQuarry, m )
         .def_readwrite( "h", &cm::BinCoord::uiH ) //
         ;
 
+    pybind11::class_<cm::AxisCoord>( m, "AxisCoord" ) //
+        .def( pybind11::init<>( ) ) //
+        .def_readwrite( "chr", &cm::AxisCoord::sChromosome ) //
+        .def_readwrite( "screen_pos", &cm::AxisCoord::uiScreenPos ) //
+        .def_readwrite( "index_pos", &cm::AxisCoord::uiIndexPos ) //
+        .def_readwrite( "size", &cm::AxisCoord::uiSize ) //
+        ;
+
     pybind11::class_<cm::PartialQuarry, cm::PyPartialQuarry>( m, "PartialQuarry" ) //
         .def( pybind11::init<std::string>( ) ) //
+        .def( pybind11::init<>( ) ) //
         .def( "set_session", &cm::PartialQuarry::setSession ) //
         .def( "get_value", &cm::PartialQuarry::getValue<pybind11::object> ) //
         .def( "set_value", &cm::PartialQuarry::setValue<int> ) //
@@ -110,6 +119,10 @@ PYBIND11_MODULE( libPartialQuarry, m )
         .def( "redo", &cm::PartialQuarry::redo ) //
         .def( "get_colors", &cm::PartialQuarry::getColors ) //
         .def( "get_bin_coords", &cm::PartialQuarry::getBinCoords ) //
+        .def( "get_axis_coords", &cm::PartialQuarry::getAxisCoords ) //
+        .def( "get_annotation", &cm::PartialQuarry::getAnnotation ) //
+        .def( "get_drawing_area", &cm::PartialQuarry::getDrawingArea ) //
+        .def( "get_dot", &cm::PartialQuarry::getDOT ) //
         .def( "normalizeBinominalTestTrampoline", &cm::ContectMappingPublicist::normalizeBinominalTestTrampoline ) //
         .def( "colorPalette", &cm::ContectMappingPublicist::colorPalette ) //
         ;

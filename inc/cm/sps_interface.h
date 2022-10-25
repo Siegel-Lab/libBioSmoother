@@ -43,7 +43,7 @@ std::shared_ptr<sps::Index<storage_t<D, false, true, O>>> getIndexHelper( SpsInt
 
 #define INIT_INDEX_OBJECT( D, O )                                                                                      \
     this->pIndex##D##O =                                                                                               \
-        std::make_shared<I##D##O##_t>( sFilePrefix + "." + std::to_string( D ) + "." + std::to_string( O ) );          \
+        std::make_shared<I##D##O##_t>( sFilePrefix + std::to_string( D ) + "." + std::to_string( O ), true );          \
     this->uiSize##D##O = this->pIndex##D##O->numPoints( );
 
 
@@ -59,10 +59,10 @@ std::shared_ptr<sps::Index<storage_t<D, false, true, O>>> getIndexHelper( SpsInt
 
 #define INSERT_COUNT( D, O )                                                                                           \
     case COMBINE( D, O ):                                                                                              \
-        if( vStart.size( ) != D )                                                                                      \
-            throw std::logic_error( "start position of count must have dimensionality equal to uiD" );                 \
-        if( vEnd.size( ) != D )                                                                                        \
-            throw std::logic_error( "end position of count must have dimensionality equal to uiD" );                   \
+        if( vStart.size( ) != D - O )                                                                                  \
+            throw std::logic_error( "start position of count must have dimensionality equal to uiD - uiO" );           \
+        if( vEnd.size( ) != D - O )                                                                                    \
+            throw std::logic_error( "end position of count must have dimensionality equal to uiD - uiO" );             \
                                                                                                                        \
         std::array<uint64_t, D - O> aStart##D##O;                                                                      \
         std::copy_n( vStart.begin( ), D - O, aStart##D##O.begin( ) );                                                  \
@@ -95,10 +95,10 @@ template <bool CACHED> class SpsInterface
     RELEVANT_COMBINATIONS( DECLARE_INDEX_SIZE )
 
 
-    SpsInterface( std::string sFilePrefix )
-    {
-        RELEVANT_COMBINATIONS( INIT_INDEX_OBJECT )
-    }
+    SpsInterface( std::string sFilePrefix ){ RELEVANT_COMBINATIONS( INIT_INDEX_OBJECT ) }
+
+    SpsInterface( )
+    {}
 
     bool loaded( )
     {
