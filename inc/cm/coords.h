@@ -35,10 +35,10 @@ std::vector<AxisCoord> axisCoordsHelper( size_t uiBinSize, size_t uiScreenStartP
     for( auto xChr : vChromosomes )
     {
         size_t uiChromosomeEndPos = uiChromosomeStartPos + xChr.uiLength;
-        size_t uiIndexPos = 0;
         size_t uiItrEndPos = std::min( uiScreenEndPos, uiChromosomeEndPos );
-        while( uiCurrScreenPos < uiItrEndPos )
+        while( uiCurrScreenPos >= uiChromosomeStartPos && uiCurrScreenPos < uiItrEndPos )
         {
+            size_t uiIndexPos = uiCurrScreenPos - uiChromosomeStartPos;
             size_t uiCurrBinSize;
             switch( iSmallerBins )
             {

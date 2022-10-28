@@ -15,8 +15,8 @@ size_t PartialQuarry::nextEvenNumber( double fX )
     while( true )
     {
         for( size_t uiI : this->xSession[ "settings" ][ "interface" ][ "snap_factors" ] )
-            if( std::pow( uiI * 10, uiN ) > fX )
-                return std::pow( uiI * 10, uiN );
+            if( uiI * std::pow( 10, uiN ) > fX )
+                return uiI * std::pow( 10, uiN );
         uiN += 1;
     }
 }
@@ -33,15 +33,17 @@ void PartialQuarry::setBinSize( )
 
     if( this->xSession[ "settings" ][ "interface" ][ "bin_aspect_ratio" ] == "view" )
     {
-        uiBinHeight = nextEvenNumber( ( this->xSession[ "area" ][ "y_end" ].get<size_t>( ) -
-                                        this->xSession[ "area" ][ "y_start" ].get<size_t>( ) ) /
-                                      uiMaxNumBins );
+        uiBinHeight = nextEvenNumber( ( this->xSession[ "area" ][ "y_end" ].get<double>( ) -
+                                        this->xSession[ "area" ][ "y_start" ].get<double>( ) ) /
+                                      std::sqrt( uiMaxNumBins ) );
         uiBinHeight = std::max( uiBinHeight, uiMinBinSize );
 
-        uiBinWidth = nextEvenNumber( ( this->xSession[ "area" ][ "x_end" ].get<size_t>( ) -
-                                       this->xSession[ "area" ][ "x_start" ].get<size_t>( ) ) /
-                                     uiMaxNumBins );
+        uiBinWidth = nextEvenNumber( ( this->xSession[ "area" ][ "x_end" ].get<double>( ) -
+                                       this->xSession[ "area" ][ "x_start" ].get<double>( ) ) /
+                                     std::sqrt( uiMaxNumBins ) );
         uiBinWidth = std::max( uiBinWidth, uiMinBinSize );
+
+        std::cout << "uiBinHeight: " << uiBinHeight << " uiBinWidth: " << uiBinWidth << std::endl;
     }
     else if( this->xSession[ "settings" ][ "interface" ][ "bin_aspect_ratio" ].get<std::string>( ) == "coord" )
     {
@@ -66,20 +68,23 @@ void PartialQuarry::setRenderArea( )
         iStartX = 0;
         iStartY = 0;
 
-        iEndX = this->xSession[ "contigs" ][ "genome_size" ].get<size_t>( );
-        iEndY = this->xSession[ "contigs" ][ "genome_size" ].get<size_t>( );
+        iEndX = this->xSession[ "contigs" ][ "genome_size" ].get<int64_t>( );
+        iEndY = this->xSession[ "contigs" ][ "genome_size" ].get<int64_t>( );
     }
     else
     {
-        iStartX = this->xSession[ "area" ][ "x_start" ].get<size_t>( ) -
-                  ( this->xSession[ "area" ][ "x_start" ].get<size_t>( ) % uiBinWidth );
-        iStartY = this->xSession[ "area" ][ "y_start" ].get<size_t>( ) -
-                  ( this->xSession[ "area" ][ "y_start" ].get<size_t>( ) % uiBinHeight );
+        iStartX = this->xSession[ "area" ][ "x_start" ].get<int64_t>( ) -
+                  ( this->xSession[ "area" ][ "x_start" ].get<int64_t>( ) % uiBinWidth );
+        iStartY = this->xSession[ "area" ][ "y_start" ].get<int64_t>( ) -
+                  ( this->xSession[ "area" ][ "y_start" ].get<int64_t>( ) % uiBinHeight );
 
-        iEndX = this->xSession[ "area" ][ "x_end" ].get<size_t>( ) + uiBinWidth -
-                ( this->xSession[ "area" ][ "x_end" ].get<size_t>( ) % uiBinWidth );
-        iEndY = this->xSession[ "area" ][ "y_end" ].get<size_t>( ) + uiBinHeight -
-                ( this->xSession[ "area" ][ "y_end" ].get<size_t>( ) % uiBinHeight );
+        iEndX = this->xSession[ "area" ][ "x_end" ].get<int64_t>( ) + uiBinWidth -
+                ( this->xSession[ "area" ][ "x_end" ].get<int64_t>( ) % uiBinWidth );
+        iEndY = this->xSession[ "area" ][ "y_end" ].get<int64_t>( ) + uiBinHeight -
+                ( this->xSession[ "area" ][ "y_end" ].get<int64_t>( ) % uiBinHeight );
+
+        std::cout << " iStartX: " << iStartX << " iStartY: " << iStartY << " iEndX: " << iEndX << " iEndY: " << iEndY
+                  << std::endl;
     }
 }
 
@@ -95,23 +100,31 @@ void PartialQuarry::regBinSize( )
                   ComputeNode{ .sNodeName = "bin_size",
                                .fFunc = &PartialQuarry::setBinSize,
                                .vIncomingFunctions = { },
-                               .vIncomingSession = { { "interface", "snap_bin_size" },
-                                                     { "interface", "snap_factors" },
-                                                     { "interface", "min_bin_size", "val" },
-                                                     { "interface", "max_num_bins", "val" },
-                                                     { "interface", "max_num_bins_factor" },
-                                                     { "interface", "bin_aspect_ratio" },
-                                                     { "settings", "dividend" },
-                                                     { "settings", "area" } },
+                               .vIncomingSession = { { "settings", "interface", "snap_bin_size" },
+                                                     { "settings", "interface", "snap_factors" },
+                                                     { "settings", "interface", "min_bin_size", "val" },
+                                                     { "settings", "interface", "max_num_bins", "val" },
+                                                     { "settings", "interface", "max_num_bins_factor" },
+                                                     { "settings", "interface", "bin_aspect_ratio" },
+                                                     { "dividend" },
+                                                     { "area" },
+                                                     { "area", "x_start" },
+                                                     { "area", "x_end" },
+                                                     { "area", "y_start" },
+                                                     { "area", "y_end" } },
                                .uiLastUpdated = uiCurrTime } );
 
     registerNode( NodeNames::RenderArea,
                   ComputeNode{ .sNodeName = "render_area",
                                .fFunc = &PartialQuarry::setRenderArea,
                                .vIncomingFunctions = { NodeNames::BinSize },
-                               .vIncomingSession = { { "export", "do_export_full" },
+                               .vIncomingSession = { { "settings", "export", "do_export_full" },
                                                      { "settings", "contigs", "genome_size" },
-                                                     { "settings", "area" } },
+                                                     { "area" },
+                                                     { "area", "x_start" },
+                                                     { "area", "x_end" },
+                                                     { "area", "y_start" },
+                                                     { "area", "y_end" } },
                                .uiLastUpdated = uiCurrTime } );
 }
 

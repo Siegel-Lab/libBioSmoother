@@ -106,13 +106,16 @@ PYBIND11_MODULE( libContactMapping, m )
         .def( pybind11::init<std::string>( ) ) //
         .def( pybind11::init<>( ) ) //
         .def( "set_session", &cm::PartialQuarry::setSession ) //
+        .def( "get_session", &cm::PartialQuarry::getSession ) //
         .def( "get_value", &cm::PartialQuarry::getValue<pybind11::object> ) //
+
         .def( "set_value", &cm::PartialQuarry::setValue<int> ) //
         .def( "set_value", &cm::PartialQuarry::setValue<std::string> ) //
         .def( "set_value", &cm::PartialQuarry::setValue<bool> ) //
         .def( "set_value", &cm::PartialQuarry::setValue<double> ) //
-        .def( "set_value", &cm::PartialQuarry::setValue<json> ) //
         .def( "set_value", &cm::PartialQuarry::setValue<std::vector<std::string>> ) //
+        .def( "set_value", &cm::PartialQuarry::setValue<json> ) //
+
         .def( "has_undo", &cm::PartialQuarry::hasUndo ) //
         .def( "undo", &cm::PartialQuarry::undo ) //
         .def( "has_redo", &cm::PartialQuarry::hasRedo ) //
@@ -122,7 +125,13 @@ PYBIND11_MODULE( libContactMapping, m )
         .def( "get_axis_coords", &cm::PartialQuarry::getAxisCoords ) //
         .def( "get_annotation", &cm::PartialQuarry::getAnnotation ) //
         .def( "get_drawing_area", &cm::PartialQuarry::getDrawingArea ) //
+        .def( "get_displayed_annos", &cm::PartialQuarry::getDisplayedAnnos ) //
+        .def( "get_heatmap", &cm::PartialQuarry::getHeatmap ) //
         .def( "get_dot", &cm::PartialQuarry::getDOT ) //
+        .def( "get_background_color", &cm::PartialQuarry::getBackgroundColor ) //
+
+        .def( "print_sizes", &cm::PartialQuarry::printSizes ) //
+
         .def( "normalizeBinominalTestTrampoline", &cm::ContectMappingPublicist::normalizeBinominalTestTrampoline ) //
         .def( "colorPalette", &cm::ContectMappingPublicist::colorPalette ) //
         ;

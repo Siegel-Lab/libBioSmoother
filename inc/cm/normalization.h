@@ -9,13 +9,12 @@ namespace cm
 void PartialQuarry::normalizeSize( size_t uiSize )
 {
     std::array<size_t, 2> vTotalReads = { 0, 0 };
-    for( std::string& rRep : this->vActiveReplicates )
-    {
-        if( this->xSession[ "replicates" ][ "in_group_a" ].contains( rRep ) )
-            vTotalReads[ 0 ] += this->xSession[ "replicates" ][ "by_name" ][ rRep ][ "total_reads" ].get<size_t>( );
-        if( this->xSession[ "replicates" ][ "in_group_b" ].contains( rRep ) )
-            vTotalReads[ 1 ] += this->xSession[ "replicates" ][ "by_name" ][ rRep ][ "total_reads" ].get<size_t>( );
-    }
+
+    for( size_t uiJ = 0; uiJ < 2; uiJ++ )
+        for( size_t uiX : vInGroup[ uiJ ] )
+            vTotalReads[ uiJ ] +=
+                this->xSession[ "replicates" ][ "by_name" ][ this->vActiveReplicates[ uiX ] ][ "total_reads" ]
+                    .get<size_t>( );
     for( auto& vVal : vvFlatValues )
         vvNormalized.push_back( std::array<double, 2>{ uiSize * vVal[ 0 ] / (double)vTotalReads[ 0 ],
                                                        uiSize * vVal[ 1 ] / (double)vTotalReads[ 1 ] } );

@@ -78,7 +78,7 @@ def add_parsers(main_parser):
     repl_parser.add_argument(
         "-g",
         "--group",
-        default="neither",
+        default="a",
         choices=["a", "b", "both", "neither"],
         help="Which analysis group to place the new replicate in when opening the interface. (default: %(default)s)",
     )

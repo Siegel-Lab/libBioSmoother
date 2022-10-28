@@ -13,11 +13,25 @@ void PartialQuarry::setActiveReplicates( )
     vActiveReplicates.reserve( rList.size( ) );
 
     std::set<std::string> xHave{ };
-    for( std::string sX : { "in_group_a", "in_group_b" } )
-        for( auto& xRepl : this->xSession[ "replicates" ][ sX ] )
+    std::array<std::set<std::string>, 2> vGroups;
+    for( size_t uiI = 0; uiI < 2; uiI++ )
+        for( auto& xRepl : this->xSession[ "replicates" ][ uiI == 0 ? "in_group_a" : "in_group_b" ] )
+        {
             xHave.insert( xRepl.get<std::string>( ) );
+            vGroups[ uiI ].insert( xRepl.get<std::string>( ) );
+        }
 
-    std::copy( xHave.begin( ), xHave.end( ), vActiveReplicates.begin( ) );
+    for( const std::string& rS : xHave )
+        vActiveReplicates.push_back( rS );
+
+    vInGroup[ 0 ].clear( );
+    vInGroup[ 0 ].reserve( vActiveReplicates.size( ) );
+    vInGroup[ 1 ].clear( );
+    vInGroup[ 1 ].reserve( vActiveReplicates.size( ) );
+    for( size_t uiI = 0; uiI < vActiveReplicates.size( ); uiI++ )
+        for( size_t uiJ = 0; uiJ < 2; uiJ++ )
+            if( vGroups[ uiJ ].count( vActiveReplicates[ uiI ] ) > 0 )
+                vInGroup[ uiJ ].push_back( uiI );
 }
 
 
@@ -69,10 +83,9 @@ void PartialQuarry::setBinValues( )
     {
         vvBinValues.emplace_back( );
         vvBinValues.back( ).reserve( vBinCoords.size( ) );
-        auto& xRep = this->xSession[ "replicates" ][ "by_name" ][ sRep ];
 
-        bool bHasMapQ = xRep[ "has_map_q" ];
-        bool bHasMultiMap = xRep[ "has_multimapping" ];
+        bool bHasMapQ = this->xSession[ "replicates" ][ "by_name" ][ sRep ][ "has_map_q" ];
+        bool bHasMultiMap = this->xSession[ "replicates" ][ "by_name" ][ sRep ][ "has_multimapping" ];
 
         size_t uiMapQMin = 255 - this->xSession[ "settings" ][ "filters" ][ "mapping_q" ][ "val_min" ].get<size_t>( );
         size_t uiMapQMax = 255 - this->xSession[ "settings" ][ "filters" ][ "mapping_q" ][ "val_max" ].get<size_t>( );
@@ -83,47 +96,45 @@ void PartialQuarry::setBinValues( )
             for( size_t uiI = 0; uiI < 2; uiI++ )
                 if( vCoords[ uiI ].sChromosomeX != "" )
                 {
-                    int64_t iDataSetId =
-                        xRep[ "ids" ][ vCoords[ uiI ].sChromosomeX ][ vCoords[ uiI ].sChromosomeY ].get<int64_t>( );
+                    size_t iDataSetId = this->xSession[ "replicates" ][ "by_name" ][ sRep ][ "ids" ]
+                                                      [ vCoords[ uiI ].sChromosomeX ][ vCoords[ uiI ].sChromosomeY ]
+                                                          .get<size_t>( );
 
-                    if( iDataSetId != -1 )
-                    {
-                        if( bHasMapQ && bHasMultiMap )
-                            vVals[ uiI ] = xIndices.getIndex<3, 2>( )->count(
-                                iDataSetId,
-                                { vCoords[ uiI ].uiIndexY, vCoords[ uiI ].uiIndexX, uiMapQMax },
-                                { vCoords[ uiI ].uiIndexY + vCoords[ uiI ].uiH,
-                                  vCoords[ uiI ].uiIndexX + vCoords[ uiI ].uiW, uiMapQMin },
-                                xIntersect,
-                                0 );
-                        else if( !bHasMapQ && bHasMultiMap )
-                            vVals[ uiI ] =
-                                xIndices.getIndex<2, 2>( )->count( iDataSetId,
-                                                                   { vCoords[ uiI ].uiIndexY, vCoords[ uiI ].uiIndexX },
-                                                                   { vCoords[ uiI ].uiIndexY + vCoords[ uiI ].uiH,
-                                                                     vCoords[ uiI ].uiIndexX + vCoords[ uiI ].uiW },
-                                                                   xIntersect,
-                                                                   0 );
-                        else if( bHasMapQ && !bHasMultiMap )
-                            vVals[ uiI ] = xIndices.getIndex<3, 0>( )->count(
-                                iDataSetId,
-                                { vCoords[ uiI ].uiIndexY, vCoords[ uiI ].uiIndexX, uiMapQMax },
-                                { vCoords[ uiI ].uiIndexY + vCoords[ uiI ].uiH,
-                                  vCoords[ uiI ].uiIndexX + vCoords[ uiI ].uiW, uiMapQMin },
-                                xIntersect,
-                                0 );
-                        else // if(!bHasMapQ && !bHasMultiMap)
-                            vVals[ uiI ] =
-                                xIndices.getIndex<2, 0>( )->count( iDataSetId,
-                                                                   { vCoords[ uiI ].uiIndexY, vCoords[ uiI ].uiIndexX },
-                                                                   { vCoords[ uiI ].uiIndexY + vCoords[ uiI ].uiH,
-                                                                     vCoords[ uiI ].uiIndexX + vCoords[ uiI ].uiW },
-                                                                   xIntersect,
-                                                                   0 );
-                    }
-                    else
-                        vVals[ uiI ] = 0;
+                    if( bHasMapQ && bHasMultiMap )
+                        vVals[ uiI ] = xIndices.getIndex<3, 2>( )->count(
+                            iDataSetId,
+                            { vCoords[ uiI ].uiIndexY, vCoords[ uiI ].uiIndexX, uiMapQMax },
+                            { vCoords[ uiI ].uiIndexY + vCoords[ uiI ].uiH,
+                              vCoords[ uiI ].uiIndexX + vCoords[ uiI ].uiW, uiMapQMin },
+                            xIntersect,
+                            0 );
+                    else if( !bHasMapQ && bHasMultiMap )
+                        vVals[ uiI ] =
+                            xIndices.getIndex<2, 2>( )->count( iDataSetId,
+                                                               { vCoords[ uiI ].uiIndexY, vCoords[ uiI ].uiIndexX },
+                                                               { vCoords[ uiI ].uiIndexY + vCoords[ uiI ].uiH,
+                                                                 vCoords[ uiI ].uiIndexX + vCoords[ uiI ].uiW },
+                                                               xIntersect,
+                                                               0 );
+                    else if( bHasMapQ && !bHasMultiMap )
+                        vVals[ uiI ] = xIndices.getIndex<3, 0>( )->count(
+                            iDataSetId,
+                            { vCoords[ uiI ].uiIndexY, vCoords[ uiI ].uiIndexX, uiMapQMax },
+                            { vCoords[ uiI ].uiIndexY + vCoords[ uiI ].uiH,
+                              vCoords[ uiI ].uiIndexX + vCoords[ uiI ].uiW, uiMapQMin },
+                            xIntersect,
+                            0 );
+                    else // if(!bHasMapQ && !bHasMultiMap)
+                        vVals[ uiI ] =
+                            xIndices.getIndex<2, 0>( )->count( iDataSetId,
+                                                               { vCoords[ uiI ].uiIndexY, vCoords[ uiI ].uiIndexX },
+                                                               { vCoords[ uiI ].uiIndexY + vCoords[ uiI ].uiH,
+                                                                 vCoords[ uiI ].uiIndexX + vCoords[ uiI ].uiW },
+                                                               xIntersect,
+                                                               0 );
                 }
+                else
+                    vVals[ uiI ] = 0;
 
             vvBinValues.back( ).push_back( symmetry( vVals[ 0 ], vVals[ 1 ] ) );
         }
@@ -235,18 +246,8 @@ void PartialQuarry::setFlatValues( )
     if( vvBinValues.size( ) > 0 )
     {
         vvFlatValues.reserve( vvBinValues[ 0 ].size( ) );
-        std::array<std::vector<size_t>, 2> vInGroup;
-        vInGroup[ 0 ].reserve( vActiveReplicates.size( ) );
-        vInGroup[ 1 ].reserve( vActiveReplicates.size( ) );
-        for( size_t uiI = 0; uiI < vActiveReplicates.size( ); uiI++ )
-        {
-            if( this->xSession[ "replicates" ][ "in_group_a" ].contains( vActiveReplicates[ uiI ] ) )
-                vInGroup[ 0 ].push_back( uiI );
-            if( this->xSession[ "replicates" ][ "in_group_b" ].contains( vActiveReplicates[ uiI ] ) )
-                vInGroup[ 1 ].push_back( uiI );
-        }
 
-        for( size_t uiI = 0; uiI < vvFlatValues.size( ); uiI++ )
+        for( size_t uiI = 0; uiI < vBinCoords.size( ); uiI++ )
         {
             vvFlatValues.push_back( { } );
             for( size_t uiJ = 0; uiJ < 2; uiJ++ )
@@ -254,7 +255,9 @@ void PartialQuarry::setFlatValues( )
                 std::vector<size_t> vCollected;
                 vCollected.reserve( vInGroup[ uiJ ].size( ) );
                 for( size_t uiX : vInGroup[ uiJ ] )
+                {
                     vCollected.push_back( vvBinValues[ uiX ][ uiI ] );
+                }
 
                 vvFlatValues.back( )[ uiJ ] = getFlatValue( vCollected );
             }

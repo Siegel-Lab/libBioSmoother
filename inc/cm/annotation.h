@@ -11,9 +11,19 @@ void PartialQuarry::setActivateAnnotation( )
     {
         vActiveAnnotation[ uiX ].clear( );
         auto& rList = this->xSession[ "annotation" ][ uiX == 0 ? "visible_x" : "visible_y" ];
-        vActiveAnnotation[ uiX ].resize( rList.size( ) );
+        vActiveAnnotation[ uiX ].reserve( rList.size( ) );
         for( auto& rRep : rList )
             vActiveAnnotation[ uiX ].push_back( rRep.get<std::string>( ) );
+    }
+}
+
+void PartialQuarry::setActivateAnnotationCDS( )
+{
+    for( size_t uiX : { 0, 1 } )
+    {
+        vActiveAnnotationCDS[ uiX ] = pybind11::list( );
+        for( std::string sAnno : vActiveAnnotation[ uiX ] )
+            vActiveAnnotationCDS[ uiX ].append( sAnno );
     }
 }
 
@@ -22,7 +32,7 @@ void PartialQuarry::setAnnotationValues( )
     for( size_t uiX : { 0, 1 } )
     {
         vAnnotationValues[ uiX ].clear( );
-        vAnnotationValues[ uiX ].resize( vActiveAnnotation[ uiX ].size( ) );
+        vAnnotationValues[ uiX ].reserve( vActiveAnnotation[ uiX ].size( ) );
 
         for( std::string sCurrAnno : vActiveAnnotation[ uiX ] )
         {
@@ -74,8 +84,9 @@ void PartialQuarry::setAnnotationCDS( )
                 if( uiVal > 0 )
                 {
                     vChr.append( rCoords.sChromosome );
-                    vIndexStart.append( rCoords.uiIndexPos );
-                    vIndexEnd.append( rCoords.uiIndexPos + rCoords.uiSize );
+                    vIndexStart.append( rCoords.uiIndexPos * this->xSession[ "dividend" ].get<size_t>( ) );
+                    vIndexEnd.append( ( rCoords.uiIndexPos + rCoords.uiSize ) *
+                                      this->xSession[ "dividend" ].get<size_t>( ) );
                     vAnnoName.append( rAnnoName );
                     vScreenStart.append( rCoords.uiScreenPos );
                     vScreenEnd.append( rCoords.uiScreenPos + rCoords.uiSize );
@@ -98,10 +109,16 @@ void PartialQuarry::setAnnotationCDS( )
     }
 }
 
-const pybind11::dict& PartialQuarry::getAnnotation( bool bXAxis )
+const pybind11::dict PartialQuarry::getAnnotation( bool bXAxis )
 {
     update( NodeNames::AnnotationCDS );
     return vAnnotationCDS[ bXAxis ? 0 : 1 ];
+}
+
+const pybind11::list PartialQuarry::getDisplayedAnnos( bool bXAxis )
+{
+    update( NodeNames::ActivateAnnotationCDS );
+    return vActiveAnnotationCDS[ bXAxis ? 0 : 1 ];
 }
 
 void PartialQuarry::regAnnotation( )
@@ -124,6 +141,13 @@ void PartialQuarry::regAnnotation( )
                   ComputeNode{ .sNodeName = "annotation_cds",
                                .fFunc = &PartialQuarry::setAnnotationCDS,
                                .vIncomingFunctions = { NodeNames::AnnotationValues, NodeNames::AnnotationColors },
+                               .vIncomingSession = { },
+                               .uiLastUpdated = uiCurrTime } );
+
+    registerNode( NodeNames::ActivateAnnotationCDS,
+                  ComputeNode{ .sNodeName = "active_annotation_cds",
+                               .fFunc = &PartialQuarry::setActivateAnnotationCDS,
+                               .vIncomingFunctions = { NodeNames::ActivateAnnotation },
                                .vIncomingSession = { },
                                .uiLastUpdated = uiCurrTime } );
 }

@@ -35,7 +35,7 @@ struct BinCoord
 class PartialQuarry
 {
   public:
-    size_t uiVerbosity = 1;
+    size_t uiVerbosity = 3;
 
   private:
     enum NodeNames
@@ -63,6 +63,9 @@ class PartialQuarry
         AnnotationValues,
         AnnotationCDS,
         AnnotationColors,
+        ActivateAnnotationCDS,
+        HeatmapCDS,
+        Scaled,
         SIZE
     };
     struct ComputeNode
@@ -81,19 +84,27 @@ class PartialQuarry
     std::map<std::vector<std::string>, size_t> xSessionTime;
 
 
-    bool updateSettings( json& xSettings, json& xOldSettings, std::vector<std::string> vPrefix = { } )
+    nlohmann::json::json_pointer toPointer( std::vector<std::string>& vKeys )
+    {
+        std::string sPtr = "";
+        for( std::string sKey : vKeys )
+            sPtr += "/" + sKey;
+        return nlohmann::json::json_pointer( sPtr );
+    }
+
+    bool updateSettings( const json& xNewSettings, std::vector<std::string> vPrefix = { } )
     {
         bool bUpdated = false;
-        for( auto& xEle : xSettings.items( ) )
+        for( auto& xEle : xNewSettings.items( ) )
         {
             if( xEle.key( ) != "previous" && xEle.key( ) != "next" )
             {
                 std::vector<std::string> vPrefix2( vPrefix );
                 vPrefix2.push_back( xEle.key( ) );
 
-                if( xEle.value( ).is_object( ) )
-                    bUpdated = updateSettings( xEle.value( ), xOldSettings[ xEle.key( ) ], vPrefix2 ) || bUpdated;
-                else if( xOldSettings[ xEle.key( ) ] != xEle.value( ) )
+                if( xNewSettings[ toPointer( vPrefix2 ) ].is_object( ) )
+                    bUpdated = updateSettings( xNewSettings, vPrefix2 ) || bUpdated;
+                else if( this->xSession[ toPointer( vPrefix2 ) ] != xNewSettings[ toPointer( vPrefix2 ) ] )
                 {
                     xSessionTime[ vPrefix2 ] = uiCurrTime;
                     bUpdated = true;
@@ -122,54 +133,66 @@ class PartialQuarry
         return sRet;
     }
 
-    bool update( NodeNames xNodeName )
+    size_t update( NodeNames xNodeName )
     {
         ComputeNode& xNode = vGraph[ xNodeName ];
-        if( xNode.uiLastUpdated == uiCurrTime )
-            return true;
-
-        std::vector<std::string> vOutOfDateReason;
-        auto p1 = std::chrono::high_resolution_clock::now( );
-        for( NodeNames xPred : xNode.vIncomingFunctions )
-            if( update( xPred ) )
-                vOutOfDateReason.push_back( "change in previous node " + vGraph[ xPred ].sNodeName );
-        auto p2 = std::chrono::high_resolution_clock::now( );
-        auto pms_int = std::chrono::duration_cast<std::chrono::milliseconds>( p2 - p1 );
-
-        for( std::vector<std::string> vSetting : xNode.vIncomingSession )
-            if( xSessionTime.count( vSetting ) == 0 || xSessionTime[ vSetting ] > xNode.uiLastUpdated )
-                vOutOfDateReason.push_back( "change in variable " + vec2str( vSetting ) );
-
-        if( vOutOfDateReason.size( ) > 0 )
+        if( xNode.uiLastUpdated < uiCurrTime )
         {
-            if( uiVerbosity >= 3 )
+            std::vector<std::string> vOutOfDateReason{ };
+            auto p1 = std::chrono::high_resolution_clock::now( );
+            for( NodeNames xPred : xNode.vIncomingFunctions )
+                if( update( xPred ) > xNode.uiLastUpdated )
+                    vOutOfDateReason.push_back( "change in previous node " + vGraph[ xPred ].sNodeName );
+            auto p2 = std::chrono::high_resolution_clock::now( );
+            auto pms_int = std::chrono::duration_cast<std::chrono::milliseconds>( p2 - p1 );
+
+            for( std::vector<std::string> vSetting : xNode.vIncomingSession )
+                if( xSessionTime.count( vSetting ) == 0 || xSessionTime[ vSetting ] > xNode.uiLastUpdated )
+                    vOutOfDateReason.push_back( "change in variable " + vec2str( vSetting ) +
+                                                " (last set: " + std::to_string( xSessionTime[ vSetting ] ) +
+                                                "; now: " + std::to_string( uiCurrTime ) + ")" );
+
+            if( vOutOfDateReason.size( ) > 0 )
             {
-                std::cout << "running node " << xNode.sNodeName << " due to: " << std::endl;
-                for( std::string& sStr : vOutOfDateReason )
-                    std::cout << "\t- " << sStr << std::endl;
+                if( uiVerbosity >= 3 )
+                {
+                    std::cout << "running node " << xNode.sNodeName << " due to: " << std::endl;
+                    for( std::string& sStr : vOutOfDateReason )
+                        std::cout << "\t- " << sStr << std::endl;
+                    std::cout << "last updated: " << xNode.uiLastUpdated << "; now: " << uiCurrTime << std::endl;
+                }
+                auto t1 = std::chrono::high_resolution_clock::now( );
+
+                ( this->*xNode.fFunc )( );
+
+                auto t2 = std::chrono::high_resolution_clock::now( );
+                auto ms_int = std::chrono::duration_cast<std::chrono::milliseconds>( t2 - t1 );
+                if( uiVerbosity >= 1 )
+                    std::cout << ms_int.count( ) << " ms (" << xNode.sNodeName << ")" << std::endl;
+                if( uiVerbosity >= 2 )
+                    std::cout << pms_int.count( ) << " ms (predecessors)" << std::endl << std::endl;
+
+                xNode.uiLastUpdated = uiCurrTime;
             }
-            auto t1 = std::chrono::high_resolution_clock::now( );
-
-            ( this->*xNode.fFunc )( );
-
-            auto t2 = std::chrono::high_resolution_clock::now( );
-            auto ms_int = std::chrono::duration_cast<std::chrono::milliseconds>( t2 - t1 );
-            if( uiVerbosity >= 1 )
-                std::cout << ms_int.count( ) << "ms (" << xNode.sNodeName << ")" << std::endl;
-            if( uiVerbosity >= 2 )
-                std::cout << pms_int.count( ) << "ms (predecessors)" << std::endl << std::endl;
+            else if( uiVerbosity >= 3 )
+                std::cout << "no reason found to run node " << xNode.sNodeName << std::endl;
         }
+        else if( uiVerbosity >= 3 )
+            std::cout << "node up to date from previous check " << xNode.sNodeName << std::endl;
 
+        size_t uiRet = xNode.uiLastUpdated;
+        // node must be up to date now
         xNode.uiLastUpdated = uiCurrTime;
-        return vOutOfDateReason.size( ) > 0;
+
+        return uiRet;
     }
 
 
   public:
-    void setSession( json& xSession )
+    void setSession( const json& xSession )
     {
         ++uiCurrTime;
-        updateSettings( xSession, this->xSession );
+        updateSettings( xSession );
         this->xSession = xSession;
     }
 
@@ -180,10 +203,9 @@ class PartialQuarry
 
     template <typename T> T getValue( std::vector<std::string> vKeys )
     {
-        json& rCurr = this->xSession;
-        for( std::string sKey : vKeys )
-            rCurr = rCurr[ sKey ];
-        return rCurr.get<T>( );
+        auto xRet = this->xSession[ toPointer( vKeys ) ].get<T>( );
+
+        return xRet;
     }
 
     template <typename T> void setValue( std::vector<std::string> vKeys, T xVal )
@@ -194,27 +216,29 @@ class PartialQuarry
         this->xSession[ "next" ] = nullptr;
 
         // deep copy json
-        json xNew = json::parse( this->xSession.dump( ) ); // is this necessary or is a normal copy enough
-        xNew[ "previous" ] = this->xSession; // back up previous
+        this->xSession[ "previous" ] = json::parse( this->xSession.dump( ) ); // back up previous
 
         // change setting
-        json& rCurr = this->xSession;
+        this->xSession[ toPointer( vKeys ) ] = xVal;
+
+        // update time
         std::vector<std::string> vCurrKey;
+        xSessionTime[ vCurrKey ] = uiCurrTime;
         for( std::string sKey : vKeys )
         {
-            xSessionTime[ vCurrKey ] = uiCurrTime;
-            rCurr = rCurr[ sKey ];
             vCurrKey.push_back( sKey );
+            xSessionTime[ vCurrKey ] = uiCurrTime;
         }
-        xSessionTime[ vCurrKey ] = uiCurrTime;
-        rCurr = xVal;
 
         // make sure undo's and redo's do not pile up infinitely
-        int uiMaxRedo = this->xSession[ "settings" ][ "interface" ][ "max_undo" ][ "val" ].get<int>( );
-        json& rToNull = this->xSession;
-        while( --uiMaxRedo >= 0 && !rToNull[ "previous" ].is_null( ) )
-            rToNull = rToNull[ "previous" ];
-        rToNull[ "previous" ] = nullptr;
+        if( this->xSession[ "settings" ].is_object( ) )
+        {
+            int uiMaxRedo = this->xSession[ "settings" ][ "interface" ][ "max_undo" ][ "val" ].get<int>( );
+            std::vector<std::string> vPrevKey{ "previous" };
+            while( --uiMaxRedo >= 0 && !this->xSession[ toPointer( vPrevKey ) ].is_null( ) )
+                vPrevKey.push_back( "previous" );
+            this->xSession[ toPointer( vPrevKey ) ] = nullptr;
+        }
     }
 
     bool hasUndo( )
@@ -226,8 +250,9 @@ class PartialQuarry
     {
         if( hasUndo( ) )
         {
-            json xNow = json::parse( this->xSession.dump( ) ); // is this necessary of is a normal copy enough
-            setSession( this->xSession[ "previous" ] );
+            json xNow = json::parse( this->xSession.dump( ) );
+            json xPrev = json::parse( this->xSession[ "previous" ].dump( ) );
+            setSession( xPrev );
             this->xSession[ "next" ] = xNow;
         }
     }
@@ -253,6 +278,7 @@ class PartialQuarry
     std::array<std::vector<AxisCoord>, 2> vAxisCords;
 
     std::vector<std::string> vActiveReplicates;
+    std::array<std::vector<size_t>, 2> vInGroup;
 
     sps::IntersectionType xIntersect;
 
@@ -266,7 +292,10 @@ class PartialQuarry
     std::vector<std::array<size_t, 2>> vvFlatValues;
     std::vector<std::array<double, 2>> vvNormalized;
     std::vector<double> vCombined;
+    std::vector<double> vScaled;
     std::vector<std::string> vColored;
+
+    std::string sBackgroundColor;
 
     std::array<std::vector<std::vector<size_t>>, 2> vvCoverageValues;
     // outer array: column / row
@@ -277,6 +306,9 @@ class PartialQuarry
     std::array<std::vector<std::string>, 2> vActiveAnnotation;
     std::array<std::vector<std::vector<size_t>>, 2> vAnnotationValues;
     std::array<pybind11::dict, 2> vAnnotationCDS;
+    std::array<pybind11::list, 2> vActiveAnnotationCDS;
+    pybind11::dict xHeatmapCDS;
+
 
     // bin_size.h
     size_t nextEvenNumber( double );
@@ -367,11 +399,15 @@ class PartialQuarry
     // colors.h
     void setCombined( );
     // colors.h
+    void setScaled( );
+    // colors.h
     void setColored( );
     // colors.h
     double logScale( double );
     // colors.h
     size_t colorRange( double );
+    // colors.h
+    void setHeatmapCDS( );
 
     // colors.h
     void regColors( );
@@ -383,6 +419,8 @@ class PartialQuarry
     void setAnnotationValues( );
     // annotation.h
     void setAnnotationCDS( );
+    // annotation.h
+    void setActivateAnnotationCDS( );
     // annotation.h
     void regAnnotation( );
 
@@ -413,7 +451,7 @@ class PartialQuarry
     PartialQuarry( std::string sPrefix )
         : uiCurrTime( 0 ),
           vGraph( NodeNames::SIZE ),
-          xSession( json::parse( std::ifstream( sPrefix + "/session.json" ) ) ),
+          xSession( json::parse( std::ifstream( sPrefix + "/default_session.json" ) ) ),
           xIndices( sPrefix )
     {
         regBinSize( );
@@ -431,6 +469,9 @@ class PartialQuarry
     // colors.h
     const std::vector<std::string>& getColors( );
 
+    // colors.h
+    const std::string& getBackgroundColor( );
+
     // coords.h
     const std::vector<std::array<BinCoord, 2>>& getBinCoords( );
 
@@ -438,10 +479,26 @@ class PartialQuarry
     const std::vector<AxisCoord>& getAxisCoords( bool bXAxis );
 
     // annotation.h
-    const pybind11::dict& getAnnotation( bool bXAxis );
+    const pybind11::dict getAnnotation( bool bXAxis );
+
+    // annotation.h
+    const pybind11::list getDisplayedAnnos( bool bXAxis );
+
+    // colors.h
+    const pybind11::dict getHeatmap( );
 
     // bin_size.h
     const std::array<int64_t, 4> getDrawingArea( );
+
+    void printSizes( )
+    {
+        std::cout << "vBinCoords " << vBinCoords.size( ) << std::endl;
+        std::cout << "vvBinValues " << vvBinValues.size( ) << std::endl;
+        std::cout << "vvFlatValues " << vvFlatValues.size( ) << std::endl;
+        std::cout << "vvNormalized " << vvNormalized.size( ) << std::endl;
+        std::cout << "vCombined " << vCombined.size( ) << std::endl;
+        std::cout << "vColored " << vColored.size( ) << std::endl;
+    }
 
     std::string getDOT( )
     {
@@ -473,10 +530,7 @@ class PartialQuarry
 
 template <> pybind11::object PartialQuarry::getValue( std::vector<std::string> vKeys )
 {
-    json& rCurr = this->xSession;
-    for( std::string sKey : vKeys )
-        rCurr = rCurr[ sKey ];
-    return pyjson::from_json( rCurr );
+    return pyjson::from_json( getValue<json>( vKeys ) );
 }
 
 } // namespace cm

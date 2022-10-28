@@ -1,12 +1,5 @@
-#pragma GCC diagnostic push
-// couldnt get rid of warning via -isystem
-#pragma GCC diagnostic ignored "-Wdeprecated-copy"
-
 #include "sps/default.h"
 #include "sps/index.h"
-
-#pragma GCC diagnostic pop
-
 #include <type_traits>
 
 namespace cm
@@ -43,7 +36,7 @@ std::shared_ptr<sps::Index<storage_t<D, false, true, O>>> getIndexHelper( SpsInt
 
 #define INIT_INDEX_OBJECT( D, O )                                                                                      \
     this->pIndex##D##O =                                                                                               \
-        std::make_shared<I##D##O##_t>( sFilePrefix + std::to_string( D ) + "." + std::to_string( O ), true );          \
+        std::make_shared<I##D##O##_t>( sFilePrefix + "/" + std::to_string( D ) + "." + std::to_string( O ), true );    \
     this->uiSize##D##O = this->pIndex##D##O->numPoints( );
 
 

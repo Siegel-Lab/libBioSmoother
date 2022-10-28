@@ -15,8 +15,8 @@ class Indexer:
     def __init__(self, prefix):
         self.prefix = prefix
         if os.path.exists(prefix + ".smoother_index/default_session.json"):
-            # self.indices = CachedSpsInterface(prefix + ".smoother_index/")
-            self.indices = DiskSpsInterface(prefix + ".smoother_index/")
+            # self.indices = CachedSpsInterface(prefix + ".smoother_index")
+            self.indices = DiskSpsInterface(prefix + ".smoother_index")
             with open(prefix + ".smoother_index/default_session.json", "r") as f:
                 self.session_default = json.load(f)
         else:

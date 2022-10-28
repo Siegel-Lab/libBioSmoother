@@ -125,14 +125,17 @@ void PartialQuarry::setFlatCoverageValues( )
                 if( this->xSession[ vActiveCoverage[ uiJ ][ uiI ].second ? "coverage" : "replicates" ]
                                   [ uiJ == 0 ? ( uiK == 1 ? "cov_column_a" : "cov_column_b" )
                                              : ( uiK == 1 ? "cov_row_a" : "cov_row_b" ) ]
+
+                                        // @todo @fixme contains does nothing use a set instead
                                       .contains( vActiveCoverage[ uiJ ][ uiI ].first ) )
                     vInGroup[ uiK ].push_back( uiI );
         }
 
         vvFlatCoverageValues[ uiJ ].clear( );
-        vvFlatCoverageValues[ uiJ ].reserve( vvCoverageValues[ uiJ ][ 0 ].size( ) );
-        for( size_t uiI = 0; uiI < vvFlatCoverageValues[ uiJ ].size( ); uiI++ )
-            for( size_t uiJ = 0; uiJ < 2; uiJ++ )
+        if( vvCoverageValues[ uiJ ].size( ) > 0 )
+        {
+            vvFlatCoverageValues[ uiJ ].reserve( vvCoverageValues[ uiJ ][ 0 ].size( ) );
+            for( size_t uiI = 0; uiI < vvCoverageValues[ uiJ ][ 0 ].size( ); uiI++ )
             {
                 std::array<size_t, 2> vVal;
                 for( size_t uiK = 0; uiK < 2; uiK++ )
@@ -146,6 +149,7 @@ void PartialQuarry::setFlatCoverageValues( )
                 }
                 vvFlatCoverageValues[ uiJ ].push_back( getMixedValue( (double)vVal[ 0 ], (double)vVal[ 1 ] ) );
             }
+        }
     }
 }
 
