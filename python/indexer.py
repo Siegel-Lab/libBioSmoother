@@ -84,21 +84,21 @@ class Indexer:
                 chr_name, chr_len = line.split()
                 if not test or ("Chr1_3A" in chr_name):
                     self.session_default["contigs"]["list"].append(chr_name)
-                    self.session_default["contigs"]["lengths"][chr_name] = int(chr_len)
+                    self.session_default["contigs"]["lengths"][chr_name] = int(chr_len) // dividend
                     self.session_default["contigs"]["displayed_on_x"].append(chr_name)
                     self.session_default["contigs"]["displayed_on_y"].append(chr_name)
                     self.session_default["contigs"]["genome_size"] += int(chr_len)
         self.session_default["area"] = {
             "x_start": 0,
             "y_start": 0,
-            "x_end": self.session_default["contigs"]["genome_size"],
-            "y_end": self.session_default["contigs"]["genome_size"],
+            "x_end": self.session_default["contigs"]["genome_size"] // dividend,
+            "y_end": self.session_default["contigs"]["genome_size"] // dividend,
         }
         self.session_default["visible"] = {
             "x_start": 0,
             "y_start": 0,
-            "x_end": self.session_default["contigs"]["genome_size"],
-            "y_end": self.session_default["contigs"]["genome_size"],
+            "x_end": self.session_default["contigs"]["genome_size"] // dividend,
+            "y_end": self.session_default["contigs"]["genome_size"] // dividend,
         }
 
         for o, d in [(1, 0), (2, 1), (2, 0), (3, 1), (4, 2), (3, 0), (5, 2)]:

@@ -102,6 +102,7 @@ PYBIND11_MODULE( libContactMapping, m )
         .def_readwrite( "size", &cm::AxisCoord::uiSize ) //
         ;
 
+
     pybind11::class_<cm::PartialQuarry, cm::PyPartialQuarry>( m, "PartialQuarry" ) //
         .def( pybind11::init<std::string>( ) ) //
         .def( pybind11::init<>( ) ) //
@@ -129,6 +130,9 @@ PYBIND11_MODULE( libContactMapping, m )
         .def( "get_heatmap", &cm::PartialQuarry::getHeatmap ) //
         .def( "get_dot", &cm::PartialQuarry::getDOT ) //
         .def( "get_background_color", &cm::PartialQuarry::getBackgroundColor ) //
+        .def( "get_ticks", &cm::PartialQuarry::getTicks ) //
+        .def( "get_tick_list", &cm::PartialQuarry::getTickList ) //
+        .def( "get_canvas_size", &cm::PartialQuarry::getCanvasSize ) //
 
         .def( "print_sizes", &cm::PartialQuarry::printSizes ) //
 

@@ -141,6 +141,85 @@ std::vector<ChromDesc> activeChromList( json& xChromLen, json& xChromDisp, std::
     return vRet;
 }
 
+
+void PartialQuarry::setTicks( )
+{
+    using namespace pybind11::literals;
+
+    size_t uiLogestCommonSuffix = 0;
+
+    if(this->xSession["contigs"]["list"].size() > 1)
+    {
+        char cLast = '_';
+        bool bContinue = true;
+        while(bContinue)
+        {
+            ++uiLogestCommonSuffix;
+            bool bFirst = true;
+            for( auto& rChr : this->xSession["contigs"]["list"] )
+            {
+                std::string sChr = rChr.get<std::string>();
+                if(sChr.size() < uiLogestCommonSuffix)
+                {
+                    bContinue = false;
+                    break;
+                }
+                else if(bFirst)
+                    cLast = sChr[sChr.size() - uiLogestCommonSuffix];
+                else if(cLast != sChr[sChr.size() - uiLogestCommonSuffix])
+                {
+                    bContinue = false;
+                    break;
+                }
+            }
+        }
+        --uiLogestCommonSuffix;
+    }
+
+
+    for( size_t uiI = 0; uiI < 2; uiI++ )
+    {
+        pybind11::list vNames;
+        pybind11::list vStartPos;
+        pybind11::list vFullList;
+
+        size_t uiRunningStart = 0;
+        for( ChromDesc& rDesc : this->vActiveChromosomes[ uiI ] )
+        {
+            vNames.append( rDesc.sName.substr(0, rDesc.sName.size() - uiLogestCommonSuffix) );
+            vStartPos.append( uiRunningStart );
+            vFullList.append( uiRunningStart );
+            uiRunningStart += rDesc.uiLength;
+        }
+        vFullList.append( uiRunningStart );
+        vCanvasSize[ uiI ] = uiRunningStart;
+
+        xTicksCDS[ uiI ] = pybind11::dict( "contig_starts"_a = vStartPos,
+                                           "genome_end"_a = uiRunningStart,
+                                           "dividend"_a = this->xSession[ "dividend" ].get<size_t>( ),
+                                           "contig_names"_a = vNames );
+        vTickLists[ uiI ] = vFullList;
+    }
+}
+
+const pybind11::dict PartialQuarry::getTicks( bool bXAxis )
+{
+    update( NodeNames::Ticks );
+    return xTicksCDS[ bXAxis ? 0 : 1 ];
+}
+
+const pybind11::list PartialQuarry::getTickList( bool bXAxis )
+{
+    update( NodeNames::Ticks );
+    return vTickLists[ bXAxis ? 0 : 1 ];
+}
+
+const std::array<size_t, 2> PartialQuarry::getCanvasSize()
+{
+    update( NodeNames::Ticks );
+    return vCanvasSize;
+}
+
 void PartialQuarry::setActiveChrom( )
 {
     for( bool bX : { true, false } )
@@ -360,6 +439,13 @@ void PartialQuarry::regCoords( )
                                .fFunc = &PartialQuarry::setActiveChrom,
                                .vIncomingFunctions = { },
                                .vIncomingSession = { { "contigs", "displayed_on_x" }, { "contigs", "displayed_on_y" } },
+                               .uiLastUpdated = uiCurrTime } );
+
+    registerNode( NodeNames::Ticks,
+                  ComputeNode{ .sNodeName = "ticks",
+                               .fFunc = &PartialQuarry::setTicks,
+                               .vIncomingFunctions = { NodeNames::ActiveChrom },
+                               .vIncomingSession = { },
                                .uiLastUpdated = uiCurrTime } );
 
     registerNode( NodeNames::AxisCoords,

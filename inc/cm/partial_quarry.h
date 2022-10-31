@@ -66,6 +66,7 @@ class PartialQuarry
         ActivateAnnotationCDS,
         HeatmapCDS,
         Scaled,
+        Ticks,
         SIZE
     };
     struct ComputeNode
@@ -285,6 +286,7 @@ class PartialQuarry
     std::vector<std::array<BinCoord, 2>> vBinCoords;
 
     std::array<std::vector<std::pair<std::string, bool>>, 2> vActiveCoverage;
+
     size_t uiSymmetry;
     size_t iInGroupSetting, iBetweenGroupSetting;
 
@@ -298,6 +300,7 @@ class PartialQuarry
     std::string sBackgroundColor;
 
     std::array<std::vector<std::vector<size_t>>, 2> vvCoverageValues;
+    std::array<std::array<std::vector<size_t>, 2>, 2> vInGroupCoverage;
     // outer array: column / row
     std::array<std::vector<double>, 2> vvFlatCoverageValues;
 
@@ -308,6 +311,9 @@ class PartialQuarry
     std::array<pybind11::dict, 2> vAnnotationCDS;
     std::array<pybind11::list, 2> vActiveAnnotationCDS;
     pybind11::dict xHeatmapCDS;
+    std::array<pybind11::dict, 2> xTicksCDS;
+    std::array<pybind11::list, 2> vTickLists;
+    std::array<size_t, 2> vCanvasSize;
 
 
     // bin_size.h
@@ -331,6 +337,8 @@ class PartialQuarry
     void setSymmetry( );
     // coords.h
     void setBinCoords( );
+    // coords.h
+    void setTicks( );
 
     // coords.h
     void regCoords( );
@@ -475,6 +483,12 @@ class PartialQuarry
     // coords.h
     const std::vector<std::array<BinCoord, 2>>& getBinCoords( );
 
+    // colors.h
+    const pybind11::dict getTicks( bool bXAxis );
+    
+    // colors.h
+    const pybind11::list getTickList( bool bXAxis );
+
     // coords.h
     const std::vector<AxisCoord>& getAxisCoords( bool bXAxis );
 
@@ -489,6 +503,9 @@ class PartialQuarry
 
     // bin_size.h
     const std::array<int64_t, 4> getDrawingArea( );
+
+    // coords.h
+    const std::array<size_t, 2> getCanvasSize();
 
     void printSizes( )
     {

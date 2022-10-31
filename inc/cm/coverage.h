@@ -9,11 +9,19 @@ namespace cm
 void PartialQuarry::setActiveCoverage( )
 {
     size_t uiSize = this->xSession[ "coverage" ][ "list" ].size( ) + this->xSession[ "replicates" ][ "list" ].size( );
-    vActiveCoverage[ 0 ].clear( );
-    vActiveCoverage[ 1 ].clear( );
-    vActiveCoverage[ 0 ].reserve( uiSize );
-    vActiveCoverage[ 1 ].reserve( uiSize );
+    for( size_t uiI = 0; uiI < 2; uiI++ )
+    {
+        vActiveCoverage[ uiI ].clear( );
+        vActiveCoverage[ uiI ].reserve( uiSize );
 
+        for( size_t uiJ = 0; uiJ < 2; uiJ++ )
+        {
+            vInGroupCoverage[ uiI ][ uiJ ].clear( );
+            vInGroupCoverage[ uiI ][ uiJ ].reserve( uiSize );
+        }
+    }
+
+    std::array<std::array<std::set<std::pair<std::string, bool>>, 2>, 2> vGroups;
     std::set<std::pair<std::string, bool>> xA{ };
     std::set<std::pair<std::string, bool>> xB{ };
 
@@ -24,15 +32,38 @@ void PartialQuarry::setActiveCoverage( )
 
         for( std::string sY : { "in_column", "cov_column_a", "cov_column_b" } )
             for( auto& rV : this->xSession[ sX ][ sY ] )
-                xA.insert( std::make_pair( rV.get<std::string>( ), bB ) );
+            {
+                std::pair<std::string, bool> xP( rV.get<std::string>( ), bB );
+                xA.insert( xP );
+                if( sY == "cov_column_a" )
+                    vGroups[ 0 ][ 0 ].insert( xP );
+                if( sY == "cov_column_b" )
+                    vGroups[ 0 ][ 1 ].insert( xP );
+            }
 
         for( std::string sY : { "in_row", "cov_row_a", "cov_row_b" } )
             for( auto& rV : this->xSession[ sX ][ sY ] )
-                xB.insert( std::make_pair( rV.get<std::string>( ), bB ) );
+            {
+                std::pair<std::string, bool> xP( rV.get<std::string>( ), bB );
+                xB.insert( xP );
+
+                if( sY == "cov_row_a" )
+                    vGroups[ 1 ][ 0 ].insert( xP );
+                if( sY == "cov_row_b" )
+                    vGroups[ 1 ][ 1 ].insert( xP );
+            }
     }
 
-    std::copy( xA.begin( ), xA.end( ), vActiveCoverage[ 0 ].begin( ) );
-    std::copy( xB.begin( ), xB.end( ), vActiveCoverage[ 1 ].begin( ) );
+    for( auto& rX : xA )
+        vActiveCoverage[ 0 ].push_back( rX );
+    for( auto& rX : xB )
+        vActiveCoverage[ 1 ].push_back( rX );
+
+    for( size_t uiI = 0; uiI < 2; uiI++ )
+        for( size_t uiJ = 0; uiJ < vActiveCoverage[ uiI ].size( ); uiJ++ )
+            for( size_t uiK = 0; uiK < 2; uiK++ )
+                if( vGroups[ uiI ][ uiK ].count( vActiveCoverage[ uiI ][ uiJ ] ) > 0 )
+                    vInGroupCoverage[ uiI ][ uiK ].push_back( uiJ );
 }
 
 void PartialQuarry::setCoverageValues( )
@@ -115,22 +146,6 @@ void PartialQuarry::setFlatCoverageValues( )
 {
     for( size_t uiJ = 0; uiJ < 2; uiJ++ )
     {
-        std::array<std::vector<size_t>, 2> vInGroup;
-        vInGroup[ 0 ].reserve( vvCoverageValues[ uiJ ].size( ) * 3 );
-        vInGroup[ 1 ].reserve( vvCoverageValues[ uiJ ].size( ) * 3 );
-
-        for( size_t uiI = 0; uiI < vvCoverageValues[ uiJ ].size( ); uiI++ )
-        {
-            for( size_t uiK = 0; uiK < 2; uiK++ )
-                if( this->xSession[ vActiveCoverage[ uiJ ][ uiI ].second ? "coverage" : "replicates" ]
-                                  [ uiJ == 0 ? ( uiK == 1 ? "cov_column_a" : "cov_column_b" )
-                                             : ( uiK == 1 ? "cov_row_a" : "cov_row_b" ) ]
-
-                                        // @todo @fixme contains does nothing use a set instead
-                                      .contains( vActiveCoverage[ uiJ ][ uiI ].first ) )
-                    vInGroup[ uiK ].push_back( uiI );
-        }
-
         vvFlatCoverageValues[ uiJ ].clear( );
         if( vvCoverageValues[ uiJ ].size( ) > 0 )
         {
@@ -141,8 +156,8 @@ void PartialQuarry::setFlatCoverageValues( )
                 for( size_t uiK = 0; uiK < 2; uiK++ )
                 {
                     std::vector<size_t> vCollected;
-                    vCollected.reserve( vInGroup[ uiK ].size( ) );
-                    for( size_t uiX : vInGroup[ uiK ] )
+                    vCollected.reserve( vInGroupCoverage[ uiJ ][ uiK ].size( ) );
+                    for( size_t uiX : vInGroupCoverage[ uiJ ][ uiK ] )
                         vCollected.push_back( vvCoverageValues[ uiJ ][ uiX ][ uiI ] );
 
                     vVal[ uiK ] = getFlatValue( vCollected );
@@ -187,14 +202,7 @@ void PartialQuarry::regCoverage( )
                   ComputeNode{ .sNodeName = "flat_coverage",
                                .fFunc = &PartialQuarry::setFlatCoverageValues,
                                .vIncomingFunctions = { NodeNames::CoverageValues, NodeNames::BetweenGroup },
-                               .vIncomingSession = { { "coverage", "cov_column_a" },
-                                                     { "coverage", "cov_column_b" },
-                                                     { "coverage", "cov_row_a" },
-                                                     { "coverage", "cov_row_b" },
-                                                     { "replicates", "cov_column_a" },
-                                                     { "replicates", "cov_column_b" },
-                                                     { "replicates", "cov_row_a" },
-                                                     { "replicates", "cov_row_b" } },
+                               .vIncomingSession = { },
                                .uiLastUpdated = uiCurrTime } );
 }
 
