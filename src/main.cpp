@@ -133,6 +133,8 @@ PYBIND11_MODULE( libContactMapping, m )
         .def( "get_ticks", &cm::PartialQuarry::getTicks ) //
         .def( "get_tick_list", &cm::PartialQuarry::getTickList ) //
         .def( "get_canvas_size", &cm::PartialQuarry::getCanvasSize ) //
+        .def( "get_tracks", &cm::PartialQuarry::getTracks ) //
+        .def( "get_min_max_tracks", &cm::PartialQuarry::getMinMaxTracks ) //
 
         .def( "print_sizes", &cm::PartialQuarry::printSizes ) //
 

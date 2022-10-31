@@ -84,7 +84,9 @@ class Indexer:
                 chr_name, chr_len = line.split()
                 if not test or ("Chr1_3A" in chr_name):
                     self.session_default["contigs"]["list"].append(chr_name)
-                    self.session_default["contigs"]["lengths"][chr_name] = int(chr_len) // dividend
+                    self.session_default["contigs"]["lengths"][chr_name] = (
+                        int(chr_len) // dividend
+                    )
                     self.session_default["contigs"]["displayed_on_x"].append(chr_name)
                     self.session_default["contigs"]["displayed_on_y"].append(chr_name)
                     self.session_default["contigs"]["genome_size"] += int(chr_len)

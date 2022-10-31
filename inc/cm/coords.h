@@ -148,25 +148,25 @@ void PartialQuarry::setTicks( )
 
     size_t uiLogestCommonSuffix = 0;
 
-    if(this->xSession["contigs"]["list"].size() > 1)
+    if( this->xSession[ "contigs" ][ "list" ].size( ) > 1 )
     {
         char cLast = '_';
         bool bContinue = true;
-        while(bContinue)
+        while( bContinue )
         {
             ++uiLogestCommonSuffix;
             bool bFirst = true;
-            for( auto& rChr : this->xSession["contigs"]["list"] )
+            for( auto& rChr : this->xSession[ "contigs" ][ "list" ] )
             {
-                std::string sChr = rChr.get<std::string>();
-                if(sChr.size() < uiLogestCommonSuffix)
+                std::string sChr = rChr.get<std::string>( );
+                if( sChr.size( ) < uiLogestCommonSuffix )
                 {
                     bContinue = false;
                     break;
                 }
-                else if(bFirst)
-                    cLast = sChr[sChr.size() - uiLogestCommonSuffix];
-                else if(cLast != sChr[sChr.size() - uiLogestCommonSuffix])
+                else if( bFirst )
+                    cLast = sChr[ sChr.size( ) - uiLogestCommonSuffix ];
+                else if( cLast != sChr[ sChr.size( ) - uiLogestCommonSuffix ] )
                 {
                     bContinue = false;
                     break;
@@ -186,7 +186,7 @@ void PartialQuarry::setTicks( )
         size_t uiRunningStart = 0;
         for( ChromDesc& rDesc : this->vActiveChromosomes[ uiI ] )
         {
-            vNames.append( rDesc.sName.substr(0, rDesc.sName.size() - uiLogestCommonSuffix) );
+            vNames.append( rDesc.sName.substr( 0, rDesc.sName.size( ) - uiLogestCommonSuffix ) );
             vStartPos.append( uiRunningStart );
             vFullList.append( uiRunningStart );
             uiRunningStart += rDesc.uiLength;
@@ -214,7 +214,7 @@ const pybind11::list PartialQuarry::getTickList( bool bXAxis )
     return vTickLists[ bXAxis ? 0 : 1 ];
 }
 
-const std::array<size_t, 2> PartialQuarry::getCanvasSize()
+const std::array<size_t, 2> PartialQuarry::getCanvasSize( )
 {
     update( NodeNames::Ticks );
     return vCanvasSize;

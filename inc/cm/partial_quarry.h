@@ -67,6 +67,7 @@ class PartialQuarry
         HeatmapCDS,
         Scaled,
         Ticks,
+        Tracks,
         SIZE
     };
     struct ComputeNode
@@ -300,7 +301,7 @@ class PartialQuarry
     std::string sBackgroundColor;
 
     std::array<std::vector<std::vector<size_t>>, 2> vvCoverageValues;
-    std::array<std::array<std::vector<size_t>, 2>, 2> vInGroupCoverage;
+    std::array<std::array<std::vector<size_t>, 3>, 2> vInGroupCoverage;
     // outer array: column / row
     std::array<std::vector<double>, 2> vvFlatCoverageValues;
 
@@ -312,8 +313,10 @@ class PartialQuarry
     std::array<pybind11::list, 2> vActiveAnnotationCDS;
     pybind11::dict xHeatmapCDS;
     std::array<pybind11::dict, 2> xTicksCDS;
+    std::array<pybind11::dict, 2> xTracksCDS;
     std::array<pybind11::list, 2> vTickLists;
     std::array<size_t, 2> vCanvasSize;
+    std::array<std::array<int64_t, 2>, 2> vvMinMaxTracks;
 
 
     // bin_size.h
@@ -357,6 +360,8 @@ class PartialQuarry
 
     // coverage.h
     void setCoverageValues( );
+    // coverage.h
+    void setTracks( );
 
     // coverage.h
     void setFlatCoverageValues( );
@@ -485,7 +490,7 @@ class PartialQuarry
 
     // colors.h
     const pybind11::dict getTicks( bool bXAxis );
-    
+
     // colors.h
     const pybind11::list getTickList( bool bXAxis );
 
@@ -505,7 +510,13 @@ class PartialQuarry
     const std::array<int64_t, 4> getDrawingArea( );
 
     // coords.h
-    const std::array<size_t, 2> getCanvasSize();
+    const std::array<size_t, 2> getCanvasSize( );
+
+    // coverage.h
+    const pybind11::dict getTracks( bool bXAxis );
+
+    // coverage.h
+    const std::array<int64_t, 2> getMinMaxTracks( bool bAxis );
 
     void printSizes( )
     {
