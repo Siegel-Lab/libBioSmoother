@@ -6,7 +6,7 @@
 namespace cm
 {
 
-void PartialQuarry::setActiveReplicates( )
+bool PartialQuarry::setActiveReplicates( )
 {
     auto& rList = this->xSession[ "replicates" ][ "list" ];
     vActiveReplicates.clear( );
@@ -17,6 +17,7 @@ void PartialQuarry::setActiveReplicates( )
     for( size_t uiI = 0; uiI < 2; uiI++ )
         for( auto& xRepl : this->xSession[ "replicates" ][ uiI == 0 ? "in_group_a" : "in_group_b" ] )
         {
+            CANCEL_RETURN;
             xHave.insert( xRepl.get<std::string>( ) );
             vGroups[ uiI ].insert( xRepl.get<std::string>( ) );
         }
@@ -30,12 +31,16 @@ void PartialQuarry::setActiveReplicates( )
     vInGroup[ 1 ].reserve( vActiveReplicates.size( ) );
     for( size_t uiI = 0; uiI < vActiveReplicates.size( ); uiI++ )
         for( size_t uiJ = 0; uiJ < 2; uiJ++ )
+        {
+            CANCEL_RETURN;
             if( vGroups[ uiJ ].count( vActiveReplicates[ uiI ] ) > 0 )
                 vInGroup[ uiJ ].push_back( uiI );
+        }
+    END_RETURN;
 }
 
 
-void PartialQuarry::setIntersectionType( )
+bool PartialQuarry::setIntersectionType( )
 {
     std::string sRenderSetting = this->xSession[ "settings" ][ "filters" ][ "ambiguous_mapping" ].get<std::string>( );
 
@@ -53,6 +58,7 @@ void PartialQuarry::setIntersectionType( )
         xIntersect = sps::IntersectionType::points_only;
     else
         throw std::logic_error( "unknown ambiguous_mapping value" );
+    END_RETURN;
 }
 
 size_t PartialQuarry::symmetry( size_t uiA, size_t uiB )
@@ -74,7 +80,7 @@ size_t PartialQuarry::symmetry( size_t uiA, size_t uiB )
     }
 }
 
-void PartialQuarry::setBinValues( )
+bool PartialQuarry::setBinValues( )
 {
     vvBinValues.clear( );
     vvBinValues.reserve( vActiveReplicates.size( ) );
@@ -92,6 +98,7 @@ void PartialQuarry::setBinValues( )
 
         for( std::array<BinCoord, 2>& vCoords : vBinCoords )
         {
+            CANCEL_RETURN;
             std::array<size_t, 2> vVals;
             for( size_t uiI = 0; uiI < 2; uiI++ )
                 if( vCoords[ uiI ].sChromosomeX != "" )
@@ -139,9 +146,10 @@ void PartialQuarry::setBinValues( )
             vvBinValues.back( ).push_back( symmetry( vVals[ 0 ], vVals[ 1 ] ) );
         }
     }
+    END_RETURN;
 }
 
-void PartialQuarry::setInGroup( )
+bool PartialQuarry::setInGroup( )
 {
     std::string sInGroupSetting = this->xSession[ "settings" ][ "replicates" ][ "in_group" ].get<std::string>( );
     if( sInGroupSetting == "min" )
@@ -156,9 +164,10 @@ void PartialQuarry::setInGroup( )
         iInGroupSetting = 4;
     else
         throw std::logic_error( "invalid value for in_group" );
+    END_RETURN;
 }
 
-void PartialQuarry::setBetweenGroup( )
+bool PartialQuarry::setBetweenGroup( )
 {
     std::string sBetwGroupSetting = this->xSession[ "settings" ][ "replicates" ][ "between_group" ].get<std::string>( );
     if( sBetwGroupSetting == "1st" )
@@ -179,6 +188,7 @@ void PartialQuarry::setBetweenGroup( )
         iBetweenGroupSetting = 7;
     else
         throw std::logic_error( "invalid value for between_group" );
+    END_RETURN;
 }
 
 
@@ -239,7 +249,7 @@ double PartialQuarry::getMixedValue( double uiA, double uiB )
     }
 }
 
-void PartialQuarry::setFlatValues( )
+bool PartialQuarry::setFlatValues( )
 {
     vvFlatValues.clear( );
 
@@ -256,6 +266,7 @@ void PartialQuarry::setFlatValues( )
                 vCollected.reserve( vInGroup[ uiJ ].size( ) );
                 for( size_t uiX : vInGroup[ uiJ ] )
                 {
+                    CANCEL_RETURN;
                     vCollected.push_back( vvBinValues[ uiX ][ uiI ] );
                 }
 
@@ -263,6 +274,7 @@ void PartialQuarry::setFlatValues( )
             }
         }
     }
+    END_RETURN;
 }
 
 void PartialQuarry::regReplicates( )
@@ -285,7 +297,7 @@ void PartialQuarry::regReplicates( )
                   ComputeNode{ .sNodeName = "bin_values",
                                .fFunc = &PartialQuarry::setBinValues,
                                .vIncomingFunctions = { NodeNames::BinCoords, NodeNames::ActiveReplicates,
-                                                       NodeNames::IntersectionType, NodeNames::Symmetry },
+                                                       NodeNames::IntersectionType },
                                .vIncomingSession = { { "settings", "filters", "mapping_q", "val_min" },
                                                      { "settings", "filters", "mapping_q", "val_max" } },
                                .uiLastUpdated = uiCurrTime } );
@@ -308,7 +320,7 @@ void PartialQuarry::regReplicates( )
                   ComputeNode{ .sNodeName = "flat_bins",
                                .fFunc = &PartialQuarry::setFlatValues,
                                .vIncomingFunctions = { NodeNames::BinValues, NodeNames::InGroup },
-                               .vIncomingSession = { { "replicates", "in_group_a" }, { "replicates", "in_group_b" } },
+                               .vIncomingSession = { },
                                .uiLastUpdated = uiCurrTime } );
 }
 

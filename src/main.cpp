@@ -23,6 +23,7 @@ class PyPartialQuarry : public PartialQuarry
                                             size_t uiNumInteractionsTotal, size_t uiNumBinsInRowTotal,
                                             double fPAccept ) override
     {
+        pybind11::gil_scoped_acquire acquire;
         PYBIND11_OVERRIDE( ret_t, /* Return type */
                            PartialQuarry, /* Parent class */
                            normalizeBinominalTestTrampoline, /* Name of function in C++ (must match Python name) */
@@ -36,6 +37,7 @@ class PyPartialQuarry : public PartialQuarry
     std::vector<std::string> colorPalette( std::string sPaletteName, std::string sColorLow,
                                            std::string sColorHigh ) override
     {
+        pybind11::gil_scoped_acquire acquire;
         PYBIND11_OVERRIDE( std::vector<std::string>, /* Return type */
                            PartialQuarry, /* Parent class */
                            colorPalette, /* Name of function in C++ (must match Python name) */
@@ -53,6 +55,15 @@ class ContectMappingPublicist : public PartialQuarry
     using PartialQuarry::normalizeBinominalTestTrampoline;
 };
 
+
+void testFunc()
+{
+    pybind11::gil_scoped_release release;
+    std::cout << "Sleeping..." << std::endl;
+    std::this_thread::sleep_for(std::chrono::seconds(3));
+    std::cout << "I'm awake! I'm awake!" << std::endl;
+}
+
 } // namespace cm
 
 template <bool CACHE> void exportSpsInterface( pybind11::module& m )
@@ -69,6 +80,7 @@ template <bool CACHE> void exportSpsInterface( pybind11::module& m )
               pybind11::arg( "verbosity" ) = 1 );
 }
 
+
 PYBIND11_MODULE( libContactMapping, m )
 {
     // prevent creation of stxxl log files
@@ -81,6 +93,8 @@ PYBIND11_MODULE( libContactMapping, m )
     m.attr( "CM_BUILD_TIME" ) = CM_BUILD_TIME;
     m.attr( "SPS_VERSION" ) = SPS_VERSION;
     m.attr( "SPS_BUILD_TIME" ) = SPS_BUILD_TIME;
+
+    m.def("test", &cm::testFunc);
 
     pybind11::class_<cm::BinCoord>( m, "BinCoord" ) //
         .def( pybind11::init<>( ) ) //
@@ -110,11 +124,14 @@ PYBIND11_MODULE( libContactMapping, m )
         .def( "get_session", &cm::PartialQuarry::getSession ) //
         .def( "get_value", &cm::PartialQuarry::getValue<pybind11::object> ) //
 
-        .def( "set_value", &cm::PartialQuarry::setValue<int> ) //
-        .def( "set_value", &cm::PartialQuarry::setValue<std::string> ) //
+        // @note order is relevant here -> the functions are tried in order
+        //      if e.g. json would be first everything would ose the json overload
+        //      also int, double, string and bool can sometimes convert into one another
         .def( "set_value", &cm::PartialQuarry::setValue<bool> ) //
+        .def( "set_value", &cm::PartialQuarry::setValue<int> ) //
         .def( "set_value", &cm::PartialQuarry::setValue<double> ) //
         .def( "set_value", &cm::PartialQuarry::setValue<std::vector<std::string>> ) //
+        .def( "set_value", &cm::PartialQuarry::setValue<std::string> ) //
         .def( "set_value", &cm::PartialQuarry::setValue<json> ) //
 
         .def( "has_undo", &cm::PartialQuarry::hasUndo ) //
@@ -137,6 +154,8 @@ PYBIND11_MODULE( libContactMapping, m )
         .def( "get_min_max_tracks", &cm::PartialQuarry::getMinMaxTracks ) //
 
         .def( "print_sizes", &cm::PartialQuarry::printSizes ) //
+        .def( "cancel", &cm::PartialQuarry::cancel ) //
+        .def( "update_cds", &cm::PartialQuarry::updateCDS ) //
 
         .def( "normalizeBinominalTestTrampoline", &cm::ContectMappingPublicist::normalizeBinominalTestTrampoline ) //
         .def( "colorPalette", &cm::ContectMappingPublicist::colorPalette ) //

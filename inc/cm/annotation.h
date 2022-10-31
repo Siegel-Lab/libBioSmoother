@@ -5,7 +5,7 @@
 namespace cm
 {
 
-void PartialQuarry::setActivateAnnotation( )
+bool PartialQuarry::setActivateAnnotation( )
 {
     for( size_t uiX : { 0, 1 } )
     {
@@ -13,21 +13,31 @@ void PartialQuarry::setActivateAnnotation( )
         auto& rList = this->xSession[ "annotation" ][ uiX == 0 ? "visible_x" : "visible_y" ];
         vActiveAnnotation[ uiX ].reserve( rList.size( ) );
         for( auto& rRep : rList )
+        {
+            CANCEL_RETURN;
             vActiveAnnotation[ uiX ].push_back( rRep.get<std::string>( ) );
+        }
     }
+    END_RETURN;
 }
 
-void PartialQuarry::setActivateAnnotationCDS( )
+bool PartialQuarry::setActivateAnnotationCDS( )
 {
+    pybind11::gil_scoped_acquire acquire;
     for( size_t uiX : { 0, 1 } )
     {
-        vActiveAnnotationCDS[ uiX ] = pybind11::list( );
+        pybind11::list xL;
         for( std::string sAnno : vActiveAnnotation[ uiX ] )
-            vActiveAnnotationCDS[ uiX ].append( sAnno );
+        {
+            CANCEL_RETURN;
+            xL.append( sAnno );
+        }
+        vActiveAnnotationCDS[ uiX ] = xL;
     }
+    END_RETURN;
 }
 
-void PartialQuarry::setAnnotationValues( )
+bool PartialQuarry::setAnnotationValues( )
 {
     for( size_t uiX : { 0, 1 } )
     {
@@ -41,6 +51,7 @@ void PartialQuarry::setAnnotationValues( )
             auto& rJson = this->xSession[ "annotation" ][ "by_name" ][ sCurrAnno ];
             for( AxisCoord& xCoords : vAxisCords[ uiX ] )
             {
+                CANCEL_RETURN;
                 if( xCoords.sChromosome != "" )
                 {
                     int64_t iDataSetId = rJson[ xCoords.sChromosome ].get<int64_t>( );
@@ -56,11 +67,13 @@ void PartialQuarry::setAnnotationValues( )
             }
         }
     }
+    END_RETURN;
 }
 
-void PartialQuarry::setAnnotationCDS( )
+bool PartialQuarry::setAnnotationCDS( )
 {
     using namespace pybind11::literals;
+    pybind11::gil_scoped_acquire acquire;
     for( size_t uiX : { 0, 1 } )
     {
         pybind11::list vChr;
@@ -78,6 +91,8 @@ void PartialQuarry::setAnnotationCDS( )
             std::string& rAnnoName = vActiveAnnotation[ uiX ][ uiN ];
             for( size_t uiA = 0; uiA < vAnnotationValues[ uiX ][ uiN ].size( ); uiA++ )
             {
+                CANCEL_RETURN;
+
                 size_t uiVal = vAnnotationValues[ uiX ][ uiN ][ uiA ];
                 auto& rCoords = vAxisCords[ uiX ][ uiA ];
 
@@ -107,6 +122,7 @@ void PartialQuarry::setAnnotationCDS( )
                                                 "num_anno"_a = vNumAnno,
                                                 "info"_a = vInfo );
     }
+    END_RETURN;
 }
 
 const pybind11::dict PartialQuarry::getAnnotation( bool bXAxis )

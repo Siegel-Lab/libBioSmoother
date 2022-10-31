@@ -6,7 +6,7 @@
 namespace cm
 {
 
-void PartialQuarry::setColors( )
+bool PartialQuarry::setColors( )
 {
     vColorPalette = colorPalette( this->xSession[ "settings" ][ "interface" ][ "color_palette" ].get<std::string>( ),
                                   this->xSession[ "settings" ][ "interface" ][ "color_low" ].get<std::string>( ),
@@ -14,27 +14,37 @@ void PartialQuarry::setColors( )
     if( iBetweenGroupSetting == 2 )
         sBackgroundColor = vColorPalette[ vColorPalette.size( ) / 2 ];
     sBackgroundColor = vColorPalette.front( );
+    END_RETURN;
 }
 
-void PartialQuarry::setAnnotationColors( )
+bool PartialQuarry::setAnnotationColors( )
 {
     vColorPaletteAnnotation.clear( );
     auto& rList = this->xSession[ "settings" ][ "interface" ][ "annotation_color_palette" ];
     vColorPaletteAnnotation.reserve( rList.size( ) );
     for( auto& rC : rList )
+    {
+        CANCEL_RETURN;
         vColorPaletteAnnotation.push_back( rC.get<std::string>( ) );
+    }
+    END_RETURN;
 }
 
-void PartialQuarry::setCombined( )
+bool PartialQuarry::setCombined( )
 {
     vCombined.clear( );
     vCombined.reserve( vvNormalized.size( ) );
 
     for( auto& vArr : vvNormalized )
+    {
+        CANCEL_RETURN;
         vCombined.push_back( getMixedValue( vArr[ 0 ], vArr[ 1 ] ) );
+    }
+    
+    END_RETURN;
 }
 
-void PartialQuarry::setScaled( )
+bool PartialQuarry::setScaled( )
 {
     vScaled.clear( );
     vScaled.reserve( vCombined.size( ) );
@@ -45,26 +55,43 @@ void PartialQuarry::setScaled( )
         double fMin = std::numeric_limits<double>::max( );
         for( double fVal : vCombined )
         {
+            CANCEL_RETURN;
             fMax = std::max( fMax, fVal );
             fMin = std::min( fMin, fVal );
         }
 
         for( double fVal : vCombined )
+        {
+            CANCEL_RETURN;
             vScaled.push_back( ( fVal + fMin ) / ( fMax - fMin ) );
+        }
     }
     else if( this->xSession[ "settings" ][ "normalization" ][ "scale" ].get<std::string>( ) == "max" )
     {
         double fMax = std::numeric_limits<double>::min( );
         for( double fVal : vCombined )
+        {
+            CANCEL_RETURN;
             fMax = std::max( fMax, fVal );
+        }
 
         for( double fVal : vCombined )
+        {
+            CANCEL_RETURN;
             vScaled.push_back( fVal / fMax );
+        }
     }
     else if( this->xSession[ "settings" ][ "normalization" ][ "scale" ].get<std::string>( ) == "dont" )
-        std::copy( vCombined.begin( ), vCombined.end( ), std::back_inserter( vScaled ) );
+    {
+        for(double fVal : vCombined)
+        {
+            CANCEL_RETURN;
+            vScaled.push_back(fVal);
+        }
+    }
     else
         throw std::logic_error( "invlaid scale value" );
+    END_RETURN;
 }
 
 double PartialQuarry::logScale( double fX )
@@ -100,13 +127,17 @@ size_t PartialQuarry::colorRange( double fX )
                      std::max( (size_t)0, (size_t)( (double)( vColorPalette.size( ) - 1 ) * fX ) ) );
 }
 
-void PartialQuarry::setColored( )
+bool PartialQuarry::setColored( )
 {
     vColored.clear( );
     vColored.reserve( vScaled.size( ) );
 
     for( double fC : vScaled )
+    {
+        CANCEL_RETURN;
         vColored.push_back( vColorPalette[ colorRange( logScale( fC ) ) ] );
+    }
+    END_RETURN;
 }
 
 
@@ -116,9 +147,10 @@ const std::vector<std::string>& PartialQuarry::getColors( )
     return vColored;
 }
 
-void PartialQuarry::setHeatmapCDS( )
+bool PartialQuarry::setHeatmapCDS( )
 {
     using namespace pybind11::literals;
+    pybind11::gil_scoped_acquire acquire;
 
     pybind11::list vScreenBottom;
     pybind11::list vScreenLeft;
@@ -146,6 +178,9 @@ void PartialQuarry::setHeatmapCDS( )
     pybind11::list vScoreB;
 
     for( size_t uiI = 0; uiI < vColored.size( ); uiI++ )
+    {
+        CANCEL_RETURN;
+        
         if( vColored[ uiI ] != sBackgroundColor )
         {
             vScreenBottom.append( vBinCoords[ uiI ][ 0 ].uiScreenY );
@@ -189,6 +224,7 @@ void PartialQuarry::setHeatmapCDS( )
             vScoreA.append( vvNormalized[ uiI ][ 0 ] );
             vScoreB.append( vvNormalized[ uiI ][ 1 ] );
         }
+    }
 
 
     xHeatmapCDS = pybind11::dict( "screen_bottom"_a = vScreenBottom,
@@ -215,6 +251,7 @@ void PartialQuarry::setHeatmapCDS( )
                                   "score_total"_a = vScoreTotal,
                                   "score_a"_a = vScoreA,
                                   "score_b"_a = vScoreB );
+    END_RETURN;
 }
 
 const pybind11::dict PartialQuarry::getHeatmap( )
@@ -250,7 +287,7 @@ void PartialQuarry::regColors( )
     registerNode( NodeNames::Combined,
                   ComputeNode{ .sNodeName = "combined_bins",
                                .fFunc = &PartialQuarry::setCombined,
-                               .vIncomingFunctions = { NodeNames::Normalized, NodeNames::BetweenGroup },
+                               .vIncomingFunctions = { NodeNames::Normalized },
                                .vIncomingSession = { },
                                .uiLastUpdated = uiCurrTime } );
 
@@ -264,7 +301,7 @@ void PartialQuarry::regColors( )
     registerNode( NodeNames::Colored,
                   ComputeNode{ .sNodeName = "colored_bins",
                                .fFunc = &PartialQuarry::setColored,
-                               .vIncomingFunctions = { NodeNames::Colors, NodeNames::Scaled, NodeNames::BetweenGroup },
+                               .vIncomingFunctions = { NodeNames::Colors, NodeNames::Scaled },
                                .vIncomingSession = { { "settings", "normalization", "log_base", "val" },
                                                      { "settings", "normalization", "color_range", "val_max" },
                                                      { "settings", "normalization", "color_range", "val_min" } },

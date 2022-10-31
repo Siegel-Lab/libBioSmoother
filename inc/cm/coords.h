@@ -26,7 +26,7 @@ namespace cm
  * @return std::vector<AxisCoord>
  */
 std::vector<AxisCoord> axisCoordsHelper( size_t uiBinSize, size_t uiScreenStartPos, size_t uiScreenEndPos,
-                                         size_t iSmallerBins, std::vector<ChromDesc> vChromosomes )
+                                         size_t iSmallerBins, std::vector<ChromDesc> vChromosomes, bool& bCancel )
 {
     std::vector<AxisCoord> vRet;
     vRet.reserve( 2 * ( uiScreenEndPos - uiScreenStartPos ) / uiBinSize );
@@ -38,6 +38,8 @@ std::vector<AxisCoord> axisCoordsHelper( size_t uiBinSize, size_t uiScreenStartP
         size_t uiItrEndPos = std::min( uiScreenEndPos, uiChromosomeEndPos );
         while( uiCurrScreenPos >= uiChromosomeStartPos && uiCurrScreenPos < uiItrEndPos )
         {
+            if(bCancel)
+                return vRet;
             size_t uiIndexPos = uiCurrScreenPos - uiChromosomeStartPos;
             size_t uiCurrBinSize;
             switch( iSmallerBins )
@@ -142,9 +144,10 @@ std::vector<ChromDesc> activeChromList( json& xChromLen, json& xChromDisp, std::
 }
 
 
-void PartialQuarry::setTicks( )
+bool PartialQuarry::setTicks( )
 {
     using namespace pybind11::literals;
+    pybind11::gil_scoped_acquire acquire;
 
     size_t uiLogestCommonSuffix = 0;
 
@@ -154,6 +157,7 @@ void PartialQuarry::setTicks( )
         bool bContinue = true;
         while( bContinue )
         {
+            CANCEL_RETURN;
             ++uiLogestCommonSuffix;
             bool bFirst = true;
             for( auto& rChr : this->xSession[ "contigs" ][ "list" ] )
@@ -186,6 +190,7 @@ void PartialQuarry::setTicks( )
         size_t uiRunningStart = 0;
         for( ChromDesc& rDesc : this->vActiveChromosomes[ uiI ] )
         {
+            CANCEL_RETURN;
             vNames.append( rDesc.sName.substr( 0, rDesc.sName.size( ) - uiLogestCommonSuffix ) );
             vStartPos.append( uiRunningStart );
             vFullList.append( uiRunningStart );
@@ -200,6 +205,7 @@ void PartialQuarry::setTicks( )
                                            "contig_names"_a = vNames );
         vTickLists[ uiI ] = vFullList;
     }
+    END_RETURN;
 }
 
 const pybind11::dict PartialQuarry::getTicks( bool bXAxis )
@@ -220,15 +226,16 @@ const std::array<size_t, 2> PartialQuarry::getCanvasSize( )
     return vCanvasSize;
 }
 
-void PartialQuarry::setActiveChrom( )
+bool PartialQuarry::setActiveChrom( )
 {
     for( bool bX : { true, false } )
         this->vActiveChromosomes[ bX ? 0 : 1 ] = activeChromList( this->xSession[ "contigs" ][ "lengths" ],
                                                                   this->xSession[ "contigs" ],
                                                                   bX ? "displayed_on_x" : "displayed_on_y" );
+    END_RETURN;
 }
 
-void PartialQuarry::setAxisCoords( )
+bool PartialQuarry::setAxisCoords( )
 {
     for( bool bX : { true, false } )
         this->vAxisCords[ bX ? 0 : 1 ] = axisCoordsHelper(
@@ -236,10 +243,13 @@ void PartialQuarry::setAxisCoords( )
             bX ? std::max( 0l, this->iStartX ) : std::max( 0l, this->iStartY ),
             bX ? std::max( 0l, this->iEndX ) : std::max( 0l, this->iEndY ),
             smaller_bin_to_num( this->xSession[ "settings" ][ "filters" ][ "cut_off_bin" ].get<std::string>( ) ),
-            this->vActiveChromosomes[ bX ? 0 : 1 ] );
+            this->vActiveChromosomes[ bX ? 0 : 1 ],
+            this->bCancel );
+    CANCEL_RETURN;
+    END_RETURN;
 }
 
-void PartialQuarry::setSymmetry( )
+bool PartialQuarry::setSymmetry( )
 {
     std::string sSymmetry = this->xSession[ "settings" ][ "filters" ][ "symmetry" ].get<std::string>( );
     if( sSymmetry == "all" )
@@ -254,8 +264,9 @@ void PartialQuarry::setSymmetry( )
         uiSymmetry = 4;
     else
         throw std::logic_error( "unknown symmetry setting" );
+    END_RETURN;
 }
-void PartialQuarry::setBinCoords( )
+bool PartialQuarry::setBinCoords( )
 {
     size_t uiManhattenDist = 1000 *
                              this->xSession[ "settings" ][ "filters" ][ "min_diag_dist" ][ "val" ].get<size_t>( ) /
@@ -266,6 +277,7 @@ void PartialQuarry::setBinCoords( )
     for( AxisCoord& xX : vAxisCords[ 0 ] )
         for( AxisCoord& xY : vAxisCords[ 1 ] )
         {
+            CANCEL_RETURN;
             if( xX.sChromosome != xY.sChromosome ||
                 (size_t)std::abs( (int64_t)xX.uiIndexPos - (int64_t)xY.uiIndexPos ) >= uiManhattenDist )
                 switch( uiSymmetry )
@@ -415,6 +427,7 @@ void PartialQuarry::setBinCoords( )
             else
                 vBinCoords.push_back( { BinCoord{ }, BinCoord{} } );
         }
+    END_RETURN;
 }
 
 

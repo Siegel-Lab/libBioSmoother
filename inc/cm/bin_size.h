@@ -22,7 +22,7 @@ size_t PartialQuarry::nextEvenNumber( double fX )
 }
 
 
-void PartialQuarry::setBinSize( )
+bool PartialQuarry::setBinSize( )
 {
     size_t uiT = this->xSession[ "settings" ][ "interface" ][ "min_bin_size" ][ "val" ].get<size_t>( );
     size_t uiMinBinSize = std::max( (size_t)1,
@@ -30,7 +30,6 @@ void PartialQuarry::setBinSize( )
                                         this->xSession[ "dividend" ].get<size_t>( ) );
     size_t uiMaxNumBins = this->xSession[ "settings" ][ "interface" ][ "max_num_bins" ][ "val" ].get<size_t>( ) *
                           this->xSession[ "settings" ][ "interface" ][ "max_num_bins_factor" ].get<size_t>( );
-
     if( this->xSession[ "settings" ][ "interface" ][ "bin_aspect_ratio" ] == "view" )
     {
         uiBinHeight = nextEvenNumber( ( this->xSession[ "area" ][ "y_end" ].get<double>( ) -
@@ -59,9 +58,10 @@ void PartialQuarry::setBinSize( )
     }
     else
         throw std::logic_error( "invlaid bin_aspect_ratio value" );
+    END_RETURN;
 }
 
-void PartialQuarry::setRenderArea( )
+bool PartialQuarry::setRenderArea( )
 {
     if( this->xSession[ "settings" ][ "export" ][ "do_export_full" ] )
     {
@@ -86,6 +86,7 @@ void PartialQuarry::setRenderArea( )
         std::cout << " iStartX: " << iStartX << " iStartY: " << iStartY << " iEndX: " << iEndX << " iEndY: " << iEndY
                   << std::endl;
     }
+    END_RETURN;
 }
 
 const std::array<int64_t, 4> PartialQuarry::getDrawingArea( )
@@ -119,12 +120,7 @@ void PartialQuarry::regBinSize( )
                                .fFunc = &PartialQuarry::setRenderArea,
                                .vIncomingFunctions = { NodeNames::BinSize },
                                .vIncomingSession = { { "settings", "export", "do_export_full" },
-                                                     { "settings", "contigs", "genome_size" },
-                                                     { "area" },
-                                                     { "area", "x_start" },
-                                                     { "area", "x_end" },
-                                                     { "area", "y_start" },
-                                                     { "area", "y_end" } },
+                                                     { "settings", "contigs", "genome_size" } },
                                .uiLastUpdated = uiCurrTime } );
 }
 

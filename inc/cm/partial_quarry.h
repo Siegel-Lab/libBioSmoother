@@ -1,10 +1,14 @@
 #include "cm/sps_interface.h"
 #include <nlohmann/json.hpp>
 #include <pybind11_json/pybind11_json.hpp>
+#include <mutex>
 
 #pragma once
 
 using json = nlohmann::json;
+
+#define CANCEL_RETURN if(this->bCancel) return false
+#define END_RETURN return true
 
 namespace cm
 {
@@ -73,7 +77,7 @@ class PartialQuarry
     struct ComputeNode
     {
         std::string sNodeName;
-        void ( PartialQuarry::*fFunc )( void );
+        bool ( PartialQuarry::*fFunc )( void );
         std::vector<NodeNames> vIncomingFunctions;
         std::vector<std::vector<std::string>> vIncomingSession;
         size_t uiLastUpdated;
@@ -85,13 +89,18 @@ class PartialQuarry
     json xSession;
     std::map<std::vector<std::string>, size_t> xSessionTime;
 
-
-    nlohmann::json::json_pointer toPointer( std::vector<std::string>& vKeys )
+    std::string toString( std::vector<std::string>& vKeys )
     {
         std::string sPtr = "";
         for( std::string sKey : vKeys )
             sPtr += "/" + sKey;
-        return nlohmann::json::json_pointer( sPtr );
+        return sPtr;
+    }
+
+
+    nlohmann::json::json_pointer toPointer( std::vector<std::string>& vKeys )
+    {
+        return nlohmann::json::json_pointer( toString( vKeys ) );
     }
 
     bool updateSettings( const json& xNewSettings, std::vector<std::string> vPrefix = { } )
@@ -135,7 +144,8 @@ class PartialQuarry
         return sRet;
     }
 
-    size_t update( NodeNames xNodeName )
+
+    size_t update_helper( NodeNames xNodeName )
     {
         ComputeNode& xNode = vGraph[ xNodeName ];
         if( xNode.uiLastUpdated < uiCurrTime )
@@ -143,8 +153,17 @@ class PartialQuarry
             std::vector<std::string> vOutOfDateReason{ };
             auto p1 = std::chrono::high_resolution_clock::now( );
             for( NodeNames xPred : xNode.vIncomingFunctions )
-                if( update( xPred ) > xNode.uiLastUpdated )
+            {
+                size_t uiUpdateTime = update_helper( xPred );
+                if(uiUpdateTime == 0)
+                {
+                    if( uiVerbosity >= 1 )
+                        std::cout << xNode.sNodeName << " was cancelled" << std::endl;
+                    return 0;
+                }
+                else if( uiUpdateTime > xNode.uiLastUpdated )
                     vOutOfDateReason.push_back( "change in previous node " + vGraph[ xPred ].sNodeName );
+            }
             auto p2 = std::chrono::high_resolution_clock::now( );
             auto pms_int = std::chrono::duration_cast<std::chrono::milliseconds>( p2 - p1 );
 
@@ -165,7 +184,15 @@ class PartialQuarry
                 }
                 auto t1 = std::chrono::high_resolution_clock::now( );
 
-                ( this->*xNode.fFunc )( );
+                bool bUpdateDone = ( this->*xNode.fFunc )( );
+                if(!bUpdateDone)
+                {
+                    if( uiVerbosity >= 1 )
+                        std::cout << xNode.sNodeName << " was cancelled" << std::endl;
+                    // update was cancelled -> we do not know how messed up the result form the last call was
+                    xNode.uiLastUpdated = 0;
+                    return 0;
+                }
 
                 auto t2 = std::chrono::high_resolution_clock::now( );
                 auto ms_int = std::chrono::duration_cast<std::chrono::milliseconds>( t2 - t1 );
@@ -190,7 +217,85 @@ class PartialQuarry
     }
 
 
+    bool update_no_throw( NodeNames xNodeName )
+    {
+        // allow python multithreading during this call
+        pybind11::gil_scoped_release release;
+
+        // make sure that no two threads can enter here (basically allow multithreading other than this)
+        std::lock_guard<std::mutex> xGuard(xUpdateMutex);
+
+        bCancel = false;
+        size_t uiUpdateTime = update_helper(xNodeName);
+
+        return uiUpdateTime != 0;
+    }
+
+    void update( NodeNames xNodeName )
+    {
+        if(!update_no_throw(xNodeName))
+            throw std::runtime_error("update was cancelled");
+    }
+
+
+    void checkUnnecessaryDependency( NodeNames xNodeCurr, std::map<NodeNames, std::string>& rDependents,
+                                     std::map<std::vector<std::string>, std::string>& rDependentSettings )
+    {
+        for( std::vector<std::string>& rSetting : vGraph[ xNodeCurr ].vIncomingSession )
+            rDependentSettings[ rSetting ] = vGraph[ xNodeCurr ].sNodeName;
+
+        for( NodeNames& rPrev : vGraph[ xNodeCurr ].vIncomingFunctions )
+        {
+            rDependents[ rPrev ] = vGraph[ xNodeCurr ].sNodeName;
+            checkUnnecessaryDependency( rPrev, rDependents, rDependentSettings );
+        }
+    }
+
+    void checkUnnecessaryDependencies( )
+    {
+        for( size_t uiNodeName = 0; uiNodeName < NodeNames::SIZE; uiNodeName++ )
+        {
+            std::map<NodeNames, std::string> xDependents;
+            std::map<std::vector<std::string>, std::string> xDependentSettings;
+            for( NodeNames& rPrev : vGraph[ uiNodeName ].vIncomingFunctions )
+                checkUnnecessaryDependency( rPrev, xDependents, xDependentSettings );
+
+            for( std::vector<std::string>& rSetting : vGraph[ uiNodeName ].vIncomingSession )
+                if( xDependentSettings.count( rSetting ) > 0 )
+                    std::cerr << "unnecessary session dependency warning: " << vGraph[ uiNodeName ].sNodeName
+                              << " depends on " << toString( rSetting ) << ", but the previous node "
+                              << xDependentSettings[ rSetting ] << " shares this dependency" << std::endl;
+
+            for( NodeNames& rPrev : vGraph[ uiNodeName ].vIncomingFunctions )
+                if( xDependents.count( rPrev ) > 0 )
+                    std::cerr << "unnecessary session dependency warning: " << vGraph[ uiNodeName ].sNodeName
+                              << " depends on " << vGraph[ rPrev ].sNodeName << ", but the previous node "
+                              << xDependents[ rPrev ] << " shares this dependency" << std::endl;
+        }
+    }
+
   public:
+    void cancel()
+    {
+        bCancel = true;
+    }
+
+    void updateCDS()
+    {
+        bool bContinue;
+        do
+        {
+            bContinue = false;
+            for(auto& rNode : {HeatmapCDS, Tracks, AnnotationCDS, ActivateAnnotationCDS, Ticks, Tracks})
+                if(!update_no_throw(rNode))
+                {
+                    bContinue = true;
+                    break;
+                }
+        }
+        while(bContinue);
+    }
+
     void setSession( const json& xSession )
     {
         ++uiCurrTime;
@@ -205,6 +310,8 @@ class PartialQuarry
 
     template <typename T> T getValue( std::vector<std::string> vKeys )
     {
+        // @todo the session should be guarded by a mutex since there can now be multithreading in here
+        // also changing a value while rendering should automatically call the cancel function?
         auto xRet = this->xSession[ toPointer( vKeys ) ].get<T>( );
 
         return xRet;
@@ -318,53 +425,56 @@ class PartialQuarry
     std::array<size_t, 2> vCanvasSize;
     std::array<std::array<int64_t, 2>, 2> vvMinMaxTracks;
 
+    bool bCancel = false;
+    std::mutex xUpdateMutex {};
+
 
     // bin_size.h
     size_t nextEvenNumber( double );
 
 
     // bin_size.h
-    void setBinSize( );
+    bool setBinSize( );
     // bin_size.h
-    void setRenderArea( );
+    bool setRenderArea( );
 
     // bin_size.h
     void regBinSize( );
 
     // coords.h
-    void setActiveChrom( );
+    bool setActiveChrom( );
     // coords.h
-    void setAxisCoords( );
+    bool setAxisCoords( );
 
     // coords.h
-    void setSymmetry( );
+    bool setSymmetry( );
     // coords.h
-    void setBinCoords( );
+    bool setBinCoords( );
     // coords.h
-    void setTicks( );
+    bool setTicks( );
 
     // coords.h
     void regCoords( );
 
     // replicates.h
-    void setIntersectionType( );
+    bool setIntersectionType( );
 
     // replicates.h
-    void setActiveReplicates( );
+    bool setActiveReplicates( );
 
     // replicates.h
     void regReplicates( );
 
     // coverage.h
-    void setActiveCoverage( );
+    bool setActiveCoverage( );
 
     // coverage.h
-    void setCoverageValues( );
+    bool setCoverageValues( );
     // coverage.h
-    void setTracks( );
+    bool setTracks( );
 
     // coverage.h
-    void setFlatCoverageValues( );
+    bool setFlatCoverageValues( );
 
     // coverage.h
     void regCoverage( );
@@ -373,7 +483,7 @@ class PartialQuarry
     size_t symmetry( size_t, size_t );
 
     // replicates.h
-    void setBinValues( );
+    bool setBinValues( );
 
     // replicates.h
     size_t getFlatValue( std::vector<size_t> );
@@ -381,59 +491,59 @@ class PartialQuarry
     double getMixedValue( double, double );
 
     // replicates.h
-    void setFlatValues( );
+    bool setFlatValues( );
 
     // replicates.h
-    void setInGroup( );
+    bool setInGroup( );
 
     // replicates.h
-    void setBetweenGroup( );
+    bool setBetweenGroup( );
 
     // normalization.h
-    void doNotNormalize( );
+    bool doNotNormalize( );
     // normalization.h
-    void normalizeTracks( );
+    bool normalizeTracks( );
     // normalization.h
-    void normalizeSize( size_t );
+    bool normalizeSize( size_t );
     // normalization.h
-    void normalizeBinominalTest( );
+    bool normalizeBinominalTest( );
     // normalization.h
-    void normalizeIC( );
+    bool normalizeIC( );
     // normalization.h
-    void setNormalized( );
+    bool setNormalized( );
 
     // normalization.h
     void regNormalization( );
 
     // colors.h
-    void setColors( );
+    bool setColors( );
     // colors.h
-    void setAnnotationColors( );
+    bool setAnnotationColors( );
     // colors.h
-    void setCombined( );
+    bool setCombined( );
     // colors.h
-    void setScaled( );
+    bool setScaled( );
     // colors.h
-    void setColored( );
+    bool setColored( );
     // colors.h
     double logScale( double );
     // colors.h
     size_t colorRange( double );
     // colors.h
-    void setHeatmapCDS( );
+    bool setHeatmapCDS( );
 
     // colors.h
     void regColors( );
 
 
     // annotation.h
-    void setActivateAnnotation( );
+    bool setActivateAnnotation( );
     // annotation.h
-    void setAnnotationValues( );
+    bool setAnnotationValues( );
     // annotation.h
-    void setAnnotationCDS( );
+    bool setAnnotationCDS( );
     // annotation.h
-    void setActivateAnnotationCDS( );
+    bool setActivateAnnotationCDS( );
     // annotation.h
     void regAnnotation( );
 
@@ -450,7 +560,7 @@ class PartialQuarry
     }
 
   public:
-    PartialQuarry( ) : uiCurrTime( 0 ), vGraph( NodeNames::SIZE ), xSession( ), xIndices( )
+    PartialQuarry( ) : uiCurrTime( 1 ), vGraph( NodeNames::SIZE ), xSession( ), xIndices( )
     {
         regBinSize( );
         regCoords( );
@@ -459,10 +569,14 @@ class PartialQuarry
         regNormalization( );
         regColors( );
         regAnnotation( );
+
+#ifndef NDEBUG
+        checkUnnecessaryDependencies( );
+#endif
     }
 
     PartialQuarry( std::string sPrefix )
-        : uiCurrTime( 0 ),
+        : uiCurrTime( 1 ),
           vGraph( NodeNames::SIZE ),
           xSession( json::parse( std::ifstream( sPrefix + "/default_session.json" ) ) ),
           xIndices( sPrefix )
@@ -474,6 +588,10 @@ class PartialQuarry
         regNormalization( );
         regColors( );
         regAnnotation( );
+
+#ifndef NDEBUG
+        checkUnnecessaryDependencies( );
+#endif
     }
 
     virtual ~PartialQuarry( )

@@ -6,46 +6,65 @@
 namespace cm
 {
 
-void PartialQuarry::normalizeSize( size_t uiSize )
+bool PartialQuarry::normalizeSize( size_t uiSize )
 {
     std::array<size_t, 2> vTotalReads = { 0, 0 };
 
     for( size_t uiJ = 0; uiJ < 2; uiJ++ )
         for( size_t uiX : vInGroup[ uiJ ] )
+        {
+            CANCEL_RETURN;
             vTotalReads[ uiJ ] +=
                 this->xSession[ "replicates" ][ "by_name" ][ this->vActiveReplicates[ uiX ] ][ "total_reads" ]
                     .get<size_t>( );
+        }
     for( auto& vVal : vvFlatValues )
+    {
+        CANCEL_RETURN;
         vvNormalized.push_back( std::array<double, 2>{ uiSize * vVal[ 0 ] / (double)vTotalReads[ 0 ],
                                                        uiSize * vVal[ 1 ] / (double)vTotalReads[ 1 ] } );
+    }
+    END_RETURN;
 }
 
-void PartialQuarry::doNotNormalize( )
+bool PartialQuarry::doNotNormalize( )
 {
     for( auto& vVal : vvFlatValues )
+    {
+        CANCEL_RETURN;
         vvNormalized.push_back( std::array<double, 2>{ (double)vVal[ 0 ], (double)vVal[ 1 ] } );
+    }
+    END_RETURN;
 }
 
 
-void PartialQuarry::normalizeTracks( )
+bool PartialQuarry::normalizeTracks( )
 {
+    throw std::logic_error( "Function not implemented -> divide by tracks should be moved after mixing values..." );
+    // if should be move after mixing since then mixing does sth 
+#if 0
     for( size_t uiI = 0; uiI < vvFlatValues.size( ); uiI++ )
-        vvNormalized.push_back(
-            std::array<double, 2>{ (double)vvFlatValues[ uiI ][ 0 ] /
-                                       std::max( 1.0, vvFlatCoverageValues[ 0 ][ uiI / vAxisCords[ 0 ].size( ) ] ),
-                                   (double)vvFlatValues[ uiI ][ 1 ] /
-                                       std::max( 1.0, vvFlatCoverageValues[ 1 ][ uiI % vAxisCords[ 0 ].size( ) ] ) } );
+        vvNormalized.push_back( std::array<double, 2>{
+             (double)vvFlatValues[ uiI ][ 0 ] /
+                   1 ? (vvFlatCoverageValues[ 0 ].size( ) == 0
+              : std::max( 1.0, vvFlatCoverageValues[ 0 ][ uiI / vAxisCords[ 0 ].size( ) ] )),
+             (double)vvFlatValues[ uiI ][ 1 ] /
+                    ( 1 ? vvFlatCoverageValues[ 1 ].size( ) == 0
+              : std::max( 1.0, vvFlatCoverageValues[ 1 ][ uiI % vAxisCords[ 0 ].size( ) ]) ) } );
+#endif
 }
 
-void PartialQuarry::normalizeBinominalTest( )
+bool PartialQuarry::normalizeBinominalTest( )
 {
     size_t uiNumBinsInRowTotal = ( this->xSession[ "contigs" ][ "genome_size" ].get<size_t>( ) - 1 ) / uiBinWidth + 1;
     vvNormalized = normalizeBinominalTestTrampoline(
         vvFlatValues, '?', uiNumBinsInRowTotal,
         this->xSession[ "settings" ][ "normalization" ][ "p_accept" ][ "val" ].get<double>( ) );
+    CANCEL_RETURN;
+    END_RETURN;
 }
 
-void PartialQuarry::normalizeIC( )
+bool PartialQuarry::normalizeIC( )
 {
     /*
 
@@ -89,23 +108,23 @@ void PartialQuarry::normalizeIC( )
     throw std::logic_error( "Function not implemented" );
 }
 
-void PartialQuarry::setNormalized( )
+bool PartialQuarry::setNormalized( )
 {
     vvNormalized.clear( );
     vvNormalized.reserve( vvFlatValues.size( ) );
 
     if( this->xSession[ "settings" ][ "normalization" ][ "normalize_by" ].get<std::string>( ) == "dont" )
-        doNotNormalize( );
+        return doNotNormalize( );
     else if( this->xSession[ "settings" ][ "normalization" ][ "normalize_by" ].get<std::string>( ) == "tracks" )
-        normalizeTracks( );
+        return normalizeTracks( );
     else if( this->xSession[ "settings" ][ "normalization" ][ "normalize_by" ].get<std::string>( ) == "radicl-seq" )
-        normalizeBinominalTest( );
+        return normalizeBinominalTest( );
     else if( this->xSession[ "settings" ][ "normalization" ][ "normalize_by" ].get<std::string>( ) == "rpm" )
-        normalizeSize( 1000000 );
+        return normalizeSize( 1000000 );
     else if( this->xSession[ "settings" ][ "normalization" ][ "normalize_by" ].get<std::string>( ) == "rpk" )
-        normalizeSize( 1000 );
+        return normalizeSize( 1000 );
     else if( this->xSession[ "settings" ][ "normalization" ][ "normalize_by" ].get<std::string>( ) == "hi-c" )
-        normalizeIC( );
+        return normalizeIC( );
     else
         throw std::logic_error( "invalid value for normalize_by" );
 }
@@ -117,8 +136,6 @@ void PartialQuarry::regNormalization( )
                                .fFunc = &PartialQuarry::setNormalized,
                                .vIncomingFunctions = { NodeNames::FlatValues, NodeNames::FlatCoverageValues },
                                .vIncomingSession = { { "settings", "normalization", "normalize_by" },
-                                                     { "replicates", "in_group_a" },
-                                                     { "replicates", "in_group_b" },
                                                      { "replicates", "by_name" },
                                                      { "settings", "normalization", "p_accept", "val" } },
                                .uiLastUpdated = uiCurrTime } );
