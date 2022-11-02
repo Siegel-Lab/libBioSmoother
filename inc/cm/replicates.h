@@ -259,7 +259,7 @@ bool PartialQuarry::setFlatValues( )
 
         for( size_t uiI = 0; uiI < vBinCoords.size( ); uiI++ )
         {
-            vvFlatValues.push_back( { } );
+            vvFlatValues.push_back( { 0, 0 } );
             for( size_t uiJ = 0; uiJ < 2; uiJ++ )
             {
                 std::vector<size_t> vCollected;

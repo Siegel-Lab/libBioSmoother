@@ -214,6 +214,7 @@ class Indexer:
             no_groups,
             "test" in self.session_default,
         )
+        total_reads = 0
 
         for chr_x in read_iterator.itr_x_axis():
             for chr_y in read_iterator.itr_y_axis():
@@ -226,6 +227,7 @@ class Indexer:
                     pos_2_e,
                     map_q,
                 ) in read_iterator.itr_cell(chr_x, chr_y):
+                    total_reads += 1
                     act_pos_1_s = int(pos_2_s) // self.session_default["dividend"]
                     act_pos_1_e = int(pos_2_e) // self.session_default["dividend"]
                     act_pos_2_s = int(pos_1_s) // self.session_default["dividend"]
@@ -262,6 +264,8 @@ class Indexer:
                     chr_y
                 ] = self.indices.generate(d, o, verbosity=0)
 
+
+        self.session_default["replicates"]["by_name"][name]["total_reads"] = total_reads
         o = 1 if multi_map else 0
         d = o + 2 if has_map_q else 1
 

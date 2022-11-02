@@ -21,8 +21,9 @@ bool PartialQuarry::normalizeSize( size_t uiSize )
     for( auto& vVal : vvFlatValues )
     {
         CANCEL_RETURN;
-        vvNormalized.push_back( std::array<double, 2>{ uiSize * vVal[ 0 ] / (double)vTotalReads[ 0 ],
-                                                       uiSize * vVal[ 1 ] / (double)vTotalReads[ 1 ] } );
+        vvNormalized.push_back( std::array<double, 2>{
+            vTotalReads[ 0 ] == 0 ? 0 : (double)uiSize * (double)vVal[ 0 ] / (double)vTotalReads[ 0 ],
+            vTotalReads[ 1 ] == 0 ? 0 : (double)uiSize * (double)vVal[ 1 ] / (double)vTotalReads[ 1 ] } );
     }
     END_RETURN;
 }

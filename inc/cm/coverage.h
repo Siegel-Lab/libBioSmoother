@@ -211,7 +211,7 @@ bool PartialQuarry::setTracks( )
                 vvMinMaxTracks[ uiI ][ 1 ] = std::max( vvMinMaxTracks[ uiI ][ 1 ], (int64_t)uiVal );
             }
 
-            if(vvFlatCoverageValues[ uiI ].size( ) > 0)
+            if( vvFlatCoverageValues[ uiI ].size( ) > 0 )
             {
                 auto uiVal = vvFlatCoverageValues[ uiI ][ uiX ];
                 vvMinMaxTracks[ uiI ][ 0 ] = std::min( vvMinMaxTracks[ uiI ][ 0 ], (int64_t)uiVal );
