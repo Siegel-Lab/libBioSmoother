@@ -41,7 +41,7 @@ struct BinCoord
 class PartialQuarry
 {
   public:
-    size_t uiVerbosity = 3;
+    size_t uiVerbosity = 0;
 
   private:
     enum NodeNames
@@ -109,7 +109,7 @@ class PartialQuarry
     bool updateSettings( const json& xNewSettings, std::vector<std::string> vPrefix = { } )
     {
         bool bUpdated = false;
-        for( auto& xEle : xNewSettings.items( ) )
+        for( auto& xEle : xNewSettings[ toPointer( vPrefix ) ].items( ) )
         {
             if( xEle.key( ) != "previous" && xEle.key( ) != "next" )
             {
@@ -120,18 +120,27 @@ class PartialQuarry
                     bUpdated = updateSettings( xNewSettings, vPrefix2 ) || bUpdated;
                 else if( this->xSession[ toPointer( vPrefix2 ) ] != xNewSettings[ toPointer( vPrefix2 ) ] )
                 {
-                    xSessionTime[ vPrefix2 ] = uiCurrTime;
+                    if(xSessionTime.count(vPrefix2) > 0)
+                    {
+                        xSessionTime[ vPrefix2 ] = uiCurrTime;
+                        std::cout << "setting changed 2: " << vPrefix2 << std::endl;
+                    }
                     bUpdated = true;
                 }
             }
         }
-        if( bUpdated )
+        if( bUpdated && xSessionTime.count(vPrefix) > 0 )
+        {
             xSessionTime[ vPrefix ] = uiCurrTime;
+            std::cout << "setting changed 2: " << vPrefix << std::endl;
+        }
         return bUpdated;
     }
 
     void registerNode( NodeNames xName, ComputeNode xNode )
     {
+        for(std::vector<std::string>& rKey : xNode.vIncomingSession)
+            xSessionTime[rKey] = uiCurrTime + 1;
         vGraph[ xName ] = xNode;
     }
 
@@ -171,7 +180,7 @@ class PartialQuarry
             auto pms_int = std::chrono::duration_cast<std::chrono::milliseconds>( p2 - p1 );
 
             for( std::vector<std::string> vSetting : xNode.vIncomingSession )
-                if( xSessionTime.count( vSetting ) == 0 || xSessionTime[ vSetting ] > xNode.uiLastUpdated )
+                if( xSessionTime[ vSetting ] > xNode.uiLastUpdated )
                     vOutOfDateReason.push_back( "change in variable " + vec2str( vSetting ) +
                                                 " (last set: " + std::to_string( xSessionTime[ vSetting ] ) +
                                                 "; now: " + std::to_string( uiCurrTime ) + ")" );
@@ -323,35 +332,44 @@ class PartialQuarry
     {
         if( this->xSession[ toPointer( vKeys ) ].is_null( ) || this->xSession[ toPointer( vKeys ) ].get<T>( ) != xVal )
         {
-            ++uiCurrTime;
-
-            // remove old redo
-            this->xSession[ "next" ] = nullptr;
-
-            // deep copy json
-            this->xSession[ "previous" ] = json::parse( this->xSession.dump( ) ); // back up previous
-
-            // change setting
-            this->xSession[ toPointer( vKeys ) ] = xVal;
-
-            // update time
-            std::vector<std::string> vCurrKey;
-            xSessionTime[ vCurrKey ] = uiCurrTime;
-            for( std::string sKey : vKeys )
+            if(this->xSessionTime.count(vKeys) > 0)
             {
-                vCurrKey.push_back( sKey );
-                xSessionTime[ vCurrKey ] = uiCurrTime;
-            }
+                ++uiCurrTime;
 
-            // make sure undo's and redo's do not pile up infinitely
-            if( this->xSession[ "settings" ].is_object( ) )
-            {
-                int uiMaxRedo = this->xSession[ "settings" ][ "interface" ][ "max_undo" ][ "val" ].get<int>( );
-                std::vector<std::string> vPrevKey{ "previous" };
-                while( --uiMaxRedo >= 0 && !this->xSession[ toPointer( vPrevKey ) ].is_null( ) )
-                    vPrevKey.push_back( "previous" );
-                this->xSession[ toPointer( vPrevKey ) ] = nullptr;
+                // remove old redo
+                this->xSession[ "next" ] = nullptr;
+
+                // deep copy json
+                this->xSession[ "previous" ] = json::parse( this->xSession.dump( ) ); // back up previous
+
+                // change setting
+                this->xSession[ toPointer( vKeys ) ] = xVal;
+
+                // update time
+                std::vector<std::string> vCurrKey;
+                if(xSessionTime.count(vCurrKey) > 0)
+                    xSessionTime[ vCurrKey ] = uiCurrTime;
+                for( std::string sKey : vKeys )
+                {
+                    vCurrKey.push_back( sKey );
+                    if(xSessionTime.count(vCurrKey) > 0)
+                        xSessionTime[ vCurrKey ] = uiCurrTime;
+                }
+
+                // make sure undo's and redo's do not pile up infinitely
+                if( this->xSession[ "settings" ].is_object( ) )
+                {
+                    int uiMaxRedo = this->xSession[ "settings" ][ "interface" ][ "max_undo" ][ "val" ].get<int>( );
+                    std::vector<std::string> vPrevKey{ "previous" };
+                    while( --uiMaxRedo >= 0 && !this->xSession[ toPointer( vPrevKey ) ].is_null( ) )
+                        vPrevKey.push_back( "previous" );
+                    this->xSession[ toPointer( vPrevKey ) ] = nullptr;
+                }
+
+                std::cout << "setting changed: " << vKeys << std::endl;
             }
+            else
+                this->xSession[ toPointer( vKeys ) ] = xVal;
         }
     }
 

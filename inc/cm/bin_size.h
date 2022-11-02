@@ -83,8 +83,6 @@ bool PartialQuarry::setRenderArea( )
         iEndY = this->xSession[ "area" ][ "y_end" ].get<int64_t>( ) + uiBinHeight -
                 ( this->xSession[ "area" ][ "y_end" ].get<int64_t>( ) % uiBinHeight );
 
-        std::cout << " iStartX: " << iStartX << " iStartY: " << iStartY << " iEndX: " << iEndX << " iEndY: " << iEndY
-                  << std::endl;
     }
     END_RETURN;
 }
@@ -108,11 +106,7 @@ void PartialQuarry::regBinSize( )
                                                      { "settings", "interface", "max_num_bins_factor" },
                                                      { "settings", "interface", "bin_aspect_ratio" },
                                                      { "dividend" },
-                                                     { "area" },
-                                                     { "area", "x_start" },
-                                                     { "area", "x_end" },
-                                                     { "area", "y_start" },
-                                                     { "area", "y_end" } },
+                                                     { "area" } },
                                .uiLastUpdated = uiCurrTime } );
 
     registerNode( NodeNames::RenderArea,
