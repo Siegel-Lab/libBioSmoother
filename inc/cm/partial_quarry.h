@@ -120,7 +120,7 @@ class PartialQuarry
                     bUpdated = updateSettings( xNewSettings, vPrefix2 ) || bUpdated;
                 else if( this->xSession[ toPointer( vPrefix2 ) ] != xNewSettings[ toPointer( vPrefix2 ) ] )
                 {
-                    if(xSessionTime.count(vPrefix2) > 0)
+                    if( xSessionTime.count( vPrefix2 ) > 0 )
                     {
                         xSessionTime[ vPrefix2 ] = uiCurrTime;
                         std::cout << "setting changed 2: " << vPrefix2 << std::endl;
@@ -129,7 +129,7 @@ class PartialQuarry
                 }
             }
         }
-        if( bUpdated && xSessionTime.count(vPrefix) > 0 )
+        if( bUpdated && xSessionTime.count( vPrefix ) > 0 )
         {
             xSessionTime[ vPrefix ] = uiCurrTime;
             std::cout << "setting changed 2: " << vPrefix << std::endl;
@@ -139,8 +139,8 @@ class PartialQuarry
 
     void registerNode( NodeNames xName, ComputeNode xNode )
     {
-        for(std::vector<std::string>& rKey : xNode.vIncomingSession)
-            xSessionTime[rKey] = uiCurrTime + 1;
+        for( std::vector<std::string>& rKey : xNode.vIncomingSession )
+            xSessionTime[ rKey ] = uiCurrTime + 1;
         vGraph[ xName ] = xNode;
     }
 
@@ -332,7 +332,7 @@ class PartialQuarry
     {
         if( this->xSession[ toPointer( vKeys ) ].is_null( ) || this->xSession[ toPointer( vKeys ) ].get<T>( ) != xVal )
         {
-            if(this->xSessionTime.count(vKeys) > 0)
+            if( this->xSessionTime.count( vKeys ) > 0 )
             {
                 ++uiCurrTime;
 
@@ -347,12 +347,12 @@ class PartialQuarry
 
                 // update time
                 std::vector<std::string> vCurrKey;
-                if(xSessionTime.count(vCurrKey) > 0)
+                if( xSessionTime.count( vCurrKey ) > 0 )
                     xSessionTime[ vCurrKey ] = uiCurrTime;
                 for( std::string sKey : vKeys )
                 {
                     vCurrKey.push_back( sKey );
-                    if(xSessionTime.count(vCurrKey) > 0)
+                    if( xSessionTime.count( vCurrKey ) > 0 )
                         xSessionTime[ vCurrKey ] = uiCurrTime;
                 }
 
@@ -571,6 +571,21 @@ class PartialQuarry
     // annotation.h
     void regAnnotation( );
 
+    void registerAll()
+    {
+        regBinSize( );
+        regCoords( );
+        regReplicates( );
+        regCoverage( );
+        regNormalization( );
+        regColors( );
+        regAnnotation( );
+
+#ifndef NDEBUG
+        checkUnnecessaryDependencies( );
+#endif
+    }
+
   protected:
     virtual std::vector<std::array<double, 2>> normalizeBinominalTestTrampoline( std::vector<std::array<size_t, 2>>&,
                                                                                  size_t, size_t, double )
@@ -586,17 +601,8 @@ class PartialQuarry
   public:
     PartialQuarry( ) : uiCurrTime( 1 ), vGraph( NodeNames::SIZE ), xSession( ), xIndices( )
     {
-        regBinSize( );
-        regCoords( );
-        regReplicates( );
-        regCoverage( );
-        regNormalization( );
-        regColors( );
-        regAnnotation( );
-
-#ifndef NDEBUG
-        checkUnnecessaryDependencies( );
-#endif
+        registerAll();
+        ++uiCurrTime;
     }
 
     PartialQuarry( std::string sPrefix )
@@ -605,17 +611,8 @@ class PartialQuarry
           xSession( json::parse( std::ifstream( sPrefix + "/default_session.json" ) ) ),
           xIndices( sPrefix )
     {
-        regBinSize( );
-        regCoords( );
-        regReplicates( );
-        regCoverage( );
-        regNormalization( );
-        regColors( );
-        regAnnotation( );
-
-#ifndef NDEBUG
-        checkUnnecessaryDependencies( );
-#endif
+        registerAll();
+        ++uiCurrTime;
     }
 
     virtual ~PartialQuarry( )

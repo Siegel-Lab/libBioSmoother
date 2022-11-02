@@ -73,16 +73,29 @@ bool PartialQuarry::setRenderArea( )
     }
     else
     {
-        iStartX = this->xSession[ "area" ][ "x_start" ].get<int64_t>( ) -
-                  ( this->xSession[ "area" ][ "x_start" ].get<int64_t>( ) % uiBinWidth );
-        iStartY = this->xSession[ "area" ][ "y_start" ].get<int64_t>( ) -
-                  ( this->xSession[ "area" ][ "y_start" ].get<int64_t>( ) % uiBinHeight );
+        double fScale = this->xSession[ "settings" ][ "interface" ][ "add_draw_area" ][ "val" ].get<double>( ) / 100.0;
 
-        iEndX = this->xSession[ "area" ][ "x_end" ].get<int64_t>( ) + uiBinWidth -
-                ( this->xSession[ "area" ][ "x_end" ].get<int64_t>( ) % uiBinWidth );
-        iEndY = this->xSession[ "area" ][ "y_end" ].get<int64_t>( ) + uiBinHeight -
-                ( this->xSession[ "area" ][ "y_end" ].get<int64_t>( ) % uiBinHeight );
+        int64_t uiL = this->xSession[ "area" ][ "x_start" ].get<int64_t>( );
+        int64_t uiR = this->xSession[ "area" ][ "x_end" ].get<int64_t>( );
 
+        int64_t uiW = uiR - uiL;
+
+        int64_t uiB = this->xSession[ "area" ][ "y_start" ].get<int64_t>( );
+        int64_t uiT = this->xSession[ "area" ][ "y_end" ].get<int64_t>( );
+
+        int64_t uiH = uiT - uiB;
+
+        uiL -= uiW * fScale;
+        uiR += uiW * fScale;
+
+        uiB -= uiH * fScale;
+        uiT += uiH * fScale;
+
+        iStartX = uiL - ( uiL % uiBinWidth );
+        iStartY = uiB - ( uiB % uiBinHeight );
+
+        iEndX = uiR + uiBinWidth - ( uiR % uiBinWidth );
+        iEndY = uiT + uiBinHeight - ( uiT % uiBinHeight );
     }
     END_RETURN;
 }
@@ -113,8 +126,12 @@ void PartialQuarry::regBinSize( )
                   ComputeNode{ .sNodeName = "render_area",
                                .fFunc = &PartialQuarry::setRenderArea,
                                .vIncomingFunctions = { NodeNames::BinSize },
-                               .vIncomingSession = { { "settings", "export", "do_export_full" },
-                                                     { "settings", "contigs", "genome_size" } },
+                               .vIncomingSession =
+                                   {
+                                       { "settings", "export", "do_export_full" },
+                                       { "settings", "contigs", "genome_size" },
+                                       { "settings", "interface", "add_draw_area", "val" },
+                                   },
                                .uiLastUpdated = uiCurrTime } );
 }
 
