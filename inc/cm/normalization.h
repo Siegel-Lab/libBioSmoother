@@ -38,22 +38,6 @@ bool PartialQuarry::doNotNormalize( )
 }
 
 
-bool PartialQuarry::normalizeTracks( )
-{
-    throw std::logic_error( "Function not implemented -> divide by tracks should be moved after mixing values..." );
-    // if should be move after mixing since then mixing does sth 
-#if 0
-    for( size_t uiI = 0; uiI < vvFlatValues.size( ); uiI++ )
-        vvNormalized.push_back( std::array<double, 2>{
-             (double)vvFlatValues[ uiI ][ 0 ] /
-                   1 ? (vvFlatCoverageValues[ 0 ].size( ) == 0
-              : std::max( 1.0, vvFlatCoverageValues[ 0 ][ uiI / vAxisCords[ 0 ].size( ) ] )),
-             (double)vvFlatValues[ uiI ][ 1 ] /
-                    ( 1 ? vvFlatCoverageValues[ 1 ].size( ) == 0
-              : std::max( 1.0, vvFlatCoverageValues[ 1 ][ uiI % vAxisCords[ 0 ].size( ) ]) ) } );
-#endif
-}
-
 bool PartialQuarry::normalizeBinominalTest( )
 {
     size_t uiNumBinsInRowTotal = ( this->xSession[ "contigs" ][ "genome_size" ].get<size_t>( ) - 1 ) / uiBinWidth + 1;
@@ -115,8 +99,6 @@ bool PartialQuarry::setNormalized( )
 
     if( this->xSession[ "settings" ][ "normalization" ][ "normalize_by" ].get<std::string>( ) == "dont" )
         return doNotNormalize( );
-    else if( this->xSession[ "settings" ][ "normalization" ][ "normalize_by" ].get<std::string>( ) == "tracks" )
-        return normalizeTracks( );
     else if( this->xSession[ "settings" ][ "normalization" ][ "normalize_by" ].get<std::string>( ) == "radicl-seq" )
         return normalizeBinominalTest( );
     else if( this->xSession[ "settings" ][ "normalization" ][ "normalize_by" ].get<std::string>( ) == "rpm" )
@@ -129,6 +111,43 @@ bool PartialQuarry::setNormalized( )
         throw std::logic_error( "invalid value for normalize_by" );
 }
 
+bool PartialQuarry::setDivided( )
+{
+    vDivided.clear( );
+    vDivided.reserve( vCombined.size( ) );
+
+    const bool bByCol = this->xSession[ "settings" ][ "normalization" ][ "divide_by_column_coverage" ].get<bool>( ) &&
+                        vvFlatCoverageValues[ 0 ].size( ) != 0;
+    const bool bByRow = this->xSession[ "settings" ][ "normalization" ][ "divide_by_row_coverage" ].get<bool>( ) &&
+                        vvFlatCoverageValues[ 1 ].size( ) != 0;
+
+    for( size_t uiI = 0; uiI < vCombined.size( ); uiI++ )
+    {
+        CANCEL_RETURN;
+
+        double fVal = vCombined[ uiI ];
+
+        if( bByCol )
+        {
+            if( vvFlatCoverageValues[ 0 ][ uiI / vAxisCords[ 0 ].size( ) ] == 0 )
+                fVal = std::numeric_limits<double>::quiet_NaN( );
+            else
+                fVal /= vvFlatCoverageValues[ 0 ][ uiI / vAxisCords[ 0 ].size( ) ];
+        }
+        if( bByRow )
+        {
+            if( vvFlatCoverageValues[ 1 ][ uiI % vAxisCords[ 0 ].size( ) ] == 0 || std::isnan( fVal ) )
+                fVal = std::numeric_limits<double>::quiet_NaN( );
+            else
+                fVal /= vvFlatCoverageValues[ 1 ][ uiI % vAxisCords[ 0 ].size( ) ];
+        }
+
+        vDivided.push_back( fVal );
+    }
+
+    END_RETURN;
+}
+
 void PartialQuarry::regNormalization( )
 {
     registerNode( NodeNames::Normalized,
@@ -138,6 +157,14 @@ void PartialQuarry::regNormalization( )
                                .vIncomingSession = { { "settings", "normalization", "normalize_by" },
                                                      { "replicates", "by_name" },
                                                      { "settings", "normalization", "p_accept", "val" } },
+                               .uiLastUpdated = uiCurrTime } );
+
+    registerNode( NodeNames::Divided,
+                  ComputeNode{ .sNodeName = "divided_by_tracks",
+                               .fFunc = &PartialQuarry::setDivided,
+                               .vIncomingFunctions = { NodeNames::Combined, NodeNames::FlatCoverageValues },
+                               .vIncomingSession = { { "settings", "normalization", "divide_by_column_coverage" },
+                                                     { "settings", "normalization", "divide_by_row_coverage" } },
                                .uiLastUpdated = uiCurrTime } );
 }
 

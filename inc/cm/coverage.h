@@ -166,7 +166,8 @@ bool PartialQuarry::setFlatCoverageValues( )
     for( size_t uiJ = 0; uiJ < 2; uiJ++ )
     {
         vvFlatCoverageValues[ uiJ ].clear( );
-        if( vvCoverageValues[ uiJ ].size( ) > 0 )
+        if( vvCoverageValues[ uiJ ].size( ) > 0 &&
+            vInGroupCoverage[ uiJ ][ 0 ].size( ) + vInGroupCoverage[ uiJ ][ 1 ].size( ) > 0 )
         {
             vvFlatCoverageValues[ uiJ ].reserve( vvCoverageValues[ uiJ ][ 0 ].size( ) );
             for( size_t uiI = 0; uiI < vvCoverageValues[ uiJ ][ 0 ].size( ); uiI++ )
@@ -200,14 +201,23 @@ bool PartialQuarry::setTracks( )
         vvMinMaxTracks[ uiI ][ 0 ] = std::numeric_limits<int64_t>::max( );
         vvMinMaxTracks[ uiI ][ 1 ] = std::numeric_limits<int64_t>::min( );
 
-        for( size_t uiId : vInGroupCoverage[ uiI ][ 2 ] )
-            for( size_t uiX = 0; uiX < vAxisCords[ uiI ].size( ); uiX++ )
+        for( size_t uiX = 0; uiX < vAxisCords[ uiI ].size( ); uiX++ )
+        {
+            CANCEL_RETURN;
+            for( size_t uiId : vInGroupCoverage[ uiI ][ 2 ] )
             {
-                CANCEL_RETURN;
                 auto uiVal = vvCoverageValues[ uiI ][ uiId ][ uiX ];
                 vvMinMaxTracks[ uiI ][ 0 ] = std::min( vvMinMaxTracks[ uiI ][ 0 ], (int64_t)uiVal );
                 vvMinMaxTracks[ uiI ][ 1 ] = std::max( vvMinMaxTracks[ uiI ][ 1 ], (int64_t)uiVal );
             }
+
+            if(vvFlatCoverageValues[ uiI ].size( ) > 0)
+            {
+                auto uiVal = vvFlatCoverageValues[ uiI ][ uiX ];
+                vvMinMaxTracks[ uiI ][ 0 ] = std::min( vvMinMaxTracks[ uiI ][ 0 ], (int64_t)uiVal );
+                vvMinMaxTracks[ uiI ][ 1 ] = std::max( vvMinMaxTracks[ uiI ][ 1 ], (int64_t)uiVal );
+            }
+        }
         pybind11::list vChrs;
         pybind11::list vScreenPoss;
         pybind11::list vIndexStarts;
@@ -440,12 +450,13 @@ void PartialQuarry::regCoverage( )
                                                      { "settings", "filters", "mapping_q", "val_max" } },
                                .uiLastUpdated = uiCurrTime } );
 
-    registerNode( NodeNames::FlatCoverageValues,
-                  ComputeNode{ .sNodeName = "flat_coverage",
-                               .fFunc = &PartialQuarry::setFlatCoverageValues,
-                               .vIncomingFunctions = { NodeNames::CoverageValues, NodeNames::BetweenGroup },
-                               .vIncomingSession = { },
-                               .uiLastUpdated = uiCurrTime } );
+    registerNode(
+        NodeNames::FlatCoverageValues,
+        ComputeNode{ .sNodeName = "flat_coverage",
+                     .fFunc = &PartialQuarry::setFlatCoverageValues,
+                     .vIncomingFunctions = { NodeNames::CoverageValues, NodeNames::BetweenGroup, NodeNames::InGroup },
+                     .vIncomingSession = { },
+                     .uiLastUpdated = uiCurrTime } );
 
     registerNode( NodeNames::Tracks,
                   ComputeNode{ .sNodeName = "coverage_tracks",

@@ -40,53 +40,63 @@ bool PartialQuarry::setCombined( )
         CANCEL_RETURN;
         vCombined.push_back( getMixedValue( vArr[ 0 ], vArr[ 1 ] ) );
     }
-    
+
     END_RETURN;
 }
 
 bool PartialQuarry::setScaled( )
 {
     vScaled.clear( );
-    vScaled.reserve( vCombined.size( ) );
+    vScaled.reserve( vDivided.size( ) );
 
     if( this->xSession[ "settings" ][ "normalization" ][ "scale" ].get<std::string>( ) == "minmax" )
     {
         double fMax = std::numeric_limits<double>::min( );
         double fMin = std::numeric_limits<double>::max( );
-        for( double fVal : vCombined )
+        for( double fVal : vDivided )
         {
             CANCEL_RETURN;
-            fMax = std::max( fMax, fVal );
-            fMin = std::min( fMin, fVal );
+            if( !std::isnan( fVal ) )
+            {
+                fMax = std::max( fMax, fVal );
+                fMin = std::min( fMin, fVal );
+            }
         }
 
-        for( double fVal : vCombined )
+        for( double fVal : vDivided )
         {
             CANCEL_RETURN;
-            vScaled.push_back( ( fVal + fMin ) / ( fMax - fMin ) );
+            if( std::isnan( fVal ) )
+                vScaled.push_back( fVal );
+            else
+                vScaled.push_back( ( fVal + fMin ) / ( fMax - fMin ) );
         }
     }
     else if( this->xSession[ "settings" ][ "normalization" ][ "scale" ].get<std::string>( ) == "max" )
     {
         double fMax = std::numeric_limits<double>::min( );
-        for( double fVal : vCombined )
+        for( double fVal : vDivided )
         {
             CANCEL_RETURN;
-            fMax = std::max( fMax, fVal );
+            if( !std::isnan( fVal ) )
+                fMax = std::max( fMax, fVal );
         }
 
-        for( double fVal : vCombined )
+        for( double fVal : vDivided )
         {
             CANCEL_RETURN;
-            vScaled.push_back( fVal / fMax );
+            if( std::isnan( fVal ) )
+                vScaled.push_back( fVal );
+            else
+                vScaled.push_back( fVal / fMax );
         }
     }
     else if( this->xSession[ "settings" ][ "normalization" ][ "scale" ].get<std::string>( ) == "dont" )
     {
-        for(double fVal : vCombined)
+        for( double fVal : vDivided )
         {
             CANCEL_RETURN;
-            vScaled.push_back(fVal);
+            vScaled.push_back( fVal );
         }
     }
     else
@@ -135,7 +145,10 @@ bool PartialQuarry::setColored( )
     for( double fC : vScaled )
     {
         CANCEL_RETURN;
-        vColored.push_back( vColorPalette[ colorRange( logScale( fC ) ) ] );
+        if( std::isnan( fC ) )
+            vColored.push_back( sBackgroundColor );
+        else
+            vColored.push_back( vColorPalette[ colorRange( logScale( fC ) ) ] );
     }
     END_RETURN;
 }
@@ -180,7 +193,7 @@ bool PartialQuarry::setHeatmapCDS( )
     for( size_t uiI = 0; uiI < vColored.size( ); uiI++ )
     {
         CANCEL_RETURN;
-        
+
         if( vColored[ uiI ] != sBackgroundColor )
         {
             vScreenBottom.append( vBinCoords[ uiI ][ 0 ].uiScreenY );
@@ -294,7 +307,7 @@ void PartialQuarry::regColors( )
     registerNode( NodeNames::Scaled,
                   ComputeNode{ .sNodeName = "colored_bins",
                                .fFunc = &PartialQuarry::setScaled,
-                               .vIncomingFunctions = { NodeNames::Combined },
+                               .vIncomingFunctions = { NodeNames::Divided },
                                .vIncomingSession = { { "settings", "normalization", "scale" } },
                                .uiLastUpdated = uiCurrTime } );
 

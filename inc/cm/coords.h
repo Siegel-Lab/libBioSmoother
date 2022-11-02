@@ -38,7 +38,7 @@ std::vector<AxisCoord> axisCoordsHelper( size_t uiBinSize, size_t uiScreenStartP
         size_t uiItrEndPos = std::min( uiScreenEndPos, uiChromosomeEndPos );
         while( uiCurrScreenPos >= uiChromosomeStartPos && uiCurrScreenPos < uiItrEndPos )
         {
-            if(bCancel)
+            if( bCancel )
                 return vRet;
             size_t uiIndexPos = uiCurrScreenPos - uiChromosomeStartPos;
             size_t uiCurrBinSize;

@@ -1,13 +1,15 @@
 #include "cm/sps_interface.h"
+#include <mutex>
 #include <nlohmann/json.hpp>
 #include <pybind11_json/pybind11_json.hpp>
-#include <mutex>
 
 #pragma once
 
 using json = nlohmann::json;
 
-#define CANCEL_RETURN if(this->bCancel) return false
+#define CANCEL_RETURN                                                                                                  \
+    if( this->bCancel )                                                                                                \
+    return false
 #define END_RETURN return true
 
 namespace cm
@@ -72,6 +74,7 @@ class PartialQuarry
         Scaled,
         Ticks,
         Tracks,
+        Divided,
         SIZE
     };
     struct ComputeNode
@@ -155,7 +158,7 @@ class PartialQuarry
             for( NodeNames xPred : xNode.vIncomingFunctions )
             {
                 size_t uiUpdateTime = update_helper( xPred );
-                if(uiUpdateTime == 0)
+                if( uiUpdateTime == 0 )
                 {
                     if( uiVerbosity >= 1 )
                         std::cout << xNode.sNodeName << " was cancelled" << std::endl;
@@ -185,7 +188,7 @@ class PartialQuarry
                 auto t1 = std::chrono::high_resolution_clock::now( );
 
                 bool bUpdateDone = ( this->*xNode.fFunc )( );
-                if(!bUpdateDone)
+                if( !bUpdateDone )
                 {
                     if( uiVerbosity >= 1 )
                         std::cout << xNode.sNodeName << " was cancelled" << std::endl;
@@ -223,18 +226,18 @@ class PartialQuarry
         pybind11::gil_scoped_release release;
 
         // make sure that no two threads can enter here (basically allow multithreading other than this)
-        std::lock_guard<std::mutex> xGuard(xUpdateMutex);
+        std::lock_guard<std::mutex> xGuard( xUpdateMutex );
 
         bCancel = false;
-        size_t uiUpdateTime = update_helper(xNodeName);
+        size_t uiUpdateTime = update_helper( xNodeName );
 
         return uiUpdateTime != 0;
     }
 
     void update( NodeNames xNodeName )
     {
-        if(!update_no_throw(xNodeName))
-            throw std::runtime_error("update was cancelled");
+        if( !update_no_throw( xNodeName ) )
+            throw std::runtime_error( "update was cancelled" );
     }
 
 
@@ -275,25 +278,24 @@ class PartialQuarry
     }
 
   public:
-    void cancel()
+    void cancel( )
     {
         bCancel = true;
     }
 
-    void updateCDS()
+    void updateCDS( )
     {
         bool bContinue;
         do
         {
             bContinue = false;
-            for(auto& rNode : {HeatmapCDS, Tracks, AnnotationCDS, ActivateAnnotationCDS, Ticks, Tracks})
-                if(!update_no_throw(rNode))
+            for( auto& rNode : { HeatmapCDS, Tracks, AnnotationCDS, ActivateAnnotationCDS, Ticks, Tracks } )
+                if( !update_no_throw( rNode ) )
                 {
                     bContinue = true;
                     break;
                 }
-        }
-        while(bContinue);
+        } while( bContinue );
     }
 
     void setSession( const json& xSession )
@@ -319,7 +321,7 @@ class PartialQuarry
 
     template <typename T> void setValue( std::vector<std::string> vKeys, T xVal )
     {
-        if( this->xSession[ toPointer( vKeys ) ].is_null() || this->xSession[ toPointer( vKeys ) ].get<T>() != xVal )
+        if( this->xSession[ toPointer( vKeys ) ].is_null( ) || this->xSession[ toPointer( vKeys ) ].get<T>( ) != xVal )
         {
             ++uiCurrTime;
 
@@ -405,6 +407,7 @@ class PartialQuarry
     std::vector<std::array<size_t, 2>> vvFlatValues;
     std::vector<std::array<double, 2>> vvNormalized;
     std::vector<double> vCombined;
+    std::vector<double> vDivided;
     std::vector<double> vScaled;
     std::vector<std::string> vColored;
 
@@ -429,7 +432,7 @@ class PartialQuarry
     std::array<std::array<int64_t, 2>, 2> vvMinMaxTracks;
 
     bool bCancel = false;
-    std::mutex xUpdateMutex {};
+    std::mutex xUpdateMutex{ };
 
 
     // bin_size.h
@@ -505,7 +508,7 @@ class PartialQuarry
     // normalization.h
     bool doNotNormalize( );
     // normalization.h
-    bool normalizeTracks( );
+    bool setDivided( );
     // normalization.h
     bool normalizeSize( size_t );
     // normalization.h

@@ -56,11 +56,11 @@ class ContectMappingPublicist : public PartialQuarry
 };
 
 
-void testFunc()
+void testFunc( )
 {
     pybind11::gil_scoped_release release;
     std::cout << "Sleeping..." << std::endl;
-    std::this_thread::sleep_for(std::chrono::seconds(3));
+    std::this_thread::sleep_for( std::chrono::seconds( 3 ) );
     std::cout << "I'm awake! I'm awake!" << std::endl;
 }
 
@@ -94,7 +94,7 @@ PYBIND11_MODULE( libContactMapping, m )
     m.attr( "SPS_VERSION" ) = SPS_VERSION;
     m.attr( "SPS_BUILD_TIME" ) = SPS_BUILD_TIME;
 
-    m.def("test", &cm::testFunc);
+    m.def( "test", &cm::testFunc );
 
     pybind11::class_<cm::BinCoord>( m, "BinCoord" ) //
         .def( pybind11::init<>( ) ) //
