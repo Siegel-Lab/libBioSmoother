@@ -319,34 +319,37 @@ class PartialQuarry
 
     template <typename T> void setValue( std::vector<std::string> vKeys, T xVal )
     {
-        ++uiCurrTime;
-
-        // remove old redo
-        this->xSession[ "next" ] = nullptr;
-
-        // deep copy json
-        this->xSession[ "previous" ] = json::parse( this->xSession.dump( ) ); // back up previous
-
-        // change setting
-        this->xSession[ toPointer( vKeys ) ] = xVal;
-
-        // update time
-        std::vector<std::string> vCurrKey;
-        xSessionTime[ vCurrKey ] = uiCurrTime;
-        for( std::string sKey : vKeys )
+        if( this->xSession[ toPointer( vKeys ) ].is_null() || this->xSession[ toPointer( vKeys ) ].get<T>() != xVal )
         {
-            vCurrKey.push_back( sKey );
+            ++uiCurrTime;
+
+            // remove old redo
+            this->xSession[ "next" ] = nullptr;
+
+            // deep copy json
+            this->xSession[ "previous" ] = json::parse( this->xSession.dump( ) ); // back up previous
+
+            // change setting
+            this->xSession[ toPointer( vKeys ) ] = xVal;
+
+            // update time
+            std::vector<std::string> vCurrKey;
             xSessionTime[ vCurrKey ] = uiCurrTime;
-        }
+            for( std::string sKey : vKeys )
+            {
+                vCurrKey.push_back( sKey );
+                xSessionTime[ vCurrKey ] = uiCurrTime;
+            }
 
-        // make sure undo's and redo's do not pile up infinitely
-        if( this->xSession[ "settings" ].is_object( ) )
-        {
-            int uiMaxRedo = this->xSession[ "settings" ][ "interface" ][ "max_undo" ][ "val" ].get<int>( );
-            std::vector<std::string> vPrevKey{ "previous" };
-            while( --uiMaxRedo >= 0 && !this->xSession[ toPointer( vPrevKey ) ].is_null( ) )
-                vPrevKey.push_back( "previous" );
-            this->xSession[ toPointer( vPrevKey ) ] = nullptr;
+            // make sure undo's and redo's do not pile up infinitely
+            if( this->xSession[ "settings" ].is_object( ) )
+            {
+                int uiMaxRedo = this->xSession[ "settings" ][ "interface" ][ "max_undo" ][ "val" ].get<int>( );
+                std::vector<std::string> vPrevKey{ "previous" };
+                while( --uiMaxRedo >= 0 && !this->xSession[ toPointer( vPrevKey ) ].is_null( ) )
+                    vPrevKey.push_back( "previous" );
+                this->xSession[ toPointer( vPrevKey ) ] = nullptr;
+            }
         }
     }
 
