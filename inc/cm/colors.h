@@ -12,8 +12,11 @@ bool PartialQuarry::setColors( )
     vColorPalette = colorPalette( this->xSession[ "settings" ][ "interface" ][ "color_palette" ].get<std::string>( ),
                                   this->xSession[ "settings" ][ "interface" ][ "color_low" ].get<std::string>( ),
                                   this->xSession[ "settings" ][ "interface" ][ "color_high" ].get<std::string>( ) );
+
+    double fBase = this->xSession[ "settings" ][ "normalization" ][ "log_base" ][ "val" ].get<double>( );
+
     if( iBetweenGroupSetting == 2 )
-        sBackgroundColor = vColorPalette[ vColorPalette.size( ) / 2 ];
+        sBackgroundColor = vColorPalette[ colorIndex( logScale( 0.5, fBase ) ) ];
     else
         sBackgroundColor = vColorPalette.front( );
     END_RETURN;
@@ -76,6 +79,20 @@ bool PartialQuarry::setScaled( )
         fMin = 0;
         fMax = 1;
     }
+    else if( this->xSession[ "settings" ][ "normalization" ][ "scale" ].get<std::string>( ) == "abs" )
+    {
+        double fAbs = std::max(std::abs(fMax), std::abs(fMin));
+        for( double fVal : vDivided )
+        {
+            CANCEL_RETURN;
+            if( std::isnan( fVal ) )
+                vScaled.push_back( fVal );
+            else
+                vScaled.push_back( fVal / fAbs );
+        }
+        fMin = std::max(-1.0, fMin);
+        fMax = std::min(1.0, fMin);
+    }
     else if( this->xSession[ "settings" ][ "normalization" ][ "scale" ].get<std::string>( ) == "max" )
     {
         for( double fVal : vDivided )
@@ -103,9 +120,9 @@ bool PartialQuarry::setScaled( )
 
 double PartialQuarry::logScale( double fX, double fBase )
 {
-    bool bLargerZero = fX > 0;
+    bool bLargerZero = fX > 0.5;
     if( iBetweenGroupSetting == 2 ) // between_groups == sub
-        fX = std::abs( fX );
+        fX = std::abs( fX - 0.5 );
 
     double fRet;
     if( fBase == 0 )
@@ -252,7 +269,7 @@ bool PartialQuarry::setHeatmapCDS( )
                 vIndexSymTop.append( nullptr );
             }
 
-            vScoreTotal.append( vCombined[ uiI ] );
+            vScoreTotal.append( vScaled[ uiI ] );
             vScoreA.append( vvNormalized[ uiI ][ 0 ] );
             vScoreB.append( vvNormalized[ uiI ][ 1 ] );
         }
@@ -306,7 +323,8 @@ void PartialQuarry::regColors( )
                                .vIncomingFunctions = { NodeNames::BetweenGroup },
                                .vIncomingSession = { { "settings", "interface", "color_palette" },
                                                      { "settings", "interface", "color_low" },
-                                                     { "settings", "interface", "color_high" } },
+                                                     { "settings", "interface", "color_high" },
+                                                     { "settings", "normalization", "log_base", "val" } },
                                .uiLastUpdated = uiCurrTime } );
 
     registerNode( NodeNames::AnnotationColors,
@@ -349,7 +367,7 @@ void PartialQuarry::regColors( )
     registerNode( NodeNames::Palette,
                   ComputeNode{ .sNodeName = "color_palette",
                                .fFunc = &PartialQuarry::setPalette,
-                               .vIncomingFunctions = { NodeNames::Scaled },
+                               .vIncomingFunctions = { NodeNames::Scaled, NodeNames::Colors },
                                .vIncomingSession = { },
                                .uiLastUpdated = uiCurrTime } );
 }
