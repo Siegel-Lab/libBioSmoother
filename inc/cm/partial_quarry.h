@@ -75,6 +75,7 @@ class PartialQuarry
         Ticks,
         Tracks,
         Divided,
+        Palette,
         SIZE
     };
     struct ComputeNode
@@ -293,7 +294,7 @@ class PartialQuarry
         do
         {
             bContinue = false;
-            for( auto& rNode : { HeatmapCDS, Tracks, AnnotationCDS, ActivateAnnotationCDS, Ticks, Tracks } )
+            for( auto& rNode : { HeatmapCDS, Tracks, AnnotationCDS, ActivateAnnotationCDS, Ticks, Tracks, Palette } )
                 if( !update_no_throw( rNode ) )
                 {
                     bContinue = true;
@@ -432,6 +433,7 @@ class PartialQuarry
     std::vector<std::array<size_t, 2>> vFlatNormValues;
 
     std::vector<std::string> vColorPalette;
+    pybind11::list vRenderedPalette;
     std::vector<std::string> vColorPaletteAnnotation;
     std::array<std::vector<std::string>, 2> vActiveAnnotation;
     std::array<std::vector<std::vector<size_t>>, 2> vAnnotationValues;
@@ -443,6 +445,7 @@ class PartialQuarry
     std::array<pybind11::list, 2> vTickLists;
     std::array<size_t, 2> vCanvasSize;
     std::array<std::array<int64_t, 2>, 2> vvMinMaxTracks;
+    double fMax, fMin;
 
     bool bCancel = false;
     std::mutex xUpdateMutex{ };
@@ -545,11 +548,15 @@ class PartialQuarry
     // colors.h
     bool setColored( );
     // colors.h
-    double logScale( double );
+    double logScale( double, double );
     // colors.h
-    size_t colorRange( double, double, double );
+    double colorRange( double, double, double );
+    // colors.h
+    size_t colorIndex( double );
     // colors.h
     bool setHeatmapCDS( );
+    // colors.h
+    bool setPalette( );
 
     // colors.h
     void regColors( );
@@ -615,7 +622,7 @@ class PartialQuarry
     {}
 
     // colors.h
-    const std::vector<std::string>& getColors( );
+    const pybind11::list getPalette( );
 
     // colors.h
     const std::string& getBackgroundColor( );

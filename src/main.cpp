@@ -139,7 +139,7 @@ PYBIND11_MODULE( libContactMapping, m )
         .def( "undo", &cm::PartialQuarry::undo ) //
         .def( "has_redo", &cm::PartialQuarry::hasRedo ) //
         .def( "redo", &cm::PartialQuarry::redo ) //
-        .def( "get_colors", &cm::PartialQuarry::getColors ) //
+        .def( "get_palette", &cm::PartialQuarry::getPalette ) //
         .def( "get_bin_coords", &cm::PartialQuarry::getBinCoords ) //
         .def( "get_axis_coords", &cm::PartialQuarry::getAxisCoords ) //
         .def( "get_annotation", &cm::PartialQuarry::getAnnotation ) //
