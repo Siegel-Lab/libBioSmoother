@@ -74,6 +74,9 @@ bool PartialQuarry::setAnnotationCDS( )
 {
     using namespace pybind11::literals;
     pybind11::gil_scoped_acquire acquire;
+
+    size_t uiDividend = this->xSession[ "dividend" ].get<size_t>( );
+
     for( size_t uiX : { 0, 1 } )
     {
         pybind11::list vChr;
@@ -85,6 +88,7 @@ bool PartialQuarry::setAnnotationCDS( )
         pybind11::list vColor;
         pybind11::list vNumAnno;
         pybind11::list vInfo;
+
 
         for( size_t uiN = 0; uiN < vActiveAnnotation[ uiX ].size( ); uiN++ )
         {
@@ -99,9 +103,8 @@ bool PartialQuarry::setAnnotationCDS( )
                 if( uiVal > 0 )
                 {
                     vChr.append( rCoords.sChromosome );
-                    vIndexStart.append( rCoords.uiIndexPos * this->xSession[ "dividend" ].get<size_t>( ) );
-                    vIndexEnd.append( ( rCoords.uiIndexPos + rCoords.uiSize ) *
-                                      this->xSession[ "dividend" ].get<size_t>( ) );
+                    vIndexStart.append( readableBp( rCoords.uiIndexPos * uiDividend ) );
+                    vIndexEnd.append( readableBp( ( rCoords.uiIndexPos + rCoords.uiSize ) * uiDividend ) );
                     vAnnoName.append( rAnnoName );
                     vScreenStart.append( rCoords.uiScreenPos );
                     vScreenEnd.append( rCoords.uiScreenPos + rCoords.uiSize );

@@ -155,15 +155,14 @@ void PartialQuarry::regNormalization( )
                   ComputeNode{ .sNodeName = "normalized_bins",
                                .fFunc = &PartialQuarry::setNormalized,
                                .vIncomingFunctions = { NodeNames::FlatValues, NodeNames::FlatCoverageValues },
-                               .vIncomingSession = { { "settings", "normalization", "normalize_by" },
-                                                     { "replicates", "by_name" },
+                               .vIncomingSession = { { "replicates", "by_name" },
                                                      { "settings", "normalization", "p_accept", "val" } },
                                .uiLastUpdated = uiCurrTime } );
 
     registerNode( NodeNames::Divided,
                   ComputeNode{ .sNodeName = "divided_by_tracks",
                                .fFunc = &PartialQuarry::setDivided,
-                               .vIncomingFunctions = { NodeNames::Combined, NodeNames::FlatCoverageValues },
+                               .vIncomingFunctions = { NodeNames::Combined },
                                .vIncomingSession = { { "settings", "normalization", "divide_by_column_coverage" },
                                                      { "settings", "normalization", "divide_by_row_coverage" } },
                                .uiLastUpdated = uiCurrTime } );

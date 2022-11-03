@@ -70,7 +70,7 @@ size_t PartialQuarry::symmetry( size_t uiA, size_t uiB )
         case 1:
             return std::min( uiA, uiB );
         case 2:
-            if(uiA > uiB)
+            if( uiA > uiB )
                 return uiA - uiB;
             else
                 return 0;

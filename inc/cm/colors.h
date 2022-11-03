@@ -81,7 +81,7 @@ bool PartialQuarry::setScaled( )
     }
     else if( this->xSession[ "settings" ][ "normalization" ][ "scale" ].get<std::string>( ) == "abs" )
     {
-        double fAbs = std::max(std::abs(fMax), std::abs(fMin));
+        double fAbs = std::max( std::abs( fMax ), std::abs( fMin ) );
         for( double fVal : vDivided )
         {
             CANCEL_RETURN;
@@ -90,8 +90,8 @@ bool PartialQuarry::setScaled( )
             else
                 vScaled.push_back( fVal / fAbs );
         }
-        fMin = std::max(-1.0, fMin);
-        fMax = std::min(1.0, fMin);
+        fMin = std::max( -1.0, fMin );
+        fMax = std::min( 1.0, fMin );
     }
     else if( this->xSession[ "settings" ][ "normalization" ][ "scale" ].get<std::string>( ) == "max" )
     {
@@ -241,23 +241,27 @@ bool PartialQuarry::setHeatmapCDS( )
 
             vChrX.append( vBinCoords[ uiI ][ 0 ].sChromosomeX );
             vChrY.append( vBinCoords[ uiI ][ 0 ].sChromosomeY );
-            vIndexLeft.append( vBinCoords[ uiI ][ 0 ].uiIndexX * this->xSession[ "dividend" ].get<size_t>( ) );
-            vIndexRight.append( ( vBinCoords[ uiI ][ 0 ].uiIndexX + vBinCoords[ uiI ][ 0 ].uiW ) *
-                                this->xSession[ "dividend" ].get<size_t>( ) );
-            vIndexBottom.append( vBinCoords[ uiI ][ 0 ].uiIndexY * this->xSession[ "dividend" ].get<size_t>( ) );
-            vIndexTop.append( ( vBinCoords[ uiI ][ 0 ].uiIndexY + vBinCoords[ uiI ][ 0 ].uiH ) *
-                              this->xSession[ "dividend" ].get<size_t>( ) );
+            vIndexLeft.append(
+                readableBp( vBinCoords[ uiI ][ 0 ].uiIndexX * this->xSession[ "dividend" ].get<size_t>( ) ) );
+            vIndexRight.append( readableBp( ( vBinCoords[ uiI ][ 0 ].uiIndexX + vBinCoords[ uiI ][ 0 ].uiW ) *
+                                            this->xSession[ "dividend" ].get<size_t>( ) ) );
+            vIndexBottom.append(
+                readableBp( vBinCoords[ uiI ][ 0 ].uiIndexY * this->xSession[ "dividend" ].get<size_t>( ) ) );
+            vIndexTop.append( readableBp( ( vBinCoords[ uiI ][ 0 ].uiIndexY + vBinCoords[ uiI ][ 0 ].uiH ) *
+                                          this->xSession[ "dividend" ].get<size_t>( ) ) );
 
             if( vBinCoords[ uiI ][ 1 ].sChromosomeX != "" )
             {
                 vChrXSym.append( vBinCoords[ uiI ][ 1 ].sChromosomeX );
                 vChrYSym.append( vBinCoords[ uiI ][ 1 ].sChromosomeY );
-                vIndexSymLeft.append( vBinCoords[ uiI ][ 1 ].uiIndexX * this->xSession[ "dividend" ].get<size_t>( ) );
-                vIndexSymRight.append( ( vBinCoords[ uiI ][ 1 ].uiIndexX + vBinCoords[ uiI ][ 1 ].uiW ) *
-                                       this->xSession[ "dividend" ].get<size_t>( ) );
-                vIndexSymBottom.append( vBinCoords[ uiI ][ 1 ].uiIndexY * this->xSession[ "dividend" ].get<size_t>( ) );
-                vIndexSymTop.append( ( vBinCoords[ uiI ][ 1 ].uiIndexY + vBinCoords[ uiI ][ 1 ].uiH ) *
-                                     this->xSession[ "dividend" ].get<size_t>( ) );
+                vIndexSymLeft.append(
+                    readableBp( vBinCoords[ uiI ][ 1 ].uiIndexX * this->xSession[ "dividend" ].get<size_t>( ) ) );
+                vIndexSymRight.append( readableBp( ( vBinCoords[ uiI ][ 1 ].uiIndexX + vBinCoords[ uiI ][ 1 ].uiW ) *
+                                                   this->xSession[ "dividend" ].get<size_t>( ) ) );
+                vIndexSymBottom.append(
+                    readableBp( vBinCoords[ uiI ][ 1 ].uiIndexY * this->xSession[ "dividend" ].get<size_t>( ) ) );
+                vIndexSymTop.append( readableBp( ( vBinCoords[ uiI ][ 1 ].uiIndexY + vBinCoords[ uiI ][ 1 ].uiH ) *
+                                                 this->xSession[ "dividend" ].get<size_t>( ) ) );
             }
             else
             {
@@ -352,8 +356,7 @@ void PartialQuarry::regColors( )
                   ComputeNode{ .sNodeName = "colored_bins",
                                .fFunc = &PartialQuarry::setColored,
                                .vIncomingFunctions = { NodeNames::Colors, NodeNames::Scaled },
-                               .vIncomingSession = { { "settings", "normalization", "log_base", "val" },
-                                                     { "settings", "normalization", "color_range", "val_max" },
+                               .vIncomingSession = { { "settings", "normalization", "color_range", "val_max" },
                                                      { "settings", "normalization", "color_range", "val_min" } },
                                .uiLastUpdated = uiCurrTime } );
 

@@ -300,7 +300,7 @@ bool PartialQuarry::setTracks( )
                 auto& xCoord = vAxisCords[ uiI ][ uiX ];
                 if( sChr != "" && sChr != xCoord.sChromosome )
                 {
-                    vChrs.append( sChr ); // @todo remove longest common suffix
+                    vChrs.append( sChr.substr( 0, sChr.size( ) - uiLogestCommonSuffix ) );
 
                     vScreenPoss.append( vScreenPos );
                     vScreenPos = pybind11::list( );
@@ -332,27 +332,27 @@ bool PartialQuarry::setTracks( )
                 auto uiVal = vvFlatCoverageValues[ uiI ][ uiX ];
 
                 // front corner
-                vIndexStart.append( xCoord.uiIndexPos * uiDividend );
-                vIndexEnd.append( ( xCoord.uiIndexPos + xCoord.uiSize ) * uiDividend );
+                vIndexStart.append( readableBp( xCoord.uiIndexPos * uiDividend ) );
+                vIndexEnd.append( readableBp( ( xCoord.uiIndexPos + xCoord.uiSize ) * uiDividend ) );
                 vScreenPos.append( xCoord.uiScreenPos );
                 vValue.append( uiVal );
 
                 // rear corner
-                vIndexStart.append( xCoord.uiIndexPos * uiDividend );
-                vIndexEnd.append( ( xCoord.uiIndexPos + xCoord.uiSize ) * uiDividend );
+                vIndexStart.append( readableBp( xCoord.uiIndexPos * uiDividend ) );
+                vIndexEnd.append( readableBp( ( xCoord.uiIndexPos + xCoord.uiSize ) * uiDividend ) );
                 vScreenPos.append( xCoord.uiScreenPos + xCoord.uiSize );
                 vValue.append( uiVal );
 
                 if( uiX + 1 == vAxisCords[ uiI ].size( ) )
                 {
                     // zero position at end
-                    vIndexStart.append( ( xCoord.uiIndexPos + xCoord.uiSize ) * uiDividend );
-                    vIndexEnd.append( ( xCoord.uiIndexPos + xCoord.uiSize ) * uiDividend );
+                    vIndexStart.append( readableBp( ( xCoord.uiIndexPos + xCoord.uiSize ) * uiDividend ) );
+                    vIndexEnd.append( readableBp( ( xCoord.uiIndexPos + xCoord.uiSize ) * uiDividend ) );
                     vScreenPos.append( xCoord.uiScreenPos + xCoord.uiSize );
                     vValue.append( vvMinMaxTracks[ uiI ][ 0 ] );
                 }
             }
-            vChrs.append( sChr ); // @todo remove longest common suffix
+            vChrs.append( sChr.substr( 0, sChr.size( ) - uiLogestCommonSuffix ) );
 
             vScreenPoss.append( vScreenPos );
             vScreenPos = pybind11::list( );
@@ -387,7 +387,7 @@ bool PartialQuarry::setTracks( )
                 auto& xCoord = vAxisCords[ uiI ][ uiX ];
                 if( sChr != "" && sChr != xCoord.sChromosome )
                 {
-                    vChrs.append( sChr ); // @todo remove longest common suffix
+                    vChrs.append( sChr.substr( 0, sChr.size( ) - uiLogestCommonSuffix ) );
 
                     vScreenPoss.append( vScreenPos );
                     vScreenPos = pybind11::list( );
@@ -409,8 +409,8 @@ bool PartialQuarry::setTracks( )
                 if( uiX == 0 )
                 {
                     // zero position at start
-                    vIndexStart.append( xCoord.uiIndexPos * uiDividend );
-                    vIndexEnd.append( xCoord.uiIndexPos * uiDividend );
+                    vIndexStart.append( readableBp( xCoord.uiIndexPos * uiDividend ) );
+                    vIndexEnd.append( readableBp( xCoord.uiIndexPos * uiDividend ) );
                     vScreenPos.append( xCoord.uiScreenPos );
                     vValue.append( vvMinMaxTracks[ uiI ][ 0 ] );
                 }
@@ -419,28 +419,28 @@ bool PartialQuarry::setTracks( )
                 auto uiVal = vvCoverageValues[ uiI ][ uiId ][ uiX ];
 
                 // front corner
-                vIndexStart.append( xCoord.uiIndexPos * uiDividend );
-                vIndexEnd.append( ( xCoord.uiIndexPos + xCoord.uiSize ) * uiDividend );
+                vIndexStart.append( readableBp( xCoord.uiIndexPos * uiDividend ) );
+                vIndexEnd.append( readableBp( ( xCoord.uiIndexPos + xCoord.uiSize ) * uiDividend ) );
                 vScreenPos.append( xCoord.uiScreenPos );
                 vValue.append( uiVal );
 
                 // rear corner
-                vIndexStart.append( xCoord.uiIndexPos * uiDividend );
-                vIndexEnd.append( ( xCoord.uiIndexPos + xCoord.uiSize ) * uiDividend );
+                vIndexStart.append( readableBp( xCoord.uiIndexPos * uiDividend ) );
+                vIndexEnd.append( readableBp( ( xCoord.uiIndexPos + xCoord.uiSize ) * uiDividend ) );
                 vScreenPos.append( xCoord.uiScreenPos + xCoord.uiSize );
                 vValue.append( uiVal );
 
                 if( uiX + 1 == vAxisCords[ uiI ].size( ) )
                 {
                     // zero position at end
-                    vIndexStart.append( ( xCoord.uiIndexPos + xCoord.uiSize ) * uiDividend );
-                    vIndexEnd.append( ( xCoord.uiIndexPos + xCoord.uiSize ) * uiDividend );
+                    vIndexStart.append( readableBp( ( xCoord.uiIndexPos + xCoord.uiSize ) * uiDividend ) );
+                    vIndexEnd.append( readableBp( ( xCoord.uiIndexPos + xCoord.uiSize ) * uiDividend ) );
                     vScreenPos.append( xCoord.uiScreenPos + xCoord.uiSize );
                     vValue.append( vvMinMaxTracks[ uiI ][ 0 ] );
                 }
             }
 
-            vChrs.append( sChr ); // @todo remove longest common suffix
+            vChrs.append( sChr.substr( 0, sChr.size( ) - uiLogestCommonSuffix ) );
             vScreenPoss.append( vScreenPos );
             vIndexStarts.append( vIndexStart );
             vIndexEnds.append( vIndexEnd );
@@ -521,7 +521,7 @@ void PartialQuarry::regCoverage( )
     registerNode( NodeNames::Tracks,
                   ComputeNode{ .sNodeName = "coverage_tracks",
                                .fFunc = &PartialQuarry::setTracks,
-                               .vIncomingFunctions = { NodeNames::FlatCoverageValues },
+                               .vIncomingFunctions = { NodeNames::FlatCoverageValues, NodeNames::LCS },
                                .vIncomingSession = { },
                                .uiLastUpdated = uiCurrTime } );
 }

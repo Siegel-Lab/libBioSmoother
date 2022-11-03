@@ -143,13 +143,9 @@ std::vector<ChromDesc> activeChromList( json& xChromLen, json& xChromDisp, std::
     return vRet;
 }
 
-
-bool PartialQuarry::setTicks( )
+bool PartialQuarry::setLCS( )
 {
-    using namespace pybind11::literals;
-    pybind11::gil_scoped_acquire acquire;
-
-    size_t uiLogestCommonSuffix = 0;
+    uiLogestCommonSuffix = 0;
 
     if( this->xSession[ "contigs" ][ "list" ].size( ) > 1 )
     {
@@ -157,11 +153,11 @@ bool PartialQuarry::setTicks( )
         bool bContinue = true;
         while( bContinue )
         {
-            CANCEL_RETURN;
             ++uiLogestCommonSuffix;
             bool bFirst = true;
             for( auto& rChr : this->xSession[ "contigs" ][ "list" ] )
             {
+                CANCEL_RETURN;
                 std::string sChr = rChr.get<std::string>( );
                 if( sChr.size( ) < uiLogestCommonSuffix )
                 {
@@ -179,6 +175,13 @@ bool PartialQuarry::setTicks( )
         }
         --uiLogestCommonSuffix;
     }
+    END_RETURN;
+}
+
+bool PartialQuarry::setTicks( )
+{
+    using namespace pybind11::literals;
+    pybind11::gil_scoped_acquire acquire;
 
 
     for( size_t uiI = 0; uiI < 2; uiI++ )
@@ -447,6 +450,13 @@ const std::vector<AxisCoord>& PartialQuarry::getAxisCoords( bool bXAxis )
 
 void PartialQuarry::regCoords( )
 {
+    registerNode( NodeNames::LCS,
+                  ComputeNode{ .sNodeName = "active_chroms",
+                               .fFunc = &PartialQuarry::setLCS,
+                               .vIncomingFunctions = { },
+                               .vIncomingSession = { { "contigs", "list" } },
+                               .uiLastUpdated = uiCurrTime } );
+
     registerNode( NodeNames::ActiveChrom,
                   ComputeNode{ .sNodeName = "active_chroms",
                                .fFunc = &PartialQuarry::setActiveChrom,
@@ -457,7 +467,7 @@ void PartialQuarry::regCoords( )
     registerNode( NodeNames::Ticks,
                   ComputeNode{ .sNodeName = "ticks",
                                .fFunc = &PartialQuarry::setTicks,
-                               .vIncomingFunctions = { NodeNames::ActiveChrom },
+                               .vIncomingFunctions = { NodeNames::ActiveChrom, NodeNames::LCS },
                                .vIncomingSession = { },
                                .uiLastUpdated = uiCurrTime } );
 

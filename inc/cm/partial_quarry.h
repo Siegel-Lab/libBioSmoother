@@ -76,6 +76,7 @@ class PartialQuarry
         Tracks,
         Divided,
         Palette,
+        LCS,
         SIZE
     };
     struct ComputeNode
@@ -446,6 +447,7 @@ class PartialQuarry
     std::array<size_t, 2> vCanvasSize;
     std::array<std::array<int64_t, 2>, 2> vvMinMaxTracks;
     double fMax, fMin;
+    size_t uiLogestCommonSuffix;
 
     bool bCancel = false;
     std::mutex xUpdateMutex{ };
@@ -459,6 +461,8 @@ class PartialQuarry
     bool setBinSize( );
     // bin_size.h
     bool setRenderArea( );
+    // bin_size.h
+    std::string readableBp( size_t );
 
     // bin_size.h
     void regBinSize( );
@@ -472,6 +476,8 @@ class PartialQuarry
     bool setSymmetry( );
     // coords.h
     bool setBinCoords( );
+    // coords.h
+    bool setLCS( );
     // coords.h
     bool setTicks( );
 
@@ -652,8 +658,12 @@ class PartialQuarry
     // bin_size.h
     const std::array<int64_t, 4> getDrawingArea( );
 
+    // bin_size.h
+    const std::array<size_t, 2> getBinSize( );
+
     // coords.h
     const std::array<size_t, 2> getCanvasSize( );
+
 
     // coverage.h
     const pybind11::dict getTracks( bool bXAxis );

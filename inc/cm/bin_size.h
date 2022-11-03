@@ -8,7 +8,7 @@ namespace cm
 
 size_t PartialQuarry::nextEvenNumber( double fX )
 {
-    if( this->xSession[ "settings" ][ "interface" ][ "snap_bin_size" ] == "no" )
+    if( !this->xSession[ "settings" ][ "interface" ][ "snap_bin_size" ].get<bool>( ) )
         return std::ceil( fX );
 
     size_t uiN = 0;
@@ -30,7 +30,7 @@ bool PartialQuarry::setBinSize( )
                                         this->xSession[ "dividend" ].get<size_t>( ) );
     size_t uiMaxNumBins = this->xSession[ "settings" ][ "interface" ][ "max_num_bins" ][ "val" ].get<size_t>( ) *
                           this->xSession[ "settings" ][ "interface" ][ "max_num_bins_factor" ].get<size_t>( );
-    if( this->xSession[ "settings" ][ "interface" ][ "bin_aspect_ratio" ] == "view" )
+    if( !this->xSession[ "settings" ][ "interface" ][ "squared_bins" ].get<bool>( ) )
     {
         uiBinHeight = nextEvenNumber( ( this->xSession[ "area" ][ "y_end" ].get<double>( ) -
                                         this->xSession[ "area" ][ "y_start" ].get<double>( ) ) /
@@ -41,10 +41,8 @@ bool PartialQuarry::setBinSize( )
                                        this->xSession[ "area" ][ "x_start" ].get<double>( ) ) /
                                      std::sqrt( uiMaxNumBins ) );
         uiBinWidth = std::max( uiBinWidth, uiMinBinSize );
-
-        std::cout << "uiBinHeight: " << uiBinHeight << " uiBinWidth: " << uiBinWidth << std::endl;
     }
-    else if( this->xSession[ "settings" ][ "interface" ][ "bin_aspect_ratio" ].get<std::string>( ) == "coord" )
+    else
     {
         size_t uiArea = ( this->xSession[ "area" ][ "x_end" ].get<size_t>( ) -
                           this->xSession[ "area" ][ "x_start" ].get<size_t>( ) ) *
@@ -56,8 +54,6 @@ bool PartialQuarry::setBinSize( )
 
         uiBinWidth = uiBinHeight;
     }
-    else
-        throw std::logic_error( "invlaid bin_aspect_ratio value" );
     END_RETURN;
 }
 
@@ -106,6 +102,40 @@ const std::array<int64_t, 4> PartialQuarry::getDrawingArea( )
     return std::array<int64_t, 4>{ { iStartX, iStartY, iEndX, iEndY } };
 }
 
+
+const std::array<size_t, 2> PartialQuarry::getBinSize( )
+{
+    update( NodeNames::BinSize );
+    size_t uiD = this->xSession[ "dividend" ].get<size_t>( );
+    return std::array<size_t, 2>{ uiBinWidth * uiD, uiBinHeight * uiD };
+}
+
+
+template<typename CharT>
+struct Sep : public std::numpunct<CharT>
+{
+    virtual std::string do_grouping() const {return "\003";}
+};
+
+std::string putCommas(size_t uiBp)
+{
+    std::stringstream ss;
+    ss.imbue(std::locale(std::cout.getloc(), new Sep <char>()));
+    ss << uiBp;
+    return ss.str();
+}
+
+std::string PartialQuarry::readableBp( size_t uiBp )
+{
+    
+    if( uiBp % 1000000 == 0 )
+        return putCommas( uiBp / 1000000 ) + "mbp";
+    else if( uiBp % 1000 == 0 )
+        return putCommas( uiBp / 1000 ) + "kbp";
+    else
+        return putCommas(uiBp) + "bp";
+}
+
 void PartialQuarry::regBinSize( )
 {
     registerNode( NodeNames::BinSize,
@@ -117,7 +147,7 @@ void PartialQuarry::regBinSize( )
                                                      { "settings", "interface", "min_bin_size", "val" },
                                                      { "settings", "interface", "max_num_bins", "val" },
                                                      { "settings", "interface", "max_num_bins_factor" },
-                                                     { "settings", "interface", "bin_aspect_ratio" },
+                                                     { "settings", "interface", "squared_bins" },
                                                      { "dividend" },
                                                      { "area" } },
                                .uiLastUpdated = uiCurrTime } );
