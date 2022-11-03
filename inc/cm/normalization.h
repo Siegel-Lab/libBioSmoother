@@ -43,7 +43,8 @@ bool PartialQuarry::normalizeBinominalTest( )
 {
     size_t uiNumBinsInRowTotal = ( this->xSession[ "contigs" ][ "genome_size" ].get<size_t>( ) - 1 ) / uiBinWidth + 1;
     vvNormalized = normalizeBinominalTestTrampoline(
-        vvFlatValues, '?', uiNumBinsInRowTotal,
+        vvFlatValues, vFlatNormValues, 
+        uiNumBinsInRowTotal,
         this->xSession[ "settings" ][ "normalization" ][ "p_accept" ][ "val" ].get<double>( ) );
     CANCEL_RETURN;
     END_RETURN;

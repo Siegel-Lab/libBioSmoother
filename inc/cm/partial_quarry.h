@@ -41,7 +41,7 @@ struct BinCoord
 class PartialQuarry
 {
   public:
-    size_t uiVerbosity = 0;
+    size_t uiVerbosity = 1;
 
   private:
     enum NodeNames
@@ -122,19 +122,13 @@ class PartialQuarry
                 else if( this->xSession[ toPointer( vPrefix2 ) ] != xNewSettings[ toPointer( vPrefix2 ) ] )
                 {
                     if( xSessionTime.count( vPrefix2 ) > 0 )
-                    {
                         xSessionTime[ vPrefix2 ] = uiCurrTime;
-                        std::cout << "setting changed 2: " << vPrefix2 << std::endl;
-                    }
                     bUpdated = true;
                 }
             }
         }
         if( bUpdated && xSessionTime.count( vPrefix ) > 0 )
-        {
             xSessionTime[ vPrefix ] = uiCurrTime;
-            std::cout << "setting changed 2: " << vPrefix << std::endl;
-        }
         return bUpdated;
     }
 
@@ -331,7 +325,7 @@ class PartialQuarry
 
     template <typename T> void setValue( std::vector<std::string> vKeys, T xVal )
     {
-        if( this->xSession[ toPointer( vKeys ) ].is_null( ) || this->xSession[ toPointer( vKeys ) ].get<T>( ) != xVal )
+        if( this->xSession[ toPointer( vKeys ) ].is_null( ) || this->xSession[ toPointer( vKeys ) ] != json(xVal) )
         {
             if( this->xSessionTime.count( vKeys ) > 0 )
             {
@@ -366,8 +360,6 @@ class PartialQuarry
                         vPrevKey.push_back( "previous" );
                     this->xSession[ toPointer( vPrevKey ) ] = nullptr;
                 }
-
-                std::cout << "setting changed: " << vKeys << std::endl;
             }
             else
                 this->xSession[ toPointer( vKeys ) ] = xVal;
@@ -434,8 +426,10 @@ class PartialQuarry
 
     std::array<std::vector<std::vector<size_t>>, 2> vvCoverageValues;
     std::array<std::array<std::vector<size_t>, 3>, 2> vInGroupCoverage;
+    std::array<std::vector<size_t>, 2> vNormCoverage;
     // outer array: column / row
     std::array<std::vector<double>, 2> vvFlatCoverageValues;
+    std::vector<std::array<size_t, 2>> vFlatNormValues;
 
     std::vector<std::string> vColorPalette;
     std::vector<std::string> vColorPaletteAnnotation;
@@ -553,7 +547,7 @@ class PartialQuarry
     // colors.h
     double logScale( double );
     // colors.h
-    size_t colorRange( double );
+    size_t colorRange( double, double, double );
     // colors.h
     bool setHeatmapCDS( );
 
@@ -589,7 +583,7 @@ class PartialQuarry
 
   protected:
     virtual std::vector<std::array<double, 2>> normalizeBinominalTestTrampoline( std::vector<std::array<size_t, 2>>&,
-                                                                                 size_t, size_t, double )
+                                                                                 std::vector<std::array<size_t, 2>>&, size_t, double )
     {
         throw std::logic_error( "Function not implemented" );
     }

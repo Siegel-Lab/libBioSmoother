@@ -85,6 +85,8 @@ bool PartialQuarry::setBinValues( )
     vvBinValues.clear( );
     vvBinValues.reserve( vActiveReplicates.size( ) );
 
+    size_t uiMinuend = this->xSession["settings"][ "normalization"][ "min_interactions"][ "val"].get<size_t>();
+
     for( std::string& sRep : vActiveReplicates )
     {
         vvBinValues.emplace_back( );
@@ -101,6 +103,7 @@ bool PartialQuarry::setBinValues( )
             CANCEL_RETURN;
             std::array<size_t, 2> vVals;
             for( size_t uiI = 0; uiI < 2; uiI++ )
+            {
                 if( vCoords[ uiI ].sChromosomeX != "" )
                 {
                     size_t iDataSetId = this->xSession[ "replicates" ][ "by_name" ][ sRep ][ "ids" ]
@@ -142,6 +145,12 @@ bool PartialQuarry::setBinValues( )
                 }
                 else
                     vVals[ uiI ] = 0;
+
+                if(vVals[uiI] > uiMinuend)
+                    vVals[uiI] -= uiMinuend;
+                else
+                    vVals[uiI] = 0;
+            }
 
             vvBinValues.back( ).push_back( symmetry( vVals[ 0 ], vVals[ 1 ] ) );
         }
@@ -299,7 +308,8 @@ void PartialQuarry::regReplicates( )
                                .vIncomingFunctions = { NodeNames::BinCoords, NodeNames::ActiveReplicates,
                                                        NodeNames::IntersectionType },
                                .vIncomingSession = { { "settings", "filters", "mapping_q", "val_min" },
-                                                     { "settings", "filters", "mapping_q", "val_max" } },
+                                                     { "settings", "filters", "mapping_q", "val_max" }, 
+                                                     { "settings", "normalization", "min_interactions", "val" } },
                                .uiLastUpdated = uiCurrTime } );
 
     registerNode( NodeNames::InGroup,

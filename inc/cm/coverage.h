@@ -11,6 +11,9 @@ bool PartialQuarry::setActiveCoverage( )
     size_t uiSize = this->xSession[ "coverage" ][ "list" ].size( ) + this->xSession[ "replicates" ][ "list" ].size( );
     for( size_t uiI = 0; uiI < 2; uiI++ )
     {
+        vNormCoverage[ uiI ].clear( );
+        vNormCoverage[ uiI ].reserve( uiSize );
+
         vActiveCoverage[ uiI ].clear( );
         vActiveCoverage[ uiI ].reserve( uiSize );
 
@@ -25,7 +28,6 @@ bool PartialQuarry::setActiveCoverage( )
     std::array<std::array<std::set<std::pair<std::string, bool>>, 3>, 2> vGroups;
     std::set<std::pair<std::string, bool>> xA{ };
     std::set<std::pair<std::string, bool>> xB{ };
-
 
     for( bool bB : { true, false } )
     {
@@ -66,6 +68,16 @@ bool PartialQuarry::setActiveCoverage( )
         CANCEL_RETURN;
         vActiveCoverage[ 0 ].push_back( rX );
     }
+
+    std::array<std::set<std::string>, 2> vNormGroups;
+    if(this->xSession[ "settings" ][ "normalization" ][ "normalize_by" ].get<std::string>( ) == "radicl-seq")
+        for( size_t uiI = 0; uiI < 2; uiI++ )
+            for(size_t uiX : vInGroup[uiI])
+            {
+                vNormGroups[uiI].insert(vActiveReplicates[uiX]);
+                xB.insert(std::pair<std::string, bool>(vActiveReplicates[uiX], false));
+            }
+
     for( auto& rX : xB )
     {
         CANCEL_RETURN;
@@ -74,17 +86,29 @@ bool PartialQuarry::setActiveCoverage( )
 
     for( size_t uiI = 0; uiI < 2; uiI++ )
         for( size_t uiJ = 0; uiJ < vActiveCoverage[ uiI ].size( ); uiJ++ )
+        {
             for( size_t uiK = 0; uiK < 3; uiK++ )
             {
                 CANCEL_RETURN;
                 if( vGroups[ uiI ][ uiK ].count( vActiveCoverage[ uiI ][ uiJ ] ) > 0 )
                     vInGroupCoverage[ uiI ][ uiK ].push_back( uiJ );
             }
+            if(uiI == 1 && !vActiveCoverage[ uiI ][ uiJ ].second)
+                for( size_t uiK = 0; uiK < 2; uiK++ )
+                {
+                    CANCEL_RETURN;
+                    if( vNormGroups[ uiK ].count( vActiveCoverage[ uiI ][ uiJ ].first ) > 0 )
+                        vNormCoverage[ uiK ].push_back( uiJ );
+                }
+        }
     END_RETURN;
 }
 
 bool PartialQuarry::setCoverageValues( )
 {
+    
+    size_t uiMinuend = this->xSession["settings"][ "normalization"][ "min_interactions"][ "val"].get<size_t>();
+
     for( size_t uiJ = 0; uiJ < 2; uiJ++ )
     {
         vvCoverageValues[ uiJ ].clear( );
@@ -150,6 +174,14 @@ bool PartialQuarry::setCoverageValues( )
                     }
                 else
                     vVals = { 0, 0 };
+                    
+                for( size_t uiI = 0; uiI < 2; uiI++ )
+                {
+                    if(vVals[uiI] > uiMinuend)
+                        vVals[uiI] -= uiMinuend;
+                    else
+                        vVals[uiI] = 0;
+                }
 
                 if( sRep.second )
                     vvCoverageValues[ uiJ ].back( ).push_back( vVals[ 0 ] );
@@ -184,6 +216,26 @@ bool PartialQuarry::setFlatCoverageValues( )
                     vVal[ uiK ] = getFlatValue( vCollected );
                 }
                 vvFlatCoverageValues[ uiJ ].push_back( getMixedValue( (double)vVal[ 0 ], (double)vVal[ 1 ] ) );
+            }
+        }
+        if( vvCoverageValues[ uiJ ].size( ) > 0 && uiJ == 1)
+        {
+            vFlatNormValues.clear();
+            vFlatNormValues.reserve( vvCoverageValues[ uiJ ][ 0 ].size( ) );
+            for( size_t uiI = 0; uiI < vvCoverageValues[ uiJ ][ 0 ].size( ); uiI++ )
+            {
+                std::array<size_t, 2> vVal;
+                for( size_t uiK = 0; uiK < 2; uiK++ )
+                {
+                    CANCEL_RETURN;
+                    std::vector<size_t> vCollected;
+                    vCollected.reserve( vNormCoverage[ uiK ].size( ) );
+                    for( size_t uiX : vNormCoverage[ uiK ] )
+                        vCollected.push_back( vvCoverageValues[ uiJ ][ uiX ][ uiI ] );
+
+                    vVal[ uiK ] = getFlatValue( vCollected );
+                }
+                vFlatNormValues.push_back( vVal );
             }
         }
     }
@@ -438,7 +490,8 @@ void PartialQuarry::regCoverage( )
                                                      { "replicates", "cov_column_a" },
                                                      { "replicates", "cov_column_b" },
                                                      { "replicates", "cov_row_a" },
-                                                     { "replicates", "cov_row_b" } },
+                                                     { "replicates", "cov_row_b" },
+                                                     { "settings", "normalization", "normalize_by" } },
                                .uiLastUpdated = uiCurrTime } );
 
     registerNode( NodeNames::CoverageValues,
@@ -447,7 +500,8 @@ void PartialQuarry::regCoverage( )
                                .vIncomingFunctions = { NodeNames::ActiveCoverage, NodeNames::AxisCoords,
                                                        NodeNames::IntersectionType, NodeNames::Symmetry },
                                .vIncomingSession = { { "settings", "filters", "mapping_q", "val_min" },
-                                                     { "settings", "filters", "mapping_q", "val_max" } },
+                                                     { "settings", "filters", "mapping_q", "val_max" }, 
+                                                     { "settings", "normalization", "min_interactions", "val" } },
                                .uiLastUpdated = uiCurrTime } );
 
     registerNode(

@@ -20,7 +20,8 @@ class PyPartialQuarry : public PartialQuarry
     using ret_t = std::vector<std::array<double, 2>>;
     /* Trampoline (need one for each virtual function) */
     ret_t normalizeBinominalTestTrampoline( std::vector<std::array<size_t, 2>>& vFlatValues,
-                                            size_t uiNumInteractionsTotal, size_t uiNumBinsInRowTotal,
+                                            std::vector<std::array<size_t, 2>>& vNumInteractionsTotal, 
+                                            size_t uiNumBinsInRowTotal,
                                             double fPAccept ) override
     {
         pybind11::gil_scoped_acquire acquire;
@@ -28,7 +29,7 @@ class PyPartialQuarry : public PartialQuarry
                            PartialQuarry, /* Parent class */
                            normalizeBinominalTestTrampoline, /* Name of function in C++ (must match Python name) */
                            vFlatValues, /* Argument(s) */
-                           uiNumInteractionsTotal, /* Argument(s) */
+                           vNumInteractionsTotal, /* Argument(s) */
                            uiNumBinsInRowTotal, /* Argument(s) */
                            fPAccept /* Argument(s) */
         );

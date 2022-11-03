@@ -8,13 +8,18 @@ class Quarry(PartialQuarry):
     def normalizeBinominalTestTrampoline(
         self, bin_values, num_interactions_total, num_bins, p_accept
     ):
-        ps = [
-            binom_test(x, num_interactions_total, 1 / num_bins, alternative="greater")
-            for x in bin_values
-        ]
+        def bin_test(jdx=0):
+            ret = []
+            for idx, val in enumerate(bin_values):
+                ret.append(binom_test(val[jdx], num_interactions_total[idx % len(num_interactions_total)][jdx], 
+                                      1 / num_bins, alternative="greater"))
+            return ret
+        psx = bin_test(0)
+        psy = bin_test(1)
         return [
-            1 if x < p_accept else 0
-            for x in multipletests(ps, alpha=float("NaN"), method="fdr_bh")[1]
+            (1 if x < p_accept else 0, 1 if y < p_accept else 0)
+            for x, y in zip(multipletests(psx, alpha=float("NaN"), method="fdr_bh")[1],
+                            multipletests(psy, alpha=float("NaN"), method="fdr_bh")[1])
         ]
 
     def __combine_hex_values(self, d):
