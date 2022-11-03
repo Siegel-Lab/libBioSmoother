@@ -156,6 +156,7 @@ PYBIND11_MODULE( libContactMapping, m )
         .def( "print_sizes", &cm::PartialQuarry::printSizes ) //
         .def( "cancel", &cm::PartialQuarry::cancel ) //
         .def( "update_cds", &cm::PartialQuarry::updateCDS ) //
+        .def( "save_session", &cm::PartialQuarry::saveSession ) //
 
         .def( "normalizeBinominalTestTrampoline", &cm::ContectMappingPublicist::normalizeBinominalTestTrampoline ) //
         .def( "colorPalette", &cm::ContectMappingPublicist::colorPalette ) //

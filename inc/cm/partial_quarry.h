@@ -86,6 +86,7 @@ class PartialQuarry
         size_t uiLastUpdated;
     };
 
+    std::string sPrefix;
     size_t uiCurrTime;
     std::vector<ComputeNode> vGraph;
 
@@ -599,16 +600,17 @@ class PartialQuarry
     }
 
   public:
-    PartialQuarry( ) : uiCurrTime( 1 ), vGraph( NodeNames::SIZE ), xSession( ), xIndices( )
+    PartialQuarry( ) : sPrefix(""), uiCurrTime( 1 ), vGraph( NodeNames::SIZE ), xSession( ), xIndices( )
     {
         registerAll();
         ++uiCurrTime;
     }
 
     PartialQuarry( std::string sPrefix )
-        : uiCurrTime( 1 ),
+        : sPrefix(sPrefix),
+          uiCurrTime( 1 ),
           vGraph( NodeNames::SIZE ),
-          xSession( json::parse( std::ifstream( sPrefix + "/default_session.json" ) ) ),
+          xSession( json::parse( std::ifstream( sPrefix + "/session.json" ) ) ),
           xIndices( sPrefix )
     {
         registerAll();
@@ -692,6 +694,12 @@ class PartialQuarry
                 sRet += "\t" + vGraph[ rIncoming ].sNodeName + " -> " + rNode.sNodeName + ";\n";
         }
         return sRet + "}";
+    }
+
+    void saveSession()
+    {
+        std::ofstream o(sPrefix + + "/session.json");
+        o << this->getSession() << std::endl;
     }
 };
 
