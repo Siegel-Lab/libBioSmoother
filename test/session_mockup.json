@@ -27,6 +27,18 @@
         "x_end": 10,
         "y_end": 15
     },
+    "anno_area": {
+        "x_start": 0,
+        "y_start": 5,
+        "x_end": 10,
+        "y_end": 15
+    },
+    "cov_area": {
+        "x_start": 0,
+        "y_start": 5,
+        "x_end": 10,
+        "y_end": 15
+    },
     "visible": {
         "x_start": 0,
         "y_start": 5,

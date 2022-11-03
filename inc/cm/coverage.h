@@ -70,12 +70,12 @@ bool PartialQuarry::setActiveCoverage( )
     }
 
     std::array<std::set<std::string>, 2> vNormGroups;
-    if(this->xSession[ "settings" ][ "normalization" ][ "normalize_by" ].get<std::string>( ) == "radicl-seq")
+    if( this->xSession[ "settings" ][ "normalization" ][ "normalize_by" ].get<std::string>( ) == "radicl-seq" )
         for( size_t uiI = 0; uiI < 2; uiI++ )
-            for(size_t uiX : vInGroup[uiI])
+            for( size_t uiX : vInGroup[ uiI ] )
             {
-                vNormGroups[uiI].insert(vActiveReplicates[uiX]);
-                xB.insert(std::pair<std::string, bool>(vActiveReplicates[uiX], false));
+                vNormGroups[ uiI ].insert( vActiveReplicates[ uiX ] );
+                xB.insert( std::pair<std::string, bool>( vActiveReplicates[ uiX ], false ) );
             }
 
     for( auto& rX : xB )
@@ -93,7 +93,7 @@ bool PartialQuarry::setActiveCoverage( )
                 if( vGroups[ uiI ][ uiK ].count( vActiveCoverage[ uiI ][ uiJ ] ) > 0 )
                     vInGroupCoverage[ uiI ][ uiK ].push_back( uiJ );
             }
-            if(uiI == 1 && !vActiveCoverage[ uiI ][ uiJ ].second)
+            if( uiI == 1 && !vActiveCoverage[ uiI ][ uiJ ].second )
                 for( size_t uiK = 0; uiK < 2; uiK++ )
                 {
                     CANCEL_RETURN;
@@ -106,8 +106,8 @@ bool PartialQuarry::setActiveCoverage( )
 
 bool PartialQuarry::setCoverageValues( )
 {
-    
-    size_t uiMinuend = this->xSession["settings"][ "normalization"][ "min_interactions"][ "val"].get<size_t>();
+
+    size_t uiMinuend = this->xSession[ "settings" ][ "normalization" ][ "min_interactions" ][ "val" ].get<size_t>( );
 
     for( size_t uiJ = 0; uiJ < 2; uiJ++ )
     {
@@ -122,10 +122,16 @@ bool PartialQuarry::setCoverageValues( )
             bool bHasMapQ = xRep[ "has_map_q" ];
             bool bHasMultiMap = xRep[ "has_multimapping" ];
 
-            size_t uiMapQMin =
-                255 - this->xSession[ "settings" ][ "filters" ][ "mapping_q" ][ "val_min" ].get<size_t>( );
-            size_t uiMapQMax =
-                255 - this->xSession[ "settings" ][ "filters" ][ "mapping_q" ][ "val_max" ].get<size_t>( );
+            size_t uiMapQMin = this->xSession[ "settings" ][ "filters" ][ "mapping_q" ][ "val_min" ].get<size_t>( );
+            size_t uiMapQMax = this->xSession[ "settings" ][ "filters" ][ "mapping_q" ][ "val_max" ].get<size_t>( );
+            bool bIncomplAlignment = this->xSession[ "settings" ][ "filters" ][ "incomplete_alignments" ].get<bool>( );
+
+            if( !( uiMapQMin == 0 && bIncomplAlignment ) )
+                ++uiMapQMin;
+            ++uiMapQMax;
+
+            uiMapQMin = 255 - uiMapQMin;
+            uiMapQMax = 255 - uiMapQMax;
 
             for( AxisCoord& xCoords : vAxisCords[ uiJ ] )
             {
@@ -174,13 +180,13 @@ bool PartialQuarry::setCoverageValues( )
                     }
                 else
                     vVals = { 0, 0 };
-                    
+
                 for( size_t uiI = 0; uiI < 2; uiI++ )
                 {
-                    if(vVals[uiI] > uiMinuend)
-                        vVals[uiI] -= uiMinuend;
+                    if( vVals[ uiI ] > uiMinuend )
+                        vVals[ uiI ] -= uiMinuend;
                     else
-                        vVals[uiI] = 0;
+                        vVals[ uiI ] = 0;
                 }
 
                 if( sRep.second )
@@ -218,9 +224,9 @@ bool PartialQuarry::setFlatCoverageValues( )
                 vvFlatCoverageValues[ uiJ ].push_back( getMixedValue( (double)vVal[ 0 ], (double)vVal[ 1 ] ) );
             }
         }
-        if( vvCoverageValues[ uiJ ].size( ) > 0 && uiJ == 1)
+        if( vvCoverageValues[ uiJ ].size( ) > 0 && uiJ == 1 )
         {
-            vFlatNormValues.clear();
+            vFlatNormValues.clear( );
             vFlatNormValues.reserve( vvCoverageValues[ uiJ ][ 0 ].size( ) );
             for( size_t uiI = 0; uiI < vvCoverageValues[ uiJ ][ 0 ].size( ); uiI++ )
             {
@@ -500,7 +506,7 @@ void PartialQuarry::regCoverage( )
                                .vIncomingFunctions = { NodeNames::ActiveCoverage, NodeNames::AxisCoords,
                                                        NodeNames::IntersectionType, NodeNames::Symmetry },
                                .vIncomingSession = { { "settings", "filters", "mapping_q", "val_min" },
-                                                     { "settings", "filters", "mapping_q", "val_max" }, 
+                                                     { "settings", "filters", "mapping_q", "val_max" },
                                                      { "settings", "normalization", "min_interactions", "val" } },
                                .uiLastUpdated = uiCurrTime } );
 

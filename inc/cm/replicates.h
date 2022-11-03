@@ -70,7 +70,10 @@ size_t PartialQuarry::symmetry( size_t uiA, size_t uiB )
         case 1:
             return std::min( uiA, uiB );
         case 2:
-            return (size_t)std::abs( (int64_t)uiA - (int64_t)uiB );
+            if(uiA > uiB)
+                return uiA - uiB;
+            else
+                return 0;
         case 3:
         case 4:
             return uiA + uiB;
@@ -85,7 +88,7 @@ bool PartialQuarry::setBinValues( )
     vvBinValues.clear( );
     vvBinValues.reserve( vActiveReplicates.size( ) );
 
-    size_t uiMinuend = this->xSession["settings"][ "normalization"][ "min_interactions"][ "val"].get<size_t>();
+    size_t uiMinuend = this->xSession[ "settings" ][ "normalization" ][ "min_interactions" ][ "val" ].get<size_t>( );
 
     for( std::string& sRep : vActiveReplicates )
     {
@@ -95,8 +98,17 @@ bool PartialQuarry::setBinValues( )
         bool bHasMapQ = this->xSession[ "replicates" ][ "by_name" ][ sRep ][ "has_map_q" ];
         bool bHasMultiMap = this->xSession[ "replicates" ][ "by_name" ][ sRep ][ "has_multimapping" ];
 
-        size_t uiMapQMin = 255 - this->xSession[ "settings" ][ "filters" ][ "mapping_q" ][ "val_min" ].get<size_t>( );
-        size_t uiMapQMax = 255 - this->xSession[ "settings" ][ "filters" ][ "mapping_q" ][ "val_max" ].get<size_t>( );
+        size_t uiMapQMin = this->xSession[ "settings" ][ "filters" ][ "mapping_q" ][ "val_min" ].get<size_t>( );
+        size_t uiMapQMax = this->xSession[ "settings" ][ "filters" ][ "mapping_q" ][ "val_max" ].get<size_t>( );
+
+        bool bIncomplAlignment = this->xSession[ "settings" ][ "filters" ][ "incomplete_alignments" ].get<bool>( );
+
+        if( !( uiMapQMin == 0 && bIncomplAlignment ) )
+            ++uiMapQMin;
+        ++uiMapQMax;
+
+        uiMapQMin = 255 - uiMapQMin;
+        uiMapQMax = 255 - uiMapQMax;
 
         for( std::array<BinCoord, 2>& vCoords : vBinCoords )
         {
@@ -146,10 +158,10 @@ bool PartialQuarry::setBinValues( )
                 else
                     vVals[ uiI ] = 0;
 
-                if(vVals[uiI] > uiMinuend)
-                    vVals[uiI] -= uiMinuend;
+                if( vVals[ uiI ] > uiMinuend )
+                    vVals[ uiI ] -= uiMinuend;
                 else
-                    vVals[uiI] = 0;
+                    vVals[ uiI ] = 0;
             }
 
             vvBinValues.back( ).push_back( symmetry( vVals[ 0 ], vVals[ 1 ] ) );
@@ -308,7 +320,8 @@ void PartialQuarry::regReplicates( )
                                .vIncomingFunctions = { NodeNames::BinCoords, NodeNames::ActiveReplicates,
                                                        NodeNames::IntersectionType },
                                .vIncomingSession = { { "settings", "filters", "mapping_q", "val_min" },
-                                                     { "settings", "filters", "mapping_q", "val_max" }, 
+                                                     { "settings", "filters", "mapping_q", "val_max" },
+                                                     { "settings", "filters", "incomplete_alignments" },
                                                      { "settings", "normalization", "min_interactions", "val" } },
                                .uiLastUpdated = uiCurrTime } );
 

@@ -8,7 +8,7 @@ namespace cm
 
 bool PartialQuarry::setColors( )
 {
-    vColorPalette.clear();
+    vColorPalette.clear( );
     vColorPalette = colorPalette( this->xSession[ "settings" ][ "interface" ][ "color_palette" ].get<std::string>( ),
                                   this->xSession[ "settings" ][ "interface" ][ "color_low" ].get<std::string>( ),
                                   this->xSession[ "settings" ][ "interface" ][ "color_high" ].get<std::string>( ) );
@@ -149,7 +149,7 @@ bool PartialQuarry::setColored( )
         if( std::isnan( fC ) )
             vColored.push_back( sBackgroundColor );
         else
-            vColored.push_back( vColorPalette[ colorIndex( logScale( colorRange( fMin, fMax, fC), fBase ) ) ] );
+            vColored.push_back( vColorPalette[ colorIndex( logScale( colorRange( fMin, fMax, fC ), fBase ) ) ] );
     }
     END_RETURN;
 }
@@ -162,12 +162,11 @@ bool PartialQuarry::setPalette( )
     double fMaxR = this->xSession[ "settings" ][ "normalization" ][ "color_range" ][ "val_max" ].get<double>( );
     double fBase = this->xSession[ "settings" ][ "normalization" ][ "log_base" ][ "val" ].get<double>( );
 
-    for(double fC = std::min(fMin, fMinR); fC <= std::max(fMax, fMaxR); fC += (std::max(fMax, fMaxR) - std::min(fMin, fMinR))/255.0)
+    for( double fC = std::min( fMin, fMinR ); fC <= std::max( fMax, fMaxR );
+         fC += ( std::max( fMax, fMaxR ) - std::min( fMin, fMinR ) ) / 255.0 )
     {
         CANCEL_RETURN;
-        vNew.append(
-            vColorPalette[ colorIndex( logScale( colorRange( fMinR, fMaxR, fC ), fBase ) ) ]
-        );
+        vNew.append( vColorPalette[ colorIndex( logScale( colorRange( fMinR, fMaxR, fC ), fBase ) ) ] );
     }
 
     vRenderedPalette = vNew;

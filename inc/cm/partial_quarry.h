@@ -326,7 +326,7 @@ class PartialQuarry
 
     template <typename T> void setValue( std::vector<std::string> vKeys, T xVal )
     {
-        if( this->xSession[ toPointer( vKeys ) ].is_null( ) || this->xSession[ toPointer( vKeys ) ] != json(xVal) )
+        if( this->xSession[ toPointer( vKeys ) ].is_null( ) || this->xSession[ toPointer( vKeys ) ] != json( xVal ) )
         {
             if( this->xSessionTime.count( vKeys ) > 0 )
             {
@@ -573,7 +573,7 @@ class PartialQuarry
     // annotation.h
     void regAnnotation( );
 
-    void registerAll()
+    void registerAll( )
     {
         regBinSize( );
         regCoords( );
@@ -590,7 +590,8 @@ class PartialQuarry
 
   protected:
     virtual std::vector<std::array<double, 2>> normalizeBinominalTestTrampoline( std::vector<std::array<size_t, 2>>&,
-                                                                                 std::vector<std::array<size_t, 2>>&, size_t, double )
+                                                                                 std::vector<std::array<size_t, 2>>&,
+                                                                                 size_t, double )
     {
         throw std::logic_error( "Function not implemented" );
     }
@@ -601,20 +602,20 @@ class PartialQuarry
     }
 
   public:
-    PartialQuarry( ) : sPrefix(""), uiCurrTime( 1 ), vGraph( NodeNames::SIZE ), xSession( ), xIndices( )
+    PartialQuarry( ) : sPrefix( "" ), uiCurrTime( 1 ), vGraph( NodeNames::SIZE ), xSession( ), xIndices( )
     {
-        registerAll();
+        registerAll( );
         ++uiCurrTime;
     }
 
     PartialQuarry( std::string sPrefix )
-        : sPrefix(sPrefix),
+        : sPrefix( sPrefix ),
           uiCurrTime( 1 ),
           vGraph( NodeNames::SIZE ),
           xSession( json::parse( std::ifstream( sPrefix + "/session.json" ) ) ),
           xIndices( sPrefix )
     {
-        registerAll();
+        registerAll( );
         ++uiCurrTime;
     }
 
@@ -697,10 +698,10 @@ class PartialQuarry
         return sRet + "}";
     }
 
-    void saveSession()
+    void saveSession( )
     {
-        std::ofstream o(sPrefix + + "/session.json");
-        o << this->getSession() << std::endl;
+        std::ofstream o( sPrefix + +"/session.json" );
+        o << this->getSession( ) << std::endl;
     }
 };
 
