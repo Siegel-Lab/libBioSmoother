@@ -344,4 +344,4 @@ def parse_annotations(annotation_file):
             ) = line.split()
             yield annotation_type, chrom, int(from_pos), int(to_pos), extras.replace(
                 ";", "\n"
-            )
+            ), strand == '+'

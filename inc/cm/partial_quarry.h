@@ -29,12 +29,28 @@ struct AxisCoord
     size_t uiSize;
 };
 
+struct AxisRegion : AxisCoord
+{
+    size_t uiCoordStartIdx;
+    size_t uiNumCoords;
+};
+
 struct BinCoord
 {
     std::string sChromosomeX, sChromosomeY;
     size_t uiScreenX, uiScreenY;
     size_t uiIndexX, uiIndexY;
     size_t uiW, uiH;
+};
+
+struct Annotation
+{
+    std::string sInfo;
+    bool bForw;
+    size_t uiScreenX, uiScreenY;
+    size_t uiIndexX, uiIndexY;
+    size_t uiRow;
+    std::string sChromosome;
 };
 
 
@@ -403,6 +419,7 @@ class PartialQuarry
 
     std::array<std::vector<ChromDesc>, 2> vActiveChromosomes;
     std::array<std::vector<AxisCoord>, 2> vAxisCords;
+    std::array<std::vector<AxisRegion>, 2> vAxisRegions;
 
     std::vector<std::string> vActiveReplicates;
     std::array<std::vector<size_t>, 2> vInGroup;
@@ -437,7 +454,8 @@ class PartialQuarry
     pybind11::list vRenderedPalette;
     std::vector<std::string> vColorPaletteAnnotation;
     std::array<std::vector<std::string>, 2> vActiveAnnotation;
-    std::array<std::vector<std::vector<size_t>>, 2> vAnnotationValues;
+    std::array<std::vector<std::pair<std::vector<size_t>, std::vector<Annotation>>>, 2> vAnnotationValues;
+    std::array<size_t, 2> vMaxAnnoRows;
     std::array<pybind11::dict, 2> vAnnotationCDS;
     std::array<pybind11::list, 2> vActiveAnnotationCDS;
     pybind11::dict xHeatmapCDS;
@@ -619,7 +637,7 @@ class PartialQuarry
           uiCurrTime( 1 ),
           vGraph( NodeNames::SIZE ),
           xSession( json::parse( std::ifstream( sPrefix + "/session.json" ) ) ),
-          xIndices( sPrefix )
+          xIndices( sPrefix, false )
     {
         registerAll( );
         ++uiCurrTime;

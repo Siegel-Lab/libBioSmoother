@@ -25,10 +25,13 @@ namespace cm
  * @param vChromosomes
  * @return std::vector<AxisCoord>
  */
-std::vector<AxisCoord> axisCoordsHelper( size_t uiBinSize, size_t uiScreenStartPos, size_t uiScreenEndPos,
-                                         size_t iSmallerBins, std::vector<ChromDesc> vChromosomes, bool& bCancel )
+std::pair<std::vector<AxisCoord>, std::vector<AxisRegion>> axisCoordsHelper( size_t uiBinSize, size_t uiScreenStartPos,
+                                                                             size_t uiScreenEndPos, size_t iSmallerBins,
+                                                                             std::vector<ChromDesc> vChromosomes,
+                                                                             bool& bCancel )
 {
     std::vector<AxisCoord> vRet;
+    std::vector<AxisRegion> vRet2;
     vRet.reserve( 2 * ( uiScreenEndPos - uiScreenStartPos ) / uiBinSize );
     size_t uiCurrScreenPos = uiScreenStartPos;
     size_t uiChromosomeStartPos = 0;
@@ -36,10 +39,13 @@ std::vector<AxisCoord> axisCoordsHelper( size_t uiBinSize, size_t uiScreenStartP
     {
         size_t uiChromosomeEndPos = uiChromosomeStartPos + xChr.uiLength;
         size_t uiItrEndPos = std::min( uiScreenEndPos, uiChromosomeEndPos );
+        size_t uiStartIdx = vRet.size( );
+        size_t uiStartScreenPos = uiCurrScreenPos;
+        size_t uiStartChromPos = uiCurrScreenPos >= uiChromosomeStartPos ? uiCurrScreenPos - uiChromosomeStartPos : 0;
         while( uiCurrScreenPos >= uiChromosomeStartPos && uiCurrScreenPos < uiItrEndPos )
         {
             if( bCancel )
-                return vRet;
+                return std::make_pair( vRet, vRet2 );
             size_t uiIndexPos = uiCurrScreenPos - uiChromosomeStartPos;
             size_t uiCurrBinSize;
             switch( iSmallerBins )
@@ -105,13 +111,25 @@ std::vector<AxisCoord> axisCoordsHelper( size_t uiBinSize, size_t uiScreenStartP
             uiIndexPos += uiCurrBinSize;
         }
 
+        if(uiStartScreenPos >= uiChromosomeStartPos)
+            vRet2.push_back( AxisRegion{
+                {
+                    .sChromosome = xChr.sName, //
+                    .uiScreenPos = uiStartScreenPos, //
+                    .uiIndexPos = uiStartChromPos, //
+                    .uiSize = uiItrEndPos - uiStartChromPos, //
+                },
+                .uiCoordStartIdx = uiStartIdx, //
+                .uiNumCoords = vRet.size( ) - uiStartIdx //
+            } );
+
         uiChromosomeStartPos = uiChromosomeEndPos;
 
         if( uiScreenEndPos <= uiChromosomeStartPos )
             break;
     }
 
-    return vRet;
+    return std::make_pair( vRet, vRet2 );
 }
 
 size_t smaller_bin_to_num( std::string sVal )
@@ -241,13 +259,17 @@ bool PartialQuarry::setActiveChrom( )
 bool PartialQuarry::setAxisCoords( )
 {
     for( bool bX : { true, false } )
-        this->vAxisCords[ bX ? 0 : 1 ] = axisCoordsHelper(
+    {
+        auto xRet = axisCoordsHelper(
             bX ? this->uiBinWidth : this->uiBinHeight,
             bX ? std::max( 0l, this->iStartX ) : std::max( 0l, this->iStartY ),
             bX ? std::max( 0l, this->iEndX ) : std::max( 0l, this->iEndY ),
             smaller_bin_to_num( this->xSession[ "settings" ][ "filters" ][ "cut_off_bin" ].get<std::string>( ) ),
             this->vActiveChromosomes[ bX ? 0 : 1 ],
             this->bCancel );
+        this->vAxisCords[ bX ? 0 : 1 ] = xRet.first;
+        this->vAxisRegions[ bX ? 0 : 1 ] = xRet.second;
+    }
     CANCEL_RETURN;
     END_RETURN;
 }

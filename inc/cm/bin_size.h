@@ -111,29 +111,31 @@ const std::array<size_t, 2> PartialQuarry::getBinSize( )
 }
 
 
-template<typename CharT>
-struct Sep : public std::numpunct<CharT>
+template <typename CharT> struct Sep : public std::numpunct<CharT>
 {
-    virtual std::string do_grouping() const {return "\003";}
+    virtual std::string do_grouping( ) const
+    {
+        return "\003";
+    }
 };
 
-std::string putCommas(size_t uiBp)
+std::string putCommas( size_t uiBp )
 {
     std::stringstream ss;
-    ss.imbue(std::locale(std::cout.getloc(), new Sep <char>()));
+    ss.imbue( std::locale( std::cout.getloc( ), new Sep<char>( ) ) );
     ss << uiBp;
-    return ss.str();
+    return ss.str( );
 }
 
 std::string PartialQuarry::readableBp( size_t uiBp )
 {
-    
+
     if( uiBp % 1000000 == 0 )
         return putCommas( uiBp / 1000000 ) + "mbp";
     else if( uiBp % 1000 == 0 )
         return putCommas( uiBp / 1000 ) + "kbp";
     else
-        return putCommas(uiBp) + "bp";
+        return putCommas( uiBp ) + "bp";
 }
 
 void PartialQuarry::regBinSize( )

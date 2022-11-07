@@ -5,6 +5,7 @@ import os
 
 MAP_Q_MAX = 255
 
+# @todo create session.json from default_session.json
 
 def touch(f_name):
     with open(f_name, "a"):  # Create file if does not exist
@@ -16,7 +17,7 @@ class Indexer:
         self.prefix = prefix
         if os.path.exists(prefix + ".smoother_index/default_session.json"):
             # self.indices = CachedSpsInterface(prefix + ".smoother_index")
-            self.indices = DiskSpsInterface(prefix + ".smoother_index")
+            self.indices = DiskSpsInterface(prefix + ".smoother_index", True)
             with open(prefix + ".smoother_index/default_session.json", "r") as f:
                 self.session_default = json.load(f)
         else:
@@ -114,14 +115,14 @@ class Indexer:
 
     def add_annotation(self, file_name):
         sorted_list = {}
-        for name, chrom, start, end, info in parse_annotations(file_name):
+        for name, chrom, start, end, info, on_forw_strnd in parse_annotations(file_name):
             if not chrom in self.session_default["contigs"]["list"]:
                 continue
             if name not in sorted_list:
                 sorted_list[name] = {}
             if chrom not in sorted_list[name]:
                 sorted_list[name][chrom] = []
-            sorted_list[name][chrom].append((start, end, info))
+            sorted_list[name][chrom].append((start // self.session_default["dividend"], end // self.session_default["dividend"], info, on_forw_strnd))
         for name, chroms in sorted_list.items():
             if name not in self.session_default["annotation"]["list"]:
                 self.session_default["annotation"]["list"].append(name)
@@ -131,17 +132,9 @@ class Indexer:
 
                 for chrom, annos in chroms.items():
                     self.progress_print("annotating", name + "(s)", "for contig", chrom)
-                    for start, end, info in annos:
-                        self.indices.insert(
-                            2,
-                            1,
-                            [start // self.session_default["dividend"]],
-                            [end // self.session_default["dividend"]],
-                            info,
-                        )
                     self.session_default["annotation"]["by_name"][name][
                         chrom
-                    ] = self.indices.generate(2, 1, verbosity=0)
+                    ] = self.indices.anno.add_intervals(annos, verbosity=0)
             else:
                 raise RuntimeError("annotation with this name already exists")
 

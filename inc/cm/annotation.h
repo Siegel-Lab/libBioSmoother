@@ -1,4 +1,5 @@
 #include "cm/partial_quarry.h"
+#include "sps/desc.h"
 
 #pragma once
 
@@ -39,31 +40,77 @@ bool PartialQuarry::setActivateAnnotationCDS( )
 
 bool PartialQuarry::setAnnotationValues( )
 {
+    size_t uiMaxDetailedDisplay =
+        this->xSession[ "settings" ][ "interface" ][ "max_detailed_anno_display" ].get<size_t>( );
     for( size_t uiX : { 0, 1 } )
     {
+        size_t uiMinAnnoDist = 2;
         vAnnotationValues[ uiX ].clear( );
         vAnnotationValues[ uiX ].reserve( vActiveAnnotation[ uiX ].size( ) );
 
+        size_t uiTotalCount = 0;
         for( std::string sCurrAnno : vActiveAnnotation[ uiX ] )
         {
-            vAnnotationValues[ uiX ].emplace_back( );
-            vAnnotationValues[ uiX ].back( ).reserve( vAxisCords[ uiX ].size( ) );
             auto& rJson = this->xSession[ "annotation" ][ "by_name" ][ sCurrAnno ];
-            for( AxisCoord& xCoords : vAxisCords[ uiX ] )
+            for( AxisRegion& xRegion : vAxisRegions[ uiX ] )
             {
                 CANCEL_RETURN;
-                if( xCoords.sChromosome != "" )
+
+                int64_t iDataSetId = rJson[ xRegion.sChromosome ].get<int64_t>( );
+
+                uiTotalCount +=
+                    xIndices.vAnno.count( iDataSetId, xRegion.uiIndexPos, xRegion.uiIndexPos + xRegion.uiSize );
+            }
+        }
+        for( std::string sCurrAnno : vActiveAnnotation[ uiX ] )
+        {
+            auto& rJson = this->xSession[ "annotation" ][ "by_name" ][ sCurrAnno ];
+            vAnnotationValues[ uiX ].emplace_back( );
+            if( uiTotalCount < uiMaxDetailedDisplay )
+            {
+                vAnnotationValues[ uiX ].back( ).second.reserve( uiTotalCount );
+                std::vector<size_t> vEndPos;
+                for( AxisRegion& xRegion : vAxisRegions[ uiX ] )
+                {
+                    int64_t iDataSetId = rJson[ xRegion.sChromosome ].get<int64_t>( );
+                    for( auto& xAnno :
+                         xIndices.vAnno.query( iDataSetId, xRegion.uiIndexPos, xRegion.uiIndexPos + xRegion.uiSize ) )
+                    {
+                        size_t uiStartPos =
+                            ( std::get<0>( xAnno ) > xRegion.uiIndexPos ? std::get<0>( xAnno ) - xRegion.uiIndexPos
+                                                                        : 0 ) +
+                            xRegion.uiScreenPos;
+                        size_t uiEndPos = std::min( std::get<1>( xAnno ) - xRegion.uiIndexPos + xRegion.uiScreenPos,
+                                                    xRegion.uiScreenPos + xRegion.uiSize );
+                        size_t uiRow = 0;
+                        while( uiRow < vEndPos.size( ) && uiStartPos < vEndPos[ uiRow ] + uiMinAnnoDist )
+                            ++uiRow;
+                        if( uiRow == vEndPos.size( ) )
+                            vEndPos.emplace_back( );
+                        vEndPos[ uiRow ] = uiEndPos;
+                        vAnnotationValues[ uiX ].back( ).second.push_back(
+                            Annotation{ .sInfo = std::get<2>( xAnno ),
+                                        .bForw = std::get<3>( xAnno ),
+                                        .uiScreenX = uiStartPos,
+                                        .uiScreenY = uiEndPos,
+                                        .uiIndexX = std::get<0>( xAnno ),
+                                        .uiIndexY = std::get<1>( xAnno ),
+                                        .uiRow = uiRow,
+                                        .sChromosome = xRegion.sChromosome } );
+                    }
+                }
+                vMaxAnnoRows[ uiX ] = vEndPos.size( );
+            }
+            else
+            {
+                vAnnotationValues[ uiX ].back( ).first.reserve( vAxisCords[ uiX ].size( ) );
+                for( AxisCoord& xCoords : vAxisCords[ uiX ] )
                 {
                     int64_t iDataSetId = rJson[ xCoords.sChromosome ].get<int64_t>( );
-                    vAnnotationValues[ uiX ].back( ).push_back(
-                        xIndices.getIndex<1, 1>( )->count( iDataSetId,
-                                                           { xCoords.uiIndexPos },
-                                                           { xCoords.uiIndexPos + xCoords.uiSize },
-                                                           sps::IntersectionType::overlaps,
-                                                           0 ) );
+                    vAnnotationValues[ uiX ].back( ).first.push_back(
+                        xIndices.vAnno.count( iDataSetId, xCoords.uiIndexPos, xCoords.uiIndexPos + xCoords.uiSize ) );
                 }
-                else
-                    vAnnotationValues[ uiX ].back( ).push_back( false );
+                vMaxAnnoRows[ uiX ] = 1;
             }
         }
     }
@@ -77,6 +124,8 @@ bool PartialQuarry::setAnnotationCDS( )
 
     size_t uiDividend = this->xSession[ "dividend" ].get<size_t>( );
 
+    double fMinAnnoDist = this->xSession[ "settings" ][ "interface" ][ "min_anno_dist" ].get<double>( );
+
     for( size_t uiX : { 0, 1 } )
     {
         pybind11::list vChr;
@@ -88,16 +137,18 @@ bool PartialQuarry::setAnnotationCDS( )
         pybind11::list vColor;
         pybind11::list vNumAnno;
         pybind11::list vInfo;
+        pybind11::list vSize;
 
+        double fAnnoHeight = ( 1.0 - fMinAnnoDist ) / vMaxAnnoRows[ uiX ];
 
         for( size_t uiN = 0; uiN < vActiveAnnotation[ uiX ].size( ); uiN++ )
         {
             std::string& rAnnoName = vActiveAnnotation[ uiX ][ uiN ];
-            for( size_t uiA = 0; uiA < vAnnotationValues[ uiX ][ uiN ].size( ); uiA++ )
+            for( size_t uiA = 0; uiA < vAnnotationValues[ uiX ][ uiN ].first.size( ); uiA++ )
             {
                 CANCEL_RETURN;
 
-                size_t uiVal = vAnnotationValues[ uiX ][ uiN ][ uiA ];
+                size_t uiVal = vAnnotationValues[ uiX ][ uiN ].first[ uiA ];
                 auto& rCoords = vAxisCords[ uiX ][ uiA ];
 
                 if( uiVal > 0 )
@@ -105,13 +156,29 @@ bool PartialQuarry::setAnnotationCDS( )
                     vChr.append( rCoords.sChromosome );
                     vIndexStart.append( readableBp( rCoords.uiIndexPos * uiDividend ) );
                     vIndexEnd.append( readableBp( ( rCoords.uiIndexPos + rCoords.uiSize ) * uiDividend ) );
-                    vAnnoName.append( rAnnoName );
+                    vAnnoName.append( py::make_tuple( rAnnoName, 0 /*anno overlap*/ ) );
                     vScreenStart.append( rCoords.uiScreenPos );
                     vScreenEnd.append( rCoords.uiScreenPos + rCoords.uiSize );
                     vColor.append( vColorPaletteAnnotation[ uiN % vColorPaletteAnnotation.size( ) ] );
                     vNumAnno.append( uiVal );
                     vInfo.append( "" );
+                    vSize.append( fAnnoHeight );
                 }
+            }
+            for( Annotation& rA : vAnnotationValues[ uiX ][ uiN ].second )
+            {
+                CANCEL_RETURN;
+
+                vChr.append( rA.sChromosome );
+                vIndexStart.append( readableBp( rA.uiIndexX * uiDividend ) );
+                vIndexEnd.append( readableBp( rA.uiIndexX * uiDividend ) );
+                vAnnoName.append( py::make_tuple( rAnnoName, (rA.uiRow % 2 == 0 ? 1.0 : -1.0) * fAnnoHeight * rA.uiRow ) );
+                vScreenStart.append( rA.uiScreenX );
+                vScreenEnd.append( rA.uiScreenY );
+                vColor.append( vColorPaletteAnnotation[ uiN % vColorPaletteAnnotation.size( ) ] );
+                vNumAnno.append( 1 );
+                vInfo.append( rA.sInfo );
+                vSize.append( fAnnoHeight );
             }
         }
 
@@ -123,7 +190,8 @@ bool PartialQuarry::setAnnotationCDS( )
                                                 "screen_end"_a = vScreenEnd,
                                                 "color"_a = vColor,
                                                 "num_anno"_a = vNumAnno,
-                                                "info"_a = vInfo );
+                                                "info"_a = vInfo,
+                                                "size"_a = vSize );
     }
     END_RETURN;
 }

@@ -1,6 +1,9 @@
+#include "cm/annotation_index.h"
 #include "sps/default.h"
 #include "sps/index.h"
 #include <type_traits>
+
+#pragma once
 
 namespace cm
 {
@@ -36,7 +39,7 @@ std::shared_ptr<sps::Index<storage_t<D, false, true, O>>> getIndexHelper( SpsInt
 
 #define INIT_INDEX_OBJECT( D, O )                                                                                      \
     this->pIndex##D##O =                                                                                               \
-        std::make_shared<I##D##O##_t>( sFilePrefix + "/" + std::to_string( D ) + "." + std::to_string( O ), true );    \
+        std::make_shared<I##D##O##_t>( sFilePrefix + "/" + std::to_string( D ) + "." + std::to_string( O ), bWrite );  \
     this->uiSize##D##O = this->pIndex##D##O->numPoints( );
 
 
@@ -61,17 +64,17 @@ std::shared_ptr<sps::Index<storage_t<D, false, true, O>>> getIndexHelper( SpsInt
         std::copy_n( vStart.begin( ), D - O, aStart##D##O.begin( ) );                                                  \
                                                                                                                        \
         if constexpr( O == 0 )                                                                                         \
-            pIndex##D##O->addPoint( aStart##D##O, sDesc );                                                             \
+            pIndex##D##O->addPoint( aStart##D##O, 1, sDesc );                                                          \
         else                                                                                                           \
         {                                                                                                              \
             std::array<uint64_t, D - O> aEnd##D##O;                                                                    \
             std::copy_n( vEnd.begin( ), D - O, aEnd##D##O.begin( ) );                                                  \
                                                                                                                        \
-            pIndex##D##O->addPoint( aStart##D##O, aEnd##D##O, sDesc );                                                 \
+            pIndex##D##O->addPoint( aStart##D##O, aEnd##D##O, 1, sDesc );                                              \
         }                                                                                                              \
         break;
 
-#define CLEAR_P_D( D, O ) pIndex##D##O->clearPoints( );
+#define CLEAR_P_D( D, O ) pIndex##D##O->clearCorners( );
 
 template <bool CACHED> class SpsInterface
 {
@@ -87,8 +90,16 @@ template <bool CACHED> class SpsInterface
 
     RELEVANT_COMBINATIONS( DECLARE_INDEX_SIZE )
 
+    using anno_t = AnnotationDescIndex<DiskVecGenerator>;
 
-    SpsInterface( std::string sFilePrefix ){ RELEVANT_COMBINATIONS( INIT_INDEX_OBJECT ) }
+    anno_t vAnno;
+
+
+    SpsInterface( std::string sFilePrefix, bool bWrite )
+        : vAnno( sFilePrefix + "/anno", bWrite ) //
+    { //
+        RELEVANT_COMBINATIONS( INIT_INDEX_OBJECT ) //
+    }
 
     SpsInterface( )
     {}

@@ -1,3 +1,4 @@
+#include "cm/annotation_index.h"
 #include "cm/build_time.h"
 #include "cm/include.h"
 #include "cm/version.h"
@@ -67,10 +68,12 @@ void testFunc( )
 
 } // namespace cm
 
+
 template <bool CACHE> void exportSpsInterface( pybind11::module& m )
 {
+
     pybind11::class_<cm::SpsInterface<CACHE>>( m, CACHE ? "CachedSpsInterface" : "DiskSpsInterface" ) //
-        .def( pybind11::init<std::string>( ) ) //
+        .def( pybind11::init<std::string, bool>( ) ) //
         .def( "loaded", &cm::SpsInterface<CACHE>::loaded )
         .def( "clear_points_and_desc", &cm::SpsInterface<CACHE>::clearPointsAndDesc )
         .def( "insert", &cm::SpsInterface<CACHE>::insert, //
@@ -78,7 +81,8 @@ template <bool CACHE> void exportSpsInterface( pybind11::module& m )
               pybind11::arg( "desc" ) = "" )
         .def( "generate", &cm::SpsInterface<CACHE>::generate, //
               pybind11::arg( "d" ), pybind11::arg( "o" ), pybind11::arg( "fac" ) = -1,
-              pybind11::arg( "verbosity" ) = 1 );
+              pybind11::arg( "verbosity" ) = 1 )
+        .def_readwrite( "anno", &cm::SpsInterface<CACHE>::vAnno );
 }
 
 
@@ -162,6 +166,11 @@ PYBIND11_MODULE( libContactMapping, m )
 
         .def( "normalizeBinominalTestTrampoline", &cm::ContectMappingPublicist::normalizeBinominalTestTrampoline ) //
         .def( "colorPalette", &cm::ContectMappingPublicist::colorPalette ) //
+        ;
+
+    pybind11::class_<cm::AnnotationDescIndex<DiskVecGenerator>>( m, ( "AnnoIndex" ) ) //
+        .def( "add_intervals", &cm::AnnotationDescIndex<DiskVecGenerator>::addIntervals, pybind11::arg( "intervals" ),
+              pybind11::arg( "verbosity" ) = 0 ) //
         ;
 
     exportSpsInterface<true>( m );
