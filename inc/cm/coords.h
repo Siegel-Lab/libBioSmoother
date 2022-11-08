@@ -152,19 +152,20 @@ size_t smaller_bin_to_num( std::string sVal )
 
 template <typename anno_t>
 std::pair<std::vector<AxisCoord>, std::vector<AxisRegion>>
-annoCoordsHelper( size_t uiBinSize, size_t uiScreenStartPos, size_t uiScreenEndPos, size_t iSmallerBins,
+annoCoordsHelper( size_t uiBinSize, size_t uiScreenStartPos, size_t uiScreenEndPos, size_t /*iSmallerBins*/,
                   size_t iMultipleAnno, size_t iMultipleBins, std::vector<ChromDesc> vChromosomes, bool& bCancel,
-                  const json& xSession, anno_t& rAnno )
+                  const json& xSession, anno_t& rAnno, std::string sAnno )
 {
     std::vector<AxisCoord> vRet;
     std::vector<AxisRegion> vRet2;
     vRet.reserve( 2 * ( uiScreenEndPos - uiScreenStartPos ) / uiBinSize );
     size_t uiCurrScreenPos = uiScreenStartPos;
     size_t uiChromosomeStartPos = 0;
-    std::string sAnno = xSession[ "settings" ][ "filters" ][ "multiple_annos_in_bin" ].get<std::string>( );
     auto& rJson = xSession[ "annotation" ][ "by_name" ][ sAnno ];
     for( auto xChr : vChromosomes )
     {
+        if( bCancel )
+            return std::make_pair( vRet, vRet2 );
         int64_t iDataSetId = rJson[ xChr.sName ].get<int64_t>( );
 
         size_t uiChromSize;
@@ -186,76 +187,95 @@ annoCoordsHelper( size_t uiBinSize, size_t uiScreenStartPos, size_t uiScreenEndP
         size_t uiStartIdx = vRet.size( );
         size_t uiStartScreenPos = uiCurrScreenPos;
         size_t uiStartChromPos = uiCurrScreenPos >= uiChromosomeStartPos ? uiCurrScreenPos - uiChromosomeStartPos : 0;
+
         while( uiCurrScreenPos >= uiChromosomeStartPos && uiCurrScreenPos < uiItrEndPos )
         {
             if( bCancel )
                 return std::make_pair( vRet, vRet2 );
-            size_t uiIndexPos = uiCurrScreenPos - uiChromosomeStartPos;
-            size_t uiCurrBinSize;
-            switch( iSmallerBins )
+            auto xLower = rAnno.lowerBound( iDataSetId, uiCurrScreenPos - uiChromosomeStartPos, iMultipleBins < 2,
+                                            iMultipleBins == 2 );
+            // @todo @continue_here does this doe what i want it to?
+            auto xUpper = rAnno.upperBound( iDataSetId, uiCurrScreenPos - uiChromosomeStartPos + uiBinSize,
+                                            iMultipleBins < 2, iMultipleBins == 2 );
+            switch( iMultipleAnno )
             {
-                case 0:
-                case 1:
-                    uiCurrBinSize = std::min( uiBinSize, xChr.uiLength - uiIndexPos );
+                case 0: // combine
+                case 3: // force_separate
                     break;
-                case 2:
-                    uiCurrBinSize = uiIndexPos + 2 * uiBinSize > xChr.uiLength ? xChr.uiLength - uiIndexPos : uiBinSize;
-                    break;
-                case 3:
-                case 4:
-                case 5:
-                    uiCurrBinSize = uiBinSize;
+                case 1: // first
+                    xUpper = xLower;
                     break;
                 default:
-                    throw std::logic_error( "unknown iSmallerBins value" );
+                    throw std::logic_error( "unknown iMultipleAnno value" );
             }
-            bool bAddBin;
-            switch( iSmallerBins )
+
+            while( xLower != xUpper )
             {
-                case 0:
-                case 2:
-                case 5:
-                    bAddBin = true;
-                    break;
-                case 1:
-                    bAddBin = uiCurrBinSize == uiBinSize || uiIndexPos > 0;
-                    break;
-                case 3:
-                case 4:
-                    bAddBin = uiIndexPos + uiCurrBinSize <= uiChromosomeEndPos;
-                    break;
-                default:
-                    throw std::logic_error( "unknown iSmallerBins value" );
-            }
-            if( bAddBin )
+                if( bCancel )
+                    return std::make_pair( vRet, vRet2 );
+                // find bin coords
+                size_t uiIndexPos = xLower->uiIntervalStart + uiCurrScreenPos - xLower->uiIntervalCoordsStart;
+                size_t uiCurrScreenSize;
+                size_t uiCurrIndexSize;
+                switch( iMultipleAnno )
+                {
+                    case 0: // combine
+                        uiCurrIndexSize = ( xUpper - 1 )->uiIntervalEnd - uiIndexPos;
+                        uiCurrScreenSize = ( xUpper - 1 )->uiIntervalCoordsEnd - xLower->uiIntervalCoordsStart;
+                        break;
+                    case 1: // first
+                    case 3: // force_separate
+                        uiCurrIndexSize = xLower->uiIntervalEnd - uiIndexPos;
+                        uiCurrScreenSize = uiCurrIndexSize;
+                        break;
+                    default:
+                        throw std::logic_error( "unknown iMultipleAnno value" );
+                }
+
+                switch( iMultipleBins )
+                {
+                    case 0: // separate
+                        uiCurrIndexSize = std::min( uiBinSize, uiCurrIndexSize );
+                        uiCurrScreenSize = std::min( uiBinSize, uiCurrScreenSize );
+                        break;
+                    case 1: // stretch
+                        // do nothing
+                        break;
+                    case 3: // squeeze
+                        uiCurrScreenSize = 1;
+                        break;
+                    default:
+                        throw std::logic_error( "unknown iMultipleBins value" );
+                }
+
                 vRet.push_back( AxisCoord{
                     .sChromosome = xChr.sName, //
                     .uiScreenPos = uiCurrScreenPos, //
                     .uiIndexPos = uiIndexPos, //
-                    .uiScreenSize = uiCurrBinSize, //
-                    .uiIndexSize = uiCurrBinSize //
+                    .uiScreenSize = uiCurrScreenSize, //
+                    .uiIndexSize = uiCurrIndexSize //
                 } );
-            bool bIncScreenPos;
-            switch( iSmallerBins )
-            {
-                case 0:
-                case 1:
-                case 2:
-                case 3:
-                case 5:
-                    bIncScreenPos = true;
-                    break;
-                case 4:
-                    bIncScreenPos = uiIndexPos + uiCurrBinSize <= uiChromosomeEndPos;
-                    break;
-                default:
-                    throw std::logic_error( "unknown iSmallerBins value" );
-            }
-            if( bIncScreenPos )
-                uiCurrScreenPos += uiCurrBinSize;
-            uiIndexPos += uiCurrBinSize;
-        }
 
+                uiCurrScreenPos += uiCurrScreenSize;
+
+                // inc xLower
+                size_t uiPos;
+                switch( iMultipleAnno )
+                {
+                    case 0: // combine
+                    case 1: // first
+                        xLower = xUpper;
+                        break;
+                    case 3: // force_separate
+                        uiPos = xLower->uiIntervalId;
+                        while( xLower != xUpper && xLower->uiIntervalId == uiPos )
+                            ++xLower;
+                        break;
+                    default:
+                        throw std::logic_error( "unknown iMultipleAnno value" );
+                }
+            }
+        }
         if( uiStartScreenPos >= uiChromosomeStartPos )
             vRet2.push_back( AxisRegion{
                 {
@@ -268,11 +288,6 @@ annoCoordsHelper( size_t uiBinSize, size_t uiScreenStartPos, size_t uiScreenEndP
                 .uiCoordStartIdx = uiStartIdx, //
                 .uiNumCoords = vRet.size( ) - uiStartIdx //
             } );
-
-        uiChromosomeStartPos = uiChromosomeEndPos;
-
-        if( uiScreenEndPos <= uiChromosomeStartPos )
-            break;
     }
 
     return std::make_pair( vRet, vRet2 );
@@ -284,22 +299,9 @@ size_t multiple_anno( std::string sVal )
         return 0;
     if( sVal == "first" )
         return 1;
-    if( sVal == "random" )
-        return 2;
     if( sVal == "force_separate" )
         return 3;
     throw std::logic_error( "unknown multiple_annos_in_bin value" );
-}
-
-size_t multiple_bins( std::string sVal )
-{
-    if( sVal == "separate" ) // make several bins for the annotation
-        return 0;
-    if( sVal == "stretch" ) // stretch one bin over entire annotation
-        return 1;
-    if( sVal == "squeeze" ) // squeeze annotation in a bin of size 1
-        return 2;
-    throw std::logic_error( "unknown anno_in_multiple_bins value" );
 }
 
 std::vector<ChromDesc> activeChromList( json& xChromLen, json& xChromDisp, std::string sExistenceKey )
@@ -433,7 +435,8 @@ bool PartialQuarry::setAxisCoords( )
                     this->xSession[ "settings" ][ "filters" ][ "multiple_annos_in_bin" ].get<std::string>( ) ),
                 multiple_bins(
                     this->xSession[ "settings" ][ "filters" ][ "anno_in_multiple_bins" ].get<std::string>( ) ),
-                this->vActiveChromosomes[ bX ? 0 : 1 ], this->bCancel, this->xSession, xIndices.vAnno );
+                this->vActiveChromosomes[ bX ? 0 : 1 ], this->bCancel, this->xSession, xIndices.vAnno,
+                this->xSession[ "contigs" ][ bX ? "column_coordinates" : "row_coordinates" ].get<std::string>( ) );
         this->vAxisCords[ bX ? 0 : 1 ] = xRet.first;
         this->vAxisRegions[ bX ? 0 : 1 ] = xRet.second;
     }

@@ -38,12 +38,26 @@ bool PartialQuarry::setActivateAnnotationCDS( )
     END_RETURN;
 }
 
+
+size_t multiple_bins( std::string sVal )
+{
+    if( sVal == "separate" ) // make several bins for the annotation
+        return 0;
+    if( sVal == "stretch" ) // stretch one bin over entire annotation
+        return 1;
+    if( sVal == "squeeze" ) // squeeze annotation in a bin of size 1
+        return 2;
+    throw std::logic_error( "unknown anno_in_multiple_bins value" );
+}
+
 bool PartialQuarry::setAnnotationValues( )
 {
     size_t uiMaxDetailedDisplay =
         this->xSession[ "settings" ][ "interface" ][ "max_detailed_anno_display" ].get<size_t>( );
+    size_t uiMultipleBins = multiple_bins(this->xSession[ "settings" ][ "filters" ][ "anno_in_multiple_bins" ].get<std::string>( ));
     for( size_t uiX : { 0, 1 } )
     {
+        bool bAnnoCoords = this->xSession[ "contigs" ][ uiX == 0 ? "column_coordinates" : "row_coordinates" ].get<std::string>( ) != "full_genome";
         size_t uiMinAnnoDist = 2;
         vAnnotationValues[ uiX ].clear( );
         vAnnotationValues[ uiX ].reserve( vActiveAnnotation[ uiX ].size( ) );
@@ -62,7 +76,8 @@ bool PartialQuarry::setAnnotationValues( )
                 int64_t iDataSetId = rJson[ xRegion.sChromosome ].get<int64_t>( );
 
                 uiTotalCount +=
-                    xIndices.vAnno.count( iDataSetId, xRegion.uiIndexPos, xRegion.uiIndexPos + xRegion.uiIndexSize );
+                    xIndices.vAnno.count( iDataSetId, xRegion.uiIndexPos, xRegion.uiIndexPos + xRegion.uiIndexSize,
+                             bAnnoCoords && uiMultipleBins < 2, bAnnoCoords && uiMultipleBins == 2 );
             }
         }
         for( std::string sCurrAnno : vActiveAnnotation[ uiX ] )
@@ -77,7 +92,8 @@ bool PartialQuarry::setAnnotationValues( )
                 {
                     int64_t iDataSetId = rJson[ xRegion.sChromosome ].get<int64_t>( );
                     for( auto& xAnno : xIndices.vAnno.query(
-                             iDataSetId, xRegion.uiIndexPos, xRegion.uiIndexPos + xRegion.uiIndexSize ) )
+                             iDataSetId, xRegion.uiIndexPos, xRegion.uiIndexPos + xRegion.uiIndexSize,
+                             bAnnoCoords && uiMultipleBins < 2, bAnnoCoords && uiMultipleBins == 2 ) )
                     {
                         size_t uiStartPos =
                             ( std::get<0>( xAnno ) > xRegion.uiIndexPos ? std::get<0>( xAnno ) - xRegion.uiIndexPos
@@ -118,7 +134,8 @@ bool PartialQuarry::setAnnotationValues( )
                 {
                     int64_t iDataSetId = rJson[ xCoords.sChromosome ].get<int64_t>( );
                     vAnnotationValues[ uiX ].back( ).first.push_back( xIndices.vAnno.count(
-                        iDataSetId, xCoords.uiIndexPos, xCoords.uiIndexPos + xCoords.uiIndexSize ) );
+                        iDataSetId, xCoords.uiIndexPos, xCoords.uiIndexPos + xCoords.uiIndexSize,
+                             bAnnoCoords && uiMultipleBins < 2, bAnnoCoords && uiMultipleBins == 2 ) );
                 }
             }
         }

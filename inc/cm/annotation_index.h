@@ -123,36 +123,35 @@ template <template <typename> typename vec_gen_t> class AnnotationDescIndex
 
     void iterate( size_t uiDatasetId, size_t uiFrom, size_t uiTo,
                   std::function<bool( std::tuple<size_t, size_t, std::string, bool> )> fYield,
-                  bool bIntervalCoords = false )
+                  bool bIntervalCoords = false, bool bIntervalCount = false )
     {
         std::set<size_t> xActiveIntervals;
-        auto xEnd = vIntervals.begin( ) + vDatasets[ uiDatasetId ].uiEnd;
 
-        auto xStart = std::lower_bound(
-            vIntervals.begin( ) + vDatasets[ uiDatasetId ].uiStart,
-            xEnd,
-            uiFrom,
-            bIntervalCoords ? []( const Interval& rI, size_t uiFrom ) { return rI.uiIntervalCoordsEnd < uiFrom; }
-                            : []( const Interval& rI, size_t uiFrom ) { return rI.uiIntervalEnd < uiFrom; } );
+        auto xStart = lowerBound( uiDatasetId, uiFrom, bIntervalCoords, bIntervalCount );
+        auto xEnd = upperBound( uiDatasetId, uiTo, bIntervalCoords, bIntervalCount );
 
-        while( xStart < xEnd && xStart->uiIntervalStart < uiTo )
+        while( xStart != xEnd )
         {
             if( xActiveIntervals.count( xStart->uiDescId ) == 0 )
             {
                 xActiveIntervals.insert( xStart->uiDescId );
-                if( !fYield( std::make_tuple( bIntervalCoords ? xStart->uiAnnoCoordsStart : xStart->uiAnnoStart,
-                                              bIntervalCoords ? xStart->uiAnnoCoordsEnd : xStart->uiAnnoEnd,
-                                              vDesc.get( xStart->uiDescId ),
-                                              xStart->bForwStrnd ) ) )
+                if( !fYield( std::make_tuple(
+                        bIntervalCoords ? xStart->uiAnnoCoordsStart
+                                        : ( bIntervalCount ? xStart->uiIntervalId : xStart->uiAnnoStart ),
+                        bIntervalCoords ? xStart->uiAnnoCoordsEnd
+                                        : ( bIntervalCount ? xStart->uiIntervalId : xStart->uiAnnoEnd ),
+                        vDesc.get( xStart->uiDescId ),
+                        xStart->bForwStrnd ) ) )
                     return;
             }
             ++xStart;
         }
     }
 
-    std::vector<std::tuple<size_t, size_t, std::string, bool>> query( size_t uiDatasetId, size_t uiFrom, size_t uiTo,
-                                                                      bool bIntervalCoords = false )
+    std::vector<std::tuple<size_t, size_t, std::string, bool>>
+    query( size_t uiDatasetId, size_t uiFrom, size_t uiTo, bool bIntervalCoords = false, bool bIntervalCount = false )
     {
+        assert( !( bIntervalCoords && bIntervalCount ) );
         std::vector<std::tuple<size_t, size_t, std::string, bool>> vRet;
 
         iterate(
@@ -161,34 +160,60 @@ template <template <typename> typename vec_gen_t> class AnnotationDescIndex
                 vRet.push_back( xTup );
                 return true;
             },
-            bIntervalCoords );
+            bIntervalCoords, bIntervalCount );
 
         std::sort( vRet.begin( ), vRet.end( ) );
 
         return vRet;
     }
 
-    std::array<typename vec_gen_t<Interval>::vec_t::iterator, 2> getRange( size_t uiDatasetId, size_t uiFrom,
-                                                                           size_t uiTo, bool bIntervalCoords = false )
+    using interval_it_t = typename vec_gen_t<Interval>::vec_t::iterator;
+
+    interval_it_t lowerBound( size_t uiDatasetId, size_t uiFrom, bool bIntervalCoords = false,
+                              bool bIntervalCount = false )
     {
+        assert( !( bIntervalCoords && bIntervalCount ) );
+
+
         auto xBegin = vIntervals.begin( ) + vDatasets[ uiDatasetId ].uiStart;
         auto xEnd = vIntervals.begin( ) + vDatasets[ uiDatasetId ].uiEnd;
 
-        auto xStart = std::lower_bound(
+        return std::lower_bound(
             xBegin, xEnd, uiFrom,
-            bIntervalCoords ? []( const Interval& rI, size_t uiFrom ) { return rI.uiIntervalCoordsEnd < uiFrom; }
-                            : []( const Interval& rI, size_t uiFrom ) { return rI.uiIntervalEnd < uiFrom; } );
-        auto xStop = std::upper_bound(
-            xBegin, xEnd, uiTo,
-            bIntervalCoords ? []( size_t uiTo, const Interval& rI ) { return uiTo < rI.uiIntervalCoordsStart; }
-                            : []( size_t uiTo, const Interval& rI ) { return uiTo < rI.uiIntervalStart; } );
+            bIntervalCoords  ? []( const Interval& rI, size_t uiFrom ) { return rI.uiIntervalCoordsEnd < uiFrom; }
+            : bIntervalCount ? []( const Interval& rI, size_t uiFrom ) { return rI.uiIntervalId < uiFrom; }
+                             : []( const Interval& rI, size_t uiFrom ) { return rI.uiIntervalEnd < uiFrom; } );
+    }
+    interval_it_t upperBound( size_t uiDatasetId, size_t uiTo, bool bIntervalCoords = false,
+                              bool bIntervalCount = false )
+    {
+        assert( !( bIntervalCoords && bIntervalCount ) );
 
-        return std::array<typename vec_gen_t<Interval>::vec_t::iterator, 2>{ xStart, xStop };
+        auto xBegin = vIntervals.begin( ) + vDatasets[ uiDatasetId ].uiStart;
+        auto xEnd = vIntervals.begin( ) + vDatasets[ uiDatasetId ].uiEnd;
+
+        return std::upper_bound(
+            xBegin, xEnd, uiTo,
+            bIntervalCoords  ? []( size_t uiTo, const Interval& rI ) { return uiTo < rI.uiIntervalCoordsStart; }
+            : bIntervalCount ? []( size_t uiTo, const Interval& rI ) { return uiTo < rI.uiIntervalId; }
+                             : []( size_t uiTo, const Interval& rI ) { return uiTo < rI.uiIntervalStart; } );
     }
 
-    size_t count( size_t uiDatasetId, size_t uiFrom, size_t uiTo, bool bIntervalCoords = false )
+    std::array<interval_it_t, 2> getRange( size_t uiDatasetId, size_t uiFrom, size_t uiTo, bool bIntervalCoords = false,
+                                           bool bIntervalCount = false )
     {
-        auto xRange = getRange( uiDatasetId, uiFrom, uiTo, bIntervalCoords );
+        assert( !( bIntervalCoords && bIntervalCount ) );
+
+        auto xStart = lowerBound( uiDatasetId, uiFrom, bIntervalCoords, bIntervalCount );
+        auto xStop = upperBound( uiDatasetId, uiTo, bIntervalCoords, bIntervalCount );
+
+        return std::array<interval_it_t, 2>{ xStart, xStop };
+    }
+
+    size_t count( size_t uiDatasetId, size_t uiFrom, size_t uiTo, bool bIntervalCoords = false,
+                  bool bIntervalCount = false )
+    {
+        auto xRange = getRange( uiDatasetId, uiFrom, uiTo, bIntervalCoords, bIntervalCount );
 
         return xRange[ 1 ] - xRange[ 0 ];
     }
