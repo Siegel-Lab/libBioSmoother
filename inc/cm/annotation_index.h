@@ -123,7 +123,7 @@ template <template <typename> typename vec_gen_t> class AnnotationDescIndex
             ++xStart;
         }
 
-        std::sort(vRet.begin(), vRet.end());
+        std::sort( vRet.begin( ), vRet.end( ) );
 
         return vRet;
     }

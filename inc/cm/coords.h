@@ -111,7 +111,7 @@ std::pair<std::vector<AxisCoord>, std::vector<AxisRegion>> axisCoordsHelper( siz
             uiIndexPos += uiCurrBinSize;
         }
 
-        if(uiStartScreenPos >= uiChromosomeStartPos)
+        if( uiStartScreenPos >= uiChromosomeStartPos )
             vRet2.push_back( AxisRegion{
                 {
                     .sChromosome = xChr.sName, //

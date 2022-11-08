@@ -453,9 +453,11 @@ class PartialQuarry
     std::vector<std::string> vColorPalette;
     pybind11::list vRenderedPalette;
     std::vector<std::string> vColorPaletteAnnotation;
+    std::vector<std::string> vColorPaletteAnnotationDark;
     std::array<std::vector<std::string>, 2> vActiveAnnotation;
     std::array<std::vector<std::pair<std::vector<size_t>, std::vector<Annotation>>>, 2> vAnnotationValues;
     std::array<size_t, 2> vMaxAnnoRows;
+    std::array<std::vector<size_t>, 2> vMaxRowsPerAnno;
     std::array<pybind11::dict, 2> vAnnotationCDS;
     std::array<pybind11::list, 2> vActiveAnnotationCDS;
     pybind11::dict xHeatmapCDS;

@@ -32,6 +32,14 @@ bool PartialQuarry::setAnnotationColors( )
         CANCEL_RETURN;
         vColorPaletteAnnotation.push_back( rC.get<std::string>( ) );
     }
+    vColorPaletteAnnotationDark.clear( );
+    auto& rList2 = this->xSession[ "settings" ][ "interface" ][ "annotation_color_palette_dark" ];
+    vColorPaletteAnnotationDark.reserve( rList2.size( ) );
+    for( auto& rC : rList2 )
+    {
+        CANCEL_RETURN;
+        vColorPaletteAnnotationDark.push_back( rC.get<std::string>( ) );
+    }
     END_RETURN;
 }
 
