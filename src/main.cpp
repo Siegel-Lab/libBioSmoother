@@ -101,26 +101,6 @@ PYBIND11_MODULE( libContactMapping, m )
 
     m.def( "test", &cm::testFunc );
 
-    pybind11::class_<cm::BinCoord>( m, "BinCoord" ) //
-        .def( pybind11::init<>( ) ) //
-        .def_readwrite( "chr_x", &cm::BinCoord::sChromosomeX ) //
-        .def_readwrite( "chr_y", &cm::BinCoord::sChromosomeY ) //
-        .def_readwrite( "screen_x", &cm::BinCoord::uiScreenX ) //
-        .def_readwrite( "screen_y", &cm::BinCoord::uiScreenY ) //
-        .def_readwrite( "index_x", &cm::BinCoord::uiIndexX ) //
-        .def_readwrite( "index_y", &cm::BinCoord::uiIndexY ) //
-        .def_readwrite( "w", &cm::BinCoord::uiW ) //
-        .def_readwrite( "h", &cm::BinCoord::uiH ) //
-        ;
-
-    pybind11::class_<cm::AxisCoord>( m, "AxisCoord" ) //
-        .def( pybind11::init<>( ) ) //
-        .def_readwrite( "chr", &cm::AxisCoord::sChromosome ) //
-        .def_readwrite( "screen_pos", &cm::AxisCoord::uiScreenPos ) //
-        .def_readwrite( "index_pos", &cm::AxisCoord::uiIndexPos ) //
-        .def_readwrite( "size", &cm::AxisCoord::uiSize ) //
-        ;
-
 
     pybind11::class_<cm::PartialQuarry, cm::PyPartialQuarry>( m, "PartialQuarry" ) //
         .def( pybind11::init<std::string>( ) ) //

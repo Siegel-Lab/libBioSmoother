@@ -26,7 +26,8 @@ struct AxisCoord
     std::string sChromosome;
     size_t uiScreenPos;
     size_t uiIndexPos;
-    size_t uiSize;
+    size_t uiScreenSize;
+    size_t uiIndexSize;
 };
 
 struct AxisRegion : AxisCoord
@@ -40,7 +41,8 @@ struct BinCoord
     std::string sChromosomeX, sChromosomeY;
     size_t uiScreenX, uiScreenY;
     size_t uiIndexX, uiIndexY;
-    size_t uiW, uiH;
+    size_t uiScreenW, uiScreenH;
+    size_t uiIndexW, uiIndexH;
 };
 
 struct Annotation

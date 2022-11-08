@@ -152,28 +152,28 @@ bool PartialQuarry::setCoverageValues( )
                                 vVals[ uiI ] = xIndices.getIndex<2, 1>( )->count(
                                     iDataSetId,
                                     { xCoords.uiIndexPos, uiMapQMax },
-                                    { xCoords.uiIndexPos + xCoords.uiSize, uiMapQMin },
+                                    { xCoords.uiIndexPos + xCoords.uiIndexSize, uiMapQMin },
                                     xIntersect,
                                     0 );
                             else if( !bHasMapQ && bHasMultiMap )
                                 vVals[ uiI ] =
                                     xIndices.getIndex<1, 1>( )->count( iDataSetId,
                                                                        { xCoords.uiIndexPos },
-                                                                       { xCoords.uiIndexPos + xCoords.uiSize },
+                                                                       { xCoords.uiIndexPos + xCoords.uiIndexSize },
                                                                        xIntersect,
                                                                        0 );
                             else if( bHasMapQ && !bHasMultiMap )
                                 vVals[ uiI ] = xIndices.getIndex<2, 0>( )->count(
                                     iDataSetId,
                                     { xCoords.uiIndexPos, uiMapQMax },
-                                    { xCoords.uiIndexPos + xCoords.uiSize, uiMapQMin },
+                                    { xCoords.uiIndexPos + xCoords.uiIndexSize, uiMapQMin },
                                     xIntersect,
                                     0 );
                             else // if(!bHasMapQ && !bHasMultiMap)
                                 vVals[ uiI ] =
                                     xIndices.getIndex<1, 0>( )->count( iDataSetId,
                                                                        { xCoords.uiIndexPos },
-                                                                       { xCoords.uiIndexPos + xCoords.uiSize },
+                                                                       { xCoords.uiIndexPos + xCoords.uiIndexSize },
                                                                        xIntersect,
                                                                        0 );
                         }
@@ -333,22 +333,22 @@ bool PartialQuarry::setTracks( )
 
                 // front corner
                 vIndexStart.append( readableBp( xCoord.uiIndexPos * uiDividend ) );
-                vIndexEnd.append( readableBp( ( xCoord.uiIndexPos + xCoord.uiSize ) * uiDividend ) );
+                vIndexEnd.append( readableBp( ( xCoord.uiIndexPos + xCoord.uiIndexSize ) * uiDividend ) );
                 vScreenPos.append( xCoord.uiScreenPos );
                 vValue.append( uiVal );
 
                 // rear corner
                 vIndexStart.append( readableBp( xCoord.uiIndexPos * uiDividend ) );
-                vIndexEnd.append( readableBp( ( xCoord.uiIndexPos + xCoord.uiSize ) * uiDividend ) );
-                vScreenPos.append( xCoord.uiScreenPos + xCoord.uiSize );
+                vIndexEnd.append( readableBp( ( xCoord.uiIndexPos + xCoord.uiIndexSize ) * uiDividend ) );
+                vScreenPos.append( xCoord.uiScreenPos + xCoord.uiScreenSize );
                 vValue.append( uiVal );
 
                 if( uiX + 1 == vAxisCords[ uiI ].size( ) )
                 {
                     // zero position at end
-                    vIndexStart.append( readableBp( ( xCoord.uiIndexPos + xCoord.uiSize ) * uiDividend ) );
-                    vIndexEnd.append( readableBp( ( xCoord.uiIndexPos + xCoord.uiSize ) * uiDividend ) );
-                    vScreenPos.append( xCoord.uiScreenPos + xCoord.uiSize );
+                    vIndexStart.append( readableBp( ( xCoord.uiIndexPos + xCoord.uiIndexSize ) * uiDividend ) );
+                    vIndexEnd.append( readableBp( ( xCoord.uiIndexPos + xCoord.uiIndexSize ) * uiDividend ) );
+                    vScreenPos.append( xCoord.uiScreenPos + xCoord.uiScreenSize );
                     vValue.append( vvMinMaxTracks[ uiI ][ 0 ] );
                 }
             }
@@ -420,22 +420,22 @@ bool PartialQuarry::setTracks( )
 
                 // front corner
                 vIndexStart.append( readableBp( xCoord.uiIndexPos * uiDividend ) );
-                vIndexEnd.append( readableBp( ( xCoord.uiIndexPos + xCoord.uiSize ) * uiDividend ) );
+                vIndexEnd.append( readableBp( ( xCoord.uiIndexPos + xCoord.uiIndexSize ) * uiDividend ) );
                 vScreenPos.append( xCoord.uiScreenPos );
                 vValue.append( uiVal );
 
                 // rear corner
                 vIndexStart.append( readableBp( xCoord.uiIndexPos * uiDividend ) );
-                vIndexEnd.append( readableBp( ( xCoord.uiIndexPos + xCoord.uiSize ) * uiDividend ) );
-                vScreenPos.append( xCoord.uiScreenPos + xCoord.uiSize );
+                vIndexEnd.append( readableBp( ( xCoord.uiIndexPos + xCoord.uiIndexSize ) * uiDividend ) );
+                vScreenPos.append( xCoord.uiScreenPos + xCoord.uiScreenSize );
                 vValue.append( uiVal );
 
                 if( uiX + 1 == vAxisCords[ uiI ].size( ) )
                 {
                     // zero position at end
-                    vIndexStart.append( readableBp( ( xCoord.uiIndexPos + xCoord.uiSize ) * uiDividend ) );
-                    vIndexEnd.append( readableBp( ( xCoord.uiIndexPos + xCoord.uiSize ) * uiDividend ) );
-                    vScreenPos.append( xCoord.uiScreenPos + xCoord.uiSize );
+                    vIndexStart.append( readableBp( ( xCoord.uiIndexPos + xCoord.uiIndexSize ) * uiDividend ) );
+                    vIndexEnd.append( readableBp( ( xCoord.uiIndexPos + xCoord.uiIndexSize ) * uiDividend ) );
+                    vScreenPos.append( xCoord.uiScreenPos + xCoord.uiScreenSize );
                     vValue.append( vvMinMaxTracks[ uiI ][ 0 ] );
                 }
             }

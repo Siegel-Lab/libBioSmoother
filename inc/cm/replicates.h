@@ -126,32 +126,32 @@ bool PartialQuarry::setBinValues( )
                         vVals[ uiI ] = xIndices.getIndex<3, 2>( )->count(
                             iDataSetId,
                             { vCoords[ uiI ].uiIndexY, vCoords[ uiI ].uiIndexX, uiMapQMax },
-                            { vCoords[ uiI ].uiIndexY + vCoords[ uiI ].uiH,
-                              vCoords[ uiI ].uiIndexX + vCoords[ uiI ].uiW, uiMapQMin },
+                            { vCoords[ uiI ].uiIndexY + vCoords[ uiI ].uiIndexH,
+                              vCoords[ uiI ].uiIndexX + vCoords[ uiI ].uiIndexW, uiMapQMin },
                             xIntersect,
                             0 );
                     else if( !bHasMapQ && bHasMultiMap )
                         vVals[ uiI ] =
                             xIndices.getIndex<2, 2>( )->count( iDataSetId,
                                                                { vCoords[ uiI ].uiIndexY, vCoords[ uiI ].uiIndexX },
-                                                               { vCoords[ uiI ].uiIndexY + vCoords[ uiI ].uiH,
-                                                                 vCoords[ uiI ].uiIndexX + vCoords[ uiI ].uiW },
+                                                               { vCoords[ uiI ].uiIndexY + vCoords[ uiI ].uiIndexH,
+                                                                 vCoords[ uiI ].uiIndexX + vCoords[ uiI ].uiIndexW },
                                                                xIntersect,
                                                                0 );
                     else if( bHasMapQ && !bHasMultiMap )
                         vVals[ uiI ] = xIndices.getIndex<3, 0>( )->count(
                             iDataSetId,
                             { vCoords[ uiI ].uiIndexY, vCoords[ uiI ].uiIndexX, uiMapQMax },
-                            { vCoords[ uiI ].uiIndexY + vCoords[ uiI ].uiH,
-                              vCoords[ uiI ].uiIndexX + vCoords[ uiI ].uiW, uiMapQMin },
+                            { vCoords[ uiI ].uiIndexY + vCoords[ uiI ].uiIndexH,
+                              vCoords[ uiI ].uiIndexX + vCoords[ uiI ].uiIndexW, uiMapQMin },
                             xIntersect,
                             0 );
                     else // if(!bHasMapQ && !bHasMultiMap)
                         vVals[ uiI ] =
                             xIndices.getIndex<2, 0>( )->count( iDataSetId,
                                                                { vCoords[ uiI ].uiIndexY, vCoords[ uiI ].uiIndexX },
-                                                               { vCoords[ uiI ].uiIndexY + vCoords[ uiI ].uiH,
-                                                                 vCoords[ uiI ].uiIndexX + vCoords[ uiI ].uiW },
+                                                               { vCoords[ uiI ].uiIndexY + vCoords[ uiI ].uiIndexH,
+                                                                 vCoords[ uiI ].uiIndexX + vCoords[ uiI ].uiIndexW },
                                                                xIntersect,
                                                                0 );
                 }

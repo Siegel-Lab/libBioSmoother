@@ -242,8 +242,8 @@ bool PartialQuarry::setHeatmapCDS( )
         {
             vScreenBottom.append( vBinCoords[ uiI ][ 0 ].uiScreenY );
             vScreenLeft.append( vBinCoords[ uiI ][ 0 ].uiScreenX );
-            vScreenTop.append( vBinCoords[ uiI ][ 0 ].uiScreenY + vBinCoords[ uiI ][ 0 ].uiH );
-            vScreenRight.append( vBinCoords[ uiI ][ 0 ].uiScreenX + vBinCoords[ uiI ][ 0 ].uiW );
+            vScreenTop.append( vBinCoords[ uiI ][ 0 ].uiScreenY + vBinCoords[ uiI ][ 0 ].uiScreenH );
+            vScreenRight.append( vBinCoords[ uiI ][ 0 ].uiScreenX + vBinCoords[ uiI ][ 0 ].uiScreenW );
 
             vColor.append( vColored[ uiI ] );
 
@@ -251,11 +251,11 @@ bool PartialQuarry::setHeatmapCDS( )
             vChrY.append( vBinCoords[ uiI ][ 0 ].sChromosomeY );
             vIndexLeft.append(
                 readableBp( vBinCoords[ uiI ][ 0 ].uiIndexX * this->xSession[ "dividend" ].get<size_t>( ) ) );
-            vIndexRight.append( readableBp( ( vBinCoords[ uiI ][ 0 ].uiIndexX + vBinCoords[ uiI ][ 0 ].uiW ) *
+            vIndexRight.append( readableBp( ( vBinCoords[ uiI ][ 0 ].uiIndexX + vBinCoords[ uiI ][ 0 ].uiIndexW ) *
                                             this->xSession[ "dividend" ].get<size_t>( ) ) );
             vIndexBottom.append(
                 readableBp( vBinCoords[ uiI ][ 0 ].uiIndexY * this->xSession[ "dividend" ].get<size_t>( ) ) );
-            vIndexTop.append( readableBp( ( vBinCoords[ uiI ][ 0 ].uiIndexY + vBinCoords[ uiI ][ 0 ].uiH ) *
+            vIndexTop.append( readableBp( ( vBinCoords[ uiI ][ 0 ].uiIndexY + vBinCoords[ uiI ][ 0 ].uiIndexH ) *
                                           this->xSession[ "dividend" ].get<size_t>( ) ) );
 
             if( vBinCoords[ uiI ][ 1 ].sChromosomeX != "" )
@@ -264,11 +264,12 @@ bool PartialQuarry::setHeatmapCDS( )
                 vChrYSym.append( vBinCoords[ uiI ][ 1 ].sChromosomeY );
                 vIndexSymLeft.append(
                     readableBp( vBinCoords[ uiI ][ 1 ].uiIndexX * this->xSession[ "dividend" ].get<size_t>( ) ) );
-                vIndexSymRight.append( readableBp( ( vBinCoords[ uiI ][ 1 ].uiIndexX + vBinCoords[ uiI ][ 1 ].uiW ) *
-                                                   this->xSession[ "dividend" ].get<size_t>( ) ) );
+                vIndexSymRight.append(
+                    readableBp( ( vBinCoords[ uiI ][ 1 ].uiIndexX + vBinCoords[ uiI ][ 1 ].uiIndexW ) *
+                                this->xSession[ "dividend" ].get<size_t>( ) ) );
                 vIndexSymBottom.append(
                     readableBp( vBinCoords[ uiI ][ 1 ].uiIndexY * this->xSession[ "dividend" ].get<size_t>( ) ) );
-                vIndexSymTop.append( readableBp( ( vBinCoords[ uiI ][ 1 ].uiIndexY + vBinCoords[ uiI ][ 1 ].uiH ) *
+                vIndexSymTop.append( readableBp( ( vBinCoords[ uiI ][ 1 ].uiIndexY + vBinCoords[ uiI ][ 1 ].uiIndexH ) *
                                                  this->xSession[ "dividend" ].get<size_t>( ) ) );
             }
             else

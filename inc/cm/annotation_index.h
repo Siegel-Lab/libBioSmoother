@@ -13,12 +13,17 @@ template <template <typename> typename vec_gen_t> class AnnotationDescIndex
 {
     struct Interval
     {
+        size_t uiIntervalId;
         size_t uiIntervalStart;
         size_t uiIntervalEnd;
         size_t uiAnnoStart;
         size_t uiAnnoEnd;
         size_t uiDescId;
         bool bForwStrnd;
+        size_t uiIntervalCoordsStart;
+        size_t uiIntervalCoordsEnd;
+        size_t uiAnnoCoordsStart;
+        size_t uiAnnoCoordsEnd;
     };
 
     struct Dataset
@@ -63,6 +68,8 @@ template <template <typename> typename vec_gen_t> class AnnotationDescIndex
         }
         std::sort( vLineSweepPos.begin( ), vLineSweepPos.end( ) );
 
+        size_t uiIntervalCoordPos = 0;
+        size_t uiIntervalId = 0;
         std::set<size_t> xActiveIntervals;
         for( size_t uiJ = 0; uiJ < vLineSweepPos.size( ); )
         {
@@ -88,57 +95,118 @@ template <template <typename> typename vec_gen_t> class AnnotationDescIndex
                 size_t uiNextPos = vLineSweepPos[ uiJ + 1 ].first;
 
                 for( size_t uiActive : xActiveIntervals )
-                    vIntervals.push_back( Interval{ .uiIntervalStart = uiCurrPos,
-                                                    .uiIntervalEnd = uiNextPos,
-                                                    .uiAnnoStart = std::get<0>( vIntervalsIn[ uiActive ] ),
-                                                    .uiAnnoEnd = std::get<1>( vIntervalsIn[ uiActive ] ),
-                                                    .uiDescId = vDescID[ uiActive ],
-                                                    .bForwStrnd = std::get<3>( vIntervalsIn[ uiActive ] ) } );
+                    vIntervals.push_back( Interval{
+                        .uiIntervalId = uiIntervalId,
+
+                        .uiIntervalStart = uiCurrPos,
+                        .uiIntervalEnd = uiNextPos,
+
+                        .uiAnnoStart = std::get<0>( vIntervalsIn[ uiActive ] ),
+                        .uiAnnoEnd = std::get<1>( vIntervalsIn[ uiActive ] ),
+
+                        .uiDescId = vDescID[ uiActive ],
+                        .bForwStrnd = std::get<3>( vIntervalsIn[ uiActive ] ),
+
+                        .uiIntervalCoordsStart = uiIntervalCoordPos,
+                        .uiIntervalCoordsEnd = uiIntervalCoordPos + ( uiNextPos - uiCurrPos ),
+
+                        .uiAnnoCoordsStart = uiIntervalCoordPos + std::get<0>( vIntervalsIn[ uiActive ] ) - uiCurrPos,
+                        .uiAnnoCoordsEnd = uiIntervalCoordPos + std::get<1>( vIntervalsIn[ uiActive ] ) - uiCurrPos,
+                    } );
+                uiIntervalCoordPos += ( uiNextPos - uiCurrPos );
+                ++uiIntervalId;
             }
         }
         vDatasets.push_back( Dataset{ .uiStart = uiStartSize, .uiEnd = vIntervals.size( ) } );
         return vDatasets.size( ) - 1;
     }
 
-    std::vector<std::tuple<size_t, size_t, std::string, bool>> query( size_t uiDatasetId, size_t uiFrom, size_t uiTo )
+    void iterate( size_t uiDatasetId, size_t uiFrom, size_t uiTo,
+                  std::function<bool( std::tuple<size_t, size_t, std::string, bool> )> fYield,
+                  bool bIntervalCoords = false )
     {
         std::set<size_t> xActiveIntervals;
-        std::vector<std::tuple<size_t, size_t, std::string, bool>> vRet;
-
         auto xEnd = vIntervals.begin( ) + vDatasets[ uiDatasetId ].uiEnd;
 
-        auto xStart = std::lower_bound( vIntervals.begin( ) + vDatasets[ uiDatasetId ].uiStart,
-                                        xEnd,
-                                        uiFrom,
-                                        []( const Interval& rI, size_t uiFrom ) { return rI.uiIntervalEnd < uiFrom; } );
+        auto xStart = std::lower_bound(
+            vIntervals.begin( ) + vDatasets[ uiDatasetId ].uiStart,
+            xEnd,
+            uiFrom,
+            bIntervalCoords ? []( const Interval& rI, size_t uiFrom ) { return rI.uiIntervalCoordsEnd < uiFrom; }
+                            : []( const Interval& rI, size_t uiFrom ) { return rI.uiIntervalEnd < uiFrom; } );
 
         while( xStart < xEnd && xStart->uiIntervalStart < uiTo )
         {
             if( xActiveIntervals.count( xStart->uiDescId ) == 0 )
             {
                 xActiveIntervals.insert( xStart->uiDescId );
-                vRet.emplace_back( xStart->uiAnnoStart, xStart->uiAnnoEnd, vDesc.get( xStart->uiDescId ),
-                                   xStart->bForwStrnd );
+                if( !fYield( std::make_tuple( bIntervalCoords ? xStart->uiAnnoCoordsStart : xStart->uiAnnoStart,
+                                              bIntervalCoords ? xStart->uiAnnoCoordsEnd : xStart->uiAnnoEnd,
+                                              vDesc.get( xStart->uiDescId ),
+                                              xStart->bForwStrnd ) ) )
+                    return;
             }
             ++xStart;
         }
+    }
+
+    std::vector<std::tuple<size_t, size_t, std::string, bool>> query( size_t uiDatasetId, size_t uiFrom, size_t uiTo,
+                                                                      bool bIntervalCoords = false )
+    {
+        std::vector<std::tuple<size_t, size_t, std::string, bool>> vRet;
+
+        iterate(
+            uiDatasetId, uiFrom, uiTo,
+            [ & ]( std::tuple<size_t, size_t, std::string, bool> xTup ) {
+                vRet.push_back( xTup );
+                return true;
+            },
+            bIntervalCoords );
 
         std::sort( vRet.begin( ), vRet.end( ) );
 
         return vRet;
     }
 
-    size_t count( size_t uiDatasetId, size_t uiFrom, size_t uiTo )
+    std::array<typename vec_gen_t<Interval>::vec_t::iterator, 2> getRange( size_t uiDatasetId, size_t uiFrom,
+                                                                           size_t uiTo, bool bIntervalCoords = false )
     {
         auto xBegin = vIntervals.begin( ) + vDatasets[ uiDatasetId ].uiStart;
         auto xEnd = vIntervals.begin( ) + vDatasets[ uiDatasetId ].uiEnd;
 
-        auto xStart = std::lower_bound( xBegin, xEnd, uiFrom,
-                                        []( const Interval& rI, size_t uiFrom ) { return rI.uiIntervalEnd < uiFrom; } );
-        auto xStop = std::upper_bound( xBegin, xEnd, uiTo,
-                                       []( size_t uiTo, const Interval& rI ) { return uiTo < rI.uiIntervalStart; } );
+        auto xStart = std::lower_bound(
+            xBegin, xEnd, uiFrom,
+            bIntervalCoords ? []( const Interval& rI, size_t uiFrom ) { return rI.uiIntervalCoordsEnd < uiFrom; }
+                            : []( const Interval& rI, size_t uiFrom ) { return rI.uiIntervalEnd < uiFrom; } );
+        auto xStop = std::upper_bound(
+            xBegin, xEnd, uiTo,
+            bIntervalCoords ? []( size_t uiTo, const Interval& rI ) { return uiTo < rI.uiIntervalCoordsStart; }
+                            : []( size_t uiTo, const Interval& rI ) { return uiTo < rI.uiIntervalStart; } );
 
-        return xStop - xStart;
+        return std::array<typename vec_gen_t<Interval>::vec_t::iterator, 2>{ xStart, xStop };
+    }
+
+    size_t count( size_t uiDatasetId, size_t uiFrom, size_t uiTo, bool bIntervalCoords = false )
+    {
+        auto xRange = getRange( uiDatasetId, uiFrom, uiTo, bIntervalCoords );
+
+        return xRange[ 1 ] - xRange[ 0 ];
+    }
+
+    size_t totalIntervalSize( size_t uiDatasetId )
+    {
+        auto xBegin = vIntervals.begin( ) + vDatasets[ uiDatasetId ].uiStart;
+        auto xEnd = vIntervals.begin( ) + vDatasets[ uiDatasetId ].uiEnd - 1;
+
+
+        return xEnd->uiIntervalCoordsEnd - xBegin->uiIntervalCoordsStart;
+    }
+
+    size_t numIntervals( size_t uiDatasetId )
+    {
+        auto xEnd = vIntervals.begin( ) + vDatasets[ uiDatasetId ].uiEnd - 1;
+
+        return xEnd->uiIntervalId + 1;
     }
 };
 

@@ -62,7 +62,7 @@ bool PartialQuarry::setAnnotationValues( )
                 int64_t iDataSetId = rJson[ xRegion.sChromosome ].get<int64_t>( );
 
                 uiTotalCount +=
-                    xIndices.vAnno.count( iDataSetId, xRegion.uiIndexPos, xRegion.uiIndexPos + xRegion.uiSize );
+                    xIndices.vAnno.count( iDataSetId, xRegion.uiIndexPos, xRegion.uiIndexPos + xRegion.uiIndexSize );
             }
         }
         for( std::string sCurrAnno : vActiveAnnotation[ uiX ] )
@@ -76,18 +76,19 @@ bool PartialQuarry::setAnnotationValues( )
                 for( AxisRegion& xRegion : vAxisRegions[ uiX ] )
                 {
                     int64_t iDataSetId = rJson[ xRegion.sChromosome ].get<int64_t>( );
-                    for( auto& xAnno :
-                         xIndices.vAnno.query( iDataSetId, xRegion.uiIndexPos, xRegion.uiIndexPos + xRegion.uiSize ) )
+                    for( auto& xAnno : xIndices.vAnno.query(
+                             iDataSetId, xRegion.uiIndexPos, xRegion.uiIndexPos + xRegion.uiIndexSize ) )
                     {
                         size_t uiStartPos =
                             ( std::get<0>( xAnno ) > xRegion.uiIndexPos ? std::get<0>( xAnno ) - xRegion.uiIndexPos
                                                                         : 0 ) +
                             xRegion.uiScreenPos;
-                        size_t uiEndPos = std::min( (std::get<1>( xAnno ) > xRegion.uiIndexPos ? 
-                                                    std::get<1>( xAnno ) - xRegion.uiIndexPos : 0 ) + 
-                                                    xRegion.uiScreenPos,
-                                                    xRegion.uiScreenPos + xRegion.uiSize );
-                        if(uiEndPos > uiStartPos)
+                        size_t uiEndPos = std::min( ( std::get<1>( xAnno ) > xRegion.uiIndexPos
+                                                          ? std::get<1>( xAnno ) - xRegion.uiIndexPos
+                                                          : 0 ) +
+                                                        xRegion.uiScreenPos,
+                                                    xRegion.uiScreenPos + xRegion.uiScreenSize );
+                        if( uiEndPos > uiStartPos )
                         {
                             size_t uiRow = 0;
                             while( uiRow < vEndPos.size( ) && uiStartPos < vEndPos[ uiRow ] + uiMinAnnoDist )
@@ -107,8 +108,8 @@ bool PartialQuarry::setAnnotationValues( )
                         }
                     }
                 }
-                vMaxRowsPerAnno[uiX].push_back( vEndPos.size( ) );
-                vMaxAnnoRows[ uiX ] = std::max(vMaxAnnoRows[ uiX ], vEndPos.size( ));
+                vMaxRowsPerAnno[ uiX ].push_back( vEndPos.size( ) );
+                vMaxAnnoRows[ uiX ] = std::max( vMaxAnnoRows[ uiX ], vEndPos.size( ) );
             }
             else
             {
@@ -116,8 +117,8 @@ bool PartialQuarry::setAnnotationValues( )
                 for( AxisCoord& xCoords : vAxisCords[ uiX ] )
                 {
                     int64_t iDataSetId = rJson[ xCoords.sChromosome ].get<int64_t>( );
-                    vAnnotationValues[ uiX ].back( ).first.push_back(
-                        xIndices.vAnno.count( iDataSetId, xCoords.uiIndexPos, xCoords.uiIndexPos + xCoords.uiSize ) );
+                    vAnnotationValues[ uiX ].back( ).first.push_back( xIndices.vAnno.count(
+                        iDataSetId, xCoords.uiIndexPos, xCoords.uiIndexPos + xCoords.uiIndexSize ) );
                 }
             }
         }
@@ -177,10 +178,10 @@ bool PartialQuarry::setAnnotationCDS( )
                 {
                     vChr.append( rCoords.sChromosome );
                     vIndexStart.append( readableBp( rCoords.uiIndexPos * uiDividend ) );
-                    vIndexEnd.append( readableBp( ( rCoords.uiIndexPos + rCoords.uiSize ) * uiDividend ) );
+                    vIndexEnd.append( readableBp( ( rCoords.uiIndexPos + rCoords.uiIndexSize ) * uiDividend ) );
                     vAnnoName.append( py::make_tuple( rAnnoName, 0 /*anno overlap*/ ) );
                     vScreenStart.append( rCoords.uiScreenPos );
-                    vScreenEnd.append( rCoords.uiScreenPos + rCoords.uiSize );
+                    vScreenEnd.append( rCoords.uiScreenPos + rCoords.uiScreenSize );
                     vColor.append( vColorPaletteAnnotation[ uiN % vColorPaletteAnnotation.size( ) ] );
                     vNumAnno.append( uiVal );
                     vInfo.append( "n/a" );
@@ -197,32 +198,33 @@ bool PartialQuarry::setAnnotationCDS( )
                 vChr.append( rA.sChromosome );
                 vIndexStart.append( readableBp( rA.uiIndexX * uiDividend ) );
                 vIndexEnd.append( readableBp( rA.uiIndexY * uiDividend ) );
-                vAnnoName.append(
-                    py::make_tuple( rAnnoName,
-                                    ( rA.uiRow % 2 == 0 ? 1.0 : -1.0 ) * fAnnoHeight * ( ( rA.uiRow + 1 ) / 2 ) +
-                                        ( vMaxRowsPerAnno[ uiX ][ uiN ] % 2 == 0 ? 0.5 * fAnnoHeight : 0 ) ) ); // uiRow - 1
+                vAnnoName.append( py::make_tuple(
+                    rAnnoName,
+                    ( rA.uiRow % 2 == 0 ? 1.0 : -1.0 ) * fAnnoHeight * ( ( rA.uiRow + 1 ) / 2 ) +
+                        ( vMaxRowsPerAnno[ uiX ][ uiN ] % 2 == 0 ? 0.5 * fAnnoHeight : 0 ) ) ); // uiRow - 1
                 vScreenStart.append( rA.uiScreenX );
                 vScreenEnd.append( rA.uiScreenY );
-                vColor.append( rA.bForw ? vColorPaletteAnnotation[ uiN % vColorPaletteAnnotation.size( ) ] : vColorPaletteAnnotationDark[ uiN % vColorPaletteAnnotationDark.size( ) ] );
+                vColor.append( rA.bForw ? vColorPaletteAnnotation[ uiN % vColorPaletteAnnotation.size( ) ]
+                                        : vColorPaletteAnnotationDark[ uiN % vColorPaletteAnnotationDark.size( ) ] );
                 vNumAnno.append( 1 );
                 vSize.append( fAnnoHeight * ( 1.0 - fMinAnnoDist ) );
                 vStrand.append( rA.bForw ? "+" : "-" );
-                std::vector<std::string> vSplit = splitString<std::vector<std::string>>(rA.sInfo, '\n');
+                std::vector<std::string> vSplit = splitString<std::vector<std::string>>( rA.sInfo, '\n' );
                 std::string sId = "n/a";
                 std::string sDesc = "n/a";
                 std::string sInfo = "";
                 const std::string csID = "ID=";
                 const std::string csDesc = "description=";
-                for(std::string sX : vSplit)
+                for( std::string sX : vSplit )
                 {
-                    if(sX.substr(0, csID.size()) == csID)
-                        sId = sX.substr(csID.size());
-                    else if(sX.substr(0, csDesc.size()) == csDesc)
-                        sDesc = sX.substr(csDesc.size());
+                    if( sX.substr( 0, csID.size( ) ) == csID )
+                        sId = sX.substr( csID.size( ) );
+                    else if( sX.substr( 0, csDesc.size( ) ) == csDesc )
+                        sDesc = sX.substr( csDesc.size( ) );
                     else
                         sInfo += sX + "\n";
                 }
-                vInfo.append( sInfo.substr(0, sInfo.size() - 1) );
+                vInfo.append( sInfo.substr( 0, sInfo.size( ) - 1 ) );
                 vID.append( sId );
                 vDesc.append( sDesc );
             }
