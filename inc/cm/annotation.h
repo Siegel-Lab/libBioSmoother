@@ -125,6 +125,17 @@ bool PartialQuarry::setAnnotationValues( )
     END_RETURN;
 }
 
+/// http://www.martinbroadhurst.com/how-to-split-a-string-in-c.html
+template <class Container_t> Container_t splitString( const std::string& sString, char sDelim = ' ' )
+{
+    std::stringstream xStream( sString );
+    std::string sCurrToken;
+    Container_t xCont;
+    while( std::getline( xStream, sCurrToken, sDelim ) )
+        xCont.push_back( sCurrToken );
+    return xCont;
+} // method
+
 bool PartialQuarry::setAnnotationCDS( )
 {
     using namespace pybind11::literals;
@@ -146,6 +157,9 @@ bool PartialQuarry::setAnnotationCDS( )
         pybind11::list vNumAnno;
         pybind11::list vInfo;
         pybind11::list vSize;
+        pybind11::list vStrand;
+        pybind11::list vID;
+        pybind11::list vDesc;
 
         double fAnnoHeight = ( 1.0 - fMinAnnoDist ) / vMaxAnnoRows[ uiX ];
 
@@ -169,8 +183,11 @@ bool PartialQuarry::setAnnotationCDS( )
                     vScreenEnd.append( rCoords.uiScreenPos + rCoords.uiSize );
                     vColor.append( vColorPaletteAnnotation[ uiN % vColorPaletteAnnotation.size( ) ] );
                     vNumAnno.append( uiVal );
-                    vInfo.append( "" );
+                    vInfo.append( "n/a" );
                     vSize.append( fAnnoHeight * ( 1.0 - fMinAnnoDist ) );
+                    vStrand.append( "n/a" );
+                    vID.append( "n/a" );
+                    vDesc.append( "n/a" );
                 }
             }
             for( Annotation& rA : vAnnotationValues[ uiX ][ uiN ].second )
@@ -188,8 +205,26 @@ bool PartialQuarry::setAnnotationCDS( )
                 vScreenEnd.append( rA.uiScreenY );
                 vColor.append( rA.bForw ? vColorPaletteAnnotation[ uiN % vColorPaletteAnnotation.size( ) ] : vColorPaletteAnnotationDark[ uiN % vColorPaletteAnnotationDark.size( ) ] );
                 vNumAnno.append( 1 );
-                vInfo.append( (rA.bForw ? "+ " : "- ") + rA.sInfo );
                 vSize.append( fAnnoHeight * ( 1.0 - fMinAnnoDist ) );
+                vStrand.append( rA.bForw ? "+" : "-" );
+                std::vector<std::string> vSplit = splitString<std::vector<std::string>>(rA.sInfo, '\n');
+                std::string sId = "n/a";
+                std::string sDesc = "n/a";
+                std::string sInfo = "";
+                const std::string csID = "ID=";
+                const std::string csDesc = "description=";
+                for(std::string sX : vSplit)
+                {
+                    if(sX.substr(0, csID.size()) == csID)
+                        sId = sX.substr(csID.size());
+                    else if(sX.substr(0, csDesc.size()) == csDesc)
+                        sDesc = sX.substr(csDesc.size());
+                    else
+                        sInfo += sX + "\n";
+                }
+                vInfo.append( sInfo.substr(0, sInfo.size() - 1) );
+                vID.append( sId );
+                vDesc.append( sDesc );
             }
         }
 
@@ -202,7 +237,10 @@ bool PartialQuarry::setAnnotationCDS( )
                                                 "color"_a = vColor,
                                                 "num_anno"_a = vNumAnno,
                                                 "info"_a = vInfo,
-                                                "size"_a = vSize );
+                                                "size"_a = vSize,
+                                                "strand"_a = vStrand,
+                                                "id"_a = vID,
+                                                "desc"_a = vDesc );
     }
     END_RETURN;
 }
