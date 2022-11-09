@@ -123,7 +123,7 @@ class Indexer:
             if chrom not in sorted_list[name]:
                 sorted_list[name][chrom] = []
             sorted_list[name][chrom].append((start // self.session_default["dividend"], 
-                                            (end-1) // self.session_default["dividend"] + 1, 
+                                             end // self.session_default["dividend"], 
                                             info, on_forw_strnd))
         for name, chroms in sorted_list.items():
             if name not in self.session_default["annotation"]["list"]:
@@ -224,9 +224,9 @@ class Indexer:
                 ) in read_iterator.itr_cell(chr_x, chr_y):
                     total_reads += 1
                     act_pos_1_s = int(pos_2_s) // self.session_default["dividend"]
-                    act_pos_1_e = (int(pos_2_e)-1) // self.session_default["dividend"] + 1
+                    act_pos_1_e = int(pos_2_e) // self.session_default["dividend"]
                     act_pos_2_s = int(pos_1_s) // self.session_default["dividend"]
-                    act_pos_2_e = (int(pos_1_e)-1) // self.session_default["dividend"] + 1
+                    act_pos_2_e = int(pos_1_e) // self.session_default["dividend"]
                     if has_map_q and multi_map:
                         start = [act_pos_1_s, act_pos_2_s, MAP_Q_MAX - int(map_q) - 1]
                         end = [act_pos_1_e, act_pos_2_e, MAP_Q_MAX - int(map_q) - 1]
@@ -277,7 +277,7 @@ class Indexer:
                     pos_s = pos_1_s if x_axis else pos_2_s
                     pos_e = pos_1_e if x_axis else pos_2_e
                     act_pos_s = int(pos_s) // self.session_default["dividend"]
-                    act_pos_e = (int(pos_e) - 1) // self.session_default["dividend"] + 1
+                    act_pos_e = int(pos_e) // self.session_default["dividend"]
                     if has_map_q and multi_map:
                         start = [act_pos_s, MAP_Q_MAX - int(map_q) - 1]
                         end = [act_pos_e, MAP_Q_MAX - int(map_q) - 1]

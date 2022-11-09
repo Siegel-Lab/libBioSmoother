@@ -57,13 +57,13 @@ template <template <typename> typename vec_gen_t> class AnnotationDescIndex
                          size_t /*uiVerbosity = 0*/ )
     {
         size_t uiStartSize = vIntervals.size( );
-        std::vector<std::pair<size_t, size_t>> vLineSweepPos;
+        std::vector<std::tuple<size_t, size_t, bool>> vLineSweepPos;
         std::vector<size_t> vDescID;
         vDescID.resize( vIntervalsIn.size( ) );
         for( size_t uiI = 0; uiI < vIntervalsIn.size( ); uiI++ )
         {
-            vLineSweepPos.push_back( std::make_pair( std::get<0>( vIntervalsIn[ uiI ] ), uiI ) );
-            vLineSweepPos.push_back( std::make_pair( std::get<1>( vIntervalsIn[ uiI ] ) + 1, uiI ) );
+            vLineSweepPos.push_back( std::make_tuple( std::get<0>( vIntervalsIn[ uiI ] ), uiI, false ) );
+            vLineSweepPos.push_back( std::make_tuple( std::get<1>( vIntervalsIn[ uiI ] ), uiI, true ) );
             vDescID[ uiI ] = vDesc.add( std::get<2>( vIntervalsIn[ uiI ] ) );
         }
         std::sort( vLineSweepPos.begin( ), vLineSweepPos.end( ) );
@@ -73,17 +73,17 @@ template <template <typename> typename vec_gen_t> class AnnotationDescIndex
         std::set<size_t> xActiveIntervals;
         for( size_t uiJ = 0; uiJ < vLineSweepPos.size( ); )
         {
-            size_t uiCurrPos = vLineSweepPos[ uiJ ].first;
-            while( uiJ < vLineSweepPos.size( ) && vLineSweepPos[ uiJ ].first == uiCurrPos )
+            size_t uiCurrPos = std::get<0>(vLineSweepPos[ uiJ ]);
+            while( uiJ < vLineSweepPos.size( ) && std::get<0>(vLineSweepPos[ uiJ ]) == uiCurrPos )
             {
-                if( std::get<0>( vIntervalsIn[ vLineSweepPos[ uiJ ].second ] ) == uiCurrPos )
+                if( !std::get<2>(vLineSweepPos[ uiJ ]) )
                     // interval start
-                    xActiveIntervals.insert( vLineSweepPos[ uiJ ].second );
+                    xActiveIntervals.insert( std::get<1>(vLineSweepPos[ uiJ ]) );
                 else /*if(std::get<1>(vIntervalsIn[vLineSweepPos[uiJ].second]) + 1 == uiCurrPos)*/
                 {
-                    assert( xActiveIntervals.count( vLineSweepPos[ uiJ ].second ) > 0 );
+                    assert( xActiveIntervals.count( std::get<1>(vLineSweepPos[ uiJ ]) ) > 0 );
                     // interval end
-                    xActiveIntervals.erase( vLineSweepPos[ uiJ ].second );
+                    xActiveIntervals.erase( std::get<1>(vLineSweepPos[ uiJ ]) );
                 }
                 uiJ++;
             }
@@ -92,7 +92,7 @@ template <template <typename> typename vec_gen_t> class AnnotationDescIndex
 
             if( xActiveIntervals.size( ) > 0 )
             {
-                size_t uiNextPos = vLineSweepPos[ uiJ + 1 ].first;
+                size_t uiNextPos = std::get<0>(vLineSweepPos[ uiJ ]);
 
                 for( size_t uiActive : xActiveIntervals )
                     vIntervals.push_back( Interval{
@@ -125,10 +125,13 @@ template <template <typename> typename vec_gen_t> class AnnotationDescIndex
                   std::function<bool( std::tuple<size_t, size_t, std::string, bool> )> fYield,
                   bool bIntervalCoords = false, bool bIntervalCount = false )
     {
-        std::set<size_t> xActiveIntervals;
+        assert( !( bIntervalCoords && bIntervalCount ) );
+        std::set<size_t> xActiveIntervals {};
 
         auto xStart = lowerBound( uiDatasetId, uiFrom, bIntervalCoords, bIntervalCount );
         auto xEnd = upperBound( uiDatasetId, uiTo, bIntervalCoords, bIntervalCount );
+
+        assert(xStart <= xEnd);
 
         while( xStart != xEnd )
         {
@@ -180,9 +183,9 @@ template <template <typename> typename vec_gen_t> class AnnotationDescIndex
 
         return std::lower_bound(
             xBegin, xEnd, uiFrom,
-            bIntervalCoords  ? []( const Interval& rI, size_t uiFrom ) { return rI.uiIntervalCoordsEnd < uiFrom; }
+            bIntervalCoords  ? []( const Interval& rI, size_t uiFrom ) { return rI.uiIntervalCoordsEnd <= uiFrom; }
             : bIntervalCount ? []( const Interval& rI, size_t uiFrom ) { return rI.uiIntervalId < uiFrom; }
-                             : []( const Interval& rI, size_t uiFrom ) { return rI.uiIntervalEnd < uiFrom; } );
+                             : []( const Interval& rI, size_t uiFrom ) { return rI.uiIntervalEnd <= uiFrom; } );
     }
     interval_it_t upperBound( size_t uiDatasetId, size_t uiTo, bool bIntervalCoords = false,
                               bool bIntervalCount = false )
@@ -194,9 +197,9 @@ template <template <typename> typename vec_gen_t> class AnnotationDescIndex
 
         return std::upper_bound(
             xBegin, xEnd, uiTo,
-            bIntervalCoords  ? []( size_t uiTo, const Interval& rI ) { return uiTo < rI.uiIntervalCoordsStart; }
-            : bIntervalCount ? []( size_t uiTo, const Interval& rI ) { return uiTo < rI.uiIntervalId; }
-                             : []( size_t uiTo, const Interval& rI ) { return uiTo < rI.uiIntervalStart; } );
+            bIntervalCoords  ? []( size_t uiTo, const Interval& rI ) { return uiTo <= rI.uiIntervalCoordsStart; }
+            : bIntervalCount ? []( size_t uiTo, const Interval& rI ) { return uiTo <= rI.uiIntervalId; }
+                             : []( size_t uiTo, const Interval& rI ) { return uiTo <= rI.uiIntervalStart; } );
     }
 
     std::array<interval_it_t, 2> getRange( size_t uiDatasetId, size_t uiFrom, size_t uiTo, bool bIntervalCoords = false,
