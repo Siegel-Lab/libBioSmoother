@@ -440,13 +440,66 @@ bool PartialQuarry::setTicks( )
         pybind11::list vFullList;
 
         size_t uiRunningStart = 0;
-        for( ChromDesc& rDesc : this->vActiveChromosomes[ uiI ] )
+        std::string sCoords = this->xSession[ "contigs" ][ uiI == 0 ? "column_coordinates" : "row_coordinates" ].get<std::string>( );
+        if( sCoords == "full_genome" )
         {
-            CANCEL_RETURN;
-            vNames.append( rDesc.sName.substr( 0, rDesc.sName.size( ) - uiLogestCommonSuffix ) );
-            vStartPos.append( uiRunningStart );
-            vFullList.append( uiRunningStart );
-            uiRunningStart += rDesc.uiLength;
+            for( ChromDesc& rDesc : this->vActiveChromosomes[ uiI ] )
+            {
+                CANCEL_RETURN;
+                vNames.append( rDesc.sName.substr( 0, rDesc.sName.size( ) - uiLogestCommonSuffix ) );
+                vStartPos.append( uiRunningStart );
+                vFullList.append( uiRunningStart );
+                uiRunningStart += rDesc.uiLength;
+            }
+        }
+        else
+        {
+            size_t iAnnoInMultipleBins = multiple_bins(
+                    this->xSession[ "settings" ][ "filters" ][ "anno_in_multiple_bins" ].get<std::string>( ) );
+            auto& rJson = this->xSession[ "annotation" ][ "by_name" ][ sCoords ];
+            for( AxisRegion& xRegion : vAxisRegions[ uiI ] )
+            {
+                CANCEL_RETURN;
+                int64_t iDataSetId = rJson[ xRegion.sChromosome ].get<int64_t>( );
+                auto xFirst = xIndices.vAnno.lowerBound(iDataSetId, xRegion.uiIndexPos, 
+                                                         iAnnoInMultipleBins < 2, iAnnoInMultipleBins == 2);
+                
+                std::vector<std::string> vSplit = splitString<std::vector<std::string>>( 
+                        xIndices.vAnno.desc(*xFirst), '\n' );
+                std::string sId = "n/a";
+                const std::string csID = "ID=";
+                for( std::string sX : vSplit )
+                    if( sX.substr( 0, csID.size( ) ) == csID )
+                    {
+                        size_t uiX = sX.rfind(":");
+                        if(uiX != std::string::npos)
+                            sId = sX.substr( csID.size( ), uiX - csID.size( ) );
+                        else
+                            sId = sX.substr( csID.size( ) );
+                    }
+
+                vNames.append( xRegion.sChromosome.substr( 0, xRegion.sChromosome.size( ) - uiLogestCommonSuffix ) + " - " + sId );
+                vStartPos.append( uiRunningStart );
+                uiRunningStart += xRegion.uiScreenSize;
+            }
+
+            uiRunningStart = 0;
+            for( auto xChr : this->vActiveChromosomes[ uiI ] )
+            {
+                CANCEL_RETURN;
+                int64_t iDataSetId = rJson[ xChr.sName ].get<int64_t>( );
+                vFullList.append( uiRunningStart );
+
+                switch( iAnnoInMultipleBins )
+                {
+                    case 0: // separate
+                    case 1: // stretch
+                        uiRunningStart += xIndices.vAnno.totalIntervalSize( iDataSetId );
+                        break;
+                    case 2: // squeeze
+                        uiRunningStart += xIndices.vAnno.numIntervals( iDataSetId );
+                }
+            }
         }
         vFullList.append( uiRunningStart );
         vCanvasSize[ uiI ] = uiRunningStart;
@@ -764,7 +817,8 @@ void PartialQuarry::regCoords( )
     registerNode( NodeNames::Ticks,
                   ComputeNode{ .sNodeName = "ticks",
                                .fFunc = &PartialQuarry::setTicks,
-                               .vIncomingFunctions = { NodeNames::ActiveChrom, NodeNames::LCS },
+                               .vIncomingFunctions = { NodeNames::ActiveChrom, NodeNames::LCS,
+                                                       NodeNames::AnnotationValues },
                                .vIncomingSession = { },
                                .uiLastUpdated = uiCurrTime } );
 

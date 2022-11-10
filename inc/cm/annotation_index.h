@@ -121,6 +121,11 @@ template <template <typename> typename vec_gen_t> class AnnotationDescIndex
         return vDatasets.size( ) - 1;
     }
 
+    std::string desc(const Interval& rI)
+    {
+        return vDesc.get( rI.uiDescId );
+    }
+
     void iterate( size_t uiDatasetId, size_t uiFrom, size_t uiTo,
                   std::function<bool( std::tuple<size_t, size_t, std::string, bool> )> fYield,
                   bool bIntervalCoords = false, bool bIntervalCount = false )
@@ -143,7 +148,7 @@ template <template <typename> typename vec_gen_t> class AnnotationDescIndex
                                         : ( bIntervalCount ? xStart->uiIntervalId : xStart->uiAnnoStart ),
                         bIntervalCoords ? xStart->uiAnnoCoordsEnd
                                         : ( bIntervalCount ? xStart->uiIntervalId : xStart->uiAnnoEnd ),
-                        vDesc.get( xStart->uiDescId ),
+                        desc( *xStart ),
                         xStart->bForwStrnd ) ) )
                     return;
             }

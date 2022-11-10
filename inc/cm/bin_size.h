@@ -129,13 +129,14 @@ std::string putCommas( size_t uiBp )
 
 std::string PartialQuarry::readableBp( size_t uiBp )
 {
-
-    if( uiBp % 1000000 == 0 )
-        return putCommas( uiBp / 1000000 ) + "mbp";
+    if( uiBp == 0 )
+        return "0 bp";
+    else if( uiBp % 1000000 == 0 )
+        return putCommas( uiBp / 1000000 ) + " mbp";
     else if( uiBp % 1000 == 0 )
-        return putCommas( uiBp / 1000 ) + "kbp";
+        return putCommas( uiBp / 1000 ) + " kbp";
     else
-        return putCommas( uiBp ) + "bp";
+        return putCommas( uiBp ) + " bp";
 }
 
 void PartialQuarry::regBinSize( )
