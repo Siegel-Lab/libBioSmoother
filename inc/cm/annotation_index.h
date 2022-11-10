@@ -171,15 +171,22 @@ template <template <typename> typename vec_gen_t> class AnnotationDescIndex
     }
 
     using interval_it_t = typename vec_gen_t<Interval>::vec_t::iterator;
+    interval_it_t begin(size_t uiDatasetId)
+    {
+        return vIntervals.begin( ) + vDatasets[ uiDatasetId ].uiStart;
+    }
+    interval_it_t end(size_t uiDatasetId)
+    {
+        return vIntervals.begin( ) + vDatasets[ uiDatasetId ].uiEnd;
+    }
 
     interval_it_t lowerBound( size_t uiDatasetId, size_t uiFrom, bool bIntervalCoords = false,
                               bool bIntervalCount = false )
     {
         assert( !( bIntervalCoords && bIntervalCount ) );
 
-
-        auto xBegin = vIntervals.begin( ) + vDatasets[ uiDatasetId ].uiStart;
-        auto xEnd = vIntervals.begin( ) + vDatasets[ uiDatasetId ].uiEnd;
+        auto xBegin = begin( uiDatasetId );
+        auto xEnd = end( uiDatasetId );
 
         return std::lower_bound(
             xBegin, xEnd, uiFrom,
@@ -192,8 +199,8 @@ template <template <typename> typename vec_gen_t> class AnnotationDescIndex
     {
         assert( !( bIntervalCoords && bIntervalCount ) );
 
-        auto xBegin = vIntervals.begin( ) + vDatasets[ uiDatasetId ].uiStart;
-        auto xEnd = vIntervals.begin( ) + vDatasets[ uiDatasetId ].uiEnd;
+        auto xBegin = begin( uiDatasetId );
+        auto xEnd = end( uiDatasetId );
 
         return std::upper_bound(
             xBegin, xEnd, uiTo,
@@ -223,8 +230,8 @@ template <template <typename> typename vec_gen_t> class AnnotationDescIndex
 
     size_t totalIntervalSize( size_t uiDatasetId )
     {
-        auto xBegin = vIntervals.begin( ) + vDatasets[ uiDatasetId ].uiStart;
-        auto xEnd = vIntervals.begin( ) + vDatasets[ uiDatasetId ].uiEnd - 1;
+        auto xBegin = begin( uiDatasetId );
+        auto xEnd = end( uiDatasetId ) - 1;
 
 
         return xEnd->uiIntervalCoordsEnd - xBegin->uiIntervalCoordsStart;
@@ -232,7 +239,7 @@ template <template <typename> typename vec_gen_t> class AnnotationDescIndex
 
     size_t numIntervals( size_t uiDatasetId )
     {
-        auto xEnd = vIntervals.begin( ) + vDatasets[ uiDatasetId ].uiEnd - 1;
+        auto xEnd = end( uiDatasetId ) - 1;
 
         return xEnd->uiIntervalId + 1;
     }

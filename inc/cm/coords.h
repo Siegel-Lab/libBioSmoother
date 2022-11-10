@@ -150,6 +150,30 @@ size_t smaller_bin_to_num( std::string sVal )
     throw std::logic_error( "unknown iSmallerBins value" );
 }
 
+
+size_t getEvenlyDividableByMaxTwoPowNIn(size_t uiFrom, size_t uiTo)
+{
+    size_t uiN = std::log2(uiTo - uiFrom) + 1;
+    while(uiN > 0)
+    {
+        size_t uiX = 1 << uiN;
+        if(uiFrom % uiX == 0)
+        {
+            assert(uiFrom + uiX >= uiTo);
+            return uiFrom;
+        }
+        size_t uiY = uiX * (uiFrom / uiX) + uiX;
+        if(uiY < uiTo)
+        {
+            assert(uiY + uiX >= uiTo);
+            assert(uiY >= uiFrom);
+            return uiY;
+        }
+        --uiN;
+    }
+    return std::numeric_limits<size_t>::max();
+}
+
 template <typename anno_t>
 std::pair<std::vector<AxisCoord>, std::vector<AxisRegion>>
 annoCoordsHelper( size_t uiBinSize, size_t uiScreenStartPos, size_t uiScreenEndPos, size_t /*iSmallerBins*/,
@@ -193,6 +217,7 @@ annoCoordsHelper( size_t uiBinSize, size_t uiScreenStartPos, size_t uiScreenEndP
                                             iAnnoInMultipleBins == 2 );
             auto xUpper = rAnno.upperBound( iDataSetId, uiCurrScreenPos - uiChromosomeStartPos + uiBinSize,
                                             iAnnoInMultipleBins < 2, iAnnoInMultipleBins == 2 );
+            typename anno_t::interval_it_t xBegin, xPick;
 
             while( xLower < xUpper )
             {
@@ -215,6 +240,7 @@ annoCoordsHelper( size_t uiBinSize, size_t uiScreenStartPos, size_t uiScreenEndP
                 }
                 size_t uiCurrScreenSize;
                 size_t uiCurrIndexSize;
+                size_t uiAdd;
                 assert(xLower->uiIntervalEnd >= uiIndexPos);
                 assert(( xUpper - 1 )->uiIntervalEnd >= uiIndexPos);
                 switch( iMultipleAnnosInBin )
@@ -225,6 +251,37 @@ annoCoordsHelper( size_t uiBinSize, size_t uiScreenStartPos, size_t uiScreenEndP
                         break;
                     case 1: // first
                         uiCurrIndexSize = xLower->uiIntervalEnd - uiIndexPos;
+                        uiCurrScreenSize = ( xUpper - 1 )->uiIntervalCoordsEnd - xLower->uiIntervalCoordsStart;
+                        break;
+                    case 2: // max_fac_pow_two
+                        xBegin = rAnno.begin(iDataSetId);
+                        if(xLower->uiIntervalId < (xUpper - 1)->uiIntervalId)
+                            uiAdd = getEvenlyDividableByMaxTwoPowNIn(xLower - xBegin, xUpper - xBegin);
+                        else
+                            uiAdd = xLower - xBegin;
+                        if(uiAdd != std::numeric_limits<size_t>::max())
+                        {
+                            xPick = xBegin + uiAdd;
+                            switch( iAnnoInMultipleBins )
+                            {
+                                case 0: // separate
+                                case 1: // stretch
+                                    uiIndexPos = xPick->uiIntervalStart + uiCurrScreenPos - xLower->uiIntervalCoordsStart;
+                                    break;
+                                case 2: // squeeze
+                                    uiIndexPos = xPick->uiIntervalStart + uiCurrScreenPos - xLower->uiIntervalId;
+                                    break;
+                                default:
+                                    throw std::logic_error( "unknown iAnnoInMultipleBins value" );
+                            }
+                            uiCurrIndexSize = xPick->uiIntervalEnd - uiIndexPos;
+                        }
+                        else
+                        {
+                            uiIndexPos = 0;
+                            uiCurrIndexSize = 0;
+                        }
+
                         uiCurrScreenSize = ( xUpper - 1 )->uiIntervalCoordsEnd - xLower->uiIntervalCoordsStart;
                         break;
                     case 3: // force_separate
@@ -290,6 +347,7 @@ annoCoordsHelper( size_t uiBinSize, size_t uiScreenStartPos, size_t uiScreenEndP
                 {
                     case 0: // combine
                     case 1: // first
+                    case 2: // max_fac_pow_two
                         xLower = xUpper;
                         break;
                     case 3: // force_separate
@@ -315,6 +373,8 @@ size_t multiple_anno( std::string sVal )
         return 0;
     if( sVal == "first" )
         return 1;
+    if( sVal == "max_fac_pow_two" )
+        return 2;
     if( sVal == "force_separate" )
         return 3;
     throw std::logic_error( "unknown multiple_annos_in_bin value" );
