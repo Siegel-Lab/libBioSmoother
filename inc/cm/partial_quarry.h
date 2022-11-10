@@ -2,6 +2,7 @@
 #include <mutex>
 #include <nlohmann/json.hpp>
 #include <pybind11_json/pybind11_json.hpp>
+#include <cctype>
 
 #pragma once
 
@@ -659,6 +660,9 @@ class PartialQuarry
     // coords.h
     const std::vector<std::array<BinCoord, 2>>& getBinCoords( );
 
+    // coords.h
+    const pybind11::list getAnnotationList( bool bXAxis );
+
     // colors.h
     const pybind11::dict getTicks( bool bXAxis );
 
@@ -686,12 +690,94 @@ class PartialQuarry
     // coords.h
     const std::array<size_t, 2> getCanvasSize( );
 
-
     // coverage.h
     const pybind11::dict getTracks( bool bXAxis );
 
     // coverage.h
     const std::array<int64_t, 2> getMinMaxTracks( bool bAxis );
+
+    private:
+    size_t stringCompare(std::string sQuery, std::string sRef)
+    {
+        if(sQuery.size() < 3)
+            return sQuery == sRef ? sQuery.size() : 0;
+
+        size_t uiRet = 0;
+        size_t uiPos = 0;
+
+        for(char c : sQuery)
+        {
+            size_t uiCurr = uiPos;
+            while(uiCurr < sRef.size() && std::tolower(c) != std::tolower(sRef[uiCurr]))
+                ++uiCurr;
+            if(uiCurr < sRef.size())
+            {
+                uiPos = uiCurr;
+                ++uiRet;
+            }
+        }
+
+        if(uiRet < sQuery.size() / 3)
+            return 0;
+
+        return uiRet;
+    }
+
+    public:
+
+    const pybind11::int_ interpretName(std::string sName, std::vector<bool> vbXAxis, bool bBottom)
+    {
+        size_t uiRunningPos = 0;
+        size_t uiMaxEquality = 0;
+        size_t uiMaxStartPos = 0;
+        for(bool bX : vbXAxis)
+        {
+            for( auto xChr : vActiveChromosomes[bX ? 0 : 1] )
+            {
+                size_t uiEq = stringCompare(sName, xChr.sName);
+                if(uiEq > uiMaxEquality)
+                {
+                    uiMaxEquality = uiEq;
+                    if(bBottom)
+                        uiMaxStartPos = uiRunningPos;
+                    else
+                        uiMaxStartPos = uiRunningPos + xChr.uiLength;
+                }
+                uiRunningPos += xChr.uiLength;
+            }
+            size_t uiEq = stringCompare(sName, "all");
+            if(uiEq > uiMaxEquality)
+            {
+                uiMaxEquality = uiEq;
+                if(bBottom)
+                    uiMaxStartPos = 0;
+                else
+                    uiMaxStartPos = uiRunningPos;
+            }
+
+            if(uiMaxEquality > (2 * sName.size()) / 3)
+                return pybind11::int_(uiMaxStartPos);
+        }
+
+        // @todo check annotations now
+        
+        for(bool bX : vbXAxis)
+        {
+            for(std::string sAnno : vActiveAnnotation)
+            {
+                
+            }
+
+            if(uiMaxEquality > (2 * sName.size()) / 3)
+                return pybind11::int_(uiMaxStartPos);
+        }
+
+
+        if(uiMaxEquality > 0)
+            return pybind11::int_(uiMaxStartPos);
+
+        return pybind11::none();
+    }
 
     void printSizes( )
     {

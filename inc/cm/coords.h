@@ -790,6 +790,18 @@ const std::vector<std::array<BinCoord, 2>>& PartialQuarry::getBinCoords( )
     return vBinCoords;
 }
 
+const pybind11::list PartialQuarry::getAnnotationList( bool bXAxis )
+{
+    update( NodeNames::ActiveChrom );
+
+    pybind11::gil_scoped_acquire acquire;
+    pybind11::list vRet;
+    for(auto& xChr : this->vActiveChromosomes[ bXAxis ? 0 : 1 ])
+        vRet.append(xChr.sName);
+
+    return vRet;
+}
+
 
 const std::vector<AxisCoord>& PartialQuarry::getAxisCoords( bool bXAxis )
 {
