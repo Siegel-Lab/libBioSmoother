@@ -337,11 +337,7 @@ class PartialQuarry
 
     template <typename T> T getValue( std::vector<std::string> vKeys )
     {
-        // @todo the session should be guarded by a mutex since there can now be multithreading in here
-        // also changing a value while rendering should automatically call the cancel function?
-        auto xRet = this->xSession[ toPointer( vKeys ) ].get<T>( );
-
-        return xRet;
+        return this->xSession[ toPointer( vKeys ) ].get<T>( );
     }
 
     template <typename T> void setValue( std::vector<std::string> vKeys, T xVal )

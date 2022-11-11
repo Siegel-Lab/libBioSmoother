@@ -5,8 +5,6 @@ import os
 
 MAP_Q_MAX = 255
 
-# @todo create session.json from default_session.json
-
 def touch(f_name):
     with open(f_name, "a"):  # Create file if does not exist
         pass
@@ -20,9 +18,12 @@ class Indexer:
             self.indices = DiskSpsInterface(prefix + ".smoother_index", True)
             with open(prefix + ".smoother_index/default_session.json", "r") as f:
                 self.session_default = json.load(f)
+            with open(prefix + ".smoother_index/session.json", "r") as f:
+                self.session = json.load(f)
         else:
             self.indices = None
             self.session_default = {}
+            self.session = {}
 
     def progress_print(self, *text):
         print(*text)
@@ -32,13 +33,31 @@ class Indexer:
             json.dump(self.session_default, f)
         del self.indices
 
+    def set_session(self, keys, val):
+        curr = self.session
+        curr_def = self.session_default
+        for key in keys[:-1]:
+            curr = curr[key]
+            curr_def = curr_def[key]
+        curr[keys[-1]] = val
+        curr_def[keys[-1]] = val
+
+    def append_session(self, keys, val):
+        curr = self.session
+        curr_def = self.session_default
+        for key in keys[:-1]:
+            curr = curr[key]
+            curr_def = curr_def[key]
+        curr[keys[-1]].append( val)
+        curr_def[keys[-1]].append( val)
+
     def create_session(self, chr_len_file_name, dividend, test=False):
         os.makedirs(self.prefix + ".smoother_index")
-        self.session_default["dividend"] = dividend
-        self.session_default["previous"] = None
-        self.session_default["next"] = None
-        self.session_default["settings"] = None
-        self.session_default["replicates"] = {
+        self.set_session(["dividend"], dividend)
+        self.set_session(["previous"], None)
+        self.set_session(["next"], None)
+        self.set_session(["settings"], None)
+        self.set_session(["replicates"], {
             "list": [],
             "by_name": {},
             "in_group_a": [],
@@ -49,8 +68,8 @@ class Indexer:
             "cov_column_b": [],
             "cov_row_a": [],
             "cov_row_b": [],
-        }
-        self.session_default["coverage"] = {
+        })
+        self.set_session(["coverage"], {
             "list": [],
             "by_name": {},
             "in_column": [],
@@ -59,16 +78,16 @@ class Indexer:
             "cov_column_b": [],
             "cov_row_a": [],
             "cov_row_b": [],
-        }
-        self.session_default["annotation"] = {
+        })
+        self.set_session(["annotation"], {
             "list": [],
             "by_name": {},
             "visible_x": [],
             "visible_y": [],
             "row_filter": [],
             "col_filter": [],
-        }
-        self.session_default["contigs"] = {
+        })
+        self.set_session(["contigs"], {
             "list": [],
             "lengths": {},
             "displayed_on_x": [],
@@ -76,33 +95,26 @@ class Indexer:
             "genome_size": 0,
             "column_coordinates": "full_genome",
             "row_coordinates": "full_genome",
-        }
+        })
         if test:
-            self.session_default["test"] = True
+            self.set_session(["test"], True)
 
         with open(chr_len_file_name, "r") as len_file:
             for line in len_file:
                 chr_name, chr_len = line.split()
                 if not test or ("Chr1_3A" in chr_name):
-                    self.session_default["contigs"]["list"].append(chr_name)
-                    self.session_default["contigs"]["lengths"][chr_name] = (
-                        int(chr_len) // dividend
-                    )
-                    self.session_default["contigs"]["displayed_on_x"].append(chr_name)
-                    self.session_default["contigs"]["displayed_on_y"].append(chr_name)
-                    self.session_default["contigs"]["genome_size"] += int(chr_len)
-        self.session_default["area"] = {
+                    self.append_session(["contigs", "list"], chr_name)
+                    self.set_session(["contigs", "lengths", chr_name], int(chr_len) // dividend)
+                    self.append_session(["contigs", "displayed_on_x"], chr_name)
+                    self.append_session(["contigs", "displayed_on_y"], chr_name)
+                    self.set_session(["contigs", "genome_size"],
+                                     self.session_default["contigs"]["genome_size"] + int(chr_len))
+        self.set_session(["area"],{
             "x_start": 0,
             "y_start": 0,
             "x_end": self.session_default["contigs"]["genome_size"] // dividend,
             "y_end": self.session_default["contigs"]["genome_size"] // dividend,
-        }
-        self.session_default["visible"] = {
-            "x_start": 0,
-            "y_start": 0,
-            "x_end": self.session_default["contigs"]["genome_size"] // dividend,
-            "y_end": self.session_default["contigs"]["genome_size"] // dividend,
-        }
+        })
 
         for o, d in [(1, 0), (2, 1), (2, 0), (3, 1), (4, 2), (3, 0), (5, 2)]:
             idx_suff = str(o) + "." + str(d)
@@ -127,16 +139,15 @@ class Indexer:
                                             info, on_forw_strnd))
         for name, chroms in sorted_list.items():
             if name not in self.session_default["annotation"]["list"]:
-                self.session_default["annotation"]["list"].append(name)
-                self.session_default["annotation"]["visible_x"].append(name)
-                self.session_default["annotation"]["visible_y"].append(name)
-                self.session_default["annotation"]["by_name"][name] = {}
+                self.append_session(["annotation", "list"], name)
+                self.append_session(["annotation", "visible_x"], name)
+                self.append_session(["annotation", "visible_y"], name)
+                self.set_session(["annotation", "by_name", name], {})
 
                 for chrom, annos in chroms.items():
                     self.progress_print("annotating", name + "(s)", "for contig", chrom)
-                    self.session_default["annotation"]["by_name"][name][
-                        chrom
-                    ] = self.indices.anno.add_intervals(annos, verbosity=0)
+                    self.set_session(["annotation", "by_name", name, chrom], 
+                                     self.indices.anno.add_intervals(annos, verbosity=0))
             else:
                 raise RuntimeError("annotation with this name already exists")
 
@@ -185,17 +196,17 @@ class Indexer:
             "multi mapping.",
         )
 
-        self.session_default["replicates"]["list"].append(name)
-        self.session_default["replicates"]["by_name"][name] = {
+        self.append_session(["replicates", "list"], name)
+        self.set_session(["replicates", "by_name", name], {
             "ids": {},
             "has_map_q": has_map_q,
             "has_multimapping": multi_map,
             "path": path,
-        }
+        })
         if group in ["a", "both"]:
-            self.session_default["replicates"]["in_group_a"].append(name)
+            self.append_session(["replicates", "in_group_a"], name)
         if group in ["b", "both"]:
-            self.session_default["replicates"]["in_group_b"].append(name)
+            self.append_session(["replicates", "in_group_b"], name)
 
         o = 2 if multi_map else 0
         d = o + 3 if has_map_q else 2
@@ -246,21 +257,17 @@ class Indexer:
                     chr_x
                     not in self.session_default["replicates"]["by_name"][name]["ids"]
                 ):
-                    self.session_default["replicates"]["by_name"][name]["ids"][
-                        chr_x
-                    ] = {}
+                    self.set_session(["replicates", "by_name", name, "ids", chr_x], {})
                 assert (
                     chr_y
                     not in self.session_default["replicates"]["by_name"][name]["ids"][
                         chr_x
                     ]
                 )
-                self.session_default["replicates"]["by_name"][name]["ids"][chr_x][
-                    chr_y
-                ] = self.indices.generate(d, o, verbosity=0)
+                    self.set_session(["replicates", "by_name", name, "ids", chr_x, chr_y], 
+                                     self.indices.generate(d, o, verbosity=0))
 
-
-        self.session_default["replicates"]["by_name"][name]["total_reads"] = total_reads
+        self.set_session(["replicates", "by_name", name, "total_reads"], total_reads)
         o = 1 if multi_map else 0
         d = o + 2 if has_map_q else 1
 
@@ -294,9 +301,8 @@ class Indexer:
                         raise RuntimeError("this statement should never be reached")
                     self.indices.insert(d, o, start, end)
 
-                self.session_default["replicates"]["by_name"][name]["ids"][chr_][
-                    "row" if x_axis else "col"
-                ] = self.indices.generate(d, o, verbosity=0)
+                self.set_session(["replicates", "by_name", name, "ids", chr_, "row" if x_axis else "col"], 
+                                 self.indices.generate(d, o, verbosity=0))
 
         read_iterator.cleanup()
 
