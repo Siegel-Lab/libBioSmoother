@@ -11,8 +11,11 @@ bool PartialQuarry::setActiveCoverage( )
     size_t uiSize = this->xSession[ "coverage" ][ "list" ].size( ) + this->xSession[ "replicates" ][ "list" ].size( );
     for( size_t uiI = 0; uiI < 2; uiI++ )
     {
-        vNormCoverage[ uiI ].clear( );
-        vNormCoverage[ uiI ].reserve( uiSize );
+        for( size_t uiJ = 0; uiJ < 2; uiJ++ )
+        {
+            vNormCoverage[ uiI ][ uiJ ].clear( );
+            vNormCoverage[ uiI ][ uiJ ].reserve( uiSize );
+        }
 
         vActiveCoverage[ uiI ].clear( );
         vActiveCoverage[ uiI ].reserve( uiSize );
@@ -70,7 +73,10 @@ bool PartialQuarry::setActiveCoverage( )
     }
 
     std::array<std::set<std::string>, 2> vNormGroups;
-    if( this->xSession[ "settings" ][ "normalization" ][ "normalize_by" ].get<std::string>( ) == "radicl-seq" )
+    const std::string sNorm = this->xSession[ "settings" ][ "normalization" ][ "normalize_by" ].get<std::string>( );
+    const bool bRadicl = sNorm == "radicl-seq";
+    const bool bIce = sNorm == "hi-c";
+    if( bRadicl || bIce )
         for( size_t uiI = 0; uiI < 2; uiI++ )
             for( size_t uiX : vInGroup[ uiI ] )
             {
@@ -93,12 +99,12 @@ bool PartialQuarry::setActiveCoverage( )
                 if( vGroups[ uiI ][ uiK ].count( vActiveCoverage[ uiI ][ uiJ ] ) > 0 )
                     vInGroupCoverage[ uiI ][ uiK ].push_back( uiJ );
             }
-            if( uiI == 1 && !vActiveCoverage[ uiI ][ uiJ ].second )
+            if( (bIce || uiI == 1) && !vActiveCoverage[ uiI ][ uiJ ].second )
                 for( size_t uiK = 0; uiK < 2; uiK++ )
                 {
                     CANCEL_RETURN;
                     if( vNormGroups[ uiK ].count( vActiveCoverage[ uiI ][ uiJ ].first ) > 0 )
-                        vNormCoverage[ uiK ].push_back( uiJ );
+                        vNormCoverage[ uiI ][ uiK ].push_back( uiJ );
                 }
         }
     END_RETURN;
@@ -224,10 +230,10 @@ bool PartialQuarry::setFlatCoverageValues( )
                 vvFlatCoverageValues[ uiJ ].push_back( getMixedValue( (double)vVal[ 0 ], (double)vVal[ 1 ] ) );
             }
         }
-        if( vvCoverageValues[ uiJ ].size( ) > 0 && uiJ == 1 )
+        if( vvCoverageValues[ uiJ ].size( ) > 0 )
         {
-            vFlatNormValues.clear( );
-            vFlatNormValues.reserve( vvCoverageValues[ uiJ ][ 0 ].size( ) );
+            vFlatNormValues[uiJ].clear( );
+            vFlatNormValues[uiJ].reserve( vvCoverageValues[ uiJ ][ 0 ].size( ) );
             for( size_t uiI = 0; uiI < vvCoverageValues[ uiJ ][ 0 ].size( ); uiI++ )
             {
                 std::array<size_t, 2> vVal;
@@ -235,13 +241,13 @@ bool PartialQuarry::setFlatCoverageValues( )
                 {
                     CANCEL_RETURN;
                     std::vector<size_t> vCollected;
-                    vCollected.reserve( vNormCoverage[ uiK ].size( ) );
-                    for( size_t uiX : vNormCoverage[ uiK ] )
+                    vCollected.reserve( vNormCoverage[ uiJ ][ uiK ].size( ) );
+                    for( size_t uiX : vNormCoverage[ uiJ ][ uiK ] )
                         vCollected.push_back( vvCoverageValues[ uiJ ][ uiX ][ uiI ] );
 
                     vVal[ uiK ] = getFlatValue( vCollected );
                 }
-                vFlatNormValues.push_back( vVal );
+                vFlatNormValues[uiJ].push_back( vVal );
             }
         }
     }

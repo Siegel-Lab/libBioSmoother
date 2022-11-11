@@ -43,54 +43,106 @@ bool PartialQuarry::normalizeBinominalTest( )
 {
     size_t uiNumBinsInRowTotal = ( this->xSession[ "contigs" ][ "genome_size" ].get<size_t>( ) - 1 ) / uiBinWidth + 1;
     vvNormalized = normalizeBinominalTestTrampoline(
-        vvFlatValues, vFlatNormValues, uiNumBinsInRowTotal,
+        vvFlatValues, vFlatNormValues[1], uiNumBinsInRowTotal,
         this->xSession[ "settings" ][ "normalization" ][ "p_accept" ][ "val" ].get<double>( ) );
     CANCEL_RETURN;
     END_RETURN;
 }
 
+/*
+
+@ https://github.com/mirnylab/hiclib-legacy/
+@ https://github.com/mirnylab/hiclib-legacy/blob/518546e41987dca8a40f45ddc63601a5aaf46bfa/src/hiclib/highResBinnedData.py#L565
+
+def _marginalError(self, marginals=None, percentile=99.9):
+    """Checks after each pass of IC if marginals are close enough to 1.
+    The error is calculated as the specified percentile of deviation
+    from the mean marginal.
+    """
+    if marginals is None:
+        if not hasattr(self, "marginals"):
+            return 99999
+        marginals = self.marginals
+    marginals = np.concatenate(marginals)
+    marginals = marginals[marginals != 0] # removes all zero values
+    error = np.percentile(np.abs(marginals - marginals.mean()), percentile)
+    return error / marginals.mean()
+
+def getMarginals(self, normalizeForIC=False):
+    """
+    Returns a sum over each row/column, and saves them to self.marginals
+    normalizeForIc=True will normalize them to mean 1.
+    """
+    self._hasData()
+    marginals = [np.zeros(i, float) for i in self.genome.chrmLensBin]
+    for chr1, chr2 in self.data:
+        m2, m1 = self.data[(chr1, chr2)].getSums()
+        marginals[chr1] += m1
+        if chr1 != chr2:
+            marginals[chr2] += m2
+
+    self.marginals = marginals
+    return marginals
+
+def divideByVectors(self, vectors):
+    """
+    Divides each row and column by correspoinding
+        value from vectors[0] and vectors[1]
+    Does it without calling getData twice!
+    """
+
+    vecX = vectors[0]
+    vecY = vectors[1]
+    vecX[vecX == 0] = 1
+    vecY[vecY == 0] = 1
+    data = self.getData()
+    assert data.shape[1] == len(vecX)
+    assert data.shape[0] == len(vecY)
+    data /= vecX[None, :] # puts entire array into new array
+    data /= vecY[:, None] # puts each element of the array into a new array
+    self.setData(data)
+
+def divideByMarginals(self, marginals=None):
+    """Divides matrix by a vector.
+    If the vector is not provided, will divide it by a
+    marginals calculated previously.
+    """
+    self._hasData()
+    if marginals is None:
+        marginals = self.marginals
+
+    for chr1, chr2 in self.data:
+        m2 = marginals[chr1]
+        m1 = marginals[chr2]
+        self.data[(chr1, chr2)].divideByVectors((np.sqrt(m1), np.sqrt(m2)))
+
+def iterativeCorrection(self, tolerance=1e-2):
+    """
+    Performs iterative correction in place.
+    Tolerance is the maximum allowed relative deviation of the marginals.
+    Tries to set biases to self.biases after IC.
+    """
+    self._hasData()
+    curPass = 0
+    marginals = np.ones(self.genome.numBins, float)
+    while self._marginalError() > tolerance:
+        m = self.getMarginals(normalizeForIC=True)
+        marginals *= np.concatenate(m)
+        self.divideByMarginals()
+        print("Pass = %d, Error = %lf" % (curPass, self._marginalError()))
+        curPass += 1
+    self.biases = marginals
+    return self.biases
+
+*/
 bool PartialQuarry::normalizeIC( )
 {
-    /*
-
-    def hi_c_normalization(self, bins, cols, rows):
-        # max 50 iterations
-        for num_itr in range(50):
-            assert len(bins) == len(cols) * len(rows)
-            # compute coverage & width
-            cov_rows = [(sum(bins[y + len(cols) * x] for y in range(len(cols))), v[1]) for x, v in enumerate(rows)]
-            cov_cols = [(sum(bins[y + len(cols) * x] for x in range(len(rows))), v[1]) for y, v in enumerate(cols)]
-            def unit_mean(l):
-                total_width = sum(w for v, w in l if v > 0)
-                cnt = 0
-                m = 1
-                for m, w in sorted([(v, w) for v, w in l if v > 0]):
-                    if cnt + w > total_width / 2:
-                        break
-                    cnt += w
-                return [r if r != 0 else 1 for r in [x / m for x, _ in l]]
-
-            cov_cols = unit_mean(cov_cols)
-            cov_rows = unit_mean(cov_rows)
-            assert len(cov_cols) == len(cols)
-            assert len(cov_rows) == len(rows)
-            assert len(bins) == len(cov_cols) * len(cov_rows)
-
-            max_bias_delta = 0
-            for idx in range(len(bins)):
-                bias_delta = cov_cols[idx % len(cols)] * cov_rows[idx // len(cols)]
-                bins[idx] = bins[idx] / bias_delta
-                max_bias_delta = max(max_bias_delta, abs(1-bias_delta))
-
-            if max_bias_delta < 0.01:
-                print("stopped at iteration", num_itr, "since max_bias_delta is", max_bias_delta)
-                break
-
-        n = max(bins + [1])
-        return [x/n for x in bins]
-
-    */
-    throw std::logic_error( "Function not implemented" );
+    for( auto& vVal : vvFlatValues )
+    {
+        CANCEL_RETURN;
+        vvNormalized.push_back( std::array<double, 2>{ (double)vVal[ 0 ], (double)vVal[ 1 ] } );
+    }
+    END_RETURN;
 }
 
 bool PartialQuarry::setNormalized( )

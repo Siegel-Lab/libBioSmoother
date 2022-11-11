@@ -444,10 +444,10 @@ class PartialQuarry
 
     std::array<std::vector<std::vector<size_t>>, 2> vvCoverageValues;
     std::array<std::array<std::vector<size_t>, 3>, 2> vInGroupCoverage;
-    std::array<std::vector<size_t>, 2> vNormCoverage;
+    std::array<std::array<std::vector<size_t>>, 2> vNormCoverage;
     // outer array: column / row
     std::array<std::vector<double>, 2> vvFlatCoverageValues;
-    std::vector<std::array<size_t, 2>> vFlatNormValues;
+    std::array<std::vector<std::array<size_t, 2>>. 2> vFlatNormValues;
 
     std::vector<std::string> vColorPalette;
     pybind11::list vRenderedPalette;
