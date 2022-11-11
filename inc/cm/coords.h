@@ -151,34 +151,34 @@ size_t smaller_bin_to_num( std::string sVal )
 }
 
 
-size_t getEvenlyDividableByMaxTwoPowNIn(size_t uiFrom, size_t uiTo)
+size_t getEvenlyDividableByMaxTwoPowNIn( size_t uiFrom, size_t uiTo )
 {
-    size_t uiN = std::log2(uiTo - uiFrom) + 1;
-    while(uiN > 0)
+    size_t uiN = std::log2( uiTo - uiFrom ) + 1;
+    while( uiN > 0 )
     {
         size_t uiX = 1 << uiN;
-        if(uiFrom % uiX == 0)
+        if( uiFrom % uiX == 0 )
         {
-            assert(uiFrom + uiX >= uiTo);
+            assert( uiFrom + uiX >= uiTo );
             return uiFrom;
         }
-        size_t uiY = uiX * (uiFrom / uiX) + uiX;
-        if(uiY < uiTo)
+        size_t uiY = uiX * ( uiFrom / uiX ) + uiX;
+        if( uiY < uiTo )
         {
-            assert(uiY + uiX >= uiTo);
-            assert(uiY >= uiFrom);
+            assert( uiY + uiX >= uiTo );
+            assert( uiY >= uiFrom );
             return uiY;
         }
         --uiN;
     }
-    return std::numeric_limits<size_t>::max();
+    return std::numeric_limits<size_t>::max( );
 }
 
 template <typename anno_t>
 std::pair<std::vector<AxisCoord>, std::vector<AxisRegion>>
 annoCoordsHelper( size_t uiBinSize, size_t uiScreenStartPos, size_t uiScreenEndPos, size_t /*iSmallerBins*/,
-                  size_t iMultipleAnnosInBin, size_t iAnnoInMultipleBins, std::vector<ChromDesc> vChromosomes, bool& bCancel,
-                  const json& xSession, anno_t& rAnno, std::string sAnno )
+                  size_t iMultipleAnnosInBin, size_t iAnnoInMultipleBins, std::vector<ChromDesc> vChromosomes,
+                  bool& bCancel, const json& xSession, anno_t& rAnno, std::string sAnno )
 {
     std::vector<AxisCoord> vRet;
     std::vector<AxisRegion> vRet2;
@@ -221,7 +221,7 @@ annoCoordsHelper( size_t uiBinSize, size_t uiScreenStartPos, size_t uiScreenEndP
 
             while( xLower < xUpper )
             {
-                //uiDescId, uiAnnoStart, uiAnnoEnd
+                // uiDescId, uiAnnoStart, uiAnnoEnd
                 if( bCancel )
                     return std::make_pair( vRet, vRet2 );
                 // find bin coords
@@ -241,8 +241,8 @@ annoCoordsHelper( size_t uiBinSize, size_t uiScreenStartPos, size_t uiScreenEndP
                 size_t uiCurrScreenSize;
                 size_t uiCurrIndexSize;
                 size_t uiAdd;
-                assert(xLower->uiIntervalEnd >= uiIndexPos);
-                assert(( xUpper - 1 )->uiIntervalEnd >= uiIndexPos);
+                assert( xLower->uiIntervalEnd >= uiIndexPos );
+                assert( ( xUpper - 1 )->uiIntervalEnd >= uiIndexPos );
                 switch( iMultipleAnnosInBin )
                 {
                     case 0: // combine
@@ -254,19 +254,20 @@ annoCoordsHelper( size_t uiBinSize, size_t uiScreenStartPos, size_t uiScreenEndP
                         uiCurrScreenSize = ( xUpper - 1 )->uiIntervalCoordsEnd - xLower->uiIntervalCoordsStart;
                         break;
                     case 2: // max_fac_pow_two
-                        xBegin = rAnno.begin(iDataSetId);
-                        if(xLower->uiIntervalId < (xUpper - 1)->uiIntervalId)
-                            uiAdd = getEvenlyDividableByMaxTwoPowNIn(xLower - xBegin, xUpper - xBegin);
+                        xBegin = rAnno.begin( iDataSetId );
+                        if( xLower->uiIntervalId < ( xUpper - 1 )->uiIntervalId )
+                            uiAdd = getEvenlyDividableByMaxTwoPowNIn( xLower - xBegin, xUpper - xBegin );
                         else
                             uiAdd = xLower - xBegin;
-                        if(uiAdd != std::numeric_limits<size_t>::max())
+                        if( uiAdd != std::numeric_limits<size_t>::max( ) )
                         {
                             xPick = xBegin + uiAdd;
                             switch( iAnnoInMultipleBins )
                             {
                                 case 0: // separate
                                 case 1: // stretch
-                                    uiIndexPos = xPick->uiIntervalStart + uiCurrScreenPos - xLower->uiIntervalCoordsStart;
+                                    uiIndexPos =
+                                        xPick->uiIntervalStart + uiCurrScreenPos - xLower->uiIntervalCoordsStart;
                                     break;
                                 case 2: // squeeze
                                     uiIndexPos = xPick->uiIntervalStart + uiCurrScreenPos - xLower->uiIntervalId;
@@ -302,7 +303,7 @@ annoCoordsHelper( size_t uiBinSize, size_t uiScreenStartPos, size_t uiScreenEndP
                         // do nothing
                         break;
                     case 2: // squeeze
-                        if(iMultipleAnnosInBin == 3)
+                        if( iMultipleAnnosInBin == 3 )
                             uiCurrScreenSize = 1;
                         else
                             uiCurrScreenSize = xUpper - xLower;
@@ -318,13 +319,12 @@ annoCoordsHelper( size_t uiBinSize, size_t uiScreenStartPos, size_t uiScreenEndP
                     .uiScreenSize = uiCurrScreenSize, //
                     .uiIndexSize = uiCurrIndexSize //
                 } );
-                if(iAnnoInMultipleBins != 2 &&
-                   vRet2.size() > 0 && vRet2.back().sChromosome == xChr.sName &&
-                   vRet2.back().uiIndexPos + vRet2.back().uiIndexSize == uiIndexPos)
-                {   // extend last AxisRegion
-                    vRet2.back().uiScreenSize += uiCurrScreenSize;
-                    vRet2.back().uiIndexSize += uiCurrIndexSize;
-                    ++vRet2.back().uiNumCoords;
+                if( iAnnoInMultipleBins != 2 && vRet2.size( ) > 0 && vRet2.back( ).sChromosome == xChr.sName &&
+                    vRet2.back( ).uiIndexPos + vRet2.back( ).uiIndexSize == uiIndexPos )
+                { // extend last AxisRegion
+                    vRet2.back( ).uiScreenSize += uiCurrScreenSize;
+                    vRet2.back( ).uiIndexSize += uiCurrIndexSize;
+                    ++vRet2.back( ).uiNumCoords;
                 }
                 else // create new AxisRegion
                     vRet2.push_back( AxisRegion{
@@ -359,8 +359,6 @@ annoCoordsHelper( size_t uiBinSize, size_t uiScreenStartPos, size_t uiScreenEndP
                         throw std::logic_error( "unknown iMultipleAnnosInBin value" );
                 }
             }
-
-
         }
     }
 
@@ -440,7 +438,8 @@ bool PartialQuarry::setTicks( )
         pybind11::list vFullList;
 
         size_t uiRunningStart = 0;
-        std::string sCoords = this->xSession[ "contigs" ][ uiI == 0 ? "column_coordinates" : "row_coordinates" ].get<std::string>( );
+        std::string sCoords =
+            this->xSession[ "contigs" ][ uiI == 0 ? "column_coordinates" : "row_coordinates" ].get<std::string>( );
         if( sCoords == "full_genome" )
         {
             for( ChromDesc& rDesc : this->vActiveChromosomes[ uiI ] )
@@ -455,30 +454,31 @@ bool PartialQuarry::setTicks( )
         else
         {
             size_t iAnnoInMultipleBins = multiple_bins(
-                    this->xSession[ "settings" ][ "filters" ][ "anno_in_multiple_bins" ].get<std::string>( ) );
+                this->xSession[ "settings" ][ "filters" ][ "anno_in_multiple_bins" ].get<std::string>( ) );
             auto& rJson = this->xSession[ "annotation" ][ "by_name" ][ sCoords ];
             for( AxisRegion& xRegion : vAxisRegions[ uiI ] )
             {
                 CANCEL_RETURN;
                 int64_t iDataSetId = rJson[ xRegion.sChromosome ].get<int64_t>( );
-                auto xFirst = xIndices.vAnno.lowerBound(iDataSetId, xRegion.uiIndexPos, 
-                                                         iAnnoInMultipleBins < 2, iAnnoInMultipleBins == 2);
-                
-                std::vector<std::string> vSplit = splitString<std::vector<std::string>>( 
-                        xIndices.vAnno.desc(*xFirst), '\n' );
+                auto xFirst = xIndices.vAnno.lowerBound( iDataSetId, xRegion.uiIndexPos, iAnnoInMultipleBins < 2,
+                                                         iAnnoInMultipleBins == 2 );
+
+                std::vector<std::string> vSplit =
+                    splitString<std::vector<std::string>>( xIndices.vAnno.desc( *xFirst ), '\n' );
                 std::string sId = "n/a";
                 const std::string csID = "ID=";
                 for( std::string sX : vSplit )
                     if( sX.substr( 0, csID.size( ) ) == csID )
                     {
-                        size_t uiX = sX.rfind(":");
-                        if(uiX != std::string::npos)
+                        size_t uiX = sX.rfind( ":" );
+                        if( uiX != std::string::npos )
                             sId = sX.substr( csID.size( ), uiX - csID.size( ) );
                         else
                             sId = sX.substr( csID.size( ) );
                     }
 
-                vNames.append( xRegion.sChromosome.substr( 0, xRegion.sChromosome.size( ) - uiLogestCommonSuffix ) + " - " + sId );
+                vNames.append( xRegion.sChromosome.substr( 0, xRegion.sChromosome.size( ) - uiLogestCommonSuffix ) +
+                               " - " + sId );
                 vStartPos.append( uiRunningStart );
                 uiRunningStart += xRegion.uiScreenSize;
             }
@@ -796,8 +796,8 @@ const pybind11::list PartialQuarry::getAnnotationList( bool bXAxis )
 
     pybind11::gil_scoped_acquire acquire;
     pybind11::list vRet;
-    for(auto& xChr : this->vActiveChromosomes[ bXAxis ? 0 : 1 ])
-        vRet.append(xChr.sName);
+    for( auto& xChr : this->vActiveChromosomes[ bXAxis ? 0 : 1 ] )
+        vRet.append( xChr.sName );
 
     return vRet;
 }
@@ -826,22 +826,21 @@ void PartialQuarry::regCoords( )
                                .vIncomingSession = { { "contigs", "displayed_on_x" }, { "contigs", "displayed_on_y" } },
                                .uiLastUpdated = uiCurrTime } );
 
-    registerNode( NodeNames::Ticks,
-                  ComputeNode{ .sNodeName = "ticks",
-                               .fFunc = &PartialQuarry::setTicks,
-                               .vIncomingFunctions = { NodeNames::ActiveChrom, NodeNames::LCS,
-                                                       NodeNames::AnnotationValues },
-                               .vIncomingSession = { },
-                               .uiLastUpdated = uiCurrTime } );
+    registerNode(
+        NodeNames::Ticks,
+        ComputeNode{ .sNodeName = "ticks",
+                     .fFunc = &PartialQuarry::setTicks,
+                     .vIncomingFunctions = { NodeNames::ActiveChrom, NodeNames::LCS, NodeNames::AnnotationValues },
+                     .vIncomingSession = { },
+                     .uiLastUpdated = uiCurrTime } );
 
     registerNode( NodeNames::AxisCoords,
                   ComputeNode{ .sNodeName = "axis_coords",
                                .fFunc = &PartialQuarry::setAxisCoords,
                                .vIncomingFunctions = { NodeNames::ActiveChrom, NodeNames::RenderArea },
-                               .vIncomingSession = { 
-                                                    { "settings", "filters", "cut_off_bin" },
-                                                    { "settings", "filters", "multiple_annos_in_bin" },
-                                                    { "settings", "filters", "anno_in_multiple_bins" },
+                               .vIncomingSession = { { "settings", "filters", "cut_off_bin" },
+                                                     { "settings", "filters", "multiple_annos_in_bin" },
+                                                     { "settings", "filters", "anno_in_multiple_bins" },
                                                      { "contigs", "column_coordinates" },
                                                      { "contigs", "row_coordinates" } },
                                .uiLastUpdated = uiCurrTime } );

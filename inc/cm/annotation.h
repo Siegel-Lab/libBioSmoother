@@ -54,7 +54,8 @@ bool PartialQuarry::setAnnotationValues( )
 {
     size_t uiMaxDetailedDisplay =
         this->xSession[ "settings" ][ "interface" ][ "max_detailed_anno_display" ].get<size_t>( );
-    const bool bSqueeze = this->xSession[ "settings" ][ "filters" ][ "anno_in_multiple_bins" ].get<std::string>( ) == "squeeze";
+    const bool bSqueeze =
+        this->xSession[ "settings" ][ "filters" ][ "anno_in_multiple_bins" ].get<std::string>( ) == "squeeze";
     for( size_t uiX : { 0, 1 } )
     {
         size_t uiMinAnnoDist = 2;
@@ -94,7 +95,7 @@ bool PartialQuarry::setAnnotationValues( )
                     {
                         size_t uiStartPos;
                         size_t uiEndPos;
-                        if(bSqueeze)
+                        if( bSqueeze )
                         {
                             uiStartPos = xRegion.uiScreenPos;
                             uiEndPos = xRegion.uiScreenPos + xRegion.uiScreenSize;
@@ -102,14 +103,14 @@ bool PartialQuarry::setAnnotationValues( )
                         else
                         {
                             uiStartPos =
-                            ( std::get<0>( xAnno ) > xRegion.uiIndexPos ? std::get<0>( xAnno ) - xRegion.uiIndexPos
-                                                                        : 0 ) +
-                            xRegion.uiScreenPos;
+                                ( std::get<0>( xAnno ) > xRegion.uiIndexPos ? std::get<0>( xAnno ) - xRegion.uiIndexPos
+                                                                            : 0 ) +
+                                xRegion.uiScreenPos;
                             uiEndPos = std::min( ( std::get<1>( xAnno ) > xRegion.uiIndexPos
-                                                          ? std::get<1>( xAnno ) - xRegion.uiIndexPos
-                                                          : 0 ) +
-                                                        xRegion.uiScreenPos,
-                                                    xRegion.uiScreenPos + xRegion.uiScreenSize );
+                                                       ? std::get<1>( xAnno ) - xRegion.uiIndexPos
+                                                       : 0 ) +
+                                                     xRegion.uiScreenPos,
+                                                 xRegion.uiScreenPos + xRegion.uiScreenSize );
                         }
 
                         if( uiEndPos > uiStartPos )

@@ -30,7 +30,16 @@ template <template <typename> typename vec_gen_t> class AnnotationDescIndex
     {
         size_t uiStart;
         size_t uiEnd;
+        // size_t uiPrefixTreeRoot;
     };
+#if 0
+    struct PrefixTreeNode
+    {
+        size_t uiNext;
+        size_t uiChild;
+        char cLabel;
+    };
+#endif
 
     typename sps::DescImpl<vec_gen_t> vDesc;
     vec_gen_t<Interval> xIntervalVecGen = vec_gen_t<Interval>( );
@@ -41,13 +50,121 @@ template <template <typename> typename vec_gen_t> class AnnotationDescIndex
     typename vec_gen_t<Dataset>::file_t xDatasetFile;
     typename vec_gen_t<Dataset>::vec_t vDatasets;
 
+#if 0
+    vec_gen_t<PrefixTreeNode> xPrefixTreeVecGen = vec_gen_t<PrefixTreeNode>( );
+    typename vec_gen_t<PrefixTreeNode>::file_t xPrefixTreeFile;
+    typename vec_gen_t<PrefixTreeNode>::vec_t vPrefixTree;
+
+    bool addToPrefixTree(std::string sDesc, size_t uiInterval, size_t uiDatasetID)
+    {
+        PrefixTreeNode& xCurr = vPrefixTree[vDatasets[uiDatasetID].uiPrefixTreeRoot];
+        sDesc += "\n";
+        size_t uiDescCnt = 0;
+        while(uiDescCnt < sDesc.size())
+        {
+            // find node with correct label
+            while(xCurr.cLabel != sDesc[uiDescCnt] && xCurr.uiNext != std::numeric_limits<size_t>::max())
+                xCurr = vPrefixTree[xCurr.uiNext];
+
+            // if no node with correct label exists stop search
+            if(xCurr.cLabel != sDesc[uiDescCnt])
+                break;
+            xCurr = vPrefixTree[xCurr.uiChild];
+            uiDescCnt++;
+        }
+        // check if we need to add nodes
+        if( uiDescCnt < sDesc.size() )
+        {
+            // add one next node with the correct label
+            xCurr.uiNext = vPrefixTree.size();
+            // make node
+            vPrefixTree.push_back(PrefixTreeNode{
+                .uiNext=std::numeric_limits<size_t>::max(),
+                .uiChild=std::numeric_limits<size_t>::max(),
+                .cLabel=sDesc[uiDescCnt];
+            });
+            xCurr = vPrefixTree.back();
+            uiDescCnt++
+
+            // create missing child nodes
+            while(uiDescCnt < sDesc.size())
+            {
+                xCurr.uiChild = vPrefixTree.size();
+                vPrefixTree.push_back(PrefixTreeNode{
+                    .uiNext=std::numeric_limits<size_t>::max(),
+                    .uiChild=std::numeric_limits<size_t>::max(),
+                    .cLabel=sDesc[uiDescCnt];
+                });
+                xCurr = vPrefixTree.back();
+                uiDescCnt++;
+            }
+        }
+
+        // make sure child is empty
+        if(xCurr.uiChild != std::numeric_limits<size_t>::max())
+            return false;
+        // save interval Id
+        xCurr.uiChild = uiInterval;
+        return true;
+    }
+
+    size_t searchPrefixTree(std::string sDesc, size_t uiDatasetID, size_t uiMinMatches = 3)
+    {
+        PrefixTreeNode& xLast = vPrefixTree[vDatasets[uiDatasetID].uiPrefixTreeRoot];
+        size_t uiMatches = 0;
+        for(size_t uiDescCnt = 0; uiDescCnt < sDesc.size(); uiDescCnt++)
+        {
+            PrefixTreeNode& xCurr = xLast;
+            // find node with correct label
+            while(xCurr.cLabel != sDesc[uiDescCnt] && xCurr.uiNext != std::numeric_limits<size_t>::max())
+                xCurr = vPrefixTree[xCurr.uiNext];
+
+            // if node with correct label exists
+            if(xCurr.cLabel == sDesc[uiDescCnt])
+            {
+                xLast = vPrefixTree[xCurr.uiChild];
+                ++uiMatches;
+            }
+        }
+        if(uiMatches > uiMinMatches)
+        {
+            // search for nearest \n
+            size_t uiMaxDepth = 1;
+            while(true)
+            {
+
+                ++uiMaxDepth;
+            }
+
+            while(xLast.cLabel != "\n" && xLast.uiNext != std::numeric_limits<size_t>::max())
+                xLast = vPrefixTree[xLast.uiNext];
+            if(xLast.cLabel == "\n")
+            {
+                xLast = vPrefixTree[xLast.uiChild];
+
+                std::vector<size_t> vRet;
+                while(xLast.uiNext != std::numeric_limits<size_t>::max())
+
+                return vRet;
+            }
+        }
+        return std::numeric_limits<size_t>::max();
+    }
+#endif
+
   public:
     AnnotationDescIndex( std::string sPrefix, bool bWrite )
         : vDesc( sPrefix, bWrite ),
+
           xIntervalFile( xIntervalVecGen.file( sPrefix + ".intervals", bWrite ) ),
           vIntervals( xIntervalVecGen.vec( xIntervalFile ) ),
+
           xDatasetFile( xDatasetVecGen.file( sPrefix + ".datasets", bWrite ) ),
           vDatasets( xDatasetVecGen.vec( xDatasetFile ) )
+#if 0
+          , xPrefixTreeFile( xPrefixTreeVecGen.file( sPrefix + ".datasets", bWrite ) ),
+          vPrefixTree( xPrefixTreeVecGen.vec( xPrefixTreeFile ) )
+#endif
     {}
 
     AnnotationDescIndex( )
@@ -73,17 +190,17 @@ template <template <typename> typename vec_gen_t> class AnnotationDescIndex
         std::set<size_t> xActiveIntervals;
         for( size_t uiJ = 0; uiJ < vLineSweepPos.size( ); )
         {
-            size_t uiCurrPos = std::get<0>(vLineSweepPos[ uiJ ]);
-            while( uiJ < vLineSweepPos.size( ) && std::get<0>(vLineSweepPos[ uiJ ]) == uiCurrPos )
+            size_t uiCurrPos = std::get<0>( vLineSweepPos[ uiJ ] );
+            while( uiJ < vLineSweepPos.size( ) && std::get<0>( vLineSweepPos[ uiJ ] ) == uiCurrPos )
             {
-                if( !std::get<2>(vLineSweepPos[ uiJ ]) )
+                if( !std::get<2>( vLineSweepPos[ uiJ ] ) )
                     // interval start
-                    xActiveIntervals.insert( std::get<1>(vLineSweepPos[ uiJ ]) );
+                    xActiveIntervals.insert( std::get<1>( vLineSweepPos[ uiJ ] ) );
                 else /*if(std::get<1>(vIntervalsIn[vLineSweepPos[uiJ].second]) + 1 == uiCurrPos)*/
                 {
-                    assert( xActiveIntervals.count( std::get<1>(vLineSweepPos[ uiJ ]) ) > 0 );
+                    assert( xActiveIntervals.count( std::get<1>( vLineSweepPos[ uiJ ] ) ) > 0 );
                     // interval end
-                    xActiveIntervals.erase( std::get<1>(vLineSweepPos[ uiJ ]) );
+                    xActiveIntervals.erase( std::get<1>( vLineSweepPos[ uiJ ] ) );
                 }
                 uiJ++;
             }
@@ -92,7 +209,7 @@ template <template <typename> typename vec_gen_t> class AnnotationDescIndex
 
             if( xActiveIntervals.size( ) > 0 )
             {
-                size_t uiNextPos = std::get<0>(vLineSweepPos[ uiJ ]);
+                size_t uiNextPos = std::get<0>( vLineSweepPos[ uiJ ] );
 
                 for( size_t uiActive : xActiveIntervals )
                     vIntervals.push_back( Interval{
@@ -121,22 +238,20 @@ template <template <typename> typename vec_gen_t> class AnnotationDescIndex
         return vDatasets.size( ) - 1;
     }
 
-    std::string desc(const Interval& rI)
+    std::string desc( const Interval& rI )
     {
         return vDesc.get( rI.uiDescId );
     }
 
-    void iterate( size_t uiDatasetId, size_t uiFrom, size_t uiTo,
+    using interval_it_t = typename vec_gen_t<Interval>::vec_t::iterator;
+    void iterate( interval_it_t xStart, interval_it_t xEnd,
                   std::function<bool( std::tuple<size_t, size_t, std::string, bool> )> fYield,
                   bool bIntervalCoords = false, bool bIntervalCount = false )
     {
         assert( !( bIntervalCoords && bIntervalCount ) );
-        std::set<size_t> xActiveIntervals {};
+        std::set<size_t> xActiveIntervals{ };
 
-        auto xStart = lowerBound( uiDatasetId, uiFrom, bIntervalCoords, bIntervalCount );
-        auto xEnd = upperBound( uiDatasetId, uiTo, bIntervalCoords, bIntervalCount );
-
-        assert(xStart <= xEnd);
+        assert( xStart <= xEnd );
 
         while( xStart != xEnd )
         {
@@ -154,6 +269,24 @@ template <template <typename> typename vec_gen_t> class AnnotationDescIndex
             }
             ++xStart;
         }
+    }
+
+    void iterate( size_t uiDatasetId, size_t uiFrom, size_t uiTo,
+                  std::function<bool( std::tuple<size_t, size_t, std::string, bool> )> fYield,
+                  bool bIntervalCoords = false, bool bIntervalCount = false )
+    {
+        auto xStart = lowerBound( uiDatasetId, uiFrom, bIntervalCoords, bIntervalCount );
+        auto xEnd = upperBound( uiDatasetId, uiTo, bIntervalCoords, bIntervalCount );
+        iterate(xStart, xEnd, fYield, bIntervalCoords, bIntervalCount);
+    }
+
+    void iterate( size_t uiDatasetId,
+                  std::function<bool( std::tuple<size_t, size_t, std::string, bool> )> fYield,
+                  bool bIntervalCoords = false, bool bIntervalCount = false )
+    {
+        auto xStart = begin( uiDatasetId );
+        auto xEnd = end( uiDatasetId );
+        iterate(xStart, xEnd, fYield, bIntervalCoords, bIntervalCount);
     }
 
     std::vector<std::tuple<size_t, size_t, std::string, bool>>
@@ -175,12 +308,11 @@ template <template <typename> typename vec_gen_t> class AnnotationDescIndex
         return vRet;
     }
 
-    using interval_it_t = typename vec_gen_t<Interval>::vec_t::iterator;
-    interval_it_t begin(size_t uiDatasetId)
+    interval_it_t begin( size_t uiDatasetId )
     {
         return vIntervals.begin( ) + vDatasets[ uiDatasetId ].uiStart;
     }
-    interval_it_t end(size_t uiDatasetId)
+    interval_it_t end( size_t uiDatasetId )
     {
         return vIntervals.begin( ) + vDatasets[ uiDatasetId ].uiEnd;
     }

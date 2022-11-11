@@ -1,8 +1,8 @@
 #include "cm/sps_interface.h"
+#include <cctype>
 #include <mutex>
 #include <nlohmann/json.hpp>
 #include <pybind11_json/pybind11_json.hpp>
-#include <cctype>
 
 #pragma once
 
@@ -696,87 +696,110 @@ class PartialQuarry
     // coverage.h
     const std::array<int64_t, 2> getMinMaxTracks( bool bAxis );
 
-    private:
-    size_t stringCompare(std::string sQuery, std::string sRef)
+  private:
+    size_t stringCompare( std::string sQuery, std::string sRef )
     {
-        if(sQuery.size() < 3)
-            return sQuery == sRef ? sQuery.size() : 0;
+        if( sQuery.size( ) < 3 )
+            return sQuery == sRef ? sQuery.size( ) : 0;
 
         size_t uiRet = 0;
         size_t uiPos = 0;
 
-        for(char c : sQuery)
+        for( char c : sQuery )
         {
             size_t uiCurr = uiPos;
-            while(uiCurr < sRef.size() && std::tolower(c) != std::tolower(sRef[uiCurr]))
+            while( uiCurr < sRef.size( ) && std::tolower( c ) != std::tolower( sRef[ uiCurr ] ) )
                 ++uiCurr;
-            if(uiCurr < sRef.size())
+            if( uiCurr < sRef.size( ) )
             {
                 uiPos = uiCurr;
                 ++uiRet;
             }
         }
 
-        if(uiRet < sQuery.size() / 3)
+        if( uiRet < sQuery.size( ) / 3 )
             return 0;
 
         return uiRet;
     }
 
-    public:
-
-    const pybind11::int_ interpretName(std::string sName, std::vector<bool> vbXAxis, bool bBottom)
+  public:
+    const pybind11::int_ interpretName( std::string sName, std::vector<bool> vbXAxis, bool bBottom )
     {
         size_t uiRunningPos = 0;
         size_t uiMaxEquality = 0;
-        size_t uiMaxStartPos = 0;
-        for(bool bX : vbXAxis)
+        size_t uiMinRefSize = 0;
+        size_t uiMaxPos = 0;
+        std::string sHitDesc;
+        for( bool bX : vbXAxis )
         {
-            for( auto xChr : vActiveChromosomes[bX ? 0 : 1] )
+            uiRunningPos = 0;
+            for( auto xChr : vActiveChromosomes[ bX ? 0 : 1 ] )
             {
-                size_t uiEq = stringCompare(sName, xChr.sName);
-                if(uiEq > uiMaxEquality)
+                std::string sSearch = "chromosome=" + xChr.sName;
+                size_t uiEq = stringCompare( sName, sSearch );
+                if( bBottom && (uiEq > uiMaxEquality || (uiEq == uiMaxEquality && xChr.sName.size() < uiMinRefSize)) )
                 {
                     uiMaxEquality = uiEq;
-                    if(bBottom)
-                        uiMaxStartPos = uiRunningPos;
-                    else
-                        uiMaxStartPos = uiRunningPos + xChr.uiLength;
+                    uiMaxPos = uiRunningPos;
+                    uiMinRefSize = xChr.sName.size();
+                    sHitDesc = sSearch;
+                }
+                if( !bBottom && (uiEq > uiMaxEquality || (uiEq >= uiMaxEquality && xChr.sName.size() <= uiMinRefSize)) )
+                {
+                    uiMaxEquality = uiEq;
+                    uiMinRefSize = xChr.sName.size();
+                    uiMaxPos = uiRunningPos + xChr.uiLength;
+                    sHitDesc = sSearch;
                 }
                 uiRunningPos += xChr.uiLength;
             }
-            size_t uiEq = stringCompare(sName, "all");
-            if(uiEq > uiMaxEquality)
-            {
-                uiMaxEquality = uiEq;
-                if(bBottom)
-                    uiMaxStartPos = 0;
-                else
-                    uiMaxStartPos = uiRunningPos;
-            }
 
-            if(uiMaxEquality > (2 * sName.size()) / 3)
-                return pybind11::int_(uiMaxStartPos);
+            if( bBottom && (sName == "*" || sName.size( ) == 0 || sName == "start") )
+                return pybind11::int_( 0 );
+            if( !bBottom && (sName == "*" || sName.size( ) == 0 || sName == "end") )
+                return pybind11::int_( uiRunningPos );
+
         }
 
-        // @todo check annotations now
-        
-        for(bool bX : vbXAxis)
+        for( bool bX : vbXAxis )
         {
-            for(std::string sAnno : vActiveAnnotation)
+            for( std::string sAnno : vActiveAnnotation[ bX ? 0 : 1 ] )
             {
-                
+                auto& rJson = this->xSession[ "annotation" ][ "by_name" ][ sAnno ];
+                for( auto xChr : vActiveChromosomes[ bX ? 0 : 1 ] )
+                {
+                    int64_t iDataSetId = rJson[ xChr.sName ].get<int64_t>( );
+                    xIndices.vAnno.iterate( iDataSetId,
+                    [&](std::tuple<size_t, size_t, std::string, bool> xTup)
+                    {
+                        std::string sSearch = sAnno + "=" + std::get<2>(xTup);
+                        size_t uiEq = stringCompare( sName, sSearch );
+                        if( bBottom && (uiEq > uiMaxEquality || 
+                                       (uiEq == uiMaxEquality && std::get<2>(xTup).size() < uiMinRefSize)) )
+                        {
+                            uiMaxEquality = uiEq;
+                            uiMinRefSize = std::get<2>(xTup).size();
+                            uiMaxPos = std::get<0>(xTup);
+                            sHitDesc = sSearch;
+                        }
+                        if( !bBottom && (uiEq > uiMaxEquality || 
+                                        (uiEq >= uiMaxEquality && std::get<2>(xTup).size() <= uiMinRefSize)) )
+                        {
+                            uiMaxEquality = uiEq;
+                            uiMinRefSize = std::get<2>(xTup).size();
+                            uiMaxPos = std::get<1>(xTup);
+                            sHitDesc = sSearch;
+                        }
+
+                        return true;
+                    } );
+                }
             }
-
-            if(uiMaxEquality > (2 * sName.size()) / 3)
-                return pybind11::int_(uiMaxStartPos);
         }
-
-
-        if(uiMaxEquality > 0)
-            return pybind11::int_(uiMaxStartPos);
-
-        return pybind11::none();
+    
+        std::cout << sHitDesc << " " << uiMaxPos << std::endl;
+        return pybind11::int_( uiMaxPos );
     }
 
     void printSizes( )
