@@ -765,9 +765,9 @@ class PartialQuarry
                 uiRunningPos += uiLen;
             }
 
-            if( bBottom && (sName == "*" || sName.size( ) == 0 || sName == "start") )
+            if( (bBottom && sName == "*") || sName.size( ) == 0 || sName == "start")
                 return pybind11::int_( 0 );
-            if( !bBottom && (sName == "*" || sName.size( ) == 0 || sName == "end") )
+            if( (!bBottom && sName == "*") || sName.size( ) == 0 || sName == "end")
                 return pybind11::int_( uiRunningPos );
 
             for( std::string sAnno : vActiveAnnotation[ bX ? 0 : 1 ] )
