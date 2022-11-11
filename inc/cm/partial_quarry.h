@@ -726,33 +726,43 @@ class PartialQuarry
   public:
     const pybind11::int_ interpretName( std::string sName, std::vector<bool> vbXAxis, bool bBottom )
     {
-        size_t uiRunningPos = 0;
         size_t uiMaxEquality = 0;
         size_t uiMinRefSize = 0;
         size_t uiMaxPos = 0;
-        std::string sHitDesc;
+        const bool bSqueeze =
+            this->xSession[ "settings" ][ "filters" ][ "anno_in_multiple_bins" ].get<std::string>( ) == "squeeze";
         for( bool bX : vbXAxis )
         {
-            uiRunningPos = 0;
+            std::string sCoords = this->xSession[ "contigs" ][ bX ? "column_coordinates" : "row_coordinates" 
+                                    ].get<std::string>( );
+            const bool bFullGenome = sCoords == "full_genome";
+            size_t uiRunningPos = 0;
             for( auto xChr : vActiveChromosomes[ bX ? 0 : 1 ] )
             {
                 std::string sSearch = "chromosome=" + xChr.sName;
                 size_t uiEq = stringCompare( sName, sSearch );
-                if( bBottom && (uiEq > uiMaxEquality || (uiEq == uiMaxEquality && xChr.sName.size() < uiMinRefSize)) )
+                size_t uiLen;
+                if(bFullGenome)
+                    uiLen = xChr.uiLength;
+                else
+                {
+                    int64_t iDataSetId = this->xSession[ "annotation" ][ "by_name" ][ sCoords ][ xChr.sName ]
+                                                .get<int64_t>( );
+                    if(bSqueeze)
+                        uiLen = xIndices.vAnno.numIntervals(iDataSetId);
+                    else
+                        uiLen = xIndices.vAnno.totalIntervalSize(iDataSetId);
+                }
+                if( uiEq > uiMaxEquality || (uiEq == uiMaxEquality && xChr.sName.size() < uiMinRefSize) )
                 {
                     uiMaxEquality = uiEq;
-                    uiMaxPos = uiRunningPos;
+                    if(bBottom)
+                        uiMaxPos = uiRunningPos;
+                    else
+                        uiMaxPos = uiRunningPos + uiLen;
                     uiMinRefSize = xChr.sName.size();
-                    sHitDesc = sSearch;
                 }
-                if( !bBottom && (uiEq > uiMaxEquality || (uiEq >= uiMaxEquality && xChr.sName.size() <= uiMinRefSize)) )
-                {
-                    uiMaxEquality = uiEq;
-                    uiMinRefSize = xChr.sName.size();
-                    uiMaxPos = uiRunningPos + xChr.uiLength;
-                    sHitDesc = sSearch;
-                }
-                uiRunningPos += xChr.uiLength;
+                uiRunningPos += uiLen;
             }
 
             if( bBottom && (sName == "*" || sName.size( ) == 0 || sName == "start") )
@@ -760,10 +770,6 @@ class PartialQuarry
             if( !bBottom && (sName == "*" || sName.size( ) == 0 || sName == "end") )
                 return pybind11::int_( uiRunningPos );
 
-        }
-
-        for( bool bX : vbXAxis )
-        {
             for( std::string sAnno : vActiveAnnotation[ bX ? 0 : 1 ] )
             {
                 auto& rJson = this->xSession[ "annotation" ][ "by_name" ][ sAnno ];
@@ -775,30 +781,22 @@ class PartialQuarry
                     {
                         std::string sSearch = sAnno + "=" + std::get<2>(xTup);
                         size_t uiEq = stringCompare( sName, sSearch );
-                        if( bBottom && (uiEq > uiMaxEquality || 
-                                       (uiEq == uiMaxEquality && std::get<2>(xTup).size() < uiMinRefSize)) )
+                        if( uiEq > uiMaxEquality || 
+                            (uiEq == uiMaxEquality && std::get<2>(xTup).size() < uiMinRefSize) )
                         {
                             uiMaxEquality = uiEq;
                             uiMinRefSize = std::get<2>(xTup).size();
-                            uiMaxPos = std::get<0>(xTup);
-                            sHitDesc = sSearch;
-                        }
-                        if( !bBottom && (uiEq > uiMaxEquality || 
-                                        (uiEq >= uiMaxEquality && std::get<2>(xTup).size() <= uiMinRefSize)) )
-                        {
-                            uiMaxEquality = uiEq;
-                            uiMinRefSize = std::get<2>(xTup).size();
-                            uiMaxPos = std::get<1>(xTup);
-                            sHitDesc = sSearch;
+                            if(bBottom)
+                                uiMaxPos = std::get<0>(xTup);
+                            else
+                                uiMaxPos = std::get<1>(xTup);
                         }
 
                         return true;
-                    } );
+                    }, !bFullGenome && !bSqueeze, !bFullGenome && bSqueeze );
                 }
             }
         }
-    
-        std::cout << sHitDesc << " " << uiMaxPos << std::endl;
         return pybind11::int_( uiMaxPos );
     }
 
