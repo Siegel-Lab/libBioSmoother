@@ -2,6 +2,7 @@ from bokeh.palettes import Viridis256, Colorblind, Plasma256, Turbo256
 from statsmodels.stats.multitest import multipletests
 from scipy.stats import binom_test
 from .libContactMapping import PartialQuarry, SPS_VERSION
+from .cooler_interface import icing
 
 
 class Quarry(PartialQuarry):
@@ -21,6 +22,11 @@ class Quarry(PartialQuarry):
             for x, y in zip(multipletests(psx, alpha=float("NaN"), method="fdr_bh")[1],
                             multipletests(psy, alpha=float("NaN"), method="fdr_bh")[1])
         ]
+
+    def normalizeCoolerTrampoline(
+        self, bin_values, axis_size
+    ):
+        return icing(bin_values, axis_size)
 
     def __combine_hex_values(self, d):
         ## taken from: https://stackoverflow.com/questions/61488790/how-can-i-proportionally-mix-colors-in-python

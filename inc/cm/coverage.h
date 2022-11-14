@@ -306,7 +306,7 @@ bool PartialQuarry::setTracks( )
                 auto& xCoord = vAxisCords[ uiI ][ uiX ];
                 if( sChr != "" && sChr != xCoord.sChromosome )
                 {
-                    vChrs.append( sChr.substr( 0, sChr.size( ) - uiLogestCommonSuffix ) );
+                    vChrs.append( substringChr(sChr) );
 
                     vScreenPoss.append( vScreenPos );
                     vScreenPos = pybind11::list( );
@@ -358,7 +358,7 @@ bool PartialQuarry::setTracks( )
                     vValue.append( vvMinMaxTracks[ uiI ][ 0 ] );
                 }
             }
-            vChrs.append( sChr.substr( 0, sChr.size( ) - uiLogestCommonSuffix ) );
+            vChrs.append( substringChr(sChr) );
 
             vScreenPoss.append( vScreenPos );
             vScreenPos = pybind11::list( );
@@ -393,7 +393,7 @@ bool PartialQuarry::setTracks( )
                 auto& xCoord = vAxisCords[ uiI ][ uiX ];
                 if( sChr != "" && sChr != xCoord.sChromosome )
                 {
-                    vChrs.append( sChr.substr( 0, sChr.size( ) - uiLogestCommonSuffix ) );
+                    vChrs.append( substringChr(sChr) );
 
                     vScreenPoss.append( vScreenPos );
                     vScreenPos = pybind11::list( );
@@ -446,7 +446,7 @@ bool PartialQuarry::setTracks( )
                 }
             }
 
-            vChrs.append( sChr.substr( 0, sChr.size( ) - uiLogestCommonSuffix ) );
+            vChrs.append( substringChr(sChr) );
             vScreenPoss.append( vScreenPos );
             vIndexStarts.append( vIndexStart );
             vIndexEnds.append( vIndexEnd );

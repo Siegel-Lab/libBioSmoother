@@ -31,6 +31,8 @@ class Indexer:
     def save_session(self):
         with open(self.prefix + ".smoother_index/default_session.json", "w") as f:
             json.dump(self.session_default, f)
+        with open(self.prefix + ".smoother_index/session.json", "w") as f:
+            json.dump(self.session, f)
         del self.indices
 
     def set_session(self, keys, val):
@@ -48,8 +50,8 @@ class Indexer:
         for key in keys[:-1]:
             curr = curr[key]
             curr_def = curr_def[key]
-        curr[keys[-1]].append( val)
-        curr_def[keys[-1]].append( val)
+        curr[keys[-1]].append(val)
+        curr_def[keys[-1]].append(val)
 
     def create_session(self, chr_len_file_name, dividend, test=False):
         os.makedirs(self.prefix + ".smoother_index")
@@ -243,13 +245,13 @@ class Indexer:
                         end = [act_pos_1_e, act_pos_2_e, MAP_Q_MAX - int(map_q) - 1]
                     elif has_map_q and not multi_map:
                         start = [act_pos_1_s, act_pos_2_s, MAP_Q_MAX - int(map_q) - 1]
-                        end = None
+                        end = [0, 0, 0]
                     elif not has_map_q and multi_map:
                         start = [act_pos_1_s, act_pos_2_s]
                         end = [act_pos_1_e, act_pos_2_e]
                     elif not has_map_q and not multi_map:
                         start = [act_pos_1_s, act_pos_2_s]
-                        end = None
+                        end = [0, 0]
                     else:
                         raise RuntimeError("this statement should never be reached")
                     self.indices.insert(d, o, start, end)
@@ -264,8 +266,8 @@ class Indexer:
                         chr_x
                     ]
                 )
-                    self.set_session(["replicates", "by_name", name, "ids", chr_x, chr_y], 
-                                     self.indices.generate(d, o, verbosity=0))
+                self.set_session(["replicates", "by_name", name, "ids", chr_x, chr_y], 
+                                    self.indices.generate(d, o, verbosity=0))
 
         self.set_session(["replicates", "by_name", name, "total_reads"], total_reads)
         o = 1 if multi_map else 0
@@ -290,13 +292,13 @@ class Indexer:
                         end = [act_pos_e, MAP_Q_MAX - int(map_q) - 1]
                     elif has_map_q and not multi_map:
                         start = [act_pos_s, MAP_Q_MAX - int(map_q) - 1]
-                        end = None
+                        end = [0, 0]
                     elif not has_map_q and multi_map:
                         start = [act_pos_s]
                         end = [act_pos_e]
                     elif not has_map_q and not multi_map:
                         start = [act_pos_s]
-                        end = None
+                        end = [0]
                     else:
                         raise RuntimeError("this statement should never be reached")
                     self.indices.insert(d, o, start, end)

@@ -444,10 +444,10 @@ class PartialQuarry
 
     std::array<std::vector<std::vector<size_t>>, 2> vvCoverageValues;
     std::array<std::array<std::vector<size_t>, 3>, 2> vInGroupCoverage;
-    std::array<std::array<std::vector<size_t>>, 2> vNormCoverage;
+    std::array<std::array<std::vector<size_t>, 2>, 2> vNormCoverage;
     // outer array: column / row
     std::array<std::vector<double>, 2> vvFlatCoverageValues;
-    std::array<std::vector<std::array<size_t, 2>>. 2> vFlatNormValues;
+    std::array<std::vector<std::array<size_t, 2>>, 2> vFlatNormValues;
 
     std::vector<std::string> vColorPalette;
     pybind11::list vRenderedPalette;
@@ -621,6 +621,11 @@ class PartialQuarry
         throw std::logic_error( "Function not implemented" );
     }
 
+    virtual std::vector<double> normalizeCoolerTrampoline( std::vector<size_t>&, size_t )
+    {
+        throw std::logic_error( "Function not implemented" );
+    }
+
     virtual std::vector<std::string> colorPalette( std::string, std::string, std::string )
     {
         throw std::logic_error( "Function not implemented" );
@@ -717,6 +722,14 @@ class PartialQuarry
             return 0;
 
         return uiRet;
+    }
+
+    std::string substringChr(std::string sChr)
+    {
+        if(sChr.size( ) > uiLogestCommonSuffix + 2)
+            return sChr.substr( 0, sChr.size( ) - uiLogestCommonSuffix );
+        else
+            return sChr;
     }
 
   public:

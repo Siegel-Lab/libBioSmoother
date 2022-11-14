@@ -35,6 +35,18 @@ class PyPartialQuarry : public PartialQuarry
                            fPAccept /* Argument(s) */
         );
     }
+    
+    /* Trampoline (need one for each virtual function) */
+    std::vector<double> normalizeCoolerTrampoline( std::vector<size_t>& vFlatValues, size_t uiAxisSize ) override
+    {
+        pybind11::gil_scoped_acquire acquire;
+        PYBIND11_OVERRIDE( std::vector<double>, /* Return type */
+                           PartialQuarry, /* Parent class */
+                           normalizeCoolerTrampoline, /* Name of function in C++ (must match Python name) */
+                           vFlatValues, /* Argument(s) */
+                           uiAxisSize /* Argument(s) */
+        );
+    }
 
     std::vector<std::string> colorPalette( std::string sPaletteName, std::string sColorLow,
                                            std::string sColorHigh ) override
@@ -55,6 +67,7 @@ class ContectMappingPublicist : public PartialQuarry
   public:
     using PartialQuarry::colorPalette;
     using PartialQuarry::normalizeBinominalTestTrampoline;
+    using PartialQuarry::normalizeCoolerTrampoline;
 };
 
 
@@ -147,6 +160,7 @@ PYBIND11_MODULE( libContactMapping, m )
         .def( "save_session", &cm::PartialQuarry::saveSession ) //
 
         .def( "normalizeBinominalTestTrampoline", &cm::ContectMappingPublicist::normalizeBinominalTestTrampoline ) //
+        .def( "normalizeCoolerTrampoline", &cm::ContectMappingPublicist::normalizeCoolerTrampoline ) //
         .def( "colorPalette", &cm::ContectMappingPublicist::colorPalette ) //
         ;
 

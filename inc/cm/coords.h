@@ -445,7 +445,7 @@ bool PartialQuarry::setTicks( )
             for( ChromDesc& rDesc : this->vActiveChromosomes[ uiI ] )
             {
                 CANCEL_RETURN;
-                vNames.append( rDesc.sName.substr( 0, rDesc.sName.size( ) - uiLogestCommonSuffix ) );
+                vNames.append( substringChr(rDesc.sName) );
                 vStartPos.append( uiRunningStart );
                 vFullList.append( uiRunningStart );
                 uiRunningStart += rDesc.uiLength;
@@ -477,8 +477,7 @@ bool PartialQuarry::setTicks( )
                             sId = sX.substr( csID.size( ) );
                     }
 
-                vNames.append( xRegion.sChromosome.substr( 0, xRegion.sChromosome.size( ) - uiLogestCommonSuffix ) +
-                               " - " + sId );
+                vNames.append( substringChr(xRegion.sChromosome) + " - " + sId );
                 vStartPos.append( uiRunningStart );
                 uiRunningStart += xRegion.uiScreenSize;
             }
