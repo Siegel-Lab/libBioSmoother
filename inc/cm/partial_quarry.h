@@ -557,8 +557,41 @@ class PartialQuarry
     // normalization.h
     bool normalizeIC( );
     // normalization.h
+    bool normalizeCoolIC( );
+    // normalization.h
     bool setNormalized( );
 
+    struct IceData
+    {
+        std::array<std::vector<double>, 2> vSliceBias;
+        std::array<std::vector<double>, 2> vSliceMargin;
+        std::vector<double> vBiases;
+        std::array<std::vector<size_t>, 2> vSliceRemainder;
+        size_t uiCornerRemainder;
+    };
+
+    // normalization.h
+    void iceSetCornerRemainder( IceData&, bool );
+    // normalization.h
+    void iceSetSliceRemainder( IceData&, bool, bool, size_t, size_t );
+    // normalization.h
+    size_t iceGetCount( IceData&, size_t, size_t, bool );
+    // normalization.h
+    void iceFilter( IceData&, size_t, size_t );
+    // normalization.h
+    void iceTimesOuterProduct( IceData&, bool, size_t, size_t );
+    // normalization.h
+    void iceMarginalize( IceData&, bool, size_t, size_t );
+    // normalization.h
+    double iceNonZeroMarginVariance( IceData&, bool, double);
+    // normalization.h
+    double iceNonZeroMarginMean( IceData&, bool );
+    // normalization.h
+    void iceDivByMargin( IceData&, bool, double, size_t, size_t );
+    // normalization.h
+    size_t changeIndexSystem( size_t, size_t, size_t, size_t, size_t );
+    // normalization.h
+    void iceApplyBias( IceData&, bool, size_t, size_t );
     // normalization.h
     void regNormalization( );
 
@@ -724,9 +757,9 @@ class PartialQuarry
         return uiRet;
     }
 
-    std::string substringChr(std::string sChr)
+    std::string substringChr( std::string sChr )
     {
-        if(sChr.size( ) > uiLogestCommonSuffix + 2)
+        if( sChr.size( ) > uiLogestCommonSuffix + 2 )
             return sChr.substr( 0, sChr.size( ) - uiLogestCommonSuffix );
         else
             return sChr;
@@ -742,8 +775,8 @@ class PartialQuarry
             this->xSession[ "settings" ][ "filters" ][ "anno_in_multiple_bins" ].get<std::string>( ) == "squeeze";
         for( bool bX : vbXAxis )
         {
-            std::string sCoords = this->xSession[ "contigs" ][ bX ? "column_coordinates" : "row_coordinates" 
-                                    ].get<std::string>( );
+            std::string sCoords =
+                this->xSession[ "contigs" ][ bX ? "column_coordinates" : "row_coordinates" ].get<std::string>( );
             const bool bFullGenome = sCoords == "full_genome";
             size_t uiRunningPos = 0;
             for( auto xChr : vActiveChromosomes[ bX ? 0 : 1 ] )
@@ -751,32 +784,32 @@ class PartialQuarry
                 std::string sSearch = "chromosome=" + xChr.sName;
                 size_t uiEq = stringCompare( sName, sSearch );
                 size_t uiLen;
-                if(bFullGenome)
+                if( bFullGenome )
                     uiLen = xChr.uiLength;
                 else
                 {
-                    int64_t iDataSetId = this->xSession[ "annotation" ][ "by_name" ][ sCoords ][ xChr.sName ]
-                                                .get<int64_t>( );
-                    if(bSqueeze)
-                        uiLen = xIndices.vAnno.numIntervals(iDataSetId);
+                    int64_t iDataSetId =
+                        this->xSession[ "annotation" ][ "by_name" ][ sCoords ][ xChr.sName ].get<int64_t>( );
+                    if( bSqueeze )
+                        uiLen = xIndices.vAnno.numIntervals( iDataSetId );
                     else
-                        uiLen = xIndices.vAnno.totalIntervalSize(iDataSetId);
+                        uiLen = xIndices.vAnno.totalIntervalSize( iDataSetId );
                 }
-                if( uiEq > uiMaxEquality || (uiEq == uiMaxEquality && xChr.sName.size() < uiMinRefSize) )
+                if( uiEq > uiMaxEquality || ( uiEq == uiMaxEquality && xChr.sName.size( ) < uiMinRefSize ) )
                 {
                     uiMaxEquality = uiEq;
-                    if(bBottom)
+                    if( bBottom )
                         uiMaxPos = uiRunningPos;
                     else
                         uiMaxPos = uiRunningPos + uiLen;
-                    uiMinRefSize = xChr.sName.size();
+                    uiMinRefSize = xChr.sName.size( );
                 }
                 uiRunningPos += uiLen;
             }
 
-            if( (bBottom && sName == "*") || sName.size( ) == 0 || sName == "start")
+            if( ( bBottom && sName == "*" ) || sName.size( ) == 0 || sName == "start" )
                 return pybind11::int_( 0 );
-            if( (!bBottom && sName == "*") || sName.size( ) == 0 || sName == "end")
+            if( ( !bBottom && sName == "*" ) || sName.size( ) == 0 || sName == "end" )
                 return pybind11::int_( uiRunningPos );
 
             for( std::string sAnno : vActiveAnnotation[ bX ? 0 : 1 ] )
@@ -785,24 +818,25 @@ class PartialQuarry
                 for( auto xChr : vActiveChromosomes[ bX ? 0 : 1 ] )
                 {
                     int64_t iDataSetId = rJson[ xChr.sName ].get<int64_t>( );
-                    xIndices.vAnno.iterate( iDataSetId,
-                    [&](std::tuple<size_t, size_t, std::string, bool> xTup)
-                    {
-                        std::string sSearch = sAnno + "=" + std::get<2>(xTup);
-                        size_t uiEq = stringCompare( sName, sSearch );
-                        if( uiEq > uiMaxEquality || 
-                            (uiEq == uiMaxEquality && std::get<2>(xTup).size() < uiMinRefSize) )
-                        {
-                            uiMaxEquality = uiEq;
-                            uiMinRefSize = std::get<2>(xTup).size();
-                            if(bBottom)
-                                uiMaxPos = std::get<0>(xTup);
-                            else
-                                uiMaxPos = std::get<1>(xTup);
-                        }
+                    xIndices.vAnno.iterate(
+                        iDataSetId,
+                        [ & ]( std::tuple<size_t, size_t, std::string, bool> xTup ) {
+                            std::string sSearch = sAnno + "=" + std::get<2>( xTup );
+                            size_t uiEq = stringCompare( sName, sSearch );
+                            if( uiEq > uiMaxEquality ||
+                                ( uiEq == uiMaxEquality && std::get<2>( xTup ).size( ) < uiMinRefSize ) )
+                            {
+                                uiMaxEquality = uiEq;
+                                uiMinRefSize = std::get<2>( xTup ).size( );
+                                if( bBottom )
+                                    uiMaxPos = std::get<0>( xTup );
+                                else
+                                    uiMaxPos = std::get<1>( xTup );
+                            }
 
-                        return true;
-                    }, !bFullGenome && !bSqueeze, !bFullGenome && bSqueeze );
+                            return true;
+                        },
+                        !bFullGenome && !bSqueeze, !bFullGenome && bSqueeze );
                 }
             }
         }

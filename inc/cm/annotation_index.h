@@ -277,16 +277,15 @@ template <template <typename> typename vec_gen_t> class AnnotationDescIndex
     {
         auto xStart = lowerBound( uiDatasetId, uiFrom, bIntervalCoords, bIntervalCount );
         auto xEnd = upperBound( uiDatasetId, uiTo, bIntervalCoords, bIntervalCount );
-        iterate(xStart, xEnd, fYield, bIntervalCoords, bIntervalCount);
+        iterate( xStart, xEnd, fYield, bIntervalCoords, bIntervalCount );
     }
 
-    void iterate( size_t uiDatasetId,
-                  std::function<bool( std::tuple<size_t, size_t, std::string, bool> )> fYield,
+    void iterate( size_t uiDatasetId, std::function<bool( std::tuple<size_t, size_t, std::string, bool> )> fYield,
                   bool bIntervalCoords = false, bool bIntervalCount = false )
     {
         auto xStart = begin( uiDatasetId );
         auto xEnd = end( uiDatasetId );
-        iterate(xStart, xEnd, fYield, bIntervalCoords, bIntervalCount);
+        iterate( xStart, xEnd, fYield, bIntervalCoords, bIntervalCount );
     }
 
     std::vector<std::tuple<size_t, size_t, std::string, bool>>

@@ -66,12 +66,6 @@ bool PartialQuarry::setActiveCoverage( )
             }
     }
 
-    for( auto& rX : xA )
-    {
-        CANCEL_RETURN;
-        vActiveCoverage[ 0 ].push_back( rX );
-    }
-
     std::array<std::set<std::string>, 2> vNormGroups;
     const std::string sNorm = this->xSession[ "settings" ][ "normalization" ][ "normalize_by" ].get<std::string>( );
     const bool bRadicl = sNorm == "radicl-seq";
@@ -82,7 +76,15 @@ bool PartialQuarry::setActiveCoverage( )
             {
                 vNormGroups[ uiI ].insert( vActiveReplicates[ uiX ] );
                 xB.insert( std::pair<std::string, bool>( vActiveReplicates[ uiX ], false ) );
+                if( bIce )
+                    xA.insert( std::pair<std::string, bool>( vActiveReplicates[ uiX ], false ) );
             }
+
+    for( auto& rX : xA )
+    {
+        CANCEL_RETURN;
+        vActiveCoverage[ 0 ].push_back( rX );
+    }
 
     for( auto& rX : xB )
     {
@@ -99,7 +101,7 @@ bool PartialQuarry::setActiveCoverage( )
                 if( vGroups[ uiI ][ uiK ].count( vActiveCoverage[ uiI ][ uiJ ] ) > 0 )
                     vInGroupCoverage[ uiI ][ uiK ].push_back( uiJ );
             }
-            if( (bIce || uiI == 1) && !vActiveCoverage[ uiI ][ uiJ ].second )
+            if( ( bIce || uiI == 1 ) && !vActiveCoverage[ uiI ][ uiJ ].second )
                 for( size_t uiK = 0; uiK < 2; uiK++ )
                 {
                     CANCEL_RETURN;
@@ -232,8 +234,8 @@ bool PartialQuarry::setFlatCoverageValues( )
         }
         if( vvCoverageValues[ uiJ ].size( ) > 0 )
         {
-            vFlatNormValues[uiJ].clear( );
-            vFlatNormValues[uiJ].reserve( vvCoverageValues[ uiJ ][ 0 ].size( ) );
+            vFlatNormValues[ uiJ ].clear( );
+            vFlatNormValues[ uiJ ].reserve( vvCoverageValues[ uiJ ][ 0 ].size( ) );
             for( size_t uiI = 0; uiI < vvCoverageValues[ uiJ ][ 0 ].size( ); uiI++ )
             {
                 std::array<size_t, 2> vVal;
@@ -247,7 +249,7 @@ bool PartialQuarry::setFlatCoverageValues( )
 
                     vVal[ uiK ] = getFlatValue( vCollected );
                 }
-                vFlatNormValues[uiJ].push_back( vVal );
+                vFlatNormValues[ uiJ ].push_back( vVal );
             }
         }
     }
@@ -306,7 +308,7 @@ bool PartialQuarry::setTracks( )
                 auto& xCoord = vAxisCords[ uiI ][ uiX ];
                 if( sChr != "" && sChr != xCoord.sChromosome )
                 {
-                    vChrs.append( substringChr(sChr) );
+                    vChrs.append( substringChr( sChr ) );
 
                     vScreenPoss.append( vScreenPos );
                     vScreenPos = pybind11::list( );
@@ -358,7 +360,7 @@ bool PartialQuarry::setTracks( )
                     vValue.append( vvMinMaxTracks[ uiI ][ 0 ] );
                 }
             }
-            vChrs.append( substringChr(sChr) );
+            vChrs.append( substringChr( sChr ) );
 
             vScreenPoss.append( vScreenPos );
             vScreenPos = pybind11::list( );
@@ -393,7 +395,7 @@ bool PartialQuarry::setTracks( )
                 auto& xCoord = vAxisCords[ uiI ][ uiX ];
                 if( sChr != "" && sChr != xCoord.sChromosome )
                 {
-                    vChrs.append( substringChr(sChr) );
+                    vChrs.append( substringChr( sChr ) );
 
                     vScreenPoss.append( vScreenPos );
                     vScreenPos = pybind11::list( );
@@ -446,7 +448,7 @@ bool PartialQuarry::setTracks( )
                 }
             }
 
-            vChrs.append( substringChr(sChr) );
+            vChrs.append( substringChr( sChr ) );
             vScreenPoss.append( vScreenPos );
             vIndexStarts.append( vIndexStart );
             vIndexEnds.append( vIndexEnd );

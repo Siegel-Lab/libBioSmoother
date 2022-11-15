@@ -35,7 +35,7 @@ class PyPartialQuarry : public PartialQuarry
                            fPAccept /* Argument(s) */
         );
     }
-    
+
     /* Trampoline (need one for each virtual function) */
     std::vector<double> normalizeCoolerTrampoline( std::vector<size_t>& vFlatValues, size_t uiAxisSize ) override
     {

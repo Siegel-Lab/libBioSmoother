@@ -445,7 +445,7 @@ bool PartialQuarry::setTicks( )
             for( ChromDesc& rDesc : this->vActiveChromosomes[ uiI ] )
             {
                 CANCEL_RETURN;
-                vNames.append( substringChr(rDesc.sName) );
+                vNames.append( substringChr( rDesc.sName ) );
                 vStartPos.append( uiRunningStart );
                 vFullList.append( uiRunningStart );
                 uiRunningStart += rDesc.uiLength;
@@ -477,7 +477,7 @@ bool PartialQuarry::setTicks( )
                             sId = sX.substr( csID.size( ) );
                     }
 
-                vNames.append( substringChr(xRegion.sChromosome) + " - " + sId );
+                vNames.append( substringChr( xRegion.sChromosome ) + " - " + sId );
                 vStartPos.append( uiRunningStart );
                 uiRunningStart += xRegion.uiScreenSize;
             }
@@ -825,13 +825,12 @@ void PartialQuarry::regCoords( )
                                .vIncomingSession = { { "contigs", "displayed_on_x" }, { "contigs", "displayed_on_y" } },
                                .uiLastUpdated = uiCurrTime } );
 
-    registerNode(
-        NodeNames::Ticks,
-        ComputeNode{ .sNodeName = "ticks",
-                     .fFunc = &PartialQuarry::setTicks,
-                     .vIncomingFunctions = { NodeNames::ActiveChrom, NodeNames::LCS, NodeNames::AnnotationValues },
-                     .vIncomingSession = { },
-                     .uiLastUpdated = uiCurrTime } );
+    registerNode( NodeNames::Ticks,
+                  ComputeNode{ .sNodeName = "ticks",
+                               .fFunc = &PartialQuarry::setTicks,
+                               .vIncomingFunctions = { NodeNames::LCS, NodeNames::AnnotationValues },
+                               .vIncomingSession = { },
+                               .uiLastUpdated = uiCurrTime } );
 
     registerNode( NodeNames::AxisCoords,
                   ComputeNode{ .sNodeName = "axis_coords",

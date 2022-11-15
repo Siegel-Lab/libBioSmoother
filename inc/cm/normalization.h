@@ -43,60 +43,270 @@ bool PartialQuarry::normalizeBinominalTest( )
 {
     size_t uiNumBinsInRowTotal = ( this->xSession[ "contigs" ][ "genome_size" ].get<size_t>( ) - 1 ) / uiBinWidth + 1;
     vvNormalized = normalizeBinominalTestTrampoline(
-        vvFlatValues, vFlatNormValues[1], uiNumBinsInRowTotal,
+        vvFlatValues, vFlatNormValues[ 1 ], uiNumBinsInRowTotal,
         this->xSession[ "settings" ][ "normalization" ][ "p_accept" ][ "val" ].get<double>( ) );
     CANCEL_RETURN;
     END_RETURN;
 }
 
 /*
-
-PLAN:
-
-    generate remainders of each column and row
-    generate corner remainder
-    repeat x times
-        generate marginals (i.e. row & cols sums)
-        divide bias by marginal
-
+original ICing implementation:
 @ https://github.com/open2c/cooler/blob/3d284485df070255f4a904102178b186c14c1cee/cooler/balance.py
 @ https://github.com/open2c/cooler/blob/3d284485df070255f4a904102178b186c14c1cee/cooler/tools.py
 
-
 */
 
-struct ICBias
-{
-    double fVal;
-    size_t uiX, uiY;
-    size_t uiW, uiH;
-};
 
-struct ICMargin
+void PartialQuarry::iceSetCornerRemainder( IceData& rIceData, bool bA )
 {
-    double fVal;
-    size_t uiP;
-    size_t uiS;
-};
+    std::vector<size_t> vCollect;
+    for( size_t uiI : vInGroup[ bA ? 0 : 1 ] )
+        vCollect.push_back(
+            this->xSession[ "replicates" ][ "by_name" ][ vActiveReplicates[ uiI ] ][ "total_reads" ].get<size_t>( ) );
+    rIceData.uiCornerRemainder = getFlatValue( vCollect );
 
-bool PartialQuarry::normalizeIC( )
+
+    const size_t uiH = rIceData.vSliceRemainder[ 1 ].size( );
+    const size_t uiW = rIceData.vSliceRemainder[ 0 ].size( );
+    for( size_t uiI = 0; uiI < uiH; uiI++ )
+        for( size_t uiJ = 0; uiJ < uiW; uiJ++ )
+            rIceData.uiCornerRemainder -= iceGetCount( rIceData, uiJ, uiI, bA );
+}
+
+void PartialQuarry::iceSetSliceRemainder( IceData& rIceData, bool bA, bool bCol, size_t uiFrom, size_t uiTo )
 {
-    if( vAxisCords[0].size() != vAxisCords[1].size() )
-        doNotNormalize();
+    const size_t uiWSlice = rIceData.vSliceBias[ bCol ? 1 : 0 ].size( ) - 1;
+    for( size_t uiI = uiFrom; uiI < uiTo; uiI++ )
+    {
+        assert( uiI < vFlatNormValues[ bCol ? 0 : 1 ].size( ) );
+        assert( uiI < rIceData.vSliceRemainder[ bCol ? 0 : 1 ].size( ) );
+
+        rIceData.vSliceRemainder[ bCol ? 0 : 1 ][ uiI ] = vFlatNormValues[ bCol ? 0 : 1 ][ uiI ][ bA ? 0 : 1 ];
+        for( size_t uiJ = 0; uiJ < uiWSlice; uiJ++ )
+            rIceData.vSliceRemainder[ bCol ? 0 : 1 ][ uiI ] -=
+                iceGetCount( rIceData, bCol ? uiI : uiJ, bCol ? uiJ : uiI, bA );
+    }
+}
+
+size_t PartialQuarry::iceGetCount( IceData& rIceData, size_t uiX, size_t uiY, bool bA )
+{
+    assert( uiX < rIceData.vSliceBias[ 0 ].size( ) );
+    assert( uiY < rIceData.vSliceBias[ 1 ].size( ) );
+    if( uiX == rIceData.vSliceBias[ 0 ].size( ) - 1 && uiY == rIceData.vSliceBias[ 1 ].size( ) - 1 )
+        return rIceData.uiCornerRemainder;
+    else if( uiX == rIceData.vSliceBias[ 0 ].size( ) - 1 )
+    {
+        assert( uiY < rIceData.vSliceRemainder[ 1 ].size( ) );
+        return rIceData.vSliceRemainder[ 1 ][ uiY ];
+    }
+    else if( uiY == rIceData.vSliceBias[ 1 ].size( ) - 1 )
+    {
+        assert( uiX < rIceData.vSliceRemainder[ 0 ].size( ) );
+        return rIceData.vSliceRemainder[ 0 ][ uiX ];
+    }
+    size_t uiIdx = uiY + uiX * ( rIceData.vSliceRemainder[ 1 ].size( ) );
+    assert( uiIdx < vvFlatValues.size( ) );
+    return vvFlatValues[ uiIdx ][ bA ? 0 : 1 ];
+}
+
+void PartialQuarry::iceFilter( IceData& /*rIceData*/, size_t /*uiFrom*/, size_t /*uiTo*/ )
+{}
+
+void PartialQuarry::iceTimesOuterProduct( IceData& rIceData, bool bA, size_t uiFrom, size_t uiTo )
+{
+    const size_t uiH = rIceData.vSliceBias[ 1 ].size( );
+    for( size_t uiI = uiFrom; uiI < uiTo; uiI++ )
+    {
+        assert( uiI / uiH < rIceData.vSliceBias[ 0 ].size( ) );
+        assert( uiI % uiH < rIceData.vSliceBias[ 1 ].size( ) );
+        assert( uiI < rIceData.vBiases.size( ) );
+        rIceData.vBiases[ uiI ] = rIceData.vSliceBias[ 0 ][ uiI / uiH ] * rIceData.vSliceBias[ 1 ][ uiI % uiH ] *
+                                  iceGetCount( rIceData, uiI / uiH, uiI % uiH, bA );
+    }
+}
+
+void PartialQuarry::iceMarginalize( IceData& rIceData, bool bCol, size_t uiFrom, size_t uiTo )
+{
+    const size_t uiH = rIceData.vSliceBias[ 1 ].size( );
+    const size_t uiWSlice = rIceData.vSliceBias[ bCol ? 1 : 0 ].size( );
+    for( size_t uiI = uiFrom; uiI < uiTo; uiI++ )
+    {
+        assert( uiI < rIceData.vSliceMargin[ bCol ? 0 : 1 ].size( ) );
+        rIceData.vSliceMargin[ bCol ? 0 : 1 ][ uiI ] = 0;
+        for( size_t uiJ = 0; uiJ < uiWSlice; uiJ++ )
+        {
+            size_t uiK = bCol ? uiH * uiI + uiJ : uiI + uiH * uiJ;
+            assert( uiK < rIceData.vBiases.size( ) );
+
+            rIceData.vSliceMargin[ bCol ? 0 : 1 ][ uiI ] += rIceData.vBiases[ uiK ];
+        }
+    }
+}
+
+double PartialQuarry::iceNonZeroMarginMean( IceData& rIceData, bool bCol )
+{
+    double fMean;
+    size_t uiNum;
+    for( double fVal : rIceData.vSliceMargin[ bCol ? 0 : 1 ] )
+        if( fVal != 0.0 )
+        {
+            fMean += fVal;
+            ++uiNum;
+        }
+    return fMean / uiNum;
+}
+
+double PartialQuarry::iceNonZeroMarginVariance( IceData& rIceData, bool bCol, double fMean)
+{
+    double fSum;
+    size_t uiNum;
+    for( double fVal : rIceData.vSliceMargin[ bCol ? 0 : 1 ] )
+        if( fVal != 0.0 )
+        {
+            fSum += (fVal - fMean) * (fVal - fMean);
+            ++uiNum;
+        }
+    if(uiNum == 0)
+        return 0;
+    return std::sqrt(fMean / uiNum - 1);
+}
+
+void PartialQuarry::iceDivByMargin( IceData& rIceData, bool bCol, double fMean, size_t uiFrom, size_t uiTo )
+{
+    for( size_t uiI = uiFrom; uiI < uiTo; uiI++ )
+    {
+        assert( uiI < rIceData.vSliceMargin[ bCol ? 0 : 1 ].size( ) );
+
+        double fVal = rIceData.vSliceMargin[ bCol ? 0 : 1 ][ uiI ];
+        fVal /= fMean;
+        if( fVal == 0 )
+            fVal = 1;
+
+        assert( uiI < rIceData.vSliceBias[ bCol ? 0 : 1 ].size( ) );
+
+        rIceData.vSliceBias[ bCol ? 0 : 1 ][ uiI ] /= fVal;
+    }
+}
+
+size_t PartialQuarry::changeIndexSystem( size_t uiI, size_t uiWFrom, size_t uiHFrom, size_t uiWTo, size_t uiHTo )
+{
+    size_t uiX = uiI / uiHFrom;
+    size_t uiY = uiI % uiHFrom;
+    assert( uiX < uiWFrom );
+    assert( uiY < uiHFrom );
+
+    size_t uiJ = uiY + uiX * uiHTo;
+
+    assert( uiJ / uiHTo < uiWTo );
+    assert( uiJ % uiHTo < uiHTo );
+
+    return uiJ;
+}
+
+void PartialQuarry::iceApplyBias( IceData& rIceData, bool bA, size_t uiFrom, size_t uiTo )
+{
+    const size_t uiW = rIceData.vSliceBias[ 0 ].size( );
+    const size_t uiH = rIceData.vSliceBias[ 1 ].size( );
+    for( size_t uiI = uiFrom; uiI < uiTo; uiI++ )
+    {
+        size_t uiJ = changeIndexSystem( uiI, uiW - 1, uiH - 1, uiW, uiH );
+        {
+            assert( uiI < vvNormalized.size( ) );
+
+            assert( uiJ % uiW < rIceData.vSliceBias[ 0 ].size( ) );
+            assert( uiJ / uiW < rIceData.vSliceBias[ 1 ].size( ) );
+
+            vvNormalized[ uiI ][ bA ? 0 : 1 ] = rIceData.vSliceBias[ 0 ][ uiJ / uiH ] //
+                                                * rIceData.vSliceBias[ 1 ][ uiJ % uiH ] //
+                                                * iceGetCount( rIceData, uiJ / uiH, uiJ % uiH, bA );
+        }
+    }
+}
+
+bool PartialQuarry::normalizeCoolIC( )
+{
+    if( vAxisCords[ 0 ].size( ) != vAxisCords[ 1 ].size( ) )
+        doNotNormalize( );
     else
     {
-        vvNormalized.resize(vvFlatValues.size());
-        for(size_t uiI = 0; uiI < 2; uiI++)
+        vvNormalized.resize( vvFlatValues.size( ) );
+        for( size_t uiI = 0; uiI < 2; uiI++ )
         {
             std::vector<size_t> vCnt;
-            for(auto& rFlat : vvFlatValues)
-                vCnt.push_back(rFlat[uiI]);
-            auto vRet = normalizeCoolerTrampoline( vCnt, vAxisCords[0].size() );
-            for(size_t uiX = 0; uiX < vRet.size(); uiX++)
-                vvNormalized[uiX][uiI] = vRet[uiX];
+            for( auto& rFlat : vvFlatValues )
+                vCnt.push_back( rFlat[ uiI ] );
+            auto vRet = normalizeCoolerTrampoline( vCnt, vAxisCords[ 0 ].size( ) );
+            for( size_t uiX = 0; uiX < vRet.size( ); uiX++ )
+                vvNormalized[ uiX ][ uiI ] = vRet[ uiX ];
         }
     }
     CANCEL_RETURN;
+    END_RETURN;
+}
+
+bool PartialQuarry::normalizeIC( )
+{
+    vvNormalized.resize( vvFlatValues.size( ) );
+
+    const size_t uiMaxIters = 200;
+    const double fTol = 1e-5;
+    for( size_t uiI = 0; uiI < 2; uiI++ )
+    {
+        CANCEL_RETURN;
+        size_t uiW = vAxisCords[ 0 ].size( ) + 1;
+        size_t uiH = vAxisCords[ 1 ].size( ) + 1;
+        IceData xData = { .vSliceBias =
+                              std::array<std::vector<double>, 2>{
+                                  std::vector<double>( uiW, 1.0 ),
+                                  std::vector<double>( uiH, 1.0 ),
+                              },
+                          .vSliceMargin =
+                              std::array<std::vector<double>, 2>{
+                                  std::vector<double>( uiW ),
+                                  std::vector<double>( uiH ),
+                              },
+                          .vBiases = std::vector<double>( uiW * uiH, 1.0 ),
+                          .vSliceRemainder =
+                              std::array<std::vector<size_t>, 2>{
+                                  std::vector<size_t>( uiW - 1 ),
+                                  std::vector<size_t>( uiH - 1 ),
+                              },
+                          .uiCornerRemainder = 0 };
+        for( bool bCol : { true, false } )
+            iceSetSliceRemainder( xData, uiI == 0, bCol, 0, xData.vSliceRemainder[ bCol ? 0 : 1 ].size( ) );
+        iceSetCornerRemainder( xData, uiI == 0 );
+        std::array<double, 2> vVar{fTol, fTol};
+        for(size_t uiItr = 0; uiItr < uiMaxIters; uiItr++ )
+        {
+            CANCEL_RETURN;
+            iceFilter( xData, 0, xData.vBiases.size( ) );
+            iceTimesOuterProduct( xData, uiI == 0, 0, xData.vBiases.size( ) );
+            for( bool bCol : { true, false } )
+            {
+                CANCEL_RETURN;
+                iceMarginalize( xData, bCol, 0, xData.vSliceBias[ bCol ? 0 : 1 ].size( ) );
+                double fMean = iceNonZeroMarginMean( xData, bCol );
+                iceDivByMargin( xData, bCol, fMean, 0,
+                                xData.vSliceBias[ bCol ? 0 : 1 ].size( ) );
+                vVar[bCol ? 0 : 1] = iceNonZeroMarginVariance(xData, bCol, fMean);
+            }
+
+            if(vVar[0] < fTol && vVar[1] < fTol)
+                break;
+        }
+        CANCEL_RETURN;
+        if(vVar[0] >= fTol || vVar[1] >= fTol)
+        {
+            std::cout << "iterative correction did not converge" << std::endl;
+            for( size_t uiJ = 0; uiJ < vvFlatValues.size(); uiJ++ )
+            {
+                CANCEL_RETURN;
+                vvNormalized[uiJ][uiI] = vvFlatValues[uiJ][uiI];
+            }
+        }
+        else
+            iceApplyBias( xData, uiI == 0, 0, vvNormalized.size( ) );
+    }
     END_RETURN;
 }
 
@@ -115,6 +325,8 @@ bool PartialQuarry::setNormalized( )
         return normalizeSize( 1000 );
     else if( this->xSession[ "settings" ][ "normalization" ][ "normalize_by" ].get<std::string>( ) == "hi-c" )
         return normalizeIC( );
+    else if( this->xSession[ "settings" ][ "normalization" ][ "normalize_by" ].get<std::string>( ) == "cool-hi-c" )
+        return normalizeCoolIC( );
     else
         throw std::logic_error( "invalid value for normalize_by" );
 }
