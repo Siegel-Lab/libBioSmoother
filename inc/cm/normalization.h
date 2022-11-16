@@ -297,7 +297,7 @@ bool PartialQuarry::normalizeIC( )
         CANCEL_RETURN;
         if(vVar[0] >= fTol || vVar[1] >= fTol)
         {
-            std::cout << "iterative correction did not converge" << std::endl;
+            setError("iterative correction did not converge");
             for( size_t uiJ = 0; uiJ < vvFlatValues.size(); uiJ++ )
             {
                 CANCEL_RETURN;

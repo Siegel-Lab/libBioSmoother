@@ -105,11 +105,13 @@ class PartialQuarry
         std::vector<NodeNames> vIncomingFunctions;
         std::vector<std::vector<std::string>> vIncomingSession;
         size_t uiLastUpdated;
+        std::string sError = "";
     };
 
     std::string sPrefix;
     size_t uiCurrTime;
     std::vector<ComputeNode> vGraph;
+    NodeNames xCurrNodeName = NodeNames::SIZE;
 
     json xSession;
     std::map<std::vector<std::string>, size_t> xSessionTime;
@@ -172,6 +174,11 @@ class PartialQuarry
         return sRet;
     }
 
+    void setError(std::string sError)
+    {
+        assert(xCurrNodeName != NodeNames::SIZE);
+        vGraph[xCurrNodeName].sError = sError;
+    }
 
     size_t update_helper( NodeNames xNodeName )
     {
@@ -212,7 +219,10 @@ class PartialQuarry
                 }
                 auto t1 = std::chrono::high_resolution_clock::now( );
 
+                xCurrNodeName = xNodeName;
+                setError("");
                 bool bUpdateDone = ( this->*xNode.fFunc )( );
+                xCurrNodeName = NodeNames::SIZE;
                 if( !bUpdateDone )
                 {
                     if( uiVerbosity >= 1 )
@@ -303,6 +313,17 @@ class PartialQuarry
     }
 
   public:
+    std::string getError()
+    {
+        std::string sRet = "";
+        for(auto& rX : vGraph)
+            if(rX.sError.size() > 0)
+                sRet += rX.sNodeName + ": " + rX.sError + "\n";
+        if(sRet.size() > 0)
+            sRet = sRet.substr(0, sRet.size() - 1);
+        return sRet;
+    }
+
     void cancel( )
     {
         bCancel = true;

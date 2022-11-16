@@ -156,6 +156,7 @@ PYBIND11_MODULE( libContactMapping, m )
 
         .def( "print_sizes", &cm::PartialQuarry::printSizes ) //
         .def( "cancel", &cm::PartialQuarry::cancel ) //
+        .def( "get_error", &cm::PartialQuarry::getError ) //
         .def( "update_cds", &cm::PartialQuarry::updateCDS ) //
         .def( "save_session", &cm::PartialQuarry::saveSession ) //
 
