@@ -90,6 +90,7 @@ class PartialQuarry
         AnnotationColors,
         ActivateAnnotationCDS,
         HeatmapCDS,
+        HeatmapExport,
         Scaled,
         Ticks,
         Tracks,
@@ -217,11 +218,14 @@ class PartialQuarry
                         std::cout << "\t- " << sStr << std::endl;
                     std::cout << "last updated: " << xNode.uiLastUpdated << "; now: " << uiCurrTime << std::endl;
                 }
-                auto t1 = std::chrono::high_resolution_clock::now( );
 
                 xCurrNodeName = xNodeName;
                 setError("");
+
+                auto t1 = std::chrono::high_resolution_clock::now( );
                 bool bUpdateDone = ( this->*xNode.fFunc )( );
+                auto t2 = std::chrono::high_resolution_clock::now( );
+
                 xCurrNodeName = NodeNames::SIZE;
                 if( !bUpdateDone )
                 {
@@ -232,7 +236,6 @@ class PartialQuarry
                     return 0;
                 }
 
-                auto t2 = std::chrono::high_resolution_clock::now( );
                 auto ms_int = std::chrono::duration_cast<std::chrono::milliseconds>( t2 - t1 );
                 if( uiVerbosity >= 1 )
                     std::cout << ms_int.count( ) << " ms (" << xNode.sNodeName << ")" << std::endl;
@@ -481,6 +484,7 @@ class PartialQuarry
     std::array<pybind11::dict, 2> vAnnotationCDS;
     std::array<pybind11::list, 2> vActiveAnnotationCDS;
     pybind11::dict xHeatmapCDS;
+    std::vector<std::tuple<std::string, size_t, size_t, std::string, size_t, size_t, double>> vHeatmapExport;
     std::array<pybind11::dict, 2> xTicksCDS;
     std::array<pybind11::dict, 2> xTracksCDS;
     std::array<pybind11::list, 2> vTickLists;
@@ -637,6 +641,8 @@ class PartialQuarry
     // colors.h
     bool setHeatmapCDS( );
     // colors.h
+    bool setHeatmapExport( );
+    // colors.h
     bool setPalette( );
 
     // colors.h
@@ -737,6 +743,8 @@ class PartialQuarry
 
     // colors.h
     const pybind11::dict getHeatmap( );
+    // colors.h
+    const decltype(vHeatmapExport) getHeatmapExport( );
 
     // bin_size.h
     const std::array<int64_t, 4> getDrawingArea( );

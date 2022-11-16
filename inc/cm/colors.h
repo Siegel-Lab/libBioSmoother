@@ -316,10 +316,38 @@ bool PartialQuarry::setHeatmapCDS( )
     END_RETURN;
 }
 
+bool PartialQuarry::setHeatmapExport( )
+{
+    vHeatmapExport.clear();
+    vHeatmapExport.reserve(vScaled.size( ));
+    for( size_t uiI = 0; uiI < vScaled.size( ); uiI++ )
+    {
+        CANCEL_RETURN;
+        vHeatmapExport.emplace_back(
+            vBinCoords[ uiI ][ 0 ].sChromosomeX,
+            vBinCoords[ uiI ][ 0 ].uiIndexX * this->xSession[ "dividend" ].get<size_t>( ),
+            ( vBinCoords[ uiI ][ 0 ].uiIndexX + vBinCoords[ uiI ][ 0 ].uiIndexW ) *
+                                            this->xSession[ "dividend" ].get<size_t>( ),
+            vBinCoords[ uiI ][ 0 ].sChromosomeY,
+            vBinCoords[ uiI ][ 0 ].uiIndexY * this->xSession[ "dividend" ].get<size_t>( ),
+            ( vBinCoords[ uiI ][ 0 ].uiIndexY + vBinCoords[ uiI ][ 0 ].uiIndexH ) *
+                                          this->xSession[ "dividend" ].get<size_t>( ),
+            vScaled[ uiI ]
+        );
+    }
+    END_RETURN;
+}
+
 const pybind11::dict PartialQuarry::getHeatmap( )
 {
     update( NodeNames::HeatmapCDS );
     return xHeatmapCDS;
+}
+
+const decltype(PartialQuarry::vHeatmapExport) PartialQuarry::getHeatmapExport( )
+{
+    update( NodeNames::HeatmapExport );
+    return vHeatmapExport;
 }
 
 const std::string& PartialQuarry::getBackgroundColor( )
@@ -373,6 +401,13 @@ void PartialQuarry::regColors( )
                   ComputeNode{ .sNodeName = "heatmap_cds",
                                .fFunc = &PartialQuarry::setHeatmapCDS,
                                .vIncomingFunctions = { NodeNames::Colored },
+                               .vIncomingSession = { },
+                               .uiLastUpdated = uiCurrTime } );
+
+    registerNode( NodeNames::HeatmapExport,
+                  ComputeNode{ .sNodeName = "heatmap_export",
+                               .fFunc = &PartialQuarry::setHeatmapExport,
+                               .vIncomingFunctions = { NodeNames::Scaled },
                                .vIncomingSession = { },
                                .uiLastUpdated = uiCurrTime } );
 

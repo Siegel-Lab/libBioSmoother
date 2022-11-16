@@ -1,7 +1,7 @@
 from bokeh.palettes import Viridis256, Colorblind, Plasma256, Turbo256
 from statsmodels.stats.multitest import multipletests
 from scipy.stats import binom_test
-from .libContactMapping import PartialQuarry, SPS_VERSION
+from .libContactMapping import PartialQuarry, SPS_VERSION, CM_VERSION
 from .cooler_interface import icing
 
 
@@ -58,3 +58,7 @@ class Quarry(PartialQuarry):
     @staticmethod
     def get_libSps_version():
         return SPS_VERSION
+
+    @staticmethod
+    def get_libCm_version():
+        return CM_VERSION

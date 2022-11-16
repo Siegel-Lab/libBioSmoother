@@ -143,6 +143,7 @@ PYBIND11_MODULE( libContactMapping, m )
         .def( "get_drawing_area", &cm::PartialQuarry::getDrawingArea ) //
         .def( "get_displayed_annos", &cm::PartialQuarry::getDisplayedAnnos ) //
         .def( "get_heatmap", &cm::PartialQuarry::getHeatmap ) //
+        .def( "get_heatmap_export", &cm::PartialQuarry::getHeatmapExport ) //
         .def( "get_dot", &cm::PartialQuarry::getDOT ) //
         .def( "get_background_color", &cm::PartialQuarry::getBackgroundColor ) //
         .def( "get_ticks", &cm::PartialQuarry::getTicks ) //
