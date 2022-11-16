@@ -152,7 +152,9 @@ bool PartialQuarry::setCoverageValues( )
                         if( sRep.second )
                             iDataSetId = xRep[ "ids" ][ xCoords.sChromosome ].get<int64_t>( );
                         else
-                            iDataSetId = xRep[ "ids" ][ xCoords.sChromosome ][ uiJ ? "col" : "row" ].get<int64_t>( );
+                            iDataSetId = xRep[ "ids" ][ xCoords.sChromosome ][ 
+                                    uiJ == 0 ? (uiI == 0 ? "col" : "row") : (uiI == 0 ? "row" : "col")
+                                ].get<int64_t>( );
 
                         if( iDataSetId != -1 )
                         {

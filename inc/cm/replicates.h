@@ -65,17 +65,17 @@ size_t PartialQuarry::symmetry( size_t uiA, size_t uiB )
 {
     switch( uiSymmetry )
     {
-        case 0:
+        case 0: // all
             return uiA;
-        case 1:
+        case 1: // sym
             return std::min( uiA, uiB );
-        case 2:
+        case 2: // asym
             if( uiA > uiB )
                 return uiA - uiB;
             else
                 return 0;
-        case 3:
-        case 4:
+        case 3: // toptobot
+        case 4: // bottotop
             return uiA + uiB;
         default:
             throw std::logic_error( "unknown symmetry setting" );

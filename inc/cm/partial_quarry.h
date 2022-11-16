@@ -614,6 +614,8 @@ class PartialQuarry
     // normalization.h
     void iceApplyBias( IceData&, bool, size_t, size_t );
     // normalization.h
+    double iceMaxBias( IceData&, bool );
+    // normalization.h
     void regNormalization( );
 
     // colors.h
