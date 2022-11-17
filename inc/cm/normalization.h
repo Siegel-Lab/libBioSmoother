@@ -413,16 +413,14 @@ void PartialQuarry::regNormalization( )
                                .fFunc = &PartialQuarry::setNormalized,
                                .vIncomingFunctions = { NodeNames::FlatValues, NodeNames::FlatCoverageValues },
                                .vIncomingSession = { { "replicates", "by_name" },
-                                                     { "settings", "normalization", "p_accept", "val" } },
-                               .uiLastUpdated = uiCurrTime } );
+                                                     { "settings", "normalization", "p_accept", "val" } }} );
 
     registerNode( NodeNames::Divided,
                   ComputeNode{ .sNodeName = "divided_by_tracks",
                                .fFunc = &PartialQuarry::setDivided,
                                .vIncomingFunctions = { NodeNames::Combined },
                                .vIncomingSession = { { "settings", "normalization", "divide_by_column_coverage" },
-                                                     { "settings", "normalization", "divide_by_row_coverage" } },
-                               .uiLastUpdated = uiCurrTime } );
+                                                     { "settings", "normalization", "divide_by_row_coverage" } }} );
 }
 
 } // namespace cm

@@ -290,29 +290,25 @@ void PartialQuarry::regAnnotation( )
                   ComputeNode{ .sNodeName = "active_annotation",
                                .fFunc = &PartialQuarry::setActivateAnnotation,
                                .vIncomingFunctions = { },
-                               .vIncomingSession = { { "annotation", "visible_x" }, { "annotation", "visible_y" } },
-                               .uiLastUpdated = uiCurrTime } );
+                               .vIncomingSession = { { "annotation", "visible_x" }, { "annotation", "visible_y" } }} );
 
     registerNode( NodeNames::AnnotationValues,
                   ComputeNode{ .sNodeName = "annotation_values",
                                .fFunc = &PartialQuarry::setAnnotationValues,
                                .vIncomingFunctions = { NodeNames::ActivateAnnotation, NodeNames::AxisCoords },
-                               .vIncomingSession = { { "annotation", "by_name" } },
-                               .uiLastUpdated = uiCurrTime } );
+                               .vIncomingSession = { { "annotation", "by_name" } }} );
 
     registerNode( NodeNames::AnnotationCDS,
                   ComputeNode{ .sNodeName = "annotation_cds",
                                .fFunc = &PartialQuarry::setAnnotationCDS,
                                .vIncomingFunctions = { NodeNames::AnnotationValues, NodeNames::AnnotationColors },
-                               .vIncomingSession = { },
-                               .uiLastUpdated = uiCurrTime } );
+                               .vIncomingSession = { }} );
 
     registerNode( NodeNames::ActivateAnnotationCDS,
                   ComputeNode{ .sNodeName = "active_annotation_cds",
                                .fFunc = &PartialQuarry::setActivateAnnotationCDS,
                                .vIncomingFunctions = { NodeNames::ActivateAnnotation },
-                               .vIncomingSession = { },
-                               .uiLastUpdated = uiCurrTime } );
+                               .vIncomingSession = { }} );
 }
 
 } // namespace cm

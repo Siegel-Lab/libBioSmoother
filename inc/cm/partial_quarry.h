@@ -91,6 +91,7 @@ class PartialQuarry
         ActivateAnnotationCDS,
         HeatmapCDS,
         HeatmapExport,
+        TrackExport,
         Scaled,
         Ticks,
         Tracks,
@@ -105,13 +106,20 @@ class PartialQuarry
         bool ( PartialQuarry::*fFunc )( void );
         std::vector<NodeNames> vIncomingFunctions;
         std::vector<std::vector<std::string>> vIncomingSession;
-        size_t uiLastUpdated;
+    };
+
+    struct ComputeNodeData
+    {
+        size_t uiLastUpdated = 0;
         std::string sError = "";
+        bool bRegistered = false;
+        bool bTerminal = true;
     };
 
     std::string sPrefix;
     size_t uiCurrTime;
     std::vector<ComputeNode> vGraph;
+    std::vector<ComputeNodeData> vGraphData;
     NodeNames xCurrNodeName = NodeNames::SIZE;
 
     json xSession;
@@ -158,9 +166,15 @@ class PartialQuarry
 
     void registerNode( NodeNames xName, ComputeNode xNode )
     {
+        assert(!vGraphData[xName].bRegistered);
+
         for( std::vector<std::string>& rKey : xNode.vIncomingSession )
             xSessionTime[ rKey ] = uiCurrTime + 1;
+        for( NodeNames& rIncoming : xNode.vIncomingFunctions )
+            vGraphData[rIncoming].bTerminal = false;
         vGraph[ xName ] = xNode;
+        vGraphData[xName].uiLastUpdated = uiCurrTime;
+        vGraphData[xName].bRegistered = true;
     }
 
     std::string vec2str( std::vector<std::string> vVec )
@@ -178,13 +192,14 @@ class PartialQuarry
     void setError( std::string sError )
     {
         assert( xCurrNodeName != NodeNames::SIZE );
-        vGraph[ xCurrNodeName ].sError = sError;
+        vGraphData[ xCurrNodeName ].sError = sError;
     }
 
     size_t update_helper( NodeNames xNodeName )
     {
         ComputeNode& xNode = vGraph[ xNodeName ];
-        if( xNode.uiLastUpdated < uiCurrTime )
+        ComputeNodeData& xNodeData = vGraphData[ xNodeName ];
+        if( xNodeData.uiLastUpdated < uiCurrTime )
         {
             std::vector<std::string> vOutOfDateReason{ };
             auto p1 = std::chrono::high_resolution_clock::now( );
@@ -197,14 +212,14 @@ class PartialQuarry
                         std::cout << xNode.sNodeName << " was cancelled" << std::endl;
                     return 0;
                 }
-                else if( uiUpdateTime > xNode.uiLastUpdated )
+                else if( uiUpdateTime > xNodeData.uiLastUpdated )
                     vOutOfDateReason.push_back( "change in previous node " + vGraph[ xPred ].sNodeName );
             }
             auto p2 = std::chrono::high_resolution_clock::now( );
             auto pms_int = std::chrono::duration_cast<std::chrono::milliseconds>( p2 - p1 );
 
             for( std::vector<std::string> vSetting : xNode.vIncomingSession )
-                if( xSessionTime[ vSetting ] > xNode.uiLastUpdated )
+                if( xSessionTime[ vSetting ] > xNodeData.uiLastUpdated )
                     vOutOfDateReason.push_back( "change in variable " + vec2str( vSetting ) +
                                                 " (last set: " + std::to_string( xSessionTime[ vSetting ] ) +
                                                 "; now: " + std::to_string( uiCurrTime ) + ")" );
@@ -216,7 +231,7 @@ class PartialQuarry
                     std::cout << "running node " << xNode.sNodeName << " due to: " << std::endl;
                     for( std::string& sStr : vOutOfDateReason )
                         std::cout << "\t- " << sStr << std::endl;
-                    std::cout << "last updated: " << xNode.uiLastUpdated << "; now: " << uiCurrTime << std::endl;
+                    std::cout << "last updated: " << xNodeData.uiLastUpdated << "; now: " << uiCurrTime << std::endl;
                 }
 
                 xCurrNodeName = xNodeName;
@@ -232,7 +247,7 @@ class PartialQuarry
                     if( uiVerbosity >= 1 )
                         std::cout << xNode.sNodeName << " was cancelled" << std::endl;
                     // update was cancelled -> we do not know how messed up the result form the last call was
-                    xNode.uiLastUpdated = 0;
+                    xNodeData.uiLastUpdated = 0;
                     return 0;
                 }
 
@@ -242,7 +257,7 @@ class PartialQuarry
                 if( uiVerbosity >= 2 )
                     std::cout << pms_int.count( ) << " ms (predecessors)" << std::endl << std::endl;
 
-                xNode.uiLastUpdated = uiCurrTime;
+                xNodeData.uiLastUpdated = uiCurrTime;
             }
             else if( uiVerbosity >= 3 )
                 std::cout << "no reason found to run node " << xNode.sNodeName << std::endl;
@@ -250,9 +265,9 @@ class PartialQuarry
         else if( uiVerbosity >= 3 )
             std::cout << "node up to date from previous check " << xNode.sNodeName << std::endl;
 
-        size_t uiRet = xNode.uiLastUpdated;
+        size_t uiRet = xNodeData.uiLastUpdated;
         // node must be up to date now
-        xNode.uiLastUpdated = uiCurrTime;
+        xNodeData.uiLastUpdated = uiCurrTime;
 
         return uiRet;
     }
@@ -294,24 +309,35 @@ class PartialQuarry
 
     void checkUnnecessaryDependencies( )
     {
+        std::set<std::string> xNodeNames;
         for( size_t uiNodeName = 0; uiNodeName < NodeNames::SIZE; uiNodeName++ )
         {
-            std::map<NodeNames, std::string> xDependents;
-            std::map<std::vector<std::string>, std::string> xDependentSettings;
-            for( NodeNames& rPrev : vGraph[ uiNodeName ].vIncomingFunctions )
-                checkUnnecessaryDependency( rPrev, xDependents, xDependentSettings );
+            if(xNodeNames.count(vGraph[ uiNodeName ].sNodeName) > 0)
+                std::cerr << "two nodes have been registered under the same name: " 
+                          << vGraph[ uiNodeName ].sNodeName << std::endl;
+            xNodeNames.insert(vGraph[ uiNodeName ].sNodeName);
 
-            for( std::vector<std::string>& rSetting : vGraph[ uiNodeName ].vIncomingSession )
-                if( xDependentSettings.count( rSetting ) > 0 )
-                    std::cerr << "unnecessary session dependency warning: " << vGraph[ uiNodeName ].sNodeName
-                              << " depends on " << toString( rSetting ) << ", but the previous node "
-                              << xDependentSettings[ rSetting ] << " shares this dependency" << std::endl;
+            if(!vGraphData[uiNodeName].bRegistered)
+                std::cerr << "Node has not been registered. id: " << uiNodeName << std::endl;
+            else
+            {
+                std::map<NodeNames, std::string> xDependents;
+                std::map<std::vector<std::string>, std::string> xDependentSettings;
+                for( NodeNames& rPrev : vGraph[ uiNodeName ].vIncomingFunctions )
+                    checkUnnecessaryDependency( rPrev, xDependents, xDependentSettings );
 
-            for( NodeNames& rPrev : vGraph[ uiNodeName ].vIncomingFunctions )
-                if( xDependents.count( rPrev ) > 0 )
-                    std::cerr << "unnecessary session dependency warning: " << vGraph[ uiNodeName ].sNodeName
-                              << " depends on " << vGraph[ rPrev ].sNodeName << ", but the previous node "
-                              << xDependents[ rPrev ] << " shares this dependency" << std::endl;
+                for( std::vector<std::string>& rSetting : vGraph[ uiNodeName ].vIncomingSession )
+                    if( xDependentSettings.count( rSetting ) > 0 )
+                        std::cerr << "unnecessary session dependency warning: " << vGraph[ uiNodeName ].sNodeName
+                                << " depends on " << toString( rSetting ) << ", but the previous node "
+                                << xDependentSettings[ rSetting ] << " shares this dependency" << std::endl;
+
+                for( NodeNames& rPrev : vGraph[ uiNodeName ].vIncomingFunctions )
+                    if( xDependents.count( rPrev ) > 0 )
+                        std::cerr << "unnecessary session dependency warning: " << vGraph[ uiNodeName ].sNodeName
+                                << " depends on " << vGraph[ rPrev ].sNodeName << ", but the previous node "
+                                << xDependents[ rPrev ] << " shares this dependency" << std::endl;
+            }
         }
     }
 
@@ -319,9 +345,9 @@ class PartialQuarry
     std::string getError( )
     {
         std::string sRet = "";
-        for( auto& rX : vGraph )
-            if( rX.sError.size( ) > 0 )
-                sRet += rX.sNodeName + ": " + rX.sError + "\n";
+        for( size_t uiNodeName = 0; uiNodeName < NodeNames::SIZE; uiNodeName++ )
+            if( vGraphData[uiNodeName].sError.size( ) > 0 )
+                sRet += vGraph[uiNodeName].sNodeName + ": " + vGraphData[uiNodeName].sError + "\n";
         if( sRet.size( ) > 0 )
             sRet = sRet.substr( 0, sRet.size( ) - 1 );
         return sRet;
@@ -485,6 +511,8 @@ class PartialQuarry
     std::array<pybind11::list, 2> vActiveAnnotationCDS;
     pybind11::dict xHeatmapCDS;
     std::vector<std::tuple<std::string, size_t, size_t, std::string, size_t, size_t, double>> vHeatmapExport;
+    std::vector<std::string> vTrackExportNames;
+    std::vector<std::tuple<std::string, size_t, size_t, std::vector<double>>> vTrackExport;
     std::array<pybind11::dict, 2> xTicksCDS;
     std::array<pybind11::dict, 2> xTracksCDS;
     std::array<pybind11::list, 2> vTickLists;
@@ -545,6 +573,8 @@ class PartialQuarry
     bool setCoverageValues( );
     // coverage.h
     bool setTracks( );
+    // coverage.h
+    bool setTrackExport( );
 
     // coverage.h
     bool setFlatCoverageValues( );
@@ -695,7 +725,8 @@ class PartialQuarry
     }
 
   public:
-    PartialQuarry( ) : sPrefix( "" ), uiCurrTime( 1 ), vGraph( NodeNames::SIZE ), xSession( ), xIndices( )
+    PartialQuarry( ) : sPrefix( "" ), uiCurrTime( 1 ), vGraph( NodeNames::SIZE ), 
+          vGraphData( NodeNames::SIZE ), xSession( ), xIndices( )
     {
         registerAll( );
         ++uiCurrTime;
@@ -705,6 +736,7 @@ class PartialQuarry
         : sPrefix( sPrefix ),
           uiCurrTime( 1 ),
           vGraph( NodeNames::SIZE ),
+          vGraphData( NodeNames::SIZE ),
           xSession( json::parse( std::ifstream( sPrefix + "/session.json" ) ) ),
           xIndices( sPrefix, false )
     {
@@ -888,8 +920,10 @@ class PartialQuarry
     std::string getDOT( )
     {
         std::string sRet = "digraph libContactMappingFlowDiagram {\n";
-        for( const ComputeNode& rNode : vGraph )
+        for( size_t uiI = 0; uiI < NodeNames::SIZE; uiI++ )
         {
+            const ComputeNode& rNode = vGraph[uiI];
+            const ComputeNodeData& rNodeData = vGraphData[uiI];
             std::string sJoined = "";
             for( std::vector<std::string> vParam : rNode.vIncomingSession )
             {
@@ -906,6 +940,8 @@ class PartialQuarry
                 sRet += "\t" + rNode.sNodeName + "_in [shape=box, label=<" + sJoined + ">];\n";
                 sRet += "\t" + rNode.sNodeName + "_in -> " + rNode.sNodeName + ";\n";
             }
+            if(rNodeData.bTerminal)
+                sRet += "\t" + rNode.sNodeName + " [shape=hexagon];\n";
             for( const NodeNames& rIncoming : rNode.vIncomingFunctions )
                 sRet += "\t" + vGraph[ rIncoming ].sNodeName + " -> " + rNode.sNodeName + ";\n";
         }

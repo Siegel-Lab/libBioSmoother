@@ -815,22 +815,19 @@ void PartialQuarry::regCoords( )
                   ComputeNode{ .sNodeName = "longest_common_substring",
                                .fFunc = &PartialQuarry::setLCS,
                                .vIncomingFunctions = { },
-                               .vIncomingSession = { { "contigs", "list" } },
-                               .uiLastUpdated = uiCurrTime } );
+                               .vIncomingSession = { { "contigs", "list" } }} );
 
     registerNode( NodeNames::ActiveChrom,
                   ComputeNode{ .sNodeName = "active_chroms",
                                .fFunc = &PartialQuarry::setActiveChrom,
                                .vIncomingFunctions = { },
-                               .vIncomingSession = { { "contigs", "displayed_on_x" }, { "contigs", "displayed_on_y" } },
-                               .uiLastUpdated = uiCurrTime } );
+                               .vIncomingSession = { { "contigs", "displayed_on_x" }, { "contigs", "displayed_on_y" } }} );
 
     registerNode( NodeNames::Ticks,
                   ComputeNode{ .sNodeName = "ticks",
                                .fFunc = &PartialQuarry::setTicks,
                                .vIncomingFunctions = { NodeNames::LCS, NodeNames::AnnotationValues },
-                               .vIncomingSession = { },
-                               .uiLastUpdated = uiCurrTime } );
+                               .vIncomingSession = { }} );
 
     registerNode( NodeNames::AxisCoords,
                   ComputeNode{ .sNodeName = "axis_coords",
@@ -840,21 +837,18 @@ void PartialQuarry::regCoords( )
                                                      { "settings", "filters", "multiple_annos_in_bin" },
                                                      { "settings", "filters", "anno_in_multiple_bins" },
                                                      { "contigs", "column_coordinates" },
-                                                     { "contigs", "row_coordinates" } },
-                               .uiLastUpdated = uiCurrTime } );
+                                                     { "contigs", "row_coordinates" } }} );
 
     registerNode( NodeNames::Symmetry, ComputeNode{ .sNodeName = "symmetry_setting",
                                                     .fFunc = &PartialQuarry::setSymmetry,
                                                     .vIncomingFunctions = { },
-                                                    .vIncomingSession = { { "settings", "filters", "symmetry" } },
-                                                    .uiLastUpdated = uiCurrTime } );
+                                                    .vIncomingSession = { { "settings", "filters", "symmetry" } } } );
 
     registerNode( NodeNames::BinCoords,
                   ComputeNode{ .sNodeName = "bin_coords",
                                .fFunc = &PartialQuarry::setBinCoords,
                                .vIncomingFunctions = { NodeNames::AxisCoords, NodeNames::Symmetry },
-                               .vIncomingSession = { { "settings", "filters", "min_diag_dist", "val" } },
-                               .uiLastUpdated = uiCurrTime } );
+                               .vIncomingSession = { { "settings", "filters", "min_diag_dist", "val" } }} );
 }
 
 } // namespace cm

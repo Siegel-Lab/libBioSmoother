@@ -564,6 +564,12 @@ bool PartialQuarry::setTracks( )
     END_RETURN;
 }
 
+bool PartialQuarry::setTrackExport( )
+{
+    
+    END_RETURN;
+}
+
 
 const pybind11::dict PartialQuarry::getTracks( bool bXAxis )
 {
@@ -596,8 +602,7 @@ void PartialQuarry::regCoverage( )
                                                      { "replicates", "cov_column_b" },
                                                      { "replicates", "cov_row_a" },
                                                      { "replicates", "cov_row_b" },
-                                                     { "settings", "normalization", "normalize_by" } },
-                               .uiLastUpdated = uiCurrTime } );
+                                                     { "settings", "normalization", "normalize_by" } }} );
 
     registerNode( NodeNames::CoverageValues,
                   ComputeNode{ .sNodeName = "coverage_values",
@@ -606,16 +611,14 @@ void PartialQuarry::regCoverage( )
                                                        NodeNames::IntersectionType, NodeNames::Symmetry },
                                .vIncomingSession = { { "settings", "filters", "mapping_q", "val_min" },
                                                      { "settings", "filters", "mapping_q", "val_max" },
-                                                     { "settings", "normalization", "min_interactions", "val" } },
-                               .uiLastUpdated = uiCurrTime } );
+                                                     { "settings", "normalization", "min_interactions", "val" } }} );
 
     registerNode(
         NodeNames::FlatCoverageValues,
         ComputeNode{ .sNodeName = "flat_coverage",
                      .fFunc = &PartialQuarry::setFlatCoverageValues,
                      .vIncomingFunctions = { NodeNames::CoverageValues, NodeNames::BetweenGroup, NodeNames::InGroup },
-                     .vIncomingSession = { },
-                     .uiLastUpdated = uiCurrTime } );
+                     .vIncomingSession = { } } );
 
     registerNode(
         NodeNames::Tracks,
@@ -623,8 +626,14 @@ void PartialQuarry::regCoverage( )
                      .fFunc = &PartialQuarry::setTracks,
                      .vIncomingFunctions = { NodeNames::FlatCoverageValues, NodeNames::LCS, NodeNames::Normalized,
                                              NodeNames::AnnotationColors },
-                     .vIncomingSession = { { "settings", "normalization", "display_ice_remainder" } },
-                     .uiLastUpdated = uiCurrTime } );
+                     .vIncomingSession = { { "settings", "normalization", "display_ice_remainder" } } } );
+
+    registerNode(
+        NodeNames::TrackExport,
+        ComputeNode{ .sNodeName = "track_export",
+                     .fFunc = &PartialQuarry::setTrackExport,
+                     .vIncomingFunctions = { NodeNames::Tracks },
+                     .vIncomingSession = { } } );
 }
 
 

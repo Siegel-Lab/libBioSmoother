@@ -152,8 +152,7 @@ void PartialQuarry::regBinSize( )
                                                      { "settings", "interface", "max_num_bins_factor" },
                                                      { "settings", "interface", "squared_bins" },
                                                      { "dividend" },
-                                                     { "area" } },
-                               .uiLastUpdated = uiCurrTime } );
+                                                     { "area" } }} );
 
     registerNode( NodeNames::RenderArea,
                   ComputeNode{ .sNodeName = "render_area",
@@ -164,8 +163,7 @@ void PartialQuarry::regBinSize( )
                                        { "settings", "export", "do_export_full" },
                                        { "settings", "contigs", "genome_size" },
                                        { "settings", "interface", "add_draw_area", "val" },
-                                   },
-                               .uiLastUpdated = uiCurrTime } );
+                                   }} );
 }
 
 
