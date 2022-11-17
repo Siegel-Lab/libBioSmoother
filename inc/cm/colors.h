@@ -188,7 +188,7 @@ bool PartialQuarry::setPalette( )
     double fBase = this->xSession[ "settings" ][ "normalization" ][ "log_base" ][ "val" ].get<double>( );
 
     for( double fC = std::min( fMin, fMinR ); fC <= std::max( fMax, fMaxR );
-         fC += std::max(1.0, std::max( fMax, fMaxR ) - std::min( fMin, fMinR ) ) / 255.0 )
+         fC += std::max( 1.0, std::max( fMax, fMaxR ) - std::min( fMin, fMinR ) ) / 255.0 )
     {
         CANCEL_RETURN;
         vNew.append( vColorPalette[ colorIndex( logScale( colorRange( fMinR, fMaxR, fC ), fBase ) ) ] );
@@ -363,50 +363,50 @@ void PartialQuarry::regColors( )
                                .vIncomingSession = { { "settings", "interface", "color_palette" },
                                                      { "settings", "interface", "color_low" },
                                                      { "settings", "interface", "color_high" },
-                                                     { "settings", "normalization", "log_base", "val" } }} );
+                                                     { "settings", "normalization", "log_base", "val" } } } );
 
     registerNode( NodeNames::AnnotationColors,
                   ComputeNode{ .sNodeName = "annotation_color_palette",
                                .fFunc = &PartialQuarry::setAnnotationColors,
                                .vIncomingFunctions = { },
-                               .vIncomingSession = { { "settings", "interface", "annotation_color_palette" } }} );
+                               .vIncomingSession = { { "settings", "interface", "annotation_color_palette" } } } );
 
     registerNode( NodeNames::Combined,
                   ComputeNode{ .sNodeName = "combined_bins",
                                .fFunc = &PartialQuarry::setCombined,
                                .vIncomingFunctions = { NodeNames::Normalized },
-                               .vIncomingSession = { }} );
+                               .vIncomingSession = {} } );
 
     registerNode( NodeNames::Scaled,
                   ComputeNode{ .sNodeName = "scaled_bins",
                                .fFunc = &PartialQuarry::setScaled,
                                .vIncomingFunctions = { NodeNames::Divided },
-                               .vIncomingSession = { { "settings", "normalization", "scale" } }} );
+                               .vIncomingSession = { { "settings", "normalization", "scale" } } } );
 
     registerNode( NodeNames::Colored,
                   ComputeNode{ .sNodeName = "colored_bins",
                                .fFunc = &PartialQuarry::setColored,
                                .vIncomingFunctions = { NodeNames::Colors, NodeNames::Scaled },
                                .vIncomingSession = { { "settings", "normalization", "color_range", "val_max" },
-                                                     { "settings", "normalization", "color_range", "val_min" } }} );
+                                                     { "settings", "normalization", "color_range", "val_min" } } } );
 
     registerNode( NodeNames::HeatmapCDS,
                   ComputeNode{ .sNodeName = "heatmap_cds",
                                .fFunc = &PartialQuarry::setHeatmapCDS,
                                .vIncomingFunctions = { NodeNames::Colored },
-                               .vIncomingSession = { }} );
+                               .vIncomingSession = {} } );
 
     registerNode( NodeNames::HeatmapExport,
                   ComputeNode{ .sNodeName = "heatmap_export",
                                .fFunc = &PartialQuarry::setHeatmapExport,
                                .vIncomingFunctions = { NodeNames::Scaled },
-                               .vIncomingSession = { }} );
+                               .vIncomingSession = {} } );
 
     registerNode( NodeNames::Palette,
                   ComputeNode{ .sNodeName = "rendered_palette",
                                .fFunc = &PartialQuarry::setPalette,
                                .vIncomingFunctions = { NodeNames::Scaled, NodeNames::Colors },
-                               .vIncomingSession = { }} );
+                               .vIncomingSession = {} } );
 }
 
 } // namespace cm

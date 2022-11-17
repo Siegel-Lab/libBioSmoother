@@ -166,15 +166,15 @@ class PartialQuarry
 
     void registerNode( NodeNames xName, ComputeNode xNode )
     {
-        assert(!vGraphData[xName].bRegistered);
+        assert( !vGraphData[ xName ].bRegistered );
 
         for( std::vector<std::string>& rKey : xNode.vIncomingSession )
             xSessionTime[ rKey ] = uiCurrTime + 1;
         for( NodeNames& rIncoming : xNode.vIncomingFunctions )
-            vGraphData[rIncoming].bTerminal = false;
+            vGraphData[ rIncoming ].bTerminal = false;
         vGraph[ xName ] = xNode;
-        vGraphData[xName].uiLastUpdated = uiCurrTime;
-        vGraphData[xName].bRegistered = true;
+        vGraphData[ xName ].uiLastUpdated = uiCurrTime;
+        vGraphData[ xName ].bRegistered = true;
     }
 
     std::string vec2str( std::vector<std::string> vVec )
@@ -312,12 +312,12 @@ class PartialQuarry
         std::set<std::string> xNodeNames;
         for( size_t uiNodeName = 0; uiNodeName < NodeNames::SIZE; uiNodeName++ )
         {
-            if(xNodeNames.count(vGraph[ uiNodeName ].sNodeName) > 0)
-                std::cerr << "two nodes have been registered under the same name: " 
-                          << vGraph[ uiNodeName ].sNodeName << std::endl;
-            xNodeNames.insert(vGraph[ uiNodeName ].sNodeName);
+            if( xNodeNames.count( vGraph[ uiNodeName ].sNodeName ) > 0 )
+                std::cerr << "two nodes have been registered under the same name: " << vGraph[ uiNodeName ].sNodeName
+                          << std::endl;
+            xNodeNames.insert( vGraph[ uiNodeName ].sNodeName );
 
-            if(!vGraphData[uiNodeName].bRegistered)
+            if( !vGraphData[ uiNodeName ].bRegistered )
                 std::cerr << "Node has not been registered. id: " << uiNodeName << std::endl;
             else
             {
@@ -329,14 +329,14 @@ class PartialQuarry
                 for( std::vector<std::string>& rSetting : vGraph[ uiNodeName ].vIncomingSession )
                     if( xDependentSettings.count( rSetting ) > 0 )
                         std::cerr << "unnecessary session dependency warning: " << vGraph[ uiNodeName ].sNodeName
-                                << " depends on " << toString( rSetting ) << ", but the previous node "
-                                << xDependentSettings[ rSetting ] << " shares this dependency" << std::endl;
+                                  << " depends on " << toString( rSetting ) << ", but the previous node "
+                                  << xDependentSettings[ rSetting ] << " shares this dependency" << std::endl;
 
                 for( NodeNames& rPrev : vGraph[ uiNodeName ].vIncomingFunctions )
                     if( xDependents.count( rPrev ) > 0 )
                         std::cerr << "unnecessary session dependency warning: " << vGraph[ uiNodeName ].sNodeName
-                                << " depends on " << vGraph[ rPrev ].sNodeName << ", but the previous node "
-                                << xDependents[ rPrev ] << " shares this dependency" << std::endl;
+                                  << " depends on " << vGraph[ rPrev ].sNodeName << ", but the previous node "
+                                  << xDependents[ rPrev ] << " shares this dependency" << std::endl;
             }
         }
     }
@@ -346,8 +346,8 @@ class PartialQuarry
     {
         std::string sRet = "";
         for( size_t uiNodeName = 0; uiNodeName < NodeNames::SIZE; uiNodeName++ )
-            if( vGraphData[uiNodeName].sError.size( ) > 0 )
-                sRet += vGraph[uiNodeName].sNodeName + ": " + vGraphData[uiNodeName].sError + "\n";
+            if( vGraphData[ uiNodeName ].sError.size( ) > 0 )
+                sRet += vGraph[ uiNodeName ].sNodeName + ": " + vGraphData[ uiNodeName ].sError + "\n";
         if( sRet.size( ) > 0 )
             sRet = sRet.substr( 0, sRet.size( ) - 1 );
         return sRet;
@@ -511,8 +511,8 @@ class PartialQuarry
     std::array<pybind11::list, 2> vActiveAnnotationCDS;
     pybind11::dict xHeatmapCDS;
     std::vector<std::tuple<std::string, size_t, size_t, std::string, size_t, size_t, double>> vHeatmapExport;
-    std::vector<std::string> vTrackExportNames;
-    std::vector<std::tuple<std::string, size_t, size_t, std::vector<double>>> vTrackExport;
+    std::array<std::vector<std::string>, 2> vTrackExportNames;
+    std::array<std::vector<std::tuple<std::string, size_t, size_t, std::vector<double>>>, 2> vTrackExport;
     std::array<pybind11::dict, 2> xTicksCDS;
     std::array<pybind11::dict, 2> xTracksCDS;
     std::array<pybind11::list, 2> vTickLists;
@@ -725,8 +725,13 @@ class PartialQuarry
     }
 
   public:
-    PartialQuarry( ) : sPrefix( "" ), uiCurrTime( 1 ), vGraph( NodeNames::SIZE ), 
-          vGraphData( NodeNames::SIZE ), xSession( ), xIndices( )
+    PartialQuarry( )
+        : sPrefix( "" ),
+          uiCurrTime( 1 ),
+          vGraph( NodeNames::SIZE ),
+          vGraphData( NodeNames::SIZE ),
+          xSession( ),
+          xIndices( )
     {
         registerAll( );
         ++uiCurrTime;
@@ -757,25 +762,26 @@ class PartialQuarry
     const std::vector<std::array<BinCoord, 2>>& getBinCoords( );
 
     // coords.h
-    const pybind11::list getAnnotationList( bool bXAxis );
+    const pybind11::list getAnnotationList( bool );
 
     // colors.h
-    const pybind11::dict getTicks( bool bXAxis );
+    const pybind11::dict getTicks( bool );
 
     // colors.h
-    const pybind11::list getTickList( bool bXAxis );
+    const pybind11::list getTickList( bool );
 
     // coords.h
-    const std::vector<AxisCoord>& getAxisCoords( bool bXAxis );
+    const std::vector<AxisCoord>& getAxisCoords( bool );
 
     // annotation.h
-    const pybind11::dict getAnnotation( bool bXAxis );
+    const pybind11::dict getAnnotation( bool );
 
     // annotation.h
-    const pybind11::list getDisplayedAnnos( bool bXAxis );
+    const pybind11::list getDisplayedAnnos( bool );
 
     // colors.h
     const pybind11::dict getHeatmap( );
+
     // colors.h
     const decltype( vHeatmapExport ) getHeatmapExport( );
 
@@ -789,7 +795,13 @@ class PartialQuarry
     const std::array<size_t, 2> getCanvasSize( );
 
     // coverage.h
-    const pybind11::dict getTracks( bool bXAxis );
+    const pybind11::dict getTracks( bool );
+
+    // coverage.h
+    const decltype( vTrackExport[ 0 ] ) getTrackExport( bool );
+
+    // coverage.h
+    const std::vector<std::string> getTrackExportNames( bool );
 
     // coverage.h
     const std::array<int64_t, 2> getMinMaxTracks( bool bAxis );
@@ -922,8 +934,8 @@ class PartialQuarry
         std::string sRet = "digraph libContactMappingFlowDiagram {\n";
         for( size_t uiI = 0; uiI < NodeNames::SIZE; uiI++ )
         {
-            const ComputeNode& rNode = vGraph[uiI];
-            const ComputeNodeData& rNodeData = vGraphData[uiI];
+            const ComputeNode& rNode = vGraph[ uiI ];
+            const ComputeNodeData& rNodeData = vGraphData[ uiI ];
             std::string sJoined = "";
             for( std::vector<std::string> vParam : rNode.vIncomingSession )
             {
@@ -940,7 +952,7 @@ class PartialQuarry
                 sRet += "\t" + rNode.sNodeName + "_in [shape=box, label=<" + sJoined + ">];\n";
                 sRet += "\t" + rNode.sNodeName + "_in -> " + rNode.sNodeName + ";\n";
             }
-            if(rNodeData.bTerminal)
+            if( rNodeData.bTerminal )
                 sRet += "\t" + rNode.sNodeName + " [shape=hexagon];\n";
             for( const NodeNames& rIncoming : rNode.vIncomingFunctions )
                 sRet += "\t" + vGraph[ rIncoming ].sNodeName + " -> " + rNode.sNodeName + ";\n";

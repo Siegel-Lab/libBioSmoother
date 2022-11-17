@@ -336,7 +336,7 @@ bool PartialQuarry::setTracks( )
 
                     vColors.append( vColorPaletteAnnotation[ uiCnt % vColorPaletteAnnotation.size( ) ] );
 
-                    vNames.append( uiI == 0 ? "Column Normalization" : "Row Normalization" );
+                    vNames.append( uiI == 0 ? "Column Sum" : "Row Sum" );
                 }
 
                 if( uiX == 0 )
@@ -566,8 +566,50 @@ bool PartialQuarry::setTracks( )
 
 bool PartialQuarry::setTrackExport( )
 {
-    
+    size_t uiDividend = this->xSession[ "dividend" ].get<size_t>( );
+    for( size_t uiI = 0; uiI < 2; uiI++ )
+    {
+        vTrackExport[ uiI ].clear( );
+        vTrackExport[ uiI ].reserve( vAxisCords[ uiI ].size( ) );
+        vTrackExportNames[ uiI ].clear( );
+        vTrackExportNames[ uiI ].reserve( vvFlatCoverageValues[ uiI ].size( ) + vInGroupCoverage[ uiI ][ 2 ].size( ) );
+
+        if( vvFlatCoverageValues[ uiI ].size( ) > 0 )
+            vTrackExportNames[ uiI ].push_back( uiI == 0 ? "Column Sum" : "Row Sum" );
+
+        for( size_t uiId : vInGroupCoverage[ uiI ][ 2 ] )
+            vTrackExportNames[ uiI ].push_back( vActiveCoverage[ uiI ][ uiId ].first );
+
+        for( size_t uiX = 0; uiX < vAxisCords[ uiI ].size( ); uiX++ )
+        {
+            CANCEL_RETURN;
+            std::vector<double> vValues;
+            if( vvFlatCoverageValues[ uiI ].size( ) > 0 )
+                vValues.push_back( vvFlatCoverageValues[ uiI ][ uiX ] );
+
+            for( size_t uiId : vInGroupCoverage[ uiI ][ 2 ] )
+                vValues.push_back( vvCoverageValues[ uiI ][ uiId ][ uiX ] );
+
+            auto& xCoord = vAxisCords[ uiI ][ uiX ];
+            vTrackExport[ uiI ].emplace_back( xCoord.sChromosome,
+                                              xCoord.uiIndexPos * uiDividend,
+                                              ( xCoord.uiIndexPos + xCoord.uiIndexSize ) * uiDividend,
+                                              vValues );
+        }
+    }
     END_RETURN;
+}
+
+const decltype( PartialQuarry::vTrackExport[ 0 ] ) PartialQuarry::getTrackExport( bool bXAxis )
+{
+    update( NodeNames::TrackExport );
+    return vTrackExport[ bXAxis ? 0 : 1 ];
+}
+
+const std::vector<std::string> PartialQuarry::getTrackExportNames( bool bXAxis )
+{
+    update( NodeNames::TrackExport );
+    return vTrackExportNames[ bXAxis ? 0 : 1 ];
 }
 
 
@@ -602,7 +644,7 @@ void PartialQuarry::regCoverage( )
                                                      { "replicates", "cov_column_b" },
                                                      { "replicates", "cov_row_a" },
                                                      { "replicates", "cov_row_b" },
-                                                     { "settings", "normalization", "normalize_by" } }} );
+                                                     { "settings", "normalization", "normalize_by" } } } );
 
     registerNode( NodeNames::CoverageValues,
                   ComputeNode{ .sNodeName = "coverage_values",
@@ -611,29 +653,27 @@ void PartialQuarry::regCoverage( )
                                                        NodeNames::IntersectionType, NodeNames::Symmetry },
                                .vIncomingSession = { { "settings", "filters", "mapping_q", "val_min" },
                                                      { "settings", "filters", "mapping_q", "val_max" },
-                                                     { "settings", "normalization", "min_interactions", "val" } }} );
+                                                     { "settings", "normalization", "min_interactions", "val" } } } );
 
     registerNode(
         NodeNames::FlatCoverageValues,
         ComputeNode{ .sNodeName = "flat_coverage",
                      .fFunc = &PartialQuarry::setFlatCoverageValues,
                      .vIncomingFunctions = { NodeNames::CoverageValues, NodeNames::BetweenGroup, NodeNames::InGroup },
-                     .vIncomingSession = { } } );
+                     .vIncomingSession = {} } );
 
-    registerNode(
-        NodeNames::Tracks,
-        ComputeNode{ .sNodeName = "coverage_tracks",
-                     .fFunc = &PartialQuarry::setTracks,
-                     .vIncomingFunctions = { NodeNames::FlatCoverageValues, NodeNames::LCS, NodeNames::Normalized,
-                                             NodeNames::AnnotationColors },
-                     .vIncomingSession = { { "settings", "normalization", "display_ice_remainder" } } } );
+    registerNode( NodeNames::Tracks,
+                  ComputeNode{ .sNodeName = "coverage_tracks",
+                               .fFunc = &PartialQuarry::setTracks,
+                               .vIncomingFunctions = { NodeNames::FlatCoverageValues, NodeNames::LCS,
+                                                       NodeNames::Normalized, NodeNames::AnnotationColors },
+                               .vIncomingSession = { { "settings", "normalization", "display_ice_remainder" } } } );
 
-    registerNode(
-        NodeNames::TrackExport,
-        ComputeNode{ .sNodeName = "track_export",
-                     .fFunc = &PartialQuarry::setTrackExport,
-                     .vIncomingFunctions = { NodeNames::Tracks },
-                     .vIncomingSession = { } } );
+    registerNode( NodeNames::TrackExport,
+                  ComputeNode{ .sNodeName = "track_export",
+                               .fFunc = &PartialQuarry::setTrackExport,
+                               .vIncomingFunctions = { NodeNames::Tracks },
+                               .vIncomingSession = {} } );
 }
 
 

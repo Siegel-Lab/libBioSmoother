@@ -300,17 +300,18 @@ bool PartialQuarry::setFlatValues( )
 
 void PartialQuarry::regReplicates( )
 {
-    registerNode( NodeNames::ActiveReplicates,
-                  ComputeNode{ .sNodeName = "active_replicates",
-                               .fFunc = &PartialQuarry::setActiveReplicates,
-                               .vIncomingFunctions = { },
-                               .vIncomingSession = { { "replicates", "in_group_a" }, { "replicates", "in_group_b" } }} );
+    registerNode(
+        NodeNames::ActiveReplicates,
+        ComputeNode{ .sNodeName = "active_replicates",
+                     .fFunc = &PartialQuarry::setActiveReplicates,
+                     .vIncomingFunctions = { },
+                     .vIncomingSession = { { "replicates", "in_group_a" }, { "replicates", "in_group_b" } } } );
 
     registerNode( NodeNames::IntersectionType,
                   ComputeNode{ .sNodeName = "intersection_type",
                                .fFunc = &PartialQuarry::setIntersectionType,
                                .vIncomingFunctions = { },
-                               .vIncomingSession = { { "settings", "filters", "ambiguous_mapping" } }} );
+                               .vIncomingSession = { { "settings", "filters", "ambiguous_mapping" } } } );
 
     registerNode( NodeNames::BinValues,
                   ComputeNode{ .sNodeName = "bin_values",
@@ -320,25 +321,25 @@ void PartialQuarry::regReplicates( )
                                .vIncomingSession = { { "settings", "filters", "mapping_q", "val_min" },
                                                      { "settings", "filters", "mapping_q", "val_max" },
                                                      { "settings", "filters", "incomplete_alignments" },
-                                                     { "settings", "normalization", "min_interactions", "val" } }} );
+                                                     { "settings", "normalization", "min_interactions", "val" } } } );
 
     registerNode( NodeNames::InGroup,
                   ComputeNode{ .sNodeName = "in_group_setting",
                                .fFunc = &PartialQuarry::setInGroup,
                                .vIncomingFunctions = { },
-                               .vIncomingSession = { { "settings", "replicates", "in_group" } }} );
+                               .vIncomingSession = { { "settings", "replicates", "in_group" } } } );
 
     registerNode( NodeNames::BetweenGroup,
                   ComputeNode{ .sNodeName = "between_group_setting",
                                .fFunc = &PartialQuarry::setBetweenGroup,
                                .vIncomingFunctions = { },
-                               .vIncomingSession = { { "settings", "replicates", "between_group" } }} );
+                               .vIncomingSession = { { "settings", "replicates", "between_group" } } } );
 
     registerNode( NodeNames::FlatValues,
                   ComputeNode{ .sNodeName = "flat_bins",
                                .fFunc = &PartialQuarry::setFlatValues,
                                .vIncomingFunctions = { NodeNames::BinValues, NodeNames::InGroup },
-                               .vIncomingSession = { }} );
+                               .vIncomingSession = {} } );
 }
 
 } // namespace cm
