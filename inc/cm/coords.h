@@ -812,7 +812,7 @@ const std::vector<AxisCoord>& PartialQuarry::getAxisCoords( bool bXAxis )
 void PartialQuarry::regCoords( )
 {
     registerNode( NodeNames::LCS,
-                  ComputeNode{ .sNodeName = "active_chroms",
+                  ComputeNode{ .sNodeName = "longest_common_substring",
                                .fFunc = &PartialQuarry::setLCS,
                                .vIncomingFunctions = { },
                                .vIncomingSession = { { "contigs", "list" } },

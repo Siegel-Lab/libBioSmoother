@@ -152,9 +152,9 @@ bool PartialQuarry::setCoverageValues( )
                         if( sRep.second )
                             iDataSetId = xRep[ "ids" ][ xCoords.sChromosome ].get<int64_t>( );
                         else
-                            iDataSetId = xRep[ "ids" ][ xCoords.sChromosome ][ 
-                                    uiJ == 0 ? (uiI == 0 ? "col" : "row") : (uiI == 0 ? "row" : "col")
-                                ].get<int64_t>( );
+                            iDataSetId = xRep[ "ids" ][ xCoords.sChromosome ]
+                                             [ uiJ == 0 ? ( uiI == 0 ? "col" : "row" ) : ( uiI == 0 ? "row" : "col" ) ]
+                                                 .get<int64_t>( );
 
                         if( iDataSetId != -1 )
                         {
@@ -264,6 +264,9 @@ bool PartialQuarry::setTracks( )
     pybind11::gil_scoped_acquire acquire;
 
     size_t uiDividend = this->xSession[ "dividend" ].get<size_t>( );
+    bool bIsHicAndShowRemainder =
+        this->xSession[ "settings" ][ "normalization" ][ "normalize_by" ].get<std::string>( ) == "hi-c" &&
+        this->xSession[ "settings" ][ "normalization" ][ "display_ice_remainder" ].get<bool>( );
     for( size_t uiI = 0; uiI < 2; uiI++ )
     {
         vvMinMaxTracks[ uiI ][ 0 ] = std::numeric_limits<int64_t>::max( );
@@ -282,6 +285,13 @@ bool PartialQuarry::setTracks( )
             if( vvFlatCoverageValues[ uiI ].size( ) > 0 )
             {
                 auto uiVal = vvFlatCoverageValues[ uiI ][ uiX ];
+                vvMinMaxTracks[ uiI ][ 0 ] = std::min( vvMinMaxTracks[ uiI ][ 0 ], (int64_t)uiVal );
+                vvMinMaxTracks[ uiI ][ 1 ] = std::max( vvMinMaxTracks[ uiI ][ 1 ], (int64_t)uiVal );
+            }
+
+            if( bIsHicAndShowRemainder )
+            {
+                auto uiVal = getMixedValue( vSliceRemainder[ uiI ][ uiX ][ 0 ], vSliceRemainder[ uiI ][ uiX ][ 1 ] );
                 vvMinMaxTracks[ uiI ][ 0 ] = std::min( vvMinMaxTracks[ uiI ][ 0 ], (int64_t)uiVal );
                 vvMinMaxTracks[ uiI ][ 1 ] = std::max( vvMinMaxTracks[ uiI ][ 1 ], (int64_t)uiVal );
             }
@@ -461,6 +471,85 @@ bool PartialQuarry::setTracks( )
             ++uiCnt;
         }
 
+        if( bIsHicAndShowRemainder )
+        {
+            pybind11::list vScreenPos;
+            pybind11::list vIndexStart;
+            pybind11::list vIndexEnd;
+            pybind11::list vValue;
+            std::string sChr = "";
+
+
+            for( size_t uiX = 0; uiX < vAxisCords[ uiI ].size( ); uiX++ )
+            {
+                CANCEL_RETURN;
+                auto& xCoord = vAxisCords[ uiI ][ uiX ];
+                if( sChr != "" && sChr != xCoord.sChromosome )
+                {
+                    vChrs.append( substringChr( sChr ) );
+
+                    vScreenPoss.append( vScreenPos );
+                    vScreenPos = pybind11::list( );
+
+                    vIndexStarts.append( vIndexStart );
+                    vIndexStart = pybind11::list( );
+
+                    vIndexEnds.append( vIndexEnd );
+                    vIndexEnd = pybind11::list( );
+
+                    vValues.append( vValue );
+                    vValue = pybind11::list( );
+
+                    vColors.append( vColorPaletteAnnotation[ uiCnt % vColorPaletteAnnotation.size( ) ] );
+
+                    vNames.append( "ICing remainder" );
+                }
+
+                if( uiX == 0 )
+                {
+                    // zero position at start
+                    vIndexStart.append( readableBp( xCoord.uiIndexPos * uiDividend ) );
+                    vIndexEnd.append( readableBp( xCoord.uiIndexPos * uiDividend ) );
+                    vScreenPos.append( xCoord.uiScreenPos );
+                    vValue.append( vvMinMaxTracks[ uiI ][ 0 ] );
+                }
+
+                sChr = xCoord.sChromosome;
+                auto uiVal = getMixedValue( vSliceRemainder[ uiI ][ uiX ][ 0 ], vSliceRemainder[ uiI ][ uiX ][ 1 ] );
+
+                // front corner
+                vIndexStart.append( readableBp( xCoord.uiIndexPos * uiDividend ) );
+                vIndexEnd.append( readableBp( ( xCoord.uiIndexPos + xCoord.uiIndexSize ) * uiDividend ) );
+                vScreenPos.append( xCoord.uiScreenPos );
+                vValue.append( uiVal );
+
+                // rear corner
+                vIndexStart.append( readableBp( xCoord.uiIndexPos * uiDividend ) );
+                vIndexEnd.append( readableBp( ( xCoord.uiIndexPos + xCoord.uiIndexSize ) * uiDividend ) );
+                vScreenPos.append( xCoord.uiScreenPos + xCoord.uiScreenSize );
+                vValue.append( uiVal );
+
+                if( uiX + 1 == vAxisCords[ uiI ].size( ) )
+                {
+                    // zero position at end
+                    vIndexStart.append( readableBp( ( xCoord.uiIndexPos + xCoord.uiIndexSize ) * uiDividend ) );
+                    vIndexEnd.append( readableBp( ( xCoord.uiIndexPos + xCoord.uiIndexSize ) * uiDividend ) );
+                    vScreenPos.append( xCoord.uiScreenPos + xCoord.uiScreenSize );
+                    vValue.append( vvMinMaxTracks[ uiI ][ 0 ] );
+                }
+            }
+
+            vChrs.append( substringChr( sChr ) );
+            vScreenPoss.append( vScreenPos );
+            vIndexStarts.append( vIndexStart );
+            vIndexEnds.append( vIndexEnd );
+            vValues.append( vValue );
+            vColors.append( vColorPaletteAnnotation[ uiCnt % vColorPaletteAnnotation.size( ) ] );
+            vNames.append( "ICing remainder" );
+
+            ++uiCnt;
+        }
+
         xTracksCDS[ uiI ] = pybind11::dict( "chrs"_a = vChrs,
                                             "screen_pos"_a = vScreenPoss,
 
@@ -528,12 +617,14 @@ void PartialQuarry::regCoverage( )
                      .vIncomingSession = { },
                      .uiLastUpdated = uiCurrTime } );
 
-    registerNode( NodeNames::Tracks,
-                  ComputeNode{ .sNodeName = "coverage_tracks",
-                               .fFunc = &PartialQuarry::setTracks,
-                               .vIncomingFunctions = { NodeNames::FlatCoverageValues, NodeNames::LCS },
-                               .vIncomingSession = { },
-                               .uiLastUpdated = uiCurrTime } );
+    registerNode(
+        NodeNames::Tracks,
+        ComputeNode{ .sNodeName = "coverage_tracks",
+                     .fFunc = &PartialQuarry::setTracks,
+                     .vIncomingFunctions = { NodeNames::FlatCoverageValues, NodeNames::LCS, NodeNames::Normalized,
+                                             NodeNames::AnnotationColors },
+                     .vIncomingSession = { { "settings", "normalization", "display_ice_remainder" } },
+                     .uiLastUpdated = uiCurrTime } );
 }
 
 

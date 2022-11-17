@@ -318,22 +318,20 @@ bool PartialQuarry::setHeatmapCDS( )
 
 bool PartialQuarry::setHeatmapExport( )
 {
-    vHeatmapExport.clear();
-    vHeatmapExport.reserve(vScaled.size( ));
+    vHeatmapExport.clear( );
+    vHeatmapExport.reserve( vScaled.size( ) );
     for( size_t uiI = 0; uiI < vScaled.size( ); uiI++ )
     {
         CANCEL_RETURN;
-        vHeatmapExport.emplace_back(
-            vBinCoords[ uiI ][ 0 ].sChromosomeX,
-            vBinCoords[ uiI ][ 0 ].uiIndexX * this->xSession[ "dividend" ].get<size_t>( ),
-            ( vBinCoords[ uiI ][ 0 ].uiIndexX + vBinCoords[ uiI ][ 0 ].uiIndexW ) *
-                                            this->xSession[ "dividend" ].get<size_t>( ),
-            vBinCoords[ uiI ][ 0 ].sChromosomeY,
-            vBinCoords[ uiI ][ 0 ].uiIndexY * this->xSession[ "dividend" ].get<size_t>( ),
-            ( vBinCoords[ uiI ][ 0 ].uiIndexY + vBinCoords[ uiI ][ 0 ].uiIndexH ) *
-                                          this->xSession[ "dividend" ].get<size_t>( ),
-            vScaled[ uiI ]
-        );
+        vHeatmapExport.emplace_back( vBinCoords[ uiI ][ 0 ].sChromosomeX,
+                                     vBinCoords[ uiI ][ 0 ].uiIndexX * this->xSession[ "dividend" ].get<size_t>( ),
+                                     ( vBinCoords[ uiI ][ 0 ].uiIndexX + vBinCoords[ uiI ][ 0 ].uiIndexW ) *
+                                         this->xSession[ "dividend" ].get<size_t>( ),
+                                     vBinCoords[ uiI ][ 0 ].sChromosomeY,
+                                     vBinCoords[ uiI ][ 0 ].uiIndexY * this->xSession[ "dividend" ].get<size_t>( ),
+                                     ( vBinCoords[ uiI ][ 0 ].uiIndexY + vBinCoords[ uiI ][ 0 ].uiIndexH ) *
+                                         this->xSession[ "dividend" ].get<size_t>( ),
+                                     vScaled[ uiI ] );
     }
     END_RETURN;
 }
@@ -344,7 +342,7 @@ const pybind11::dict PartialQuarry::getHeatmap( )
     return xHeatmapCDS;
 }
 
-const decltype(PartialQuarry::vHeatmapExport) PartialQuarry::getHeatmapExport( )
+const decltype( PartialQuarry::vHeatmapExport ) PartialQuarry::getHeatmapExport( )
 {
     update( NodeNames::HeatmapExport );
     return vHeatmapExport;
@@ -383,7 +381,7 @@ void PartialQuarry::regColors( )
                                .uiLastUpdated = uiCurrTime } );
 
     registerNode( NodeNames::Scaled,
-                  ComputeNode{ .sNodeName = "colored_bins",
+                  ComputeNode{ .sNodeName = "scaled_bins",
                                .fFunc = &PartialQuarry::setScaled,
                                .vIncomingFunctions = { NodeNames::Divided },
                                .vIncomingSession = { { "settings", "normalization", "scale" } },
@@ -412,7 +410,7 @@ void PartialQuarry::regColors( )
                                .uiLastUpdated = uiCurrTime } );
 
     registerNode( NodeNames::Palette,
-                  ComputeNode{ .sNodeName = "color_palette",
+                  ComputeNode{ .sNodeName = "rendered_palette",
                                .fFunc = &PartialQuarry::setPalette,
                                .vIncomingFunctions = { NodeNames::Scaled, NodeNames::Colors },
                                .vIncomingSession = { },

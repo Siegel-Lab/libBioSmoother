@@ -175,10 +175,10 @@ class PartialQuarry
         return sRet;
     }
 
-    void setError(std::string sError)
+    void setError( std::string sError )
     {
-        assert(xCurrNodeName != NodeNames::SIZE);
-        vGraph[xCurrNodeName].sError = sError;
+        assert( xCurrNodeName != NodeNames::SIZE );
+        vGraph[ xCurrNodeName ].sError = sError;
     }
 
     size_t update_helper( NodeNames xNodeName )
@@ -220,7 +220,7 @@ class PartialQuarry
                 }
 
                 xCurrNodeName = xNodeName;
-                setError("");
+                setError( "" );
 
                 auto t1 = std::chrono::high_resolution_clock::now( );
                 bool bUpdateDone = ( this->*xNode.fFunc )( );
@@ -316,14 +316,14 @@ class PartialQuarry
     }
 
   public:
-    std::string getError()
+    std::string getError( )
     {
         std::string sRet = "";
-        for(auto& rX : vGraph)
-            if(rX.sError.size() > 0)
+        for( auto& rX : vGraph )
+            if( rX.sError.size( ) > 0 )
                 sRet += rX.sNodeName + ": " + rX.sError + "\n";
-        if(sRet.size() > 0)
-            sRet = sRet.substr(0, sRet.size() - 1);
+        if( sRet.size( ) > 0 )
+            sRet = sRet.substr( 0, sRet.size( ) - 1 );
         return sRet;
     }
 
@@ -492,6 +492,7 @@ class PartialQuarry
     std::array<std::array<int64_t, 2>, 2> vvMinMaxTracks;
     double fMax, fMin;
     size_t uiLogestCommonSuffix;
+    std::array<std::vector<std::array<size_t, 2>>, 2> vSliceRemainder;
 
     bool bCancel = false;
     std::mutex xUpdateMutex{ };
@@ -591,7 +592,6 @@ class PartialQuarry
         std::array<std::vector<double>, 2> vSliceBias;
         std::array<std::vector<double>, 2> vSliceMargin;
         std::vector<double> vBiases;
-        std::array<std::vector<size_t>, 2> vSliceRemainder;
         size_t uiCornerRemainder;
     };
 
@@ -608,7 +608,7 @@ class PartialQuarry
     // normalization.h
     void iceMarginalize( IceData&, bool, size_t, size_t );
     // normalization.h
-    double iceNonZeroMarginVariance( IceData&, bool, double);
+    double iceNonZeroMarginVariance( IceData&, bool, double );
     // normalization.h
     double iceNonZeroMarginMean( IceData&, bool );
     // normalization.h
@@ -672,6 +672,7 @@ class PartialQuarry
 
 #ifndef NDEBUG
         checkUnnecessaryDependencies( );
+        // @todo check for duplicates
 #endif
     }
 
@@ -744,7 +745,7 @@ class PartialQuarry
     // colors.h
     const pybind11::dict getHeatmap( );
     // colors.h
-    const decltype(vHeatmapExport) getHeatmapExport( );
+    const decltype( vHeatmapExport ) getHeatmapExport( );
 
     // bin_size.h
     const std::array<int64_t, 4> getDrawingArea( );
