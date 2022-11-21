@@ -1,4 +1,4 @@
-from .indexer import *
+from indexer import *
 import argparse
 
 

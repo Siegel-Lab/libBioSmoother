@@ -520,7 +520,6 @@ class PartialQuarry
     std::array<std::array<int64_t, 2>, 2> vvMinMaxTracks;
     double fMax, fMin;
     size_t uiLogestCommonSuffix;
-    std::array<std::vector<std::array<size_t, 2>>, 2> vSliceRemainder;
 
     bool bCancel = false;
     std::mutex xUpdateMutex{ };

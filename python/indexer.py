@@ -1,5 +1,5 @@
-from .libContactMapping import CachedSpsInterface, DiskSpsInterface
-from ._parse_and_group_reads import *
+from libContactMapping import CachedSpsInterface, DiskSpsInterface
+from _parse_and_group_reads import *
 import json
 import os
 
@@ -9,6 +9,7 @@ def touch(f_name):
     with open(f_name, "a"):  # Create file if does not exist
         pass
 
+GENERATE_VERBOSITY = 1
 
 class Indexer:
     def __init__(self, prefix):
@@ -149,7 +150,7 @@ class Indexer:
                 for chrom, annos in chroms.items():
                     self.progress_print("annotating", name + "(s)", "for contig", chrom)
                     self.set_session(["annotation", "by_name", name, chrom], 
-                                     self.indices.anno.add_intervals(annos, verbosity=0))
+                                     self.indices.anno.add_intervals(annos, verbosity=GENERATE_VERBOSITY))
             else:
                 raise RuntimeError("annotation with this name already exists")
 
@@ -267,7 +268,7 @@ class Indexer:
                     ]
                 )
                 self.set_session(["replicates", "by_name", name, "ids", chr_x, chr_y], 
-                                    self.indices.generate(d, o, verbosity=0))
+                                    self.indices.generate(d, o, verbosity=GENERATE_VERBOSITY))
 
         self.set_session(["replicates", "by_name", name, "total_reads"], total_reads)
         o = 1 if multi_map else 0
@@ -304,7 +305,7 @@ class Indexer:
                     self.indices.insert(d, o, start, end)
 
                 self.set_session(["replicates", "by_name", name, "ids", chr_, "row" if x_axis else "col"], 
-                                 self.indices.generate(d, o, verbosity=0))
+                                 self.indices.generate(d, o, verbosity=GENERATE_VERBOSITY))
 
         read_iterator.cleanup()
 

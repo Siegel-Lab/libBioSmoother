@@ -31,7 +31,6 @@ std::shared_ptr<sps::Index<storage_t<D, O>>> getIndexHelper( SpsInterface<CACHED
 
 #define DECLARE_INDEX_OBJECT( D, O ) std::shared_ptr<I##D##O##_t> pIndex##D##O = nullptr;
 
-#define DECLARE_INDEX_SIZE( D, O ) size_t uiSize##D##O;
 
 #define INDEX_LOADED( D, O )                                                                                           \
     if( pIndex##D##O == nullptr )                                                                                      \
@@ -40,7 +39,6 @@ std::shared_ptr<sps::Index<storage_t<D, O>>> getIndexHelper( SpsInterface<CACHED
 #define INIT_INDEX_OBJECT( D, O )                                                                                      \
     this->pIndex##D##O =                                                                                               \
         std::make_shared<I##D##O##_t>( sFilePrefix + "/" + std::to_string( D ) + "." + std::to_string( O ), bWrite );  \
-    this->uiSize##D##O = this->pIndex##D##O->numPoints( );
 
 
 #define D_INC 8
@@ -49,8 +47,7 @@ std::shared_ptr<sps::Index<storage_t<D, O>>> getIndexHelper( SpsInterface<CACHED
 
 #define GENERATE( D, O )                                                                                               \
     case COMBINE( D, O ):                                                                                              \
-        uiId = pIndex##D##O->generate( uiSize##D##O, pIndex##D##O->numPoints( ), fFac, uiVerbosity );                  \
-        uiSize##D##O = pIndex##D##O->numPoints( );                                                                     \
+        uiId = pIndex##D##O->generate( fFac, uiVerbosity );                  \
         break;
 
 #define INSERT_COUNT( D, O )                                                                                           \
@@ -64,13 +61,13 @@ std::shared_ptr<sps::Index<storage_t<D, O>>> getIndexHelper( SpsInterface<CACHED
         std::copy_n( vStart.begin( ), D - O, aStart##D##O.begin( ) );                                                  \
                                                                                                                        \
         if constexpr( O == 0 )                                                                                         \
-            pIndex##D##O->addPoint( aStart##D##O, 1, sDesc );                                                          \
+            pIndex##D##O->addPoint( aStart##D##O, 1 );                                                          \
         else                                                                                                           \
         {                                                                                                              \
             std::array<uint64_t, D - O> aEnd##D##O;                                                                    \
             std::copy_n( vEnd.begin( ), D - O, aEnd##D##O.begin( ) );                                                  \
                                                                                                                        \
-            pIndex##D##O->addPoint( aStart##D##O, aEnd##D##O, 1, sDesc );                                              \
+            pIndex##D##O->addPoint( aStart##D##O, aEnd##D##O, 1 );                                              \
         }                                                                                                              \
         break;
 
@@ -87,7 +84,6 @@ template <bool CACHED> class SpsInterface
   public:
     RELEVANT_COMBINATIONS( DECLARE_INDEX_OBJECT )
 
-    RELEVANT_COMBINATIONS( DECLARE_INDEX_SIZE )
 
     using anno_t = AnnotationDescIndex<DiskVecGenerator>;
 
@@ -129,7 +125,7 @@ template <bool CACHED> class SpsInterface
     }
 
   public:
-    void insert( size_t uiD, size_t uiO, std::vector<uint64_t> vStart, std::vector<uint64_t> vEnd, std::string sDesc )
+    void insert( size_t uiD, size_t uiO, std::vector<uint64_t> vStart, std::vector<uint64_t> vEnd )
     {
         switch( combine( uiD, uiO ) )
         {

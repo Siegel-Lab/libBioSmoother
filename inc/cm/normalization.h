@@ -57,63 +57,11 @@ original ICing implementation:
 */
 
 
-void PartialQuarry::iceSetCornerRemainder( IceData& rIceData, bool bA )
-{
-    std::vector<size_t> vCollect;
-    for( size_t uiI : vInGroup[ bA ? 0 : 1 ] )
-    {
-        size_t uiVal =
-            this->xSession[ "replicates" ][ "by_name" ][ vActiveReplicates[ uiI ] ][ "total_reads" ].get<size_t>( );
-        vCollect.push_back( symmetry( uiVal, uiVal ) );
-    }
-    rIceData.uiCornerRemainder = getFlatValue( vCollect );
-
-    const size_t uiH = rIceData.vSliceBias[ 1 ].size( ) - 1;
-    const size_t uiW = rIceData.vSliceBias[ 0 ].size( ) - 1;
-    for( size_t uiI = 0; uiI < uiH; uiI++ )
-        for( size_t uiJ = 0; uiJ < uiW; uiJ++ )
-        {
-            size_t uiC = iceGetCount( rIceData, uiJ, uiI, bA );
-            if( rIceData.uiCornerRemainder >= uiC )
-                rIceData.uiCornerRemainder -= uiC;
-        }
-}
-
-void PartialQuarry::iceSetSliceRemainder( IceData& rIceData, bool bA, bool bCol, size_t uiFrom, size_t uiTo )
-{
-    const size_t uiWSlice = rIceData.vSliceBias[ bCol ? 1 : 0 ].size( ) - 1;
-    for( size_t uiI = uiFrom; uiI < uiTo; uiI++ )
-    {
-        assert( uiI < vFlatNormValues[ bCol ? 0 : 1 ].size( ) );
-        assert( uiI < rIceData.vSliceBias[ bCol ? 0 : 1 ].size( ) - 1 );
-
-        vSliceRemainder[ bCol ? 0 : 1 ][ uiI ][ bA ? 0 : 1 ] = vFlatNormValues[ bCol ? 0 : 1 ][ uiI ][ bA ? 0 : 1 ];
-        for( size_t uiJ = 0; uiJ < uiWSlice; uiJ++ )
-        {
-            size_t uiC = iceGetCount( rIceData, bCol ? uiI : uiJ, bCol ? uiJ : uiI, bA );
-            if( vSliceRemainder[ bCol ? 0 : 1 ][ uiI ][ bA ? 0 : 1 ] >= uiC )
-                vSliceRemainder[ bCol ? 0 : 1 ][ uiI ][ bA ? 0 : 1 ] -= uiC;
-        }
-    }
-}
-
 size_t PartialQuarry::iceGetCount( IceData& rIceData, size_t uiX, size_t uiY, bool bA )
 {
     assert( uiX < rIceData.vSliceBias[ 0 ].size( ) );
     assert( uiY < rIceData.vSliceBias[ 1 ].size( ) );
-    if( uiX == rIceData.vSliceBias[ 0 ].size( ) - 1 && uiY == rIceData.vSliceBias[ 1 ].size( ) - 1 )
-        return rIceData.uiCornerRemainder;
-    else if( uiX == rIceData.vSliceBias[ 0 ].size( ) - 1 )
-    {
-        assert( uiY < rIceData.vSliceBias[ 1 ].size( ) - 1 );
-        return vSliceRemainder[ 1 ][ uiY ][ bA ? 0 : 1 ];
-    }
-    else if( uiY == rIceData.vSliceBias[ 1 ].size( ) - 1 )
-    {
-        assert( uiX < rIceData.vSliceBias[ 0 ].size( ) - 1 );
-        return vSliceRemainder[ 0 ][ uiX ][ bA ? 0 : 1 ];
-    }
-    size_t uiIdx = uiY + uiX * ( rIceData.vSliceBias[ 1 ].size( ) - 1 );
+    size_t uiIdx = uiY + uiX * ( rIceData.vSliceBias[ 1 ].size( ) );
     assert( uiIdx < vvFlatValues.size( ) );
     return vvFlatValues[ uiIdx ][ bA ? 0 : 1 ];
 }
@@ -199,20 +147,6 @@ void PartialQuarry::iceDivByMargin( IceData& rIceData, bool bCol, double fMean, 
     }
 }
 
-size_t PartialQuarry::changeIndexSystem( size_t uiI, size_t uiWFrom, size_t uiHFrom, size_t uiWTo, size_t uiHTo )
-{
-    size_t uiX = uiI / uiHFrom;
-    size_t uiY = uiI % uiHFrom;
-    assert( uiX < uiWFrom );
-    assert( uiY < uiHFrom );
-
-    size_t uiJ = uiY + uiX * uiHTo;
-
-    assert( uiJ / uiHTo < uiWTo );
-    assert( uiJ % uiHTo < uiHTo );
-
-    return uiJ;
-}
 
 void PartialQuarry::iceApplyBias( IceData& rIceData, bool bA, size_t uiFrom, size_t uiTo )
 {
@@ -220,17 +154,14 @@ void PartialQuarry::iceApplyBias( IceData& rIceData, bool bA, size_t uiFrom, siz
     const size_t uiH = rIceData.vSliceBias[ 1 ].size( );
     for( size_t uiI = uiFrom; uiI < uiTo; uiI++ )
     {
-        size_t uiJ = changeIndexSystem( uiI, uiW - 1, uiH - 1, uiW, uiH );
-        {
-            assert( uiI < vvNormalized.size( ) );
+        assert( uiI < vvNormalized.size( ) );
 
-            assert( uiJ % uiW < rIceData.vSliceBias[ 0 ].size( ) );
-            assert( uiJ / uiW < rIceData.vSliceBias[ 1 ].size( ) );
+        assert( uiI % uiW < rIceData.vSliceBias[ 0 ].size( ) );
+        assert( uiI / uiW < rIceData.vSliceBias[ 1 ].size( ) );
 
-            vvNormalized[ uiI ][ bA ? 0 : 1 ] = rIceData.vSliceBias[ 0 ][ uiJ / uiH ] //
-                                                * rIceData.vSliceBias[ 1 ][ uiJ % uiH ] //
-                                                * iceGetCount( rIceData, uiJ / uiH, uiJ % uiH, bA );
-        }
+        vvNormalized[ uiI ][ bA ? 0 : 1 ] = rIceData.vSliceBias[ 0 ][ uiI / uiH ] //
+                                            * rIceData.vSliceBias[ 1 ][ uiI % uiH ] //
+                                            * iceGetCount( rIceData, uiI / uiH, uiI % uiH, bA );
     }
 }
 
@@ -267,14 +198,8 @@ bool PartialQuarry::normalizeIC( )
 {
     vvNormalized.resize( vvFlatValues.size( ) );
 
-    size_t uiW = vAxisCords[ 0 ].size( ) + 1;
-    size_t uiH = vAxisCords[ 1 ].size( ) + 1;
-
-    vSliceRemainder[ 0 ].clear( );
-    vSliceRemainder[ 0 ].resize( uiW - 1 );
-
-    vSliceRemainder[ 1 ].clear( );
-    vSliceRemainder[ 1 ].resize( uiH - 1 );
+    size_t uiW = vAxisCords[ 0 ].size( );
+    size_t uiH = vAxisCords[ 1 ].size( );
 
     const size_t uiMaxIters = 200;
     const double fTol = 1e-5;
@@ -291,10 +216,9 @@ bool PartialQuarry::normalizeIC( )
                                   std::vector<double>( uiW, 0.0 ),
                                   std::vector<double>( uiH, 0.0 ),
                               },
-                          .vBiases = std::vector<double>( uiW * uiH, 1.0 ),
-                          .uiCornerRemainder = 0 };
+                          .vBiases = std::vector<double>( uiW * uiH, 1.0 ) };
         for( bool bCol : { true, false } )
-            iceSetSliceRemainder( xData, uiI == 0, bCol, 0, ( bCol ? uiW : uiH ) - 1 );
+            iceSetSliceRemainder( xData, uiI == 0, bCol, 0, bCol ? uiW : uiH );
         iceSetCornerRemainder( xData, uiI == 0 );
         std::array<double, 2> vVar{ 0, 0 };
         std::array<double, 2> vMean{ 0, 0 };
@@ -411,7 +335,7 @@ void PartialQuarry::regNormalization( )
     registerNode( NodeNames::Normalized,
                   ComputeNode{ .sNodeName = "normalized_bins",
                                .fFunc = &PartialQuarry::setNormalized,
-                               .vIncomingFunctions = { NodeNames::FlatValues, NodeNames::FlatCoverageValues },
+                               .vIncomingFunctions = { NodeNames::FlatValues },
                                .vIncomingSession = { { "replicates", "by_name" },
                                                      { "settings", "normalization", "p_accept", "val" } } } );
 
