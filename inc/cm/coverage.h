@@ -231,7 +231,7 @@ bool PartialQuarry::setCoverageValues( )
 
     size_t uiMinuend = this->xSession[ "settings" ][ "normalization" ][ "min_interactions" ][ "val" ].get<size_t>( );
     size_t uiCoverageGetMaxBinSize =
-        this->xSession[ "settings" ][ "replicates" ][ "coverage_get_max_bin_size" ].get<size_t>( ) /
+        this->xSession[ "settings" ][ "replicates" ][ "coverage_get_max_bin_size" ]["val"].get<size_t>( ) /
         this->xSession[ "dividend" ].get<size_t>( );
 
     for( size_t uiJ = 0; uiJ < 2; uiJ++ )
@@ -648,7 +648,7 @@ void PartialQuarry::regCoverage( )
                                                      { "settings", "filters", "mapping_q", "val_max" },
                                                      { "settings", "replicates", "coverage_get_max_col" },
                                                      { "settings", "replicates", "coverage_get_max_row" },
-                                                     { "settings", "replicates", "coverage_get_max_bin_size" },
+                                                     { "settings", "replicates", "coverage_get_max_bin_size", "val" },
                                                      { "settings", "normalization", "min_interactions", "val" } } } );
 
     registerNode(
