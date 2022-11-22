@@ -572,6 +572,28 @@ bool PartialQuarry::setAxisCoords( )
     END_RETURN;
 }
 
+bool PartialQuarry::setFilteredCoords( )
+{
+    for( size_t uiI = 0; uiI < 2; uiI++ )
+    {
+        double fFilterMin =
+            this->xSession[ "settings" ][ "filters" ]
+                          [ uiI == 0 ? "coverage_bin_filter_column" : "coverage_bin_filter_row" ][ "val_min" ]
+                              .get<double>( );
+        double fFilterMax =
+            this->xSession[ "settings" ][ "filters" ]
+                          [ uiI == 0 ? "coverage_bin_filter_column" : "coverage_bin_filter_row" ][ "val_max" ]
+                              .get<double>( );
+        for( size_t uiX = 0; uiX < vvFlatCoverageValues[ uiI ].size( ); uiX++ )
+        {
+            vAxisCords[ uiI ][ uiX ].bFiltered =
+                vvFlatCoverageValues[ uiI ][ uiX ] >= fFilterMin && vvFlatCoverageValues[ uiI ][ uiX ] < fFilterMax;
+            CANCEL_RETURN;
+        }
+    }
+    END_RETURN;
+}
+
 bool PartialQuarry::setSymmetry( )
 {
     std::string sSymmetry = this->xSession[ "settings" ][ "filters" ][ "symmetry" ].get<std::string>( );
@@ -598,187 +620,189 @@ bool PartialQuarry::setBinCoords( )
     vBinCoords.clear( );
     vBinCoords.reserve( vAxisCords[ 0 ].size( ) * vAxisCords[ 1 ].size( ) );
     for( AxisCoord& xX : vAxisCords[ 0 ] )
-        for( AxisCoord& xY : vAxisCords[ 1 ] )
-        {
-            CANCEL_RETURN;
-            if( xX.sChromosome != xY.sChromosome ||
-                (size_t)std::abs( (int64_t)xX.uiIndexPos - (int64_t)xY.uiIndexPos ) >= uiManhattenDist )
-                switch( uiSymmetry )
+        if( !xX.bFiltered )
+            for( AxisCoord& xY : vAxisCords[ 1 ] )
+                if( !xY.bFiltered )
                 {
-                    case 0:
-                        vBinCoords.push_back( { BinCoord{ .sChromosomeX = xX.sChromosome,
-                                                          .sChromosomeY = xY.sChromosome,
-
-                                                          .uiScreenX = xX.uiScreenPos,
-                                                          .uiScreenY = xY.uiScreenPos,
-
-                                                          .uiIndexX = xX.uiIndexPos,
-                                                          .uiIndexY = xY.uiIndexPos,
-
-                                                          .uiScreenW = xX.uiScreenSize,
-                                                          .uiScreenH = xY.uiScreenSize,
-
-                                                          .uiIndexW = xX.uiIndexSize,
-                                                          .uiIndexH = xY.uiIndexSize },
-                                                BinCoord{} } );
-                        break;
-                    case 1:
-                    case 2:
-                        vBinCoords.push_back( { BinCoord{ .sChromosomeX = xX.sChromosome,
-                                                          .sChromosomeY = xY.sChromosome,
-
-                                                          .uiScreenX = xX.uiScreenPos,
-                                                          .uiScreenY = xY.uiScreenPos,
-
-                                                          .uiIndexX = xX.uiIndexPos,
-                                                          .uiIndexY = xY.uiIndexPos,
-
-                                                          .uiScreenW = xX.uiScreenSize,
-                                                          .uiScreenH = xY.uiScreenSize,
-
-                                                          .uiIndexW = xX.uiIndexSize,
-                                                          .uiIndexH = xY.uiIndexSize },
-                                                BinCoord{ .sChromosomeX = xY.sChromosome,
-                                                          .sChromosomeY = xX.sChromosome,
-
-                                                          .uiScreenX = xX.uiScreenPos,
-                                                          .uiScreenY = xY.uiScreenPos,
-
-                                                          .uiIndexX = xY.uiIndexPos,
-                                                          .uiIndexY = xX.uiIndexPos,
-
-                                                          .uiScreenW = xY.uiScreenSize,
-                                                          .uiScreenH = xX.uiScreenSize,
-
-                                                          .uiIndexW = xY.uiIndexSize,
-                                                          .uiIndexH = xX.uiIndexSize } } );
-                        break;
-                    case 3:
-                        if( xY.uiIndexPos + xY.uiIndexSize > xX.uiIndexPos )
+                    CANCEL_RETURN;
+                    if( xX.sChromosome != xY.sChromosome ||
+                        (size_t)std::abs( (int64_t)xX.uiIndexPos - (int64_t)xY.uiIndexPos ) >= uiManhattenDist )
+                        switch( uiSymmetry )
                         {
-                            size_t uiDiagIntersect1Y = std::max( xX.uiIndexPos, xY.uiIndexPos );
-                            size_t uiDiagIntersect1X = xX.uiIndexPos;
+                            case 0:
+                                vBinCoords.push_back( { BinCoord{ .sChromosomeX = xX.sChromosome,
+                                                                  .sChromosomeY = xY.sChromosome,
 
-                            size_t uiDiagIntersect2X =
-                                std::min( xX.uiIndexPos + xX.uiIndexSize, xY.uiIndexPos + xY.uiIndexSize );
-                            size_t uiDiagIntersect2Y = xY.uiIndexPos + xY.uiIndexSize;
+                                                                  .uiScreenX = xX.uiScreenPos,
+                                                                  .uiScreenY = xY.uiScreenPos,
 
-                            size_t uiIndexW = uiDiagIntersect2X - uiDiagIntersect1X;
-                            size_t uiIndexH = uiDiagIntersect2Y - uiDiagIntersect1Y;
+                                                                  .uiIndexX = xX.uiIndexPos,
+                                                                  .uiIndexY = xY.uiIndexPos,
 
-                            vBinCoords.push_back( { BinCoord{ .sChromosomeX = xX.sChromosome,
-                                                              .sChromosomeY = xY.sChromosome,
+                                                                  .uiScreenW = xX.uiScreenSize,
+                                                                  .uiScreenH = xY.uiScreenSize,
 
-                                                              .uiScreenX = xX.uiScreenPos,
-                                                              .uiScreenY = xY.uiScreenPos,
+                                                                  .uiIndexW = xX.uiIndexSize,
+                                                                  .uiIndexH = xY.uiIndexSize },
+                                                        BinCoord{} } );
+                                break;
+                            case 1:
+                            case 2:
+                                vBinCoords.push_back( { BinCoord{ .sChromosomeX = xX.sChromosome,
+                                                                  .sChromosomeY = xY.sChromosome,
 
-                                                              .uiIndexX = xX.uiIndexPos,
-                                                              .uiIndexY = xY.uiIndexPos,
+                                                                  .uiScreenX = xX.uiScreenPos,
+                                                                  .uiScreenY = xY.uiScreenPos,
 
-                                                              .uiScreenW = xX.uiScreenSize,
-                                                              .uiScreenH = xY.uiScreenSize,
+                                                                  .uiIndexX = xX.uiIndexPos,
+                                                                  .uiIndexY = xY.uiIndexPos,
 
-                                                              .uiIndexW = xX.uiIndexSize,
-                                                              .uiIndexH = xY.uiIndexSize },
+                                                                  .uiScreenW = xX.uiScreenSize,
+                                                                  .uiScreenH = xY.uiScreenSize,
 
-                                                    BinCoord{ .sChromosomeX = xY.sChromosome,
-                                                              .sChromosomeY = xX.sChromosome,
+                                                                  .uiIndexW = xX.uiIndexSize,
+                                                                  .uiIndexH = xY.uiIndexSize },
+                                                        BinCoord{ .sChromosomeX = xY.sChromosome,
+                                                                  .sChromosomeY = xX.sChromosome,
 
-                                                              .uiScreenX = xX.uiScreenPos,
-                                                              .uiScreenY = xY.uiScreenPos,
+                                                                  .uiScreenX = xX.uiScreenPos,
+                                                                  .uiScreenY = xY.uiScreenPos,
 
-                                                              .uiIndexX = uiDiagIntersect1Y,
-                                                              .uiIndexY = uiDiagIntersect1X,
+                                                                  .uiIndexX = xY.uiIndexPos,
+                                                                  .uiIndexY = xX.uiIndexPos,
 
-                                                              .uiScreenW = xX.uiScreenSize,
-                                                              .uiScreenH = xY.uiScreenSize,
+                                                                  .uiScreenW = xY.uiScreenSize,
+                                                                  .uiScreenH = xX.uiScreenSize,
 
-                                                              .uiIndexW = uiIndexH,
-                                                              .uiIndexH = uiIndexW } } );
+                                                                  .uiIndexW = xY.uiIndexSize,
+                                                                  .uiIndexH = xX.uiIndexSize } } );
+                                break;
+                            case 3:
+                                if( xY.uiIndexPos + xY.uiIndexSize > xX.uiIndexPos )
+                                {
+                                    size_t uiDiagIntersect1Y = std::max( xX.uiIndexPos, xY.uiIndexPos );
+                                    size_t uiDiagIntersect1X = xX.uiIndexPos;
+
+                                    size_t uiDiagIntersect2X =
+                                        std::min( xX.uiIndexPos + xX.uiIndexSize, xY.uiIndexPos + xY.uiIndexSize );
+                                    size_t uiDiagIntersect2Y = xY.uiIndexPos + xY.uiIndexSize;
+
+                                    size_t uiIndexW = uiDiagIntersect2X - uiDiagIntersect1X;
+                                    size_t uiIndexH = uiDiagIntersect2Y - uiDiagIntersect1Y;
+
+                                    vBinCoords.push_back( { BinCoord{ .sChromosomeX = xX.sChromosome,
+                                                                      .sChromosomeY = xY.sChromosome,
+
+                                                                      .uiScreenX = xX.uiScreenPos,
+                                                                      .uiScreenY = xY.uiScreenPos,
+
+                                                                      .uiIndexX = xX.uiIndexPos,
+                                                                      .uiIndexY = xY.uiIndexPos,
+
+                                                                      .uiScreenW = xX.uiScreenSize,
+                                                                      .uiScreenH = xY.uiScreenSize,
+
+                                                                      .uiIndexW = xX.uiIndexSize,
+                                                                      .uiIndexH = xY.uiIndexSize },
+
+                                                            BinCoord{ .sChromosomeX = xY.sChromosome,
+                                                                      .sChromosomeY = xX.sChromosome,
+
+                                                                      .uiScreenX = xX.uiScreenPos,
+                                                                      .uiScreenY = xY.uiScreenPos,
+
+                                                                      .uiIndexX = uiDiagIntersect1Y,
+                                                                      .uiIndexY = uiDiagIntersect1X,
+
+                                                                      .uiScreenW = xX.uiScreenSize,
+                                                                      .uiScreenH = xY.uiScreenSize,
+
+                                                                      .uiIndexW = uiIndexH,
+                                                                      .uiIndexH = uiIndexW } } );
+                                }
+                                else
+                                    vBinCoords.push_back( { BinCoord{ .sChromosomeX = xX.sChromosome,
+                                                                      .sChromosomeY = xY.sChromosome,
+
+                                                                      .uiScreenX = xX.uiScreenPos,
+                                                                      .uiScreenY = xY.uiScreenPos,
+
+                                                                      .uiIndexX = xX.uiIndexPos,
+                                                                      .uiIndexY = xY.uiIndexPos,
+
+                                                                      .uiScreenW = xX.uiScreenSize,
+                                                                      .uiScreenH = xY.uiScreenSize,
+
+                                                                      .uiIndexW = xX.uiIndexSize,
+                                                                      .uiIndexH = xY.uiIndexSize },
+                                                            BinCoord{} } );
+                                break;
+                            case 4:
+                                if( xX.uiIndexPos + xX.uiIndexSize > xY.uiIndexPos )
+                                {
+                                    size_t uiDiagIntersect1X = std::max( xY.uiIndexPos, xX.uiIndexPos );
+                                    size_t uiDiagIntersect1Y = xY.uiIndexPos;
+
+                                    size_t uiDiagIntersect2X =
+                                        std::max( xX.uiIndexPos + xX.uiIndexSize, xY.uiIndexPos + xY.uiIndexSize );
+                                    size_t uiDiagIntersect2Y = xY.uiIndexPos + xY.uiIndexSize;
+
+                                    size_t uiIndexW = uiDiagIntersect2X - uiDiagIntersect1X;
+                                    size_t uiIndexH = uiDiagIntersect2Y - uiDiagIntersect1Y;
+
+                                    vBinCoords.push_back( { BinCoord{ .sChromosomeX = xX.sChromosome,
+                                                                      .sChromosomeY = xY.sChromosome,
+
+                                                                      .uiScreenX = xX.uiScreenPos,
+                                                                      .uiScreenY = xY.uiScreenPos,
+
+                                                                      .uiIndexX = xX.uiIndexPos,
+                                                                      .uiIndexY = xY.uiIndexPos,
+
+                                                                      .uiScreenW = xX.uiScreenSize,
+                                                                      .uiScreenH = xY.uiScreenSize,
+
+                                                                      .uiIndexW = xX.uiIndexSize,
+                                                                      .uiIndexH = xY.uiIndexSize },
+                                                            BinCoord{ .sChromosomeX = xY.sChromosome,
+                                                                      .sChromosomeY = xX.sChromosome,
+
+                                                                      .uiScreenX = xX.uiScreenPos,
+                                                                      .uiScreenY = xY.uiScreenPos,
+
+                                                                      .uiIndexX = uiDiagIntersect1Y,
+                                                                      .uiIndexY = uiDiagIntersect1X,
+
+                                                                      .uiScreenW = xX.uiScreenSize,
+                                                                      .uiScreenH = xY.uiScreenSize,
+
+                                                                      .uiIndexW = uiIndexH,
+                                                                      .uiIndexH = uiIndexW } } );
+                                }
+                                else
+                                    vBinCoords.push_back( { BinCoord{ .sChromosomeX = xX.sChromosome,
+                                                                      .sChromosomeY = xY.sChromosome,
+
+                                                                      .uiScreenX = xX.uiScreenPos,
+                                                                      .uiScreenY = xY.uiScreenPos,
+
+                                                                      .uiIndexX = xX.uiIndexPos,
+                                                                      .uiIndexY = xY.uiIndexPos,
+
+                                                                      .uiScreenW = xX.uiScreenSize,
+                                                                      .uiScreenH = xY.uiScreenSize,
+
+                                                                      .uiIndexW = xX.uiIndexSize,
+                                                                      .uiIndexH = xY.uiIndexSize },
+                                                            BinCoord{} } );
+                                break;
+                            default:
+                                throw std::logic_error( "unknown symmetry setting" );
+                                break;
                         }
-                        else
-                            vBinCoords.push_back( { BinCoord{ .sChromosomeX = xX.sChromosome,
-                                                              .sChromosomeY = xY.sChromosome,
-
-                                                              .uiScreenX = xX.uiScreenPos,
-                                                              .uiScreenY = xY.uiScreenPos,
-
-                                                              .uiIndexX = xX.uiIndexPos,
-                                                              .uiIndexY = xY.uiIndexPos,
-
-                                                              .uiScreenW = xX.uiScreenSize,
-                                                              .uiScreenH = xY.uiScreenSize,
-
-                                                              .uiIndexW = xX.uiIndexSize,
-                                                              .uiIndexH = xY.uiIndexSize },
-                                                    BinCoord{} } );
-                        break;
-                    case 4:
-                        if( xX.uiIndexPos + xX.uiIndexSize > xY.uiIndexPos )
-                        {
-                            size_t uiDiagIntersect1X = std::max( xY.uiIndexPos, xX.uiIndexPos );
-                            size_t uiDiagIntersect1Y = xY.uiIndexPos;
-
-                            size_t uiDiagIntersect2X =
-                                std::max( xX.uiIndexPos + xX.uiIndexSize, xY.uiIndexPos + xY.uiIndexSize );
-                            size_t uiDiagIntersect2Y = xY.uiIndexPos + xY.uiIndexSize;
-
-                            size_t uiIndexW = uiDiagIntersect2X - uiDiagIntersect1X;
-                            size_t uiIndexH = uiDiagIntersect2Y - uiDiagIntersect1Y;
-
-                            vBinCoords.push_back( { BinCoord{ .sChromosomeX = xX.sChromosome,
-                                                              .sChromosomeY = xY.sChromosome,
-
-                                                              .uiScreenX = xX.uiScreenPos,
-                                                              .uiScreenY = xY.uiScreenPos,
-
-                                                              .uiIndexX = xX.uiIndexPos,
-                                                              .uiIndexY = xY.uiIndexPos,
-
-                                                              .uiScreenW = xX.uiScreenSize,
-                                                              .uiScreenH = xY.uiScreenSize,
-
-                                                              .uiIndexW = xX.uiIndexSize,
-                                                              .uiIndexH = xY.uiIndexSize },
-                                                    BinCoord{ .sChromosomeX = xY.sChromosome,
-                                                              .sChromosomeY = xX.sChromosome,
-
-                                                              .uiScreenX = xX.uiScreenPos,
-                                                              .uiScreenY = xY.uiScreenPos,
-
-                                                              .uiIndexX = uiDiagIntersect1Y,
-                                                              .uiIndexY = uiDiagIntersect1X,
-
-                                                              .uiScreenW = xX.uiScreenSize,
-                                                              .uiScreenH = xY.uiScreenSize,
-
-                                                              .uiIndexW = uiIndexH,
-                                                              .uiIndexH = uiIndexW } } );
-                        }
-                        else
-                            vBinCoords.push_back( { BinCoord{ .sChromosomeX = xX.sChromosome,
-                                                              .sChromosomeY = xY.sChromosome,
-
-                                                              .uiScreenX = xX.uiScreenPos,
-                                                              .uiScreenY = xY.uiScreenPos,
-
-                                                              .uiIndexX = xX.uiIndexPos,
-                                                              .uiIndexY = xY.uiIndexPos,
-
-                                                              .uiScreenW = xX.uiScreenSize,
-                                                              .uiScreenH = xY.uiScreenSize,
-
-                                                              .uiIndexW = xX.uiIndexSize,
-                                                              .uiIndexH = xY.uiIndexSize },
-                                                    BinCoord{} } );
-                        break;
-                    default:
-                        throw std::logic_error( "unknown symmetry setting" );
-                        break;
+                    else
+                        vBinCoords.push_back( { BinCoord{ }, BinCoord{} } );
                 }
-            else
-                vBinCoords.push_back( { BinCoord{ }, BinCoord{} } );
-        }
     END_RETURN;
 }
 
@@ -839,6 +863,16 @@ void PartialQuarry::regCoords( )
                                                      { "settings", "filters", "anno_in_multiple_bins" },
                                                      { "contigs", "column_coordinates" },
                                                      { "contigs", "row_coordinates" } } } );
+    registerNode(
+        NodeNames::FilteredCoords,
+        ComputeNode{
+            .sNodeName = "axis_coords",
+            .fFunc = &PartialQuarry::setFilteredCoords,
+            .vIncomingFunctions = { NodeNames::AxisCoords, NodeNames::AnnotationValues, NodeNames::FlatCoverageValues },
+            .vIncomingSession = { { "settings", "filters", "coverage_bin_filter_column", "val_min" },
+                                  { "settings", "filters", "coverage_bin_filter_column", "val_max" },
+                                  { "settings", "filters", "coverage_bin_filter_row", "val_min" },
+                                  { "settings", "filters", "coverage_bin_filter_row", "val_max" } } } );
 
     registerNode( NodeNames::Symmetry, ComputeNode{ .sNodeName = "symmetry_setting",
                                                     .fFunc = &PartialQuarry::setSymmetry,
@@ -848,7 +882,7 @@ void PartialQuarry::regCoords( )
     registerNode( NodeNames::BinCoords,
                   ComputeNode{ .sNodeName = "bin_coords",
                                .fFunc = &PartialQuarry::setBinCoords,
-                               .vIncomingFunctions = { NodeNames::AxisCoords, NodeNames::Symmetry },
+                               .vIncomingFunctions = { NodeNames::FilteredCoords, NodeNames::Symmetry },
                                .vIncomingSession = { { "settings", "filters", "min_diag_dist", "val" } } } );
 }
 

@@ -29,6 +29,7 @@ struct AxisCoord
     size_t uiIndexPos;
     size_t uiScreenSize;
     size_t uiIndexSize;
+    bool bFiltered = false;
 };
 
 struct AxisRegion : AxisCoord
@@ -69,6 +70,7 @@ class PartialQuarry
         RenderArea,
         ActiveChrom,
         AxisCoords,
+        FilteredCoords,
         Symmetry,
         BinCoords,
         IntersectionType,
@@ -504,6 +506,7 @@ class PartialQuarry
     std::vector<std::string> vColorPaletteAnnotation;
     std::vector<std::string> vColorPaletteAnnotationDark;
     std::array<std::vector<std::string>, 2> vActiveAnnotation;
+    std::array<std::vector<std::string>, 2> vFilterAnnotation;
     std::array<std::vector<std::pair<std::vector<size_t>, std::vector<Annotation>>>, 2> vAnnotationValues;
     std::array<size_t, 2> vMaxAnnoRows;
     std::array<std::vector<size_t>, 2> vMaxRowsPerAnno;
@@ -543,6 +546,8 @@ class PartialQuarry
     bool setActiveChrom( );
     // coords.h
     bool setAxisCoords( );
+    // coords.h
+    bool setFilteredCoords( );
 
     // coords.h
     bool setSymmetry( );
@@ -588,8 +593,8 @@ class PartialQuarry
                                 bool,
                                 bool );
     // coverage.h
-    std::tuple<size_t, int64_t, size_t, size_t>
-    makeHeapTuple( bool, bool, size_t, size_t, bool, bool, const AxisCoord&, int64_t, size_t, size_t );
+    std::tuple<size_t, int64_t, size_t, size_t> makeHeapTuple( bool, bool, size_t, size_t, bool, bool, const AxisCoord&,
+                                                               int64_t, size_t, size_t );
 
     // coverage.h
     bool setFlatCoverageValues( );
