@@ -621,13 +621,8 @@ class PartialQuarry
         std::array<std::vector<double>, 2> vSliceBias;
         std::array<std::vector<double>, 2> vSliceMargin;
         std::vector<double> vBiases;
-        size_t uiCornerRemainder;
     };
 
-    // normalization.h
-    void iceSetCornerRemainder( IceData&, bool );
-    // normalization.h
-    void iceSetSliceRemainder( IceData&, bool, bool, size_t, size_t );
     // normalization.h
     size_t iceGetCount( IceData&, size_t, size_t, bool );
     // normalization.h
@@ -642,8 +637,6 @@ class PartialQuarry
     double iceNonZeroMarginMean( IceData&, bool );
     // normalization.h
     void iceDivByMargin( IceData&, bool, double, size_t, size_t );
-    // normalization.h
-    size_t changeIndexSystem( size_t, size_t, size_t, size_t, size_t );
     // normalization.h
     void iceApplyBias( IceData&, bool, size_t, size_t );
     // normalization.h

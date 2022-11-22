@@ -1,7 +1,8 @@
-from libContactMapping import CachedSpsInterface, DiskSpsInterface
-from _parse_and_group_reads import *
+from .libContactMapping import CachedSpsInterface, DiskSpsInterface
+from ._parse_and_group_reads import *
 import json
 import os
+import copy
 
 MAP_Q_MAX = 255
 
@@ -42,8 +43,10 @@ class Indexer:
         for key in keys[:-1]:
             curr = curr[key]
             curr_def = curr_def[key]
-        curr[keys[-1]] = val
-        curr_def[keys[-1]] = val
+        # do not put the same object in both jsons -> it might have references to the same subobject
+        # instead deep-copy the object
+        curr[keys[-1]] = copy.deepcopy(val)
+        curr_def[keys[-1]] = copy.deepcopy(val)
 
     def append_session(self, keys, val):
         curr = self.session
@@ -51,8 +54,10 @@ class Indexer:
         for key in keys[:-1]:
             curr = curr[key]
             curr_def = curr_def[key]
-        curr[keys[-1]].append(val)
-        curr_def[keys[-1]].append(val)
+        # do not put the same object in both jsons -> it might have references to the same subobject
+        # instead deep-copy the object
+        curr[keys[-1]].append(copy.deepcopy(val))
+        curr_def[keys[-1]].append(copy.deepcopy(val))
 
     def create_session(self, chr_len_file_name, dividend, test=False):
         os.makedirs(self.prefix + ".smoother_index")

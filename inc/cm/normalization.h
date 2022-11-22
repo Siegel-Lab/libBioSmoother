@@ -150,14 +150,10 @@ void PartialQuarry::iceDivByMargin( IceData& rIceData, bool bCol, double fMean, 
 
 void PartialQuarry::iceApplyBias( IceData& rIceData, bool bA, size_t uiFrom, size_t uiTo )
 {
-    const size_t uiW = rIceData.vSliceBias[ 0 ].size( );
     const size_t uiH = rIceData.vSliceBias[ 1 ].size( );
     for( size_t uiI = uiFrom; uiI < uiTo; uiI++ )
     {
         assert( uiI < vvNormalized.size( ) );
-
-        assert( uiI % uiW < rIceData.vSliceBias[ 0 ].size( ) );
-        assert( uiI / uiW < rIceData.vSliceBias[ 1 ].size( ) );
 
         vvNormalized[ uiI ][ bA ? 0 : 1 ] = rIceData.vSliceBias[ 0 ][ uiI / uiH ] //
                                             * rIceData.vSliceBias[ 1 ][ uiI % uiH ] //
@@ -217,9 +213,6 @@ bool PartialQuarry::normalizeIC( )
                                   std::vector<double>( uiH, 0.0 ),
                               },
                           .vBiases = std::vector<double>( uiW * uiH, 1.0 ) };
-        for( bool bCol : { true, false } )
-            iceSetSliceRemainder( xData, uiI == 0, bCol, 0, bCol ? uiW : uiH );
-        iceSetCornerRemainder( xData, uiI == 0 );
         std::array<double, 2> vVar{ 0, 0 };
         std::array<double, 2> vMean{ 0, 0 };
         for( size_t uiItr = 0; uiItr < uiMaxIters; uiItr++ )
