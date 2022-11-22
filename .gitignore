@@ -21,4 +21,4 @@ core.*
 callgrind.out.*
 settings.json
 *.prof
-python/__pycache__/*
+*.pyc
