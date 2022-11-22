@@ -574,6 +574,22 @@ class PartialQuarry
     bool setTracks( );
     // coverage.h
     bool setTrackExport( );
+    // coverage.h
+    size_t getCoverageFromRepl( bool,
+                                bool,
+                                bool,
+                                size_t,
+                                size_t,
+                                const AxisCoord&,
+                                const json&,
+                                bool,
+                                size_t,
+                                const std::vector<ChromDesc>&,
+                                bool,
+                                bool );
+    // coverage.h
+    std::tuple<size_t, int64_t, size_t, size_t>
+    makeHeapTuple( bool, bool, size_t, size_t, bool, bool, const AxisCoord&, int64_t, size_t, size_t );
 
     // coverage.h
     bool setFlatCoverageValues( );

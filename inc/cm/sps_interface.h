@@ -10,8 +10,7 @@ namespace cm
 
 template <bool CACHED> class SpsInterface;
 
-template <template <size_t D, size_t orthope> typename storage_t,
-          size_t D, size_t O, bool CACHED>
+template <template <size_t D, size_t orthope> typename storage_t, size_t D, size_t O, bool CACHED>
 std::shared_ptr<sps::Index<storage_t<D, O>>> getIndexHelper( SpsInterface<CACHED>* );
 
 
@@ -38,7 +37,7 @@ std::shared_ptr<sps::Index<storage_t<D, O>>> getIndexHelper( SpsInterface<CACHED
 
 #define INIT_INDEX_OBJECT( D, O )                                                                                      \
     this->pIndex##D##O =                                                                                               \
-        std::make_shared<I##D##O##_t>( sFilePrefix + "/" + std::to_string( D ) + "." + std::to_string( O ), bWrite );  \
+        std::make_shared<I##D##O##_t>( sFilePrefix + "/" + std::to_string( D ) + "." + std::to_string( O ), bWrite );
 
 
 #define D_INC 8
@@ -47,7 +46,7 @@ std::shared_ptr<sps::Index<storage_t<D, O>>> getIndexHelper( SpsInterface<CACHED
 
 #define GENERATE( D, O )                                                                                               \
     case COMBINE( D, O ):                                                                                              \
-        uiId = pIndex##D##O->generate( fFac, uiVerbosity );                  \
+        uiId = pIndex##D##O->generate( fFac, uiVerbosity );                                                            \
         break;
 
 #define INSERT_COUNT( D, O )                                                                                           \
@@ -61,13 +60,13 @@ std::shared_ptr<sps::Index<storage_t<D, O>>> getIndexHelper( SpsInterface<CACHED
         std::copy_n( vStart.begin( ), D - O, aStart##D##O.begin( ) );                                                  \
                                                                                                                        \
         if constexpr( O == 0 )                                                                                         \
-            pIndex##D##O->addPoint( aStart##D##O, 1 );                                                          \
+            pIndex##D##O->addPoint( aStart##D##O, 1 );                                                                 \
         else                                                                                                           \
         {                                                                                                              \
             std::array<uint64_t, D - O> aEnd##D##O;                                                                    \
             std::copy_n( vEnd.begin( ), D - O, aEnd##D##O.begin( ) );                                                  \
                                                                                                                        \
-            pIndex##D##O->addPoint( aStart##D##O, aEnd##D##O, 1 );                                              \
+            pIndex##D##O->addPoint( aStart##D##O, aEnd##D##O, 1 );                                                     \
         }                                                                                                              \
         break;
 
@@ -161,14 +160,14 @@ template <bool CACHED> class SpsInterface
 
 #define IMPLEMENT_GET_INDEX_HELPER( D, O )                                                                             \
     template <>                                                                                                        \
-    std::shared_ptr<sps::Index<CachedTypeDef<D, O>>> getIndexHelper<CachedTypeDef, D, O, true>(           \
-        SpsInterface<true> * pInterface )                                                                              \
+    std::shared_ptr<sps::Index<CachedTypeDef<D, O>>> getIndexHelper<CachedTypeDef, D, O, true>( SpsInterface<true> *   \
+                                                                                                pInterface )           \
     {                                                                                                                  \
         return pInterface->pIndex##D##O;                                                                               \
     }                                                                                                                  \
     template <>                                                                                                        \
-    std::shared_ptr<sps::Index<DiskTypeDef<D, O>>> getIndexHelper<DiskTypeDef, D, O, false>(              \
-        SpsInterface<false> * pInterface )                                                                             \
+    std::shared_ptr<sps::Index<DiskTypeDef<D, O>>> getIndexHelper<DiskTypeDef, D, O, false>( SpsInterface<false> *     \
+                                                                                             pInterface )              \
     {                                                                                                                  \
         return pInterface->pIndex##D##O;                                                                               \
     }

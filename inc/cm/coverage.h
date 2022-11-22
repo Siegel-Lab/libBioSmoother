@@ -112,13 +112,131 @@ bool PartialQuarry::setActiveCoverage( )
     END_RETURN;
 }
 
+std::tuple<size_t, int64_t, size_t, size_t> PartialQuarry::makeHeapTuple( bool bHasMapQ,
+                                                                          bool bHasMultiMap,
+                                                                          size_t uiMapQMin,
+                                                                          size_t uiMapQMax,
+                                                                          bool bCol,
+                                                                          bool bSymPart,
+                                                                          const AxisCoord& xCoords,
+                                                                          int64_t iDataSetId,
+                                                                          size_t uiStart,
+                                                                          size_t uiEnd )
+{
+    size_t uiXMin = bCol != bSymPart ? xCoords.uiIndexPos : uiStart;
+    size_t uiXMax = bCol != bSymPart ? xCoords.uiIndexPos + xCoords.uiIndexSize : uiEnd;
+    size_t uiYMin = bCol != bSymPart ? uiStart : xCoords.uiIndexPos;
+    size_t uiYMax = bCol != bSymPart ? uiEnd : xCoords.uiIndexPos + xCoords.uiIndexSize;
+    size_t uiCount;
+
+    if( bHasMapQ && bHasMultiMap )
+        uiCount = xIndices.getIndex<3, 2>( )->count( iDataSetId, { uiYMin, uiXMin, uiMapQMax },
+                                                     { uiYMax, uiXMax, uiMapQMin }, xIntersect, 0 );
+    else if( !bHasMapQ && bHasMultiMap )
+        uiCount =
+            xIndices.getIndex<2, 2>( )->count( iDataSetId, { uiYMin, uiXMin }, { uiYMax, uiXMax }, xIntersect, 0 );
+    else if( bHasMapQ && !bHasMultiMap )
+        uiCount = xIndices.getIndex<3, 0>( )->count( iDataSetId, { uiYMin, uiXMin, uiMapQMax },
+                                                     { uiYMax, uiXMax, uiMapQMin }, xIntersect, 0 );
+    else // if(!bHasMapQ && !bHasMultiMap)
+        uiCount =
+            xIndices.getIndex<2, 0>( )->count( iDataSetId, { uiYMin, uiXMin }, { uiYMax, uiXMax }, xIntersect, 0 );
+
+    return std::make_tuple( uiCount, iDataSetId, uiStart, uiEnd );
+}
+
+size_t PartialQuarry::getCoverageFromRepl( bool bHasMapQ,
+                                           bool bHasMultiMap,
+                                           bool bCoverageGetMax,
+                                           size_t uiMapQMin,
+                                           size_t uiMapQMax,
+                                           const AxisCoord& xCoords,
+                                           const json& xRep,
+                                           bool bIs1D,
+                                           size_t uiCoverageGetMaxBinSize,
+                                           const std::vector<ChromDesc>& vChroms,
+                                           bool bCol,
+                                           bool bSymPart )
+{
+    if( bIs1D || !bCoverageGetMax )
+    {
+        int64_t iDataSetId;
+        if( bIs1D )
+            iDataSetId = xRep[ "ids" ][ xCoords.sChromosome ].get<int64_t>( );
+        else
+            iDataSetId = xRep[ "ids" ][ xCoords.sChromosome ][ bCol != bSymPart ? "col" : "row" ].get<int64_t>( );
+
+        if( iDataSetId != -1 )
+        {
+            if( bHasMapQ && bHasMultiMap )
+                return xIndices.getIndex<2, 1>( )->count( iDataSetId,
+                                                          { xCoords.uiIndexPos, uiMapQMax },
+                                                          { xCoords.uiIndexPos + xCoords.uiIndexSize, uiMapQMin },
+                                                          xIntersect,
+                                                          0 );
+            else if( !bHasMapQ && bHasMultiMap )
+                return xIndices.getIndex<1, 1>( )->count( iDataSetId, { xCoords.uiIndexPos },
+                                                          { xCoords.uiIndexPos + xCoords.uiIndexSize }, xIntersect, 0 );
+            else if( bHasMapQ && !bHasMultiMap )
+                return xIndices.getIndex<2, 0>( )->count( iDataSetId,
+                                                          { xCoords.uiIndexPos, uiMapQMax },
+                                                          { xCoords.uiIndexPos + xCoords.uiIndexSize, uiMapQMin },
+                                                          xIntersect,
+                                                          0 );
+            else // if(!bHasMapQ && !bHasMultiMap)
+                return xIndices.getIndex<1, 0>( )->count( iDataSetId, { xCoords.uiIndexPos },
+                                                          { xCoords.uiIndexPos + xCoords.uiIndexSize }, xIntersect, 0 );
+        }
+    }
+    else
+    {
+        // score, datasetId, start, end
+        std::vector<std::tuple<size_t, int64_t, size_t, size_t>> vHeap;
+        for( const ChromDesc& rDesc : vChroms )
+            vHeap.push_back( makeHeapTuple( bHasMapQ, bHasMultiMap, uiMapQMin, uiMapQMax, bCol, bSymPart, xCoords,
+                                            xRep[ "ids" ][ bCol != bSymPart ? xCoords.sChromosome : rDesc.sName ]
+                                                [ bCol != bSymPart ? rDesc.sName : xCoords.sChromosome ]
+                                                    .get<int64_t>( ),
+                                            0, rDesc.uiLength ) );
+
+        std::make_heap( vHeap.begin( ), vHeap.end( ) );
+
+        while( vHeap.size( ) > 0 &&
+               std::get<3>( vHeap.back( ) ) - std::get<2>( vHeap.back( ) ) > std::max( uiCoverageGetMaxBinSize, 1ul ) )
+        {
+            auto xFront = vHeap.back( );
+            vHeap.pop_back( );
+
+            size_t uiCenter = ( std::get<2>( xFront ) + std::get<3>( xFront ) ) / 2;
+            vHeap.push_back( makeHeapTuple( bHasMapQ, bHasMultiMap, uiMapQMin, uiMapQMax, bCol, bSymPart, xCoords,
+                                            std::get<1>( xFront ), uiCenter, std::get<3>( xFront ) ) );
+            std::push_heap( vHeap.begin( ), vHeap.end( ) );
+
+            vHeap.push_back( makeHeapTuple( bHasMapQ, bHasMultiMap, uiMapQMin, uiMapQMax, bCol, bSymPart, xCoords,
+                                            std::get<1>( xFront ), std::get<2>( xFront ), uiCenter ) );
+            std::push_heap( vHeap.begin( ), vHeap.end( ) );
+
+
+            std::pop_heap( vHeap.begin( ), vHeap.end( ) );
+        }
+        if( vHeap.size( ) > 0 )
+            return std::get<0>( vHeap.back( ) );
+    }
+
+    return 0;
+}
+
 bool PartialQuarry::setCoverageValues( )
 {
 
     size_t uiMinuend = this->xSession[ "settings" ][ "normalization" ][ "min_interactions" ][ "val" ].get<size_t>( );
+    size_t uiCoverageGetMaxBinSize =
+        this->xSession[ "settings" ][ "replicates" ][ "coverage_get_max_bin_size" ].get<size_t>( ) /
+        this->xSession[ "dividend" ].get<size_t>( );
 
     for( size_t uiJ = 0; uiJ < 2; uiJ++ )
     {
+        bool bCoverageGetMax = this->xSession[ "settings" ][ "replicates" ][ uiJ == 0 ? "coverage_get_max_col" : "coverage_get_max_row" ].get<bool>( );
         vvCoverageValues[ uiJ ].clear( );
         vvCoverageValues[ uiJ ].reserve( vActiveCoverage[ uiJ ].size( ) );
         for( auto& sRep : vActiveCoverage[ uiJ ] )
@@ -148,45 +266,9 @@ bool PartialQuarry::setCoverageValues( )
                     for( size_t uiI = 0; uiI < ( sRep.second ? 1 : 2 ); uiI++ )
                     {
                         CANCEL_RETURN;
-                        int64_t iDataSetId;
-                        if( sRep.second )
-                            iDataSetId = xRep[ "ids" ][ xCoords.sChromosome ].get<int64_t>( );
-                        else
-                            iDataSetId = xRep[ "ids" ][ xCoords.sChromosome ]
-                                             [ uiJ == 0 ? ( uiI == 0 ? "col" : "row" ) : ( uiI == 0 ? "row" : "col" ) ]
-                                                 .get<int64_t>( );
-
-                        if( iDataSetId != -1 )
-                        {
-                            if( bHasMapQ && bHasMultiMap )
-                                vVals[ uiI ] = xIndices.getIndex<2, 1>( )->count(
-                                    iDataSetId,
-                                    { xCoords.uiIndexPos, uiMapQMax },
-                                    { xCoords.uiIndexPos + xCoords.uiIndexSize, uiMapQMin },
-                                    xIntersect,
-                                    0 );
-                            else if( !bHasMapQ && bHasMultiMap )
-                                vVals[ uiI ] =
-                                    xIndices.getIndex<1, 1>( )->count( iDataSetId,
-                                                                       { xCoords.uiIndexPos },
-                                                                       { xCoords.uiIndexPos + xCoords.uiIndexSize },
-                                                                       xIntersect,
-                                                                       0 );
-                            else if( bHasMapQ && !bHasMultiMap )
-                                vVals[ uiI ] = xIndices.getIndex<2, 0>( )->count(
-                                    iDataSetId,
-                                    { xCoords.uiIndexPos, uiMapQMax },
-                                    { xCoords.uiIndexPos + xCoords.uiIndexSize, uiMapQMin },
-                                    xIntersect,
-                                    0 );
-                            else // if(!bHasMapQ && !bHasMultiMap)
-                                vVals[ uiI ] =
-                                    xIndices.getIndex<1, 0>( )->count( iDataSetId,
-                                                                       { xCoords.uiIndexPos },
-                                                                       { xCoords.uiIndexPos + xCoords.uiIndexSize },
-                                                                       xIntersect,
-                                                                       0 );
-                        }
+                        vVals[ uiI ] = getCoverageFromRepl(
+                            bHasMapQ, bHasMultiMap, bCoverageGetMax, uiMapQMin, uiMapQMax, xCoords, xRep, sRep.second,
+                            uiCoverageGetMaxBinSize, this->vActiveChromosomes[ uiJ ], uiJ == 0, uiI == 0 );
                     }
                 else
                     vVals = { 0, 0 };
@@ -564,6 +646,9 @@ void PartialQuarry::regCoverage( )
                                                        NodeNames::IntersectionType, NodeNames::Symmetry },
                                .vIncomingSession = { { "settings", "filters", "mapping_q", "val_min" },
                                                      { "settings", "filters", "mapping_q", "val_max" },
+                                                     { "settings", "replicates", "coverage_get_max_col" },
+                                                     { "settings", "replicates", "coverage_get_max_row" },
+                                                     { "settings", "replicates", "coverage_get_max_bin_size" },
                                                      { "settings", "normalization", "min_interactions", "val" } } } );
 
     registerNode(
