@@ -317,7 +317,7 @@ void PartialQuarry::regReplicates( )
                   ComputeNode{ .sNodeName = "bin_values",
                                .fFunc = &PartialQuarry::setBinValues,
                                .vIncomingFunctions = { NodeNames::BinCoords, NodeNames::ActiveReplicates },
-                               .vIncomingSession = { } } );
+                               .vIncomingSession = {} } );
 
     registerNode( NodeNames::InGroup,
                   ComputeNode{ .sNodeName = "in_group_setting",

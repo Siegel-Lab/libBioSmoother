@@ -595,6 +595,73 @@ bool PartialQuarry::setTrackExport( )
     END_RETURN;
 }
 
+bool PartialQuarry::setRankedSlicesCDS( )
+{
+    std::array<std::vector<size_t>, 2> vSorted;
+
+    for( size_t uiI = 0; uiI < 2; uiI++ )
+    {
+        vSorted[ uiI ].reserve( vvFlatCoverageValues[ uiI ].size( ) );
+        for( size_t uiX = 0; uiX < vvFlatCoverageValues[ uiI ].size( ); uiX++ )
+            vSorted[ uiI ].push_back( uiX );
+        std::sort( vSorted[ uiI ].begin( ), vSorted[ uiI ].end( ), [ & ]( size_t uiA, size_t uiB ) {
+            return vvFlatCoverageValues[ uiI ][ uiA ] < vvFlatCoverageValues[ uiI ][ uiB ];
+        } );
+    }
+
+    using namespace pybind11::literals;
+    pybind11::gil_scoped_acquire acquire;
+    size_t uiDividend = this->xSession[ "dividend" ].get<size_t>( );
+
+    for( size_t uiI = 0; uiI < 2; uiI++ )
+    {
+        pybind11::list vChrs;
+        pybind11::list vIndexStart;
+        pybind11::list vIndexEnd;
+        pybind11::list vXs;
+        pybind11::list vYs;
+        pybind11::list vColors;
+        pybind11::list vScoreA;
+        pybind11::list vScoreB;
+
+        for( size_t uiX = 0; uiX < vvFlatCoverageValues[ uiI ].size( ); uiX++ )
+        {
+            CANCEL_RETURN;
+            auto& xCoord = vAxisCords[ uiI ][ vSorted[ uiI ][ uiX ] ];
+            auto uiVal = vvFlatCoverageValues[ uiI ][ vSorted[ uiI ][ uiX ] ];
+            //auto uiA = vFlatNormValues[ uiI ][ vSorted[ uiI ][ uiX ] ][ 0 ];
+            //auto uiB = vFlatNormValues[ uiI ][ vSorted[ uiI ][ uiX ] ][ 1 ];
+
+            vChrs.append( substringChr( xCoord.sChromosome ) );
+            vIndexStart.append( readableBp( xCoord.uiIndexPos * uiDividend ) );
+            vIndexEnd.append( readableBp( ( xCoord.uiIndexPos + xCoord.uiIndexSize ) * uiDividend ) );
+
+            vXs.append( uiX );
+            vYs.append( uiVal );
+
+            vColors.append( xCoord.bFiltered ? "grey" : ( uiI == 0 ? "#0072B2" : "#D55E00" ) );
+
+            vScoreA.append( 0 ); // @todo -> no non-mixed coverage exists
+            vScoreB.append( 0 );
+        }
+
+        vRankedSliceCDS[ uiI ] = pybind11::dict( "chrs"_a = vChrs,
+
+                                                 "index_start"_a = vIndexStart,
+                                                 "index_end"_a = vIndexEnd,
+
+                                                 "xs"_a = vXs,
+                                                 "ys"_a = vYs,
+
+                                                 "colors"_a = vColors,
+
+                                                 "score_a"_a = vScoreA,
+                                                 "score_b"_a = vScoreB );
+    }
+
+    END_RETURN;
+}
+
 const decltype( PartialQuarry::vTrackExport[ 0 ] ) PartialQuarry::getTrackExport( bool bXAxis )
 {
     update( NodeNames::TrackExport );
@@ -612,6 +679,12 @@ const pybind11::dict PartialQuarry::getTracks( bool bXAxis )
 {
     update( NodeNames::Tracks );
     return xTracksCDS[ bXAxis ? 0 : 1 ];
+}
+
+const pybind11::dict PartialQuarry::getRankedSlices( bool bXAxis )
+{
+    update( NodeNames::RankedSlicesCDS );
+    return vRankedSliceCDS[ bXAxis ? 0 : 1 ];
 }
 
 const std::array<int64_t, 2> PartialQuarry::getMinMaxTracks( bool bXAxis )
@@ -660,18 +733,28 @@ void PartialQuarry::regCoverage( )
                      .vIncomingFunctions = { NodeNames::CoverageValues, NodeNames::BetweenGroup, NodeNames::InGroup },
                      .vIncomingSession = {} } );
 
-    registerNode( NodeNames::Tracks,
-                  ComputeNode{ .sNodeName = "coverage_tracks",
-                               .fFunc = &PartialQuarry::setTracks,
-                               .vIncomingFunctions = { NodeNames::LCS,
-                                                       NodeNames::Normalized, NodeNames::AnnotationColors },
-                               .vIncomingSession = { { "settings", "normalization", "display_ice_remainder" } } } );
+    registerNode(
+        NodeNames::Tracks,
+        ComputeNode{ .sNodeName = "coverage_tracks",
+                     .fFunc = &PartialQuarry::setTracks,
+                     .vIncomingFunctions = { NodeNames::LCS, NodeNames::Normalized, NodeNames::AnnotationColors },
+                     .vIncomingSession = { { "settings", "normalization", "display_ice_remainder" } } } );
 
     registerNode( NodeNames::TrackExport,
                   ComputeNode{ .sNodeName = "track_export",
                                .fFunc = &PartialQuarry::setTrackExport,
                                .vIncomingFunctions = { NodeNames::Tracks },
                                .vIncomingSession = {} } );
+
+    registerNode(
+        NodeNames::RankedSlicesCDS,
+        ComputeNode{ .sNodeName = "ranked_slices",
+                     .fFunc = &PartialQuarry::setRankedSlicesCDS,
+                     .vIncomingFunctions = { NodeNames::FlatCoverageValues },
+                     .vIncomingSession = { { "settings", "filters", "coverage_bin_filter_column", "val_min" },
+                                           { "settings", "filters", "coverage_bin_filter_column", "val_max" },
+                                           { "settings", "filters", "coverage_bin_filter_row", "val_min" },
+                                           { "settings", "filters", "coverage_bin_filter_row", "val_max" } } } );
 }
 
 

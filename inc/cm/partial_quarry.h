@@ -100,6 +100,7 @@ class PartialQuarry
         Divided,
         Palette,
         LCS,
+        RankedSlicesCDS,
         SIZE
     };
     struct ComputeNode
@@ -513,6 +514,7 @@ class PartialQuarry
     std::array<pybind11::dict, 2> vAnnotationCDS;
     std::array<pybind11::list, 2> vActiveAnnotationCDS;
     pybind11::dict xHeatmapCDS;
+    std::array<pybind11::dict, 2> vRankedSliceCDS;
     std::vector<std::tuple<std::string, size_t, size_t, std::string, size_t, size_t, double>> vHeatmapExport;
     std::array<std::vector<std::string>, 2> vTrackExportNames;
     std::array<std::vector<std::tuple<std::string, size_t, size_t, std::vector<double>>>, 2> vTrackExport;
@@ -598,6 +600,7 @@ class PartialQuarry
 
     // coverage.h
     bool setFlatCoverageValues( );
+    bool setRankedSlicesCDS( );
 
     // coverage.h
     void regCoverage( );
@@ -809,6 +812,9 @@ class PartialQuarry
 
     // coverage.h
     const pybind11::dict getTracks( bool );
+
+    // coverage.h
+    const pybind11::dict getRankedSlices( bool );
 
     // coverage.h
     const decltype( vTrackExport[ 0 ] ) getTrackExport( bool );

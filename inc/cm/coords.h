@@ -52,11 +52,11 @@ std::pair<std::vector<AxisCoord>, std::vector<AxisRegion>> axisCoordsHelper( siz
             {
                 case 0:
                 case 1:
-                    assert(xChr.uiLength >= uiIndexPos);
+                    assert( xChr.uiLength >= uiIndexPos );
                     uiCurrBinSize = std::min( uiBinSize, xChr.uiLength - uiIndexPos );
                     break;
                 case 2:
-                    assert(uiIndexPos + 2 * uiBinSize <= xChr.uiLength || xChr.uiLength >= uiIndexPos);
+                    assert( uiIndexPos + 2 * uiBinSize <= xChr.uiLength || xChr.uiLength >= uiIndexPos );
                     uiCurrBinSize = uiIndexPos + 2 * uiBinSize > xChr.uiLength ? xChr.uiLength - uiIndexPos : uiBinSize;
                     break;
                 case 3:
@@ -116,7 +116,7 @@ std::pair<std::vector<AxisCoord>, std::vector<AxisRegion>> axisCoordsHelper( siz
 
         if( uiStartScreenPos >= uiChromosomeStartPos )
         {
-            assert(uiItrEndPos > uiStartChromPos);
+            assert( uiItrEndPos > uiStartChromPos );
             vRet2.push_back( AxisRegion{
                 {
                     .sChromosome = xChr.sName, //
@@ -251,12 +251,12 @@ annoCoordsHelper( size_t uiBinSize, size_t uiScreenStartPos, size_t uiScreenEndP
                 switch( iMultipleAnnosInBin )
                 {
                     case 0: // combine
-                        assert(( xUpper - 1 )->uiIntervalEnd >= uiIndexPos);
+                        assert( ( xUpper - 1 )->uiIntervalEnd >= uiIndexPos );
                         uiCurrIndexSize = ( xUpper - 1 )->uiIntervalEnd - uiIndexPos;
                         uiCurrScreenSize = ( xUpper - 1 )->uiIntervalCoordsEnd - xLower->uiIntervalCoordsStart;
                         break;
                     case 1: // first
-                        assert(xLower->uiIntervalEnd >= uiIndexPos);
+                        assert( xLower->uiIntervalEnd >= uiIndexPos );
                         uiCurrIndexSize = xLower->uiIntervalEnd - uiIndexPos;
                         uiCurrScreenSize = ( xUpper - 1 )->uiIntervalCoordsEnd - xLower->uiIntervalCoordsStart;
                         break;
@@ -272,8 +272,8 @@ annoCoordsHelper( size_t uiBinSize, size_t uiScreenStartPos, size_t uiScreenEndP
                             switch( iAnnoInMultipleBins )
                             {
                                 case 0: // separate
-                                    uiIndexPos = xPick->uiIntervalStart + uiCurrScreenPos - 
-                                                        xPick->uiIntervalCoordsStart;
+                                    uiIndexPos =
+                                        xPick->uiIntervalStart + uiCurrScreenPos - xPick->uiIntervalCoordsStart;
                                     uiCurrIndexSize = xPick->uiIntervalEnd - uiIndexPos;
                                     break;
                                 case 1: // stretch
@@ -294,7 +294,7 @@ annoCoordsHelper( size_t uiBinSize, size_t uiScreenStartPos, size_t uiScreenEndP
                         uiCurrScreenSize = ( xUpper - 1 )->uiIntervalCoordsEnd - xLower->uiIntervalCoordsStart;
                         break;
                     case 3: // force_separate
-                        assert(xLower->uiIntervalEnd >= uiIndexPos);
+                        assert( xLower->uiIntervalEnd >= uiIndexPos );
                         uiCurrIndexSize = xLower->uiIntervalEnd - uiIndexPos;
                         uiCurrScreenSize = uiCurrIndexSize;
                         break;
@@ -874,14 +874,13 @@ void PartialQuarry::regCoords( )
                                                      { "contigs", "row_coordinates" } } } );
     registerNode(
         NodeNames::FilteredCoords,
-        ComputeNode{
-            .sNodeName = "filtered_coords",
-            .fFunc = &PartialQuarry::setFilteredCoords,
-            .vIncomingFunctions = { NodeNames::AnnotationValues, NodeNames::FlatCoverageValues },
-            .vIncomingSession = { { "settings", "filters", "coverage_bin_filter_column", "val_min" },
-                                  { "settings", "filters", "coverage_bin_filter_column", "val_max" },
-                                  { "settings", "filters", "coverage_bin_filter_row", "val_min" },
-                                  { "settings", "filters", "coverage_bin_filter_row", "val_max" } } } );
+        ComputeNode{ .sNodeName = "filtered_coords",
+                     .fFunc = &PartialQuarry::setFilteredCoords,
+                     .vIncomingFunctions = { NodeNames::AnnotationValues, NodeNames::FlatCoverageValues },
+                     .vIncomingSession = { { "settings", "filters", "coverage_bin_filter_column", "val_min" },
+                                           { "settings", "filters", "coverage_bin_filter_column", "val_max" },
+                                           { "settings", "filters", "coverage_bin_filter_row", "val_min" },
+                                           { "settings", "filters", "coverage_bin_filter_row", "val_max" } } } );
 
     registerNode( NodeNames::Symmetry, ComputeNode{ .sNodeName = "symmetry_setting",
                                                     .fFunc = &PartialQuarry::setSymmetry,
