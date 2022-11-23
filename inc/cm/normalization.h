@@ -12,7 +12,7 @@ bool PartialQuarry::normalizeSize( size_t uiSize )
 
     for( size_t uiJ = 0; uiJ < 2; uiJ++ )
         for( size_t uiX : vInGroup[ uiJ ] )
-        {
+        { // @todo symmetry & collapsing in_group correctly
             CANCEL_RETURN;
             vTotalReads[ uiJ ] +=
                 this->xSession[ "replicates" ][ "by_name" ][ this->vActiveReplicates[ uiX ] ][ "total_reads" ]
@@ -292,9 +292,9 @@ bool PartialQuarry::setDivided( )
     vDivided.reserve( vCombined.size( ) );
 
     const bool bByCol = this->xSession[ "settings" ][ "normalization" ][ "divide_by_column_coverage" ].get<bool>( ) &&
-                        vvFlatCoverageValues[ 0 ].size( ) != 0;
+                        vvCombinedCoverageValues[ 0 ].size( ) != 0;
     const bool bByRow = this->xSession[ "settings" ][ "normalization" ][ "divide_by_row_coverage" ].get<bool>( ) &&
-                        vvFlatCoverageValues[ 1 ].size( ) != 0;
+                        vvCombinedCoverageValues[ 1 ].size( ) != 0;
 
     for( size_t uiI = 0; uiI < vCombined.size( ); uiI++ )
     {
@@ -304,17 +304,17 @@ bool PartialQuarry::setDivided( )
 
         if( bByCol )
         {
-            if( vvFlatCoverageValues[ 0 ][ uiI / vAxisCords[ 0 ].size( ) ] == 0 )
+            if( vvCombinedCoverageValues[ 0 ][ uiI / vAxisCords[ 0 ].size( ) ] == 0 )
                 fVal = std::numeric_limits<double>::quiet_NaN( );
             else
-                fVal /= vvFlatCoverageValues[ 0 ][ uiI / vAxisCords[ 0 ].size( ) ];
+                fVal /= vvCombinedCoverageValues[ 0 ][ uiI / vAxisCords[ 0 ].size( ) ];
         }
         if( bByRow )
         {
-            if( vvFlatCoverageValues[ 1 ][ uiI % vAxisCords[ 0 ].size( ) ] == 0 || std::isnan( fVal ) )
+            if( vvCombinedCoverageValues[ 1 ][ uiI % vAxisCords[ 0 ].size( ) ] == 0 || std::isnan( fVal ) )
                 fVal = std::numeric_limits<double>::quiet_NaN( );
             else
-                fVal /= vvFlatCoverageValues[ 1 ][ uiI % vAxisCords[ 0 ].size( ) ];
+                fVal /= vvCombinedCoverageValues[ 1 ][ uiI % vAxisCords[ 0 ].size( ) ];
         }
 
         vDivided.push_back( fVal );

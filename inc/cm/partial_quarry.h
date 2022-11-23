@@ -78,6 +78,8 @@ class PartialQuarry
         ActiveCoverage,
         CoverageValues,
         FlatCoverageValues,
+        NormalizeCoverageValues,
+        CombinedCoverageValues,
         BinValues,
         FlatValues,
         InGroup,
@@ -481,6 +483,7 @@ class PartialQuarry
     std::vector<std::array<BinCoord, 2>> vBinCoords;
 
     std::array<std::vector<std::pair<std::string, bool>>, 2> vActiveCoverage;
+    std::array<std::vector<size_t>, 2> vActiveCoverageTotal;
 
     size_t uiSymmetry;
     size_t iInGroupSetting, iBetweenGroupSetting;
@@ -499,7 +502,10 @@ class PartialQuarry
     std::array<std::array<std::vector<size_t>, 3>, 2> vInGroupCoverage;
     std::array<std::array<std::vector<size_t>, 2>, 2> vNormCoverage;
     // outer array: column / row
-    std::array<std::vector<double>, 2> vvFlatCoverageValues;
+    std::array<std::vector<std::array<size_t, 2>>, 2> vvFlatCoverageValues;
+    std::array<std::array<size_t, 2>, 2> vFlatCoverageTotal;
+    std::array<std::vector<std::array<double, 2>>, 2> vvNormalizedCoverageValues;
+    std::array<std::vector<double>, 2> vvCombinedCoverageValues;
     std::array<std::vector<std::array<size_t, 2>>, 2> vFlatNormValues;
 
     std::vector<std::string> vColorPalette;
@@ -522,7 +528,7 @@ class PartialQuarry
     std::array<pybind11::dict, 2> xTracksCDS;
     std::array<pybind11::list, 2> vTickLists;
     std::array<size_t, 2> vCanvasSize;
-    std::array<std::array<int64_t, 2>, 2> vvMinMaxTracks;
+    std::array<std::array<double, 2>, 2> vvMinMaxTracks;
     double fMax, fMin;
     size_t uiLogestCommonSuffix;
 
@@ -577,6 +583,10 @@ class PartialQuarry
 
     // coverage.h
     bool setCoverageValues( );
+    // coverage.h
+    bool setNormalizeCoverageValues( );
+    // coverage.h
+    bool setCombinedCoverageValues( );
     // coverage.h
     bool setTracks( );
     // coverage.h
@@ -823,7 +833,7 @@ class PartialQuarry
     const std::vector<std::string> getTrackExportNames( bool );
 
     // coverage.h
-    const std::array<int64_t, 2> getMinMaxTracks( bool bAxis );
+    const std::array<double, 2> getMinMaxTracks( bool bAxis );
 
   private:
     size_t stringCompare( std::string sQuery, std::string sRef )

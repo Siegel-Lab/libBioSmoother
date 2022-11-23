@@ -19,6 +19,8 @@ bool PartialQuarry::setActiveCoverage( )
 
         vActiveCoverage[ uiI ].clear( );
         vActiveCoverage[ uiI ].reserve( uiSize );
+        vActiveCoverageTotal[ uiI ].clear( );
+        vActiveCoverageTotal[ uiI ].reserve( uiSize );
 
         for( size_t uiJ = 0; uiJ < 3; uiJ++ )
         {
@@ -84,12 +86,18 @@ bool PartialQuarry::setActiveCoverage( )
     {
         CANCEL_RETURN;
         vActiveCoverage[ 0 ].push_back( rX );
+        vActiveCoverageTotal[ 0 ].push_back(
+            this->xSession[ rX.second ? "coverage" : "replicates" ][ "by_name" ][ rX.first ][ "total_reads" ]
+                .get<size_t>( ) );
     }
 
     for( auto& rX : xB )
     {
         CANCEL_RETURN;
         vActiveCoverage[ 1 ].push_back( rX );
+        vActiveCoverageTotal[ 1 ].push_back(
+            this->xSession[ rX.second ? "coverage" : "replicates" ][ "by_name" ][ rX.first ][ "total_reads" ]
+                .get<size_t>( ) );
     }
 
     for( size_t uiI = 0; uiI < 2; uiI++ )
@@ -298,6 +306,8 @@ bool PartialQuarry::setFlatCoverageValues( )
     for( size_t uiJ = 0; uiJ < 2; uiJ++ )
     {
         vvFlatCoverageValues[ uiJ ].clear( );
+        vFlatCoverageTotal[ uiJ ][ 0 ] = 0;
+        vFlatCoverageTotal[ uiJ ][ 1 ] = 1;
         if( vvCoverageValues[ uiJ ].size( ) > 0 &&
             vInGroupCoverage[ uiJ ][ 0 ].size( ) + vInGroupCoverage[ uiJ ][ 1 ].size( ) > 0 )
         {
@@ -315,8 +325,20 @@ bool PartialQuarry::setFlatCoverageValues( )
 
                     vVal[ uiK ] = getFlatValue( vCollected );
                 }
-                vvFlatCoverageValues[ uiJ ].push_back( getMixedValue( (double)vVal[ 0 ], (double)vVal[ 1 ] ) );
+                vvFlatCoverageValues[ uiJ ].push_back( vVal );
             }
+
+            std::array<size_t, 2> vVal;
+            for( size_t uiK = 0; uiK < 2; uiK++ )
+            {
+                std::vector<size_t> vCollected;
+                vCollected.reserve( vInGroupCoverage[ uiJ ][ uiK ].size( ) );
+                for( size_t uiX : vInGroupCoverage[ uiJ ][ uiK ] )
+                    vCollected.push_back( vActiveCoverageTotal[ uiJ ][ uiX ] );
+                vVal[ uiK ] = getFlatValue( vCollected );
+            }
+
+            vFlatCoverageTotal[ uiJ ] = vVal;
         }
         if( vvCoverageValues[ uiJ ].size( ) > 0 )
         {
@@ -342,6 +364,90 @@ bool PartialQuarry::setFlatCoverageValues( )
     END_RETURN;
 }
 
+double normCoverage( size_t uiNorm, size_t uiVal, size_t uiTotal, size_t uiW, size_t uiH )
+{
+    uint64_t uiS = (uint64_t)uiW * (uint64_t)uiH;
+    switch( uiNorm )
+    {
+        case 0: // dont
+            return (double)uiVal;
+        case 1: // rpm
+            return uiTotal == 0 ? 0 : 1000000.0 * (double)uiVal / (double)uiTotal;
+        case 2: // rpk
+            return uiTotal == 0 ? 0 : 1000.0 * (double)uiVal / (double)uiTotal;
+        case 3: // rpmb
+            return uiS == 0 ? 0 : 1000000.0 * (double)uiVal / (double)uiS;
+        case 4: // rpkb
+            return uiS == 0 ? 0 : 1000.0 * (double)uiVal / (double)uiS;
+        default:
+            throw std::logic_error( "invalid value for normalize_by_coverage" );
+    }
+}
+
+bool PartialQuarry::setNormalizeCoverageValues( )
+{
+    std::string sNorm = this->xSession[ "settings" ][ "normalization" ][ "normalize_by_coverage" ].get<std::string>( );
+    size_t uiNorm;
+    if( sNorm == "dont" )
+        uiNorm = 0;
+    else if( sNorm == "rpm" )
+        uiNorm = 1;
+    else if( sNorm == "rpk" )
+        uiNorm = 2;
+    else if( sNorm == "rpmb" )
+        uiNorm = 3;
+    else if( sNorm == "rpkb" )
+        uiNorm = 4;
+    else
+        throw std::logic_error( "invalid value for normalize_by_coverage" );
+
+    size_t uiCoverageGetMaxBinSize =
+        this->xSession[ "settings" ][ "replicates" ][ "coverage_get_max_bin_size" ][ "val" ].get<size_t>( ) /
+        this->xSession[ "dividend" ].get<size_t>( );
+
+    for( size_t uiJ = 0; uiJ < 2; uiJ++ )
+    {
+        CANCEL_RETURN;
+        bool bCoverageGetMax =
+            this->xSession[ "settings" ][ "replicates" ][ uiJ == 0 ? "coverage_get_max_col" : "coverage_get_max_row" ]
+                .get<bool>( );
+
+        size_t uiH = // @todo get actual canvas size
+            bCoverageGetMax ? uiCoverageGetMaxBinSize : this->xSession[ "contigs" ][ "genome_size" ].get<size_t>( );
+        vvNormalizedCoverageValues[ uiJ ].clear( );
+        vvNormalizedCoverageValues[ uiJ ].reserve( vvFlatCoverageValues[ uiJ ].size( ) );
+
+        for( size_t uiI = 0; uiI < vvFlatCoverageValues[ uiJ ].size( ); uiI++ )
+        {
+            CANCEL_RETURN;
+            size_t uiW = vAxisCords[ uiJ ][ uiI ].uiIndexSize;
+            vvNormalizedCoverageValues[ uiJ ].push_back( std::array<double, 2>{
+                normCoverage( uiNorm, vvFlatCoverageValues[ uiJ ][ uiI ][ 0 ], vFlatCoverageTotal[ uiJ ][ 0 ], uiW,
+                              uiH ),
+                normCoverage( uiNorm, vvFlatCoverageValues[ uiJ ][ uiI ][ 1 ], vFlatCoverageTotal[ uiJ ][ 1 ], uiW,
+                              uiH ) } );
+        }
+    }
+    END_RETURN;
+}
+
+bool PartialQuarry::setCombinedCoverageValues( )
+{
+    for( size_t uiJ = 0; uiJ < 2; uiJ++ )
+    {
+        vvCombinedCoverageValues[ uiJ ].clear( );
+        vvCombinedCoverageValues[ uiJ ].reserve( vvNormalizedCoverageValues[ uiJ ].size( ) );
+
+        for( size_t uiI = 0; uiI < vvNormalizedCoverageValues[ uiJ ].size( ); uiI++ )
+        {
+            CANCEL_RETURN;
+            vvCombinedCoverageValues[ uiJ ].push_back( getMixedValue( vvNormalizedCoverageValues[ uiJ ][ uiI ][ 0 ],
+                                                                      vvNormalizedCoverageValues[ uiJ ][ uiI ][ 1 ] ) );
+        }
+    }
+    END_RETURN;
+}
+
 bool PartialQuarry::setTracks( )
 {
     using namespace pybind11::literals;
@@ -350,24 +456,24 @@ bool PartialQuarry::setTracks( )
     size_t uiDividend = this->xSession[ "dividend" ].get<size_t>( );
     for( size_t uiI = 0; uiI < 2; uiI++ )
     {
-        vvMinMaxTracks[ uiI ][ 0 ] = std::numeric_limits<int64_t>::max( );
-        vvMinMaxTracks[ uiI ][ 1 ] = std::numeric_limits<int64_t>::min( );
+        vvMinMaxTracks[ uiI ][ 0 ] = std::numeric_limits<double>::max( );
+        vvMinMaxTracks[ uiI ][ 1 ] = std::numeric_limits<double>::min( );
 
         for( size_t uiX = 0; uiX < vAxisCords[ uiI ].size( ); uiX++ )
         {
             CANCEL_RETURN;
             for( size_t uiId : vInGroupCoverage[ uiI ][ 2 ] )
             {
-                auto uiVal = vvCoverageValues[ uiI ][ uiId ][ uiX ];
-                vvMinMaxTracks[ uiI ][ 0 ] = std::min( vvMinMaxTracks[ uiI ][ 0 ], (int64_t)uiVal );
-                vvMinMaxTracks[ uiI ][ 1 ] = std::max( vvMinMaxTracks[ uiI ][ 1 ], (int64_t)uiVal );
+                auto uiVal = (double)vvCoverageValues[ uiI ][ uiId ][ uiX ];
+                vvMinMaxTracks[ uiI ][ 0 ] = std::min( vvMinMaxTracks[ uiI ][ 0 ], uiVal );
+                vvMinMaxTracks[ uiI ][ 1 ] = std::max( vvMinMaxTracks[ uiI ][ 1 ], uiVal );
             }
 
-            if( vvFlatCoverageValues[ uiI ].size( ) > 0 )
+            if( vvCombinedCoverageValues[ uiI ].size( ) > 0 )
             {
-                auto uiVal = vvFlatCoverageValues[ uiI ][ uiX ];
-                vvMinMaxTracks[ uiI ][ 0 ] = std::min( vvMinMaxTracks[ uiI ][ 0 ], (int64_t)uiVal );
-                vvMinMaxTracks[ uiI ][ 1 ] = std::max( vvMinMaxTracks[ uiI ][ 1 ], (int64_t)uiVal );
+                auto uiVal = vvCombinedCoverageValues[ uiI ][ uiX ];
+                vvMinMaxTracks[ uiI ][ 0 ] = std::min( vvMinMaxTracks[ uiI ][ 0 ], uiVal );
+                vvMinMaxTracks[ uiI ][ 1 ] = std::max( vvMinMaxTracks[ uiI ][ 1 ], uiVal );
             }
         }
         pybind11::list vChrs;
@@ -380,12 +486,14 @@ bool PartialQuarry::setTracks( )
 
         size_t uiCnt = 0;
 
-        if( vvFlatCoverageValues[ uiI ].size( ) > 0 )
+        if( vvCombinedCoverageValues[ uiI ].size( ) > 0 )
         {
             pybind11::list vScreenPos;
             pybind11::list vIndexStart;
             pybind11::list vIndexEnd;
             pybind11::list vValue;
+            pybind11::list vScoreA;
+            pybind11::list vScoreB;
             std::string sChr = "";
 
             for( size_t uiX = 0; uiX < vAxisCords[ uiI ].size( ); uiX++ )
@@ -420,22 +528,30 @@ bool PartialQuarry::setTracks( )
                     vIndexEnd.append( xCoord.uiIndexPos * uiDividend );
                     vScreenPos.append( xCoord.uiScreenPos );
                     vValue.append( vvMinMaxTracks[ uiI ][ 0 ] );
+                    vScoreA.append( 0 );
+                    vScoreB.append( 0 );
                 }
 
                 sChr = xCoord.sChromosome;
-                auto uiVal = vvFlatCoverageValues[ uiI ][ uiX ];
+                auto uiVal = vvCombinedCoverageValues[ uiI ][ uiX ];
+                auto uiScoreA = vvFlatCoverageValues[ uiI ][ uiX ][ 0 ];
+                auto uiScoreB = vvFlatCoverageValues[ uiI ][ uiX ][ 1 ];
 
                 // front corner
                 vIndexStart.append( readableBp( xCoord.uiIndexPos * uiDividend ) );
                 vIndexEnd.append( readableBp( ( xCoord.uiIndexPos + xCoord.uiIndexSize ) * uiDividend ) );
                 vScreenPos.append( xCoord.uiScreenPos );
                 vValue.append( uiVal );
+                vScoreA.append( uiScoreA );
+                vScoreB.append( uiScoreB );
 
                 // rear corner
                 vIndexStart.append( readableBp( xCoord.uiIndexPos * uiDividend ) );
                 vIndexEnd.append( readableBp( ( xCoord.uiIndexPos + xCoord.uiIndexSize ) * uiDividend ) );
                 vScreenPos.append( xCoord.uiScreenPos + xCoord.uiScreenSize );
                 vValue.append( uiVal );
+                vScoreA.append( uiScoreA );
+                vScoreB.append( uiScoreB );
 
                 if( uiX + 1 == vAxisCords[ uiI ].size( ) )
                 {
@@ -444,6 +560,8 @@ bool PartialQuarry::setTracks( )
                     vIndexEnd.append( readableBp( ( xCoord.uiIndexPos + xCoord.uiIndexSize ) * uiDividend ) );
                     vScreenPos.append( xCoord.uiScreenPos + xCoord.uiScreenSize );
                     vValue.append( vvMinMaxTracks[ uiI ][ 0 ] );
+                    vScoreA.append( 0 );
+                    vScoreB.append( 0 );
                 }
             }
             vChrs.append( substringChr( sChr ) );
@@ -472,6 +590,8 @@ bool PartialQuarry::setTracks( )
             pybind11::list vIndexStart;
             pybind11::list vIndexEnd;
             pybind11::list vValue;
+            pybind11::list vScoreA;
+            pybind11::list vScoreB;
             std::string sChr = "";
 
 
@@ -507,16 +627,22 @@ bool PartialQuarry::setTracks( )
                     vIndexEnd.append( readableBp( xCoord.uiIndexPos * uiDividend ) );
                     vScreenPos.append( xCoord.uiScreenPos );
                     vValue.append( vvMinMaxTracks[ uiI ][ 0 ] );
+                    vScoreA.append( 0 );
+                    vScoreB.append( 0 );
                 }
 
                 sChr = xCoord.sChromosome;
                 auto uiVal = vvCoverageValues[ uiI ][ uiId ][ uiX ];
+                auto uiScoreA = vvFlatCoverageValues[ uiI ][ uiX ][ 0 ];
+                auto uiScoreB = vvFlatCoverageValues[ uiI ][ uiX ][ 1 ];
 
                 // front corner
                 vIndexStart.append( readableBp( xCoord.uiIndexPos * uiDividend ) );
                 vIndexEnd.append( readableBp( ( xCoord.uiIndexPos + xCoord.uiIndexSize ) * uiDividend ) );
                 vScreenPos.append( xCoord.uiScreenPos );
                 vValue.append( uiVal );
+                vScoreA.append( uiScoreA );
+                vScoreB.append( uiScoreB );
 
                 // rear corner
                 vIndexStart.append( readableBp( xCoord.uiIndexPos * uiDividend ) );
@@ -531,6 +657,8 @@ bool PartialQuarry::setTracks( )
                     vIndexEnd.append( readableBp( ( xCoord.uiIndexPos + xCoord.uiIndexSize ) * uiDividend ) );
                     vScreenPos.append( xCoord.uiScreenPos + xCoord.uiScreenSize );
                     vValue.append( vvMinMaxTracks[ uiI ][ 0 ] );
+                    vScoreA.append( 0 );
+                    vScoreB.append( 0 );
                 }
             }
 
@@ -567,9 +695,10 @@ bool PartialQuarry::setTrackExport( )
         vTrackExport[ uiI ].clear( );
         vTrackExport[ uiI ].reserve( vAxisCords[ uiI ].size( ) );
         vTrackExportNames[ uiI ].clear( );
-        vTrackExportNames[ uiI ].reserve( vvFlatCoverageValues[ uiI ].size( ) + vInGroupCoverage[ uiI ][ 2 ].size( ) );
+        vTrackExportNames[ uiI ].reserve( vvCombinedCoverageValues[ uiI ].size( ) +
+                                          vInGroupCoverage[ uiI ][ 2 ].size( ) );
 
-        if( vvFlatCoverageValues[ uiI ].size( ) > 0 )
+        if( vvCombinedCoverageValues[ uiI ].size( ) > 0 )
             vTrackExportNames[ uiI ].push_back( uiI == 0 ? "Column Sum" : "Row Sum" );
 
         for( size_t uiId : vInGroupCoverage[ uiI ][ 2 ] )
@@ -579,8 +708,8 @@ bool PartialQuarry::setTrackExport( )
         {
             CANCEL_RETURN;
             std::vector<double> vValues;
-            if( vvFlatCoverageValues[ uiI ].size( ) > 0 )
-                vValues.push_back( vvFlatCoverageValues[ uiI ][ uiX ] );
+            if( vvCombinedCoverageValues[ uiI ].size( ) > 0 )
+                vValues.push_back( vvCombinedCoverageValues[ uiI ][ uiX ] );
 
             for( size_t uiId : vInGroupCoverage[ uiI ][ 2 ] )
                 vValues.push_back( vvCoverageValues[ uiI ][ uiId ][ uiX ] );
@@ -601,11 +730,11 @@ bool PartialQuarry::setRankedSlicesCDS( )
 
     for( size_t uiI = 0; uiI < 2; uiI++ )
     {
-        vSorted[ uiI ].reserve( vvFlatCoverageValues[ uiI ].size( ) );
-        for( size_t uiX = 0; uiX < vvFlatCoverageValues[ uiI ].size( ); uiX++ )
+        vSorted[ uiI ].reserve( vvCombinedCoverageValues[ uiI ].size( ) );
+        for( size_t uiX = 0; uiX < vvCombinedCoverageValues[ uiI ].size( ); uiX++ )
             vSorted[ uiI ].push_back( uiX );
         std::sort( vSorted[ uiI ].begin( ), vSorted[ uiI ].end( ), [ & ]( size_t uiA, size_t uiB ) {
-            return vvFlatCoverageValues[ uiI ][ uiA ] < vvFlatCoverageValues[ uiI ][ uiB ];
+            return vvCombinedCoverageValues[ uiI ][ uiA ] < vvCombinedCoverageValues[ uiI ][ uiB ];
         } );
     }
 
@@ -624,13 +753,13 @@ bool PartialQuarry::setRankedSlicesCDS( )
         pybind11::list vScoreA;
         pybind11::list vScoreB;
 
-        for( size_t uiX = 0; uiX < vvFlatCoverageValues[ uiI ].size( ); uiX++ )
+        for( size_t uiX = 0; uiX < vvCombinedCoverageValues[ uiI ].size( ); uiX++ )
         {
             CANCEL_RETURN;
             auto& xCoord = vAxisCords[ uiI ][ vSorted[ uiI ][ uiX ] ];
-            auto uiVal = vvFlatCoverageValues[ uiI ][ vSorted[ uiI ][ uiX ] ];
-            //auto uiA = vFlatNormValues[ uiI ][ vSorted[ uiI ][ uiX ] ][ 0 ];
-            //auto uiB = vFlatNormValues[ uiI ][ vSorted[ uiI ][ uiX ] ][ 1 ];
+            auto uiVal = vvCombinedCoverageValues[ uiI ][ vSorted[ uiI ][ uiX ] ];
+            auto uiA = vvFlatCoverageValues[ uiI ][ vSorted[ uiI ][ uiX ] ][ 0 ];
+            auto uiB = vvFlatCoverageValues[ uiI ][ vSorted[ uiI ][ uiX ] ][ 1 ];
 
             vChrs.append( substringChr( xCoord.sChromosome ) );
             vIndexStart.append( readableBp( xCoord.uiIndexPos * uiDividend ) );
@@ -641,8 +770,8 @@ bool PartialQuarry::setRankedSlicesCDS( )
 
             vColors.append( xCoord.bFiltered ? "grey" : ( uiI == 0 ? "#0072B2" : "#D55E00" ) );
 
-            vScoreA.append( 0 ); // @todo -> no non-mixed coverage exists
-            vScoreB.append( 0 );
+            vScoreA.append( uiA );
+            vScoreB.append( uiB );
         }
 
         vRankedSliceCDS[ uiI ] = pybind11::dict( "chrs"_a = vChrs,
@@ -687,7 +816,7 @@ const pybind11::dict PartialQuarry::getRankedSlices( bool bXAxis )
     return vRankedSliceCDS[ bXAxis ? 0 : 1 ];
 }
 
-const std::array<int64_t, 2> PartialQuarry::getMinMaxTracks( bool bXAxis )
+const std::array<double, 2> PartialQuarry::getMinMaxTracks( bool bXAxis )
 {
     update( NodeNames::Tracks );
     return vvMinMaxTracks[ bXAxis ? 0 : 1 ];
@@ -730,8 +859,22 @@ void PartialQuarry::regCoverage( )
         NodeNames::FlatCoverageValues,
         ComputeNode{ .sNodeName = "flat_coverage",
                      .fFunc = &PartialQuarry::setFlatCoverageValues,
-                     .vIncomingFunctions = { NodeNames::CoverageValues, NodeNames::BetweenGroup, NodeNames::InGroup },
+                     .vIncomingFunctions = { NodeNames::CoverageValues, NodeNames::InGroup },
                      .vIncomingSession = {} } );
+
+    registerNode(
+        NodeNames::NormalizeCoverageValues,
+        ComputeNode{ .sNodeName = "normalized_coverage",
+                     .fFunc = &PartialQuarry::setNormalizeCoverageValues,
+                     .vIncomingFunctions = { NodeNames::FlatCoverageValues },
+                     .vIncomingSession = { { "settings", "normalization", "normalize_by_coverage" } } } );
+
+    registerNode(
+        NodeNames::CombinedCoverageValues,
+        ComputeNode{ .sNodeName = "normalized_coverage",
+                     .fFunc = &PartialQuarry::setCombinedCoverageValues,
+                     .vIncomingFunctions = { NodeNames::NormalizeCoverageValues, NodeNames::BetweenGroup },
+                     .vIncomingSession = { } } );
 
     registerNode(
         NodeNames::Tracks,
@@ -750,7 +893,7 @@ void PartialQuarry::regCoverage( )
         NodeNames::RankedSlicesCDS,
         ComputeNode{ .sNodeName = "ranked_slices",
                      .fFunc = &PartialQuarry::setRankedSlicesCDS,
-                     .vIncomingFunctions = { NodeNames::FlatCoverageValues },
+                     .vIncomingFunctions = { NodeNames::CombinedCoverageValues },
                      .vIncomingSession = { { "settings", "filters", "coverage_bin_filter_column", "val_min" },
                                            { "settings", "filters", "coverage_bin_filter_column", "val_max" },
                                            { "settings", "filters", "coverage_bin_filter_row", "val_min" },

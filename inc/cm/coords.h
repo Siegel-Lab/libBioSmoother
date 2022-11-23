@@ -593,10 +593,10 @@ bool PartialQuarry::setFilteredCoords( )
             this->xSession[ "settings" ][ "filters" ]
                           [ uiI == 0 ? "coverage_bin_filter_column" : "coverage_bin_filter_row" ][ "val_max" ]
                               .get<double>( );
-        for( size_t uiX = 0; uiX < vvFlatCoverageValues[ uiI ].size( ); uiX++ )
+        for( size_t uiX = 0; uiX < vvCombinedCoverageValues[ uiI ].size( ); uiX++ )
         {
-            vAxisCords[ uiI ][ uiX ].bFiltered =
-                vvFlatCoverageValues[ uiI ][ uiX ] < fFilterMin || vvFlatCoverageValues[ uiI ][ uiX ] >= fFilterMax;
+            vAxisCords[ uiI ][ uiX ].bFiltered = vvCombinedCoverageValues[ uiI ][ uiX ] < fFilterMin ||
+                                                 vvCombinedCoverageValues[ uiI ][ uiX ] >= fFilterMax;
             CANCEL_RETURN;
         }
     }
@@ -876,7 +876,7 @@ void PartialQuarry::regCoords( )
         NodeNames::FilteredCoords,
         ComputeNode{ .sNodeName = "filtered_coords",
                      .fFunc = &PartialQuarry::setFilteredCoords,
-                     .vIncomingFunctions = { NodeNames::AnnotationValues, NodeNames::FlatCoverageValues },
+                     .vIncomingFunctions = { NodeNames::AnnotationValues, NodeNames::CombinedCoverageValues },
                      .vIncomingSession = { { "settings", "filters", "coverage_bin_filter_column", "val_min" },
                                            { "settings", "filters", "coverage_bin_filter_column", "val_max" },
                                            { "settings", "filters", "coverage_bin_filter_row", "val_min" },
