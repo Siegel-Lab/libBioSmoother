@@ -434,6 +434,50 @@ bool PartialQuarry::setLCS( )
     END_RETURN;
 }
 
+bool PartialQuarry::setCanvasSize( )
+{
+    for( size_t uiI = 0; uiI < 2; uiI++ )
+    {
+
+        size_t uiRunningStart = 0;
+        std::string sCoords =
+            this->xSession[ "contigs" ][ uiI == 0 ? "column_coordinates" : "row_coordinates" ].get<std::string>( );
+        if( sCoords == "full_genome" )
+        {
+            for( ChromDesc& rDesc : this->vActiveChromosomes[ uiI ] )
+            {
+                CANCEL_RETURN;
+                uiRunningStart += rDesc.uiLength;
+            }
+        }
+        else
+        {
+            size_t iAnnoInMultipleBins = multiple_bins(
+                this->xSession[ "settings" ][ "filters" ][ "anno_in_multiple_bins" ].get<std::string>( ) );
+            auto& rJson = this->xSession[ "annotation" ][ "by_name" ][ sCoords ];
+
+            uiRunningStart = 0;
+            for( auto xChr : this->vActiveChromosomes[ uiI ] )
+            {
+                CANCEL_RETURN;
+                int64_t iDataSetId = rJson[ xChr.sName ].get<int64_t>( );
+
+                switch( iAnnoInMultipleBins )
+                {
+                    case 0: // separate
+                    case 1: // stretch
+                        uiRunningStart += xIndices.vAnno.totalIntervalSize( iDataSetId );
+                        break;
+                    case 2: // squeeze
+                        uiRunningStart += xIndices.vAnno.numIntervals( iDataSetId );
+                }
+            }
+        }
+        vCanvasSize[ uiI ] = uiRunningStart;
+    }
+    END_RETURN;
+}
+
 bool PartialQuarry::setTicks( )
 {
     using namespace pybind11::literals;
@@ -509,11 +553,11 @@ bool PartialQuarry::setTicks( )
                 }
             }
         }
+        assert(uiRunningStart == vCanvasSize[uiI]);
         vFullList.append( uiRunningStart );
-        vCanvasSize[ uiI ] = uiRunningStart;
 
         xTicksCDS[ uiI ] = pybind11::dict( "contig_starts"_a = vStartPos,
-                                           "genome_end"_a = uiRunningStart,
+                                           "genome_end"_a = vCanvasSize[uiI],
                                            "dividend"_a = this->xSession[ "dividend" ].get<size_t>( ),
                                            "contig_names"_a = vNames );
         vTickLists[ uiI ] = vFullList;
@@ -535,7 +579,7 @@ const pybind11::list PartialQuarry::getTickList( bool bXAxis )
 
 const std::array<size_t, 2> PartialQuarry::getCanvasSize( )
 {
-    update( NodeNames::Ticks );
+    update( NodeNames::CanvasSize );
     return vCanvasSize;
 }
 
@@ -860,8 +904,16 @@ void PartialQuarry::regCoords( )
     registerNode( NodeNames::Ticks,
                   ComputeNode{ .sNodeName = "ticks",
                                .fFunc = &PartialQuarry::setTicks,
-                               .vIncomingFunctions = { NodeNames::LCS, NodeNames::AnnotationValues },
+                               .vIncomingFunctions = { NodeNames::LCS, NodeNames::AnnotationValues, NodeNames::CanvasSize },
                                .vIncomingSession = {} } );
+
+    registerNode( NodeNames::CanvasSize,
+                  ComputeNode{ .sNodeName = "canvas_size",
+                               .fFunc = &PartialQuarry::setCanvasSize,
+                               .vIncomingFunctions = { NodeNames::ActiveChrom },
+                               .vIncomingSession = { { "contigs", "column_coordinates" },
+                                                    { "contigs", "row_coordinates" },
+                                                    {"settings", "filters", "anno_in_multiple_bins"} } } );
 
     registerNode( NodeNames::AxisCoords,
                   ComputeNode{ .sNodeName = "axis_coords",

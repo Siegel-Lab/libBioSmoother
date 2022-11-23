@@ -103,6 +103,7 @@ class PartialQuarry
         Palette,
         LCS,
         RankedSlicesCDS,
+        CanvasSize,
         SIZE
     };
     struct ComputeNode
@@ -476,6 +477,7 @@ class PartialQuarry
     std::array<std::vector<AxisRegion>, 2> vAxisRegions;
 
     std::vector<std::string> vActiveReplicates;
+    std::vector<size_t> vActiveReplicatesTotal;
     std::array<std::vector<size_t>, 2> vInGroup;
 
     sps::IntersectionType xIntersect;
@@ -490,6 +492,7 @@ class PartialQuarry
 
     std::vector<std::vector<size_t>> vvBinValues;
     std::vector<std::array<size_t, 2>> vvFlatValues;
+    std::array<size_t, 2> vvFlatTotal;
     std::vector<std::array<double, 2>> vvNormalized;
     std::vector<double> vCombined;
     std::vector<double> vDivided;
@@ -565,6 +568,8 @@ class PartialQuarry
     bool setLCS( );
     // coords.h
     bool setTicks( );
+    // coords.h
+    bool setCanvasSize( );
 
     // coords.h
     void regCoords( );
@@ -728,7 +733,6 @@ class PartialQuarry
 
 #ifndef NDEBUG
         checkUnnecessaryDependencies( );
-        // @todo check for duplicates
 #endif
     }
 

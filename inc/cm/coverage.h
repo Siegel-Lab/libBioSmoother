@@ -19,8 +19,6 @@ bool PartialQuarry::setActiveCoverage( )
 
         vActiveCoverage[ uiI ].clear( );
         vActiveCoverage[ uiI ].reserve( uiSize );
-        vActiveCoverageTotal[ uiI ].clear( );
-        vActiveCoverageTotal[ uiI ].reserve( uiSize );
 
         for( size_t uiJ = 0; uiJ < 3; uiJ++ )
         {
@@ -86,18 +84,12 @@ bool PartialQuarry::setActiveCoverage( )
     {
         CANCEL_RETURN;
         vActiveCoverage[ 0 ].push_back( rX );
-        vActiveCoverageTotal[ 0 ].push_back(
-            this->xSession[ rX.second ? "coverage" : "replicates" ][ "by_name" ][ rX.first ][ "total_reads" ]
-                .get<size_t>( ) );
     }
 
     for( auto& rX : xB )
     {
         CANCEL_RETURN;
         vActiveCoverage[ 1 ].push_back( rX );
-        vActiveCoverageTotal[ 1 ].push_back(
-            this->xSession[ rX.second ? "coverage" : "replicates" ][ "by_name" ][ rX.first ][ "total_reads" ]
-                .get<size_t>( ) );
     }
 
     for( size_t uiI = 0; uiI < 2; uiI++ )
@@ -249,6 +241,10 @@ bool PartialQuarry::setCoverageValues( )
                 .get<bool>( );
         vvCoverageValues[ uiJ ].clear( );
         vvCoverageValues[ uiJ ].reserve( vActiveCoverage[ uiJ ].size( ) );
+        
+        vActiveCoverageTotal[ uiJ ].clear( );
+        vActiveCoverageTotal[ uiJ ].reserve( vActiveCoverage[ uiJ ].size( ) );
+
         for( auto& sRep : vActiveCoverage[ uiJ ] )
         {
             vvCoverageValues[ uiJ ].emplace_back( );
@@ -296,6 +292,12 @@ bool PartialQuarry::setCoverageValues( )
                 else
                     vvCoverageValues[ uiJ ].back( ).push_back( symmetry( vVals[ 0 ], vVals[ 1 ] ) );
             }
+
+            size_t uiTot = xRep[ "total_reads" ].get<size_t>( );
+            if( sRep.second )
+                vActiveCoverageTotal[ uiJ ].push_back( uiTot );
+            else
+                vActiveCoverageTotal[ uiJ ].push_back( symmetry(uiTot, uiTot) );
         }
     }
     END_RETURN;
@@ -412,7 +414,7 @@ bool PartialQuarry::setNormalizeCoverageValues( )
             this->xSession[ "settings" ][ "replicates" ][ uiJ == 0 ? "coverage_get_max_col" : "coverage_get_max_row" ]
                 .get<bool>( );
 
-        size_t uiH = // @todo get actual canvas size
+        size_t uiH =
             bCoverageGetMax ? uiCoverageGetMaxBinSize : this->xSession[ "contigs" ][ "genome_size" ].get<size_t>( );
         vvNormalizedCoverageValues[ uiJ ].clear( );
         vvNormalizedCoverageValues[ uiJ ].reserve( vvFlatCoverageValues[ uiJ ].size( ) );

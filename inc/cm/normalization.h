@@ -8,22 +8,12 @@ namespace cm
 
 bool PartialQuarry::normalizeSize( size_t uiSize )
 {
-    std::array<size_t, 2> vTotalReads = { 0, 0 };
-
-    for( size_t uiJ = 0; uiJ < 2; uiJ++ )
-        for( size_t uiX : vInGroup[ uiJ ] )
-        { // @todo symmetry & collapsing in_group correctly
-            CANCEL_RETURN;
-            vTotalReads[ uiJ ] +=
-                this->xSession[ "replicates" ][ "by_name" ][ this->vActiveReplicates[ uiX ] ][ "total_reads" ]
-                    .get<size_t>( );
-        }
     for( auto& vVal : vvFlatValues )
     {
         CANCEL_RETURN;
         vvNormalized.push_back( std::array<double, 2>{
-            vTotalReads[ 0 ] == 0 ? 0 : (double)uiSize * (double)vVal[ 0 ] / (double)vTotalReads[ 0 ],
-            vTotalReads[ 1 ] == 0 ? 0 : (double)uiSize * (double)vVal[ 1 ] / (double)vTotalReads[ 1 ] } );
+            vvFlatTotal[ 0 ] == 0 ? 0 : (double)uiSize * (double)vVal[ 0 ] / (double)vvFlatTotal[ 0 ],
+            vvFlatTotal[ 1 ] == 0 ? 0 : (double)uiSize * (double)vVal[ 1 ] / (double)vvFlatTotal[ 1 ] } );
     }
     END_RETURN;
 }

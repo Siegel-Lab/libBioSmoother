@@ -87,6 +87,8 @@ bool PartialQuarry::setBinValues( )
 {
     vvBinValues.clear( );
     vvBinValues.reserve( vActiveReplicates.size( ) );
+    vActiveReplicatesTotal.clear( );
+    vActiveReplicatesTotal.reserve( vActiveReplicates.size( ) );
 
     size_t uiMinuend = this->xSession[ "settings" ][ "normalization" ][ "min_interactions" ][ "val" ].get<size_t>( );
 
@@ -165,6 +167,9 @@ bool PartialQuarry::setBinValues( )
             }
 
             vvBinValues.back( ).push_back( symmetry( vVals[ 0 ], vVals[ 1 ] ) );
+
+            size_t uiTot = this->xSession[ "replicates" ][ "by_name" ][ sRep ][ "total_reads" ].get<size_t>( );
+            vActiveReplicatesTotal.push_back( symmetry(uiTot, uiTot) );
         }
     }
     END_RETURN;
@@ -293,6 +298,19 @@ bool PartialQuarry::setFlatValues( )
 
                 vvFlatValues.back( )[ uiJ ] = getFlatValue( vCollected );
             }
+        }
+
+        for( size_t uiJ = 0; uiJ < 2; uiJ++ )
+        {
+            std::vector<size_t> vCollected;
+            vCollected.reserve( vInGroup[ uiJ ].size( ) );
+            for( size_t uiX : vInGroup[ uiJ ] )
+            {
+                CANCEL_RETURN;
+                vCollected.push_back( vActiveReplicatesTotal[ uiX ] );
+            }
+
+            vvFlatTotal[ uiJ ] = getFlatValue( vCollected );
         }
     }
     END_RETURN;
