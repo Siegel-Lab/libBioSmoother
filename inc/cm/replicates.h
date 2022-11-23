@@ -316,12 +316,8 @@ void PartialQuarry::regReplicates( )
     registerNode( NodeNames::BinValues,
                   ComputeNode{ .sNodeName = "bin_values",
                                .fFunc = &PartialQuarry::setBinValues,
-                               .vIncomingFunctions = { NodeNames::BinCoords, NodeNames::ActiveReplicates,
-                                                       NodeNames::IntersectionType },
-                               .vIncomingSession = { { "settings", "filters", "mapping_q", "val_min" },
-                                                     { "settings", "filters", "mapping_q", "val_max" },
-                                                     { "settings", "filters", "incomplete_alignments" },
-                                                     { "settings", "normalization", "min_interactions", "val" } } } );
+                               .vIncomingFunctions = { NodeNames::BinCoords, NodeNames::ActiveReplicates },
+                               .vIncomingSession = { } } );
 
     registerNode( NodeNames::InGroup,
                   ComputeNode{ .sNodeName = "in_group_setting",
@@ -338,7 +334,7 @@ void PartialQuarry::regReplicates( )
     registerNode( NodeNames::FlatValues,
                   ComputeNode{ .sNodeName = "flat_bins",
                                .fFunc = &PartialQuarry::setFlatValues,
-                               .vIncomingFunctions = { NodeNames::BinValues, NodeNames::InGroup },
+                               .vIncomingFunctions = { NodeNames::BinValues },
                                .vIncomingSession = {} } );
 }
 

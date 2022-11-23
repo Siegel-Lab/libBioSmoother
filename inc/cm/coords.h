@@ -52,9 +52,11 @@ std::pair<std::vector<AxisCoord>, std::vector<AxisRegion>> axisCoordsHelper( siz
             {
                 case 0:
                 case 1:
+                    assert(xChr.uiLength >= uiIndexPos);
                     uiCurrBinSize = std::min( uiBinSize, xChr.uiLength - uiIndexPos );
                     break;
                 case 2:
+                    assert(uiIndexPos + 2 * uiBinSize <= xChr.uiLength || xChr.uiLength >= uiIndexPos);
                     uiCurrBinSize = uiIndexPos + 2 * uiBinSize > xChr.uiLength ? xChr.uiLength - uiIndexPos : uiBinSize;
                     break;
                 case 3:
@@ -113,6 +115,8 @@ std::pair<std::vector<AxisCoord>, std::vector<AxisRegion>> axisCoordsHelper( siz
         }
 
         if( uiStartScreenPos >= uiChromosomeStartPos )
+        {
+            assert(uiItrEndPos > uiStartChromPos);
             vRet2.push_back( AxisRegion{
                 {
                     .sChromosome = xChr.sName, //
@@ -124,6 +128,7 @@ std::pair<std::vector<AxisCoord>, std::vector<AxisRegion>> axisCoordsHelper( siz
                 .uiCoordStartIdx = uiStartIdx, //
                 .uiNumCoords = vRet.size( ) - uiStartIdx //
             } );
+        }
 
         uiChromosomeStartPos = uiChromosomeEndPos;
 
@@ -246,10 +251,12 @@ annoCoordsHelper( size_t uiBinSize, size_t uiScreenStartPos, size_t uiScreenEndP
                 switch( iMultipleAnnosInBin )
                 {
                     case 0: // combine
+                        assert(( xUpper - 1 )->uiIntervalEnd >= uiIndexPos);
                         uiCurrIndexSize = ( xUpper - 1 )->uiIntervalEnd - uiIndexPos;
                         uiCurrScreenSize = ( xUpper - 1 )->uiIntervalCoordsEnd - xLower->uiIntervalCoordsStart;
                         break;
                     case 1: // first
+                        assert(xLower->uiIntervalEnd >= uiIndexPos);
                         uiCurrIndexSize = xLower->uiIntervalEnd - uiIndexPos;
                         uiCurrScreenSize = ( xUpper - 1 )->uiIntervalCoordsEnd - xLower->uiIntervalCoordsStart;
                         break;
@@ -265,17 +272,18 @@ annoCoordsHelper( size_t uiBinSize, size_t uiScreenStartPos, size_t uiScreenEndP
                             switch( iAnnoInMultipleBins )
                             {
                                 case 0: // separate
-                                case 1: // stretch
-                                    uiIndexPos =
-                                        xPick->uiIntervalStart + uiCurrScreenPos - xLower->uiIntervalCoordsStart;
+                                    uiIndexPos = xPick->uiIntervalStart + uiCurrScreenPos - 
+                                                        xPick->uiIntervalCoordsStart;
+                                    uiCurrIndexSize = xPick->uiIntervalEnd - uiIndexPos;
                                     break;
+                                case 1: // stretch
                                 case 2: // squeeze
-                                    uiIndexPos = xPick->uiIntervalStart + uiCurrScreenPos - xLower->uiIntervalId;
+                                    uiIndexPos = xPick->uiIntervalStart;
+                                    uiCurrIndexSize = xPick->uiIntervalEnd - xPick->uiIntervalStart;
                                     break;
                                 default:
                                     throw std::logic_error( "unknown iAnnoInMultipleBins value" );
                             }
-                            uiCurrIndexSize = xPick->uiIntervalEnd - uiIndexPos;
                         }
                         else
                         {
@@ -286,6 +294,7 @@ annoCoordsHelper( size_t uiBinSize, size_t uiScreenStartPos, size_t uiScreenEndP
                         uiCurrScreenSize = ( xUpper - 1 )->uiIntervalCoordsEnd - xLower->uiIntervalCoordsStart;
                         break;
                     case 3: // force_separate
+                        assert(xLower->uiIntervalEnd >= uiIndexPos);
                         uiCurrIndexSize = xLower->uiIntervalEnd - uiIndexPos;
                         uiCurrScreenSize = uiCurrIndexSize;
                         break;
@@ -587,7 +596,7 @@ bool PartialQuarry::setFilteredCoords( )
         for( size_t uiX = 0; uiX < vvFlatCoverageValues[ uiI ].size( ); uiX++ )
         {
             vAxisCords[ uiI ][ uiX ].bFiltered =
-                vvFlatCoverageValues[ uiI ][ uiX ] >= fFilterMin && vvFlatCoverageValues[ uiI ][ uiX ] < fFilterMax;
+                vvFlatCoverageValues[ uiI ][ uiX ] < fFilterMin || vvFlatCoverageValues[ uiI ][ uiX ] >= fFilterMax;
             CANCEL_RETURN;
         }
     }
@@ -866,9 +875,9 @@ void PartialQuarry::regCoords( )
     registerNode(
         NodeNames::FilteredCoords,
         ComputeNode{
-            .sNodeName = "axis_coords",
+            .sNodeName = "filtered_coords",
             .fFunc = &PartialQuarry::setFilteredCoords,
-            .vIncomingFunctions = { NodeNames::AxisCoords, NodeNames::AnnotationValues, NodeNames::FlatCoverageValues },
+            .vIncomingFunctions = { NodeNames::AnnotationValues, NodeNames::FlatCoverageValues },
             .vIncomingSession = { { "settings", "filters", "coverage_bin_filter_column", "val_min" },
                                   { "settings", "filters", "coverage_bin_filter_column", "val_max" },
                                   { "settings", "filters", "coverage_bin_filter_row", "val_min" },
@@ -882,7 +891,7 @@ void PartialQuarry::regCoords( )
     registerNode( NodeNames::BinCoords,
                   ComputeNode{ .sNodeName = "bin_coords",
                                .fFunc = &PartialQuarry::setBinCoords,
-                               .vIncomingFunctions = { NodeNames::FilteredCoords, NodeNames::Symmetry },
+                               .vIncomingFunctions = { NodeNames::FilteredCoords },
                                .vIncomingSession = { { "settings", "filters", "min_diag_dist", "val" } } } );
 }
 
