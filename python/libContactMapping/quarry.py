@@ -1,8 +1,13 @@
-from bokeh.palettes import Viridis256, Colorblind, Plasma256, Turbo256
+try:
+    from bokeh.palettes import Viridis256, Colorblind, Plasma256, Turbo256
+    from .cooler_interface import icing
+except ImportError:
+    # Error handling
+    pass
+
 from statsmodels.stats.multitest import multipletests
 from scipy.stats import binom_test
 from .libContactMapping import PartialQuarry, SPS_VERSION, CM_VERSION
-from .cooler_interface import icing
 
 
 class Quarry(PartialQuarry):
