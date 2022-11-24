@@ -553,11 +553,11 @@ bool PartialQuarry::setTicks( )
                 }
             }
         }
-        assert(uiRunningStart == vCanvasSize[uiI]);
+        assert( uiRunningStart == vCanvasSize[ uiI ] );
         vFullList.append( uiRunningStart );
 
         xTicksCDS[ uiI ] = pybind11::dict( "contig_starts"_a = vStartPos,
-                                           "genome_end"_a = vCanvasSize[uiI],
+                                           "genome_end"_a = vCanvasSize[ uiI ],
                                            "dividend"_a = this->xSession[ "dividend" ].get<size_t>( ),
                                            "contig_names"_a = vNames );
         vTickLists[ uiI ] = vFullList;
@@ -859,53 +859,71 @@ bool PartialQuarry::setBinCoords( )
     END_RETURN;
 }
 
-bool PartialQuarry::setDecayCoords()
+bool PartialQuarry::setDecayCoords( )
 {
-    vDistDepDecCoords.clear();
-    vDistDepDecCoords.resize(vBinCoords.size());
+    vDistDepDecCoords.clear( );
+    vDistDepDecCoords.reserve( vBinCoords.size( ) );
+    vSortedDistDepDecCoords[ 0 ].clear( );
+    vSortedDistDepDecCoords[ 1 ].clear( );
+    vSortedDistDepDecCoords[ 0 ].reserve( vBinCoords.size( ) );
+    vSortedDistDepDecCoords[ 1 ].reserve( vBinCoords.size( ) );
 
     std::map<std::array<DecayCoord, 2>, size_t> vPtr;
     for( std::array<BinCoord, 2>& vCoords : vBinCoords )
     {
-        if(vCoords[0].sChromosomeX != vCoords[0].sChromosomeY)
+        CANCEL_RETURN;
+        if( vCoords[ 0 ].sChromosomeX != vCoords[ 0 ].sChromosomeY )
             continue;
-        assert(vCoords[1].sChromosomeX != vCoords[1].sChromosomeY);
-        assert(vCoords[0].sChromosomeX != vCoords[1].sChromosomeY);
-        size_t uiChrSize = this->xSession["contigs"]["lengths"][vCoords[0].sChromosomeX].get<size_t>();
+        assert( vCoords[ 1 ].sChromosomeX == vCoords[ 1 ].sChromosomeY );
+        assert( vCoords[ 1 ].sChromosomeY == "" || vCoords[ 0 ].sChromosomeX == vCoords[ 1 ].sChromosomeY );
 
         std::array<DecayCoord, 2> vKey;
-        for(size_t uiI = 0; uiI < 2; uiI++)
+        for( size_t uiI = 0; uiI < 2; uiI++ )
         {
-            assert(uiChrSize + (vCoords[uiI].uiIndexX + vCoords[uiI].uiIndexW) >= vCoords[uiI].uiIndexY);
-            size_t uiA = uiChrSize + (vCoords[uiI].uiIndexX + vCoords[uiI].uiIndexW) - vCoords[uiI].uiIndexY;
+            if( vCoords[ uiI ].sChromosomeX.size( ) > 0 )
+            {
+                size_t uiChrSize =
+                    this->xSession[ "contigs" ][ "lengths" ][ vCoords[ uiI ].sChromosomeX ].get<size_t>( );
+                assert( uiChrSize + ( vCoords[ uiI ].uiIndexX + vCoords[ uiI ].uiIndexW ) >= vCoords[ uiI ].uiIndexY );
+                size_t uiA =
+                    uiChrSize + ( vCoords[ uiI ].uiIndexX + vCoords[ uiI ].uiIndexW ) - vCoords[ uiI ].uiIndexY;
 
-            assert(uiChrSize + vCoords[uiI].uiIndexX >= vCoords[uiI].uiIndexY + vCoords[uiI].uiIndexH);
-            size_t uiB = uiChrSize + vCoords[uiI].uiIndexX - (vCoords[uiI].uiIndexY + vCoords[uiI].uiIndexH);
+                assert( uiChrSize + vCoords[ uiI ].uiIndexX >= vCoords[ uiI ].uiIndexY + vCoords[ uiI ].uiIndexH );
+                size_t uiB =
+                    uiChrSize + vCoords[ uiI ].uiIndexX - ( vCoords[ uiI ].uiIndexY + vCoords[ uiI ].uiIndexH );
 
-            size_t uiS = std::min(uiA, uiB);
-            size_t uiE = std::max(uiA, uiB);
+                size_t uiS = std::min( uiA, uiB );
+                size_t uiE = std::max( uiA, uiB );
 
-            vKey[uiI] = DecayCoord{vCoords[uiI].sChromosomeX, uiS, uiE};
+                vKey[ uiI ] = DecayCoord{ vCoords[ uiI ].sChromosomeX, uiS, uiE };
+            }
+            else
+                vKey[ uiI ] = DecayCoord{ "", 0, 0 };
         }
 
-        if(vPtr.count(vKey) == 0)
+        if( vPtr.count( vKey ) == 0 )
         {
-            vPtr[vKey] = vDistDepDecCoords.size();
-            vSortedDistDepDecCoords[0].push_back(vDistDepDecCoords.size());
-            vSortedDistDepDecCoords[1].push_back(vDistDepDecCoords.size());
-            vDistDepDecCoords.push_back(vKey);
+            vPtr[ vKey ] = vDistDepDecCoords.size( );
+            vSortedDistDepDecCoords[ 0 ].push_back( vDistDepDecCoords.size( ) );
+            vSortedDistDepDecCoords[ 1 ].push_back( vDistDepDecCoords.size( ) );
+            vDistDepDecCoords.push_back( vKey );
         }
-        
-        vCoords[0].uiDecayCoordIndex = vPtr[vKey];
-        vCoords[1].uiDecayCoordIndex = vCoords[0].uiDecayCoordIndex;
+
+        vCoords[ 0 ].uiDecayCoordIndex = vPtr[ vKey ];
+        vCoords[ 1 ].uiDecayCoordIndex = vCoords[ 0 ].uiDecayCoordIndex;
     }
 
-    for(size_t uiI : {0, 1})
-        std::sort(vSortedDistDepDecCoords[uiI].begin(), vSortedDistDepDecCoords[uiI].end(), 
-            [&]( size_t uiA, size_t uiB ){
-                return vDistDepDecCoords[uiA][uiI].sChromosome < vDistDepDecCoords[uiB][uiI].sChromosome;
-            }
-        );
+    for( size_t uiI : { 0, 1 } )
+    {
+        CANCEL_RETURN;
+        std::sort( vSortedDistDepDecCoords[ uiI ].begin( ), vSortedDistDepDecCoords[ uiI ].end( ),
+                   [ & ]( size_t uiA, size_t uiB ) {
+                       if( vDistDepDecCoords[ uiA ][ uiI ].sChromosome != vDistDepDecCoords[ uiB ][ uiI ].sChromosome )
+                           return vDistDepDecCoords[ uiA ][ uiI ].sChromosome <
+                                  vDistDepDecCoords[ uiB ][ uiI ].sChromosome;
+                       return vDistDepDecCoords[ uiA ][ uiI ].uiFrom < vDistDepDecCoords[ uiB ][ uiI ].uiFrom;
+                   } );
+    }
     END_RETURN;
 }
 
@@ -950,19 +968,20 @@ void PartialQuarry::regCoords( )
                      .vIncomingFunctions = { },
                      .vIncomingSession = { { "contigs", "displayed_on_x" }, { "contigs", "displayed_on_y" } } } );
 
-    registerNode( NodeNames::Ticks,
-                  ComputeNode{ .sNodeName = "ticks",
-                               .fFunc = &PartialQuarry::setTicks,
-                               .vIncomingFunctions = { NodeNames::LCS, NodeNames::AnnotationValues, NodeNames::CanvasSize },
-                               .vIncomingSession = {} } );
+    registerNode(
+        NodeNames::Ticks,
+        ComputeNode{ .sNodeName = "ticks",
+                     .fFunc = &PartialQuarry::setTicks,
+                     .vIncomingFunctions = { NodeNames::LCS, NodeNames::AnnotationValues, NodeNames::CanvasSize },
+                     .vIncomingSession = {} } );
 
     registerNode( NodeNames::CanvasSize,
                   ComputeNode{ .sNodeName = "canvas_size",
                                .fFunc = &PartialQuarry::setCanvasSize,
                                .vIncomingFunctions = { NodeNames::ActiveChrom },
                                .vIncomingSession = { { "contigs", "column_coordinates" },
-                                                    { "contigs", "row_coordinates" },
-                                                    {"settings", "filters", "anno_in_multiple_bins"} } } );
+                                                     { "contigs", "row_coordinates" },
+                                                     { "settings", "filters", "anno_in_multiple_bins" } } } );
 
     registerNode( NodeNames::AxisCoords,
                   ComputeNode{ .sNodeName = "axis_coords",
@@ -998,7 +1017,7 @@ void PartialQuarry::regCoords( )
                   ComputeNode{ .sNodeName = "decay_coords",
                                .fFunc = &PartialQuarry::setDecayCoords,
                                .vIncomingFunctions = { NodeNames::BinCoords },
-                               .vIncomingSession = { } } );
+                               .vIncomingSession = {} } );
 }
 
 } // namespace cm

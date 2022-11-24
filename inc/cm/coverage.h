@@ -241,7 +241,7 @@ bool PartialQuarry::setCoverageValues( )
                 .get<bool>( );
         vvCoverageValues[ uiJ ].clear( );
         vvCoverageValues[ uiJ ].reserve( vActiveCoverage[ uiJ ].size( ) );
-        
+
         vActiveCoverageTotal[ uiJ ].clear( );
         vActiveCoverageTotal[ uiJ ].reserve( vActiveCoverage[ uiJ ].size( ) );
 
@@ -297,7 +297,7 @@ bool PartialQuarry::setCoverageValues( )
             if( sRep.second )
                 vActiveCoverageTotal[ uiJ ].push_back( uiTot );
             else
-                vActiveCoverageTotal[ uiJ ].push_back( symmetry(uiTot, uiTot) );
+                vActiveCoverageTotal[ uiJ ].push_back( symmetry( uiTot, uiTot ) );
         }
     }
     END_RETURN;
@@ -423,11 +423,11 @@ bool PartialQuarry::setNormalizeCoverageValues( )
         {
             CANCEL_RETURN;
             size_t uiW = vAxisCords[ uiJ ][ uiI ].uiIndexSize;
-            vvNormalizedCoverageValues[ uiJ ].push_back( std::array<double, 2>{
-                normCoverage( uiNorm, vvFlatCoverageValues[ uiJ ][ uiI ][ 0 ], vFlatCoverageTotal[ uiJ ][ 0 ], uiW,
-                              uiH ),
-                normCoverage( uiNorm, vvFlatCoverageValues[ uiJ ][ uiI ][ 1 ], vFlatCoverageTotal[ uiJ ][ 1 ], uiW,
-                              uiH ) } );
+            vvNormalizedCoverageValues[ uiJ ].push_back(
+                std::array<double, 2>{ normCoverage( uiNorm, vvFlatCoverageValues[ uiJ ][ uiI ][ 0 ],
+                                                     vFlatCoverageTotal[ uiJ ][ 0 ], uiW, uiH ),
+                                       normCoverage( uiNorm, vvFlatCoverageValues[ uiJ ][ uiI ][ 1 ],
+                                                     vFlatCoverageTotal[ uiJ ][ 1 ], uiW, uiH ) } );
         }
     }
     END_RETURN;
@@ -857,34 +857,30 @@ void PartialQuarry::regCoverage( )
                                                      { "settings", "replicates", "coverage_get_max_bin_size", "val" },
                                                      { "settings", "normalization", "min_interactions", "val" } } } );
 
-    registerNode(
-        NodeNames::FlatCoverageValues,
-        ComputeNode{ .sNodeName = "flat_coverage",
-                     .fFunc = &PartialQuarry::setFlatCoverageValues,
-                     .vIncomingFunctions = { NodeNames::CoverageValues, NodeNames::InGroup },
-                     .vIncomingSession = {} } );
+    registerNode( NodeNames::FlatCoverageValues,
+                  ComputeNode{ .sNodeName = "flat_coverage",
+                               .fFunc = &PartialQuarry::setFlatCoverageValues,
+                               .vIncomingFunctions = { NodeNames::CoverageValues, NodeNames::InGroup },
+                               .vIncomingSession = {} } );
 
-    registerNode(
-        NodeNames::NormalizeCoverageValues,
-        ComputeNode{ .sNodeName = "normalized_coverage",
-                     .fFunc = &PartialQuarry::setNormalizeCoverageValues,
-                     .vIncomingFunctions = { NodeNames::FlatCoverageValues },
-                     .vIncomingSession = { { "settings", "normalization", "normalize_by_coverage" } } } );
+    registerNode( NodeNames::NormalizeCoverageValues,
+                  ComputeNode{ .sNodeName = "normalized_coverage",
+                               .fFunc = &PartialQuarry::setNormalizeCoverageValues,
+                               .vIncomingFunctions = { NodeNames::FlatCoverageValues },
+                               .vIncomingSession = { { "settings", "normalization", "normalize_by_coverage" } } } );
 
-    registerNode(
-        NodeNames::CombinedCoverageValues,
-        ComputeNode{ .sNodeName = "normalized_coverage",
-                     .fFunc = &PartialQuarry::setCombinedCoverageValues,
-                     .vIncomingFunctions = { NodeNames::NormalizeCoverageValues, NodeNames::BetweenGroup },
-                     .vIncomingSession = { } } );
+    registerNode( NodeNames::CombinedCoverageValues,
+                  ComputeNode{ .sNodeName = "normalized_coverage",
+                               .fFunc = &PartialQuarry::setCombinedCoverageValues,
+                               .vIncomingFunctions = { NodeNames::NormalizeCoverageValues, NodeNames::BetweenGroup },
+                               .vIncomingSession = {} } );
 
-    registerNode(
-        NodeNames::Tracks,
-        ComputeNode{ .sNodeName = "coverage_tracks",
-                     .fFunc = &PartialQuarry::setTracks,
-                     .vIncomingFunctions = { NodeNames::LCS, NodeNames::DistDepDecayRemoved,
-                                             NodeNames::AnnotationColors },
-                     .vIncomingSession = { { "settings", "normalization", "display_ice_remainder" } } } );
+    registerNode( NodeNames::Tracks,
+                  ComputeNode{ .sNodeName = "coverage_tracks",
+                               .fFunc = &PartialQuarry::setTracks,
+                               .vIncomingFunctions = { NodeNames::LCS, NodeNames::DistDepDecayRemoved,
+                                                       NodeNames::AnnotationColors },
+                               .vIncomingSession = { { "settings", "normalization", "display_ice_remainder" } } } );
 
     registerNode( NodeNames::TrackExport,
                   ComputeNode{ .sNodeName = "track_export",

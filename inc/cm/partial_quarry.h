@@ -37,14 +37,14 @@ struct DecayCoord
     std::string sChromosome;
     size_t uiFrom;
     size_t uiTo;
-    
-    friend bool operator<(const DecayCoord& l, const DecayCoord& r)
+
+    friend bool operator<( const DecayCoord& l, const DecayCoord& r )
     {
-        if(l.sChromosome != r.sChromosome)
+        if( l.sChromosome != r.sChromosome )
             return l.sChromosome < r.sChromosome;
-        if(l.uiFrom != r.uiFrom)
+        if( l.uiFrom != r.uiFrom )
             return l.uiFrom < r.uiFrom;
-        if(l.uiTo != r.uiTo)
+        if( l.uiTo != r.uiTo )
             return l.uiTo < r.uiTo;
         return false;
     }
@@ -63,7 +63,7 @@ struct BinCoord
     size_t uiIndexX, uiIndexY;
     size_t uiScreenW, uiScreenH;
     size_t uiIndexW, uiIndexH;
-    size_t uiDecayCoordIndex = std::numeric_limits<size_t>::max();
+    size_t uiDecayCoordIndex = std::numeric_limits<size_t>::max( );
 };
 
 struct Annotation
@@ -394,7 +394,8 @@ class PartialQuarry
         do
         {
             bContinue = false;
-            for( auto& rNode : { HeatmapCDS, Tracks, AnnotationCDS, ActivateAnnotationCDS, Ticks, Tracks, Palette } )
+            for( auto& rNode : { HeatmapCDS, Tracks, AnnotationCDS, ActivateAnnotationCDS, Ticks, Tracks, Palette,
+                                 DecayCDS, RankedSlicesCDS } )
                 if( !update_no_throw( rNode ) )
                 {
                     bContinue = true;

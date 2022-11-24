@@ -280,14 +280,14 @@ bool PartialQuarry::setDistDepDecayRemoved( )
 {
     if( this->xSession[ "settings" ][ "normalization" ][ "ddd" ].get<bool>( ) )
         for( size_t uiI = 0; uiI < vvNormalized.size( ); uiI++ )
-            for(size_t uiJ = 0; uiJ < 2; uiJ++)
-                if(vBinCoords[uiI][uiJ].uiDecayCoordIndex != std::numeric_limits<size_t>::max())
+            for( size_t uiJ = 0; uiJ < 2; uiJ++ )
+                if( vBinCoords[ uiI ][ uiJ ].uiDecayCoordIndex != std::numeric_limits<size_t>::max( ) )
                 {
                     CANCEL_RETURN;
-                    if(vvFlatDecay[vBinCoords[uiI][uiJ].uiDecayCoordIndex][uiJ] > 0)
-                        vvNormalized[uiI][uiJ] /= vvFlatDecay[vBinCoords[uiI][uiJ].uiDecayCoordIndex][uiJ];
+                    if( vvFlatDecay[ vBinCoords[ uiI ][ uiJ ].uiDecayCoordIndex ][ uiJ ] > 0 )
+                        vvNormalized[ uiI ][ uiJ ] /= vvFlatDecay[ vBinCoords[ uiI ][ uiJ ].uiDecayCoordIndex ][ uiJ ];
                     else
-                        vvNormalized[uiI][uiJ] = 0;
+                        vvNormalized[ uiI ][ uiJ ] = 0;
                 }
     END_RETURN;
 }

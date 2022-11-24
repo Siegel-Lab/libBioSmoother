@@ -169,7 +169,7 @@ bool PartialQuarry::setBinValues( )
             vvBinValues.back( ).push_back( symmetry( vVals[ 0 ], vVals[ 1 ] ) );
 
             size_t uiTot = this->xSession[ "replicates" ][ "by_name" ][ sRep ][ "total_reads" ].get<size_t>( );
-            vActiveReplicatesTotal.push_back( symmetry(uiTot, uiTot) );
+            vActiveReplicatesTotal.push_back( symmetry( uiTot, uiTot ) );
         }
     }
     END_RETURN;
@@ -181,6 +181,7 @@ bool PartialQuarry::setDecayValues( )
     vvDecayValues.reserve( vActiveReplicates.size( ) );
 
     size_t uiMinuend = this->xSession[ "settings" ][ "normalization" ][ "min_interactions" ][ "val" ].get<size_t>( );
+    size_t uiSamples = this->xSession[ "settings" ][ "normalization" ][ "ddd_samples" ][ "val" ].get<size_t>( );
 
     for( std::string& sRep : vActiveReplicates )
     {
@@ -210,44 +211,64 @@ bool PartialQuarry::setDecayValues( )
             {
                 if( vCoords[ uiI ].sChromosome != "" )
                 {
+                    std::vector<size_t> vvVals;
+                    vvVals.reserve( uiSamples );
                     size_t iDataSetId = this->xSession[ "replicates" ][ "by_name" ][ sRep ][ "ids" ]
                                                       [ vCoords[ uiI ].sChromosome ][ "dist_dep_dec" ]
                                                           .get<size_t>( );
+                    size_t uiChrSize = this->xSession[ "contigs" ][ "lengths" ][ vCoords[ uiI ].sChromosome ].get<size_t>( );
 
-                    if( bHasMapQ && bHasMultiMap )
-                        vVals[ uiI ] = xIndices.getIndex<2, 1>( )->count(
-                            iDataSetId,
-                            { vCoords[ uiI ].uiFrom, uiMapQMax },
-                            { vCoords[ uiI ].uiTo, uiMapQMin },
-                            xIntersect,
-                            0 );
-                    else if( !bHasMapQ && bHasMultiMap )
-                        vVals[ uiI ] =
-                            xIndices.getIndex<1, 1>( )->count( iDataSetId,
-                                                               { vCoords[ uiI ].uiFrom },
-                                                               { vCoords[ uiI ].uiTo },
-                                                               xIntersect,
-                                                               0 );
-                    else if( bHasMapQ && !bHasMultiMap )
-                        vVals[ uiI ] = xIndices.getIndex<2, 0>( )->count(
-                            iDataSetId,
-                            { vCoords[ uiI ].uiFrom, uiMapQMax },
-                            { vCoords[ uiI ].uiTo, uiMapQMin },
-                            xIntersect,
-                            0 );
-                    else // if(!bHasMapQ && !bHasMultiMap)
-                        vVals[ uiI ] =
-                            xIndices.getIndex<1, 0>( )->count( iDataSetId,
-                                                               { vCoords[ uiI ].uiFrom },
-                                                               { vCoords[ uiI ].uiTo },
-                                                               xIntersect,
-                                                               0 );
+                    size_t uiBot = 0;
+                    if( vCoords[ uiI ].uiFrom >= uiChrSize )
+                        uiBot = vCoords[ uiI ].uiFrom - uiChrSize;
+                    else if( uiChrSize >= vCoords[ uiI ].uiTo )
+                        uiBot = uiChrSize - vCoords[ uiI ].uiTo;
+
+                    size_t uiTop = 2 * uiChrSize - uiBot;
+                    size_t uiH = std::max( (size_t)1, ( uiTop - uiBot ) / uiSamples );
+
+                    for( size_t uiJ = 0; uiJ < uiSamples; uiJ++ )
+                    {
+                        size_t uiMyBot = uiBot + uiH * uiJ;
+                        size_t uiMyTop = uiMyBot + vCoords[ uiI ].uiTo - vCoords[ uiI ].uiFrom;
+                        if( bHasMapQ && bHasMultiMap )
+                            vvVals.push_back(
+                                xIndices.getIndex<3, 2>( )->count( iDataSetId,
+                                                                   { vCoords[ uiI ].uiFrom, uiMyBot, uiMapQMax },
+                                                                   { vCoords[ uiI ].uiTo, uiMyTop, uiMapQMin },
+                                                                   xIntersect,
+                                                                   0 ) );
+                        else if( !bHasMapQ && bHasMultiMap )
+                            vvVals.push_back(
+                                xIndices.getIndex<2, 2>( )->count( iDataSetId,
+                                                                   { vCoords[ uiI ].uiFrom, uiMyBot },
+                                                                   { vCoords[ uiI ].uiTo, uiMyTop },
+                                                                   xIntersect,
+                                                                   0 ) );
+                        else if( bHasMapQ && !bHasMultiMap )
+                            vvVals.push_back(
+                                xIndices.getIndex<3, 0>( )->count( iDataSetId,
+                                                                   { vCoords[ uiI ].uiFrom, uiMyBot, uiMapQMax },
+                                                                   { vCoords[ uiI ].uiTo, uiMyTop, uiMapQMin },
+                                                                   xIntersect,
+                                                                   0 ) );
+                        else // if(!bHasMapQ && !bHasMultiMap)
+                            vvVals.push_back(
+                                xIndices.getIndex<2, 0>( )->count( iDataSetId,
+                                                                   { vCoords[ uiI ].uiFrom, uiMyBot },
+                                                                   { vCoords[ uiI ].uiTo, uiMyTop },
+                                                                   xIntersect,
+                                                                   0 ) );
+                    }
+
+                    if( vvVals.back( ) > uiMinuend )
+                        vvVals.back( ) -= uiMinuend;
+                    else
+                        vvVals.back( ) = 0;
+                    
+                    std::sort(vvVals.begin(), vvVals.end());
+                    vVals[ uiI ] = vvVals[vvVals.size() / 2];
                 }
-                else
-                    vVals[ uiI ] = 0;
-
-                if( vVals[ uiI ] > uiMinuend )
-                    vVals[ uiI ] -= uiMinuend;
                 else
                     vVals[ uiI ] = 0;
             }
@@ -437,51 +458,45 @@ bool PartialQuarry::setDecayCDS( )
     pybind11::list vYs;
     pybind11::list vColors;
 
+    size_t uiDividend = this->xSession[ "dividend" ].get<size_t>( );
+
     size_t uiCnt = 0;
     for( size_t uiJ = 0; uiJ < 2; uiJ++ )
     {
         std::string sChr = "";
-        pybind11::list vX;
-        pybind11::list vY;
-        for( size_t uiI : vSortedDistDepDecCoords[uiJ] )
+        for( size_t uiI : vSortedDistDepDecCoords[ uiJ ] )
         {
-            std::string sChrCurr = vDistDepDecCoords[uiJ][uiI].sChromosome;
-            if(sChr.size() > 0 && sChrCurr != sChr)
+            std::string sChrCurr = vDistDepDecCoords[ uiI ][ uiJ ].sChromosome;
+            if( sChrCurr.size( ) > 0 )
             {
-                vChrs.append( substringChr(sChr) + (uiJ == 0 ? " A" : " B") );
+                size_t uiChrSize = this->xSession[ "contigs" ][ "lengths" ][ sChrCurr ].get<size_t>( );
+                if( sChr.size( ) > 0 && sChrCurr != sChr )
+                    ++uiCnt;
+                sChr = sChrCurr;
 
-                vXs.append(vX);
-                vX = pybind11::list();
+                pybind11::list vX;
+                pybind11::list vY;
+                vX.append( ( (int64_t)vDistDepDecCoords[ uiI ][ uiJ ].uiFrom - (int64_t)uiChrSize ) *
+                           (int64_t)uiDividend );
+                vY.append( vvFlatDecay[ uiI ][ uiJ ] );
 
-                vYs.append(vY);
-                vY = pybind11::list();
+                vX.append( ( (int64_t)vDistDepDecCoords[ uiI ][ uiJ ].uiTo - (int64_t)uiChrSize ) *
+                           (int64_t)uiDividend );
+                vY.append( vvFlatDecay[ uiI ][ uiJ ] );
 
-                vColors.append( vColorPaletteAnnotation[ uiCnt % vColorPaletteAnnotation.size( ) ]);
+                vChrs.append( substringChr( sChrCurr ) + ( uiJ == 0 ? " A" : " B" ) );
+                vXs.append( vX );
+                vYs.append( vY );
+                vColors.append( vColorPaletteAnnotation[ uiCnt % vColorPaletteAnnotation.size( ) ] );
             }
-            sChr = sChrCurr;
-
-            vX.append(vDistDepDecCoords[uiJ][uiI].uiFrom);
-            vY.append(vvFlatDecay[uiI][uiJ]);
-
-            vX.append(vDistDepDecCoords[uiJ][uiI].uiTo);
-            vY.append(vvFlatDecay[uiI][uiJ]);
 
             CANCEL_RETURN;
         }
-
-        vChrs.append( substringChr(sChr) + (uiJ == 0 ? " A" : " B") );
-        vXs.append(vX);
-        vYs.append(vY);
-        vColors.append( vColorPaletteAnnotation[ uiCnt % vColorPaletteAnnotation.size( ) ]);
-
         ++uiCnt;
     }
 
 
-    xDistDepDecCDS = pybind11::dict( "color"_a = vColors,
-                                  "chr"_a = vChrs,
-                                  "xs"_a = vXs,
-                                  "ys"_a = vYs );
+    xDistDepDecCDS = pybind11::dict( "color"_a = vColors, "chr"_a = vChrs, "xs"_a = vXs, "ys"_a = vYs );
     END_RETURN;
 }
 
@@ -517,7 +532,7 @@ void PartialQuarry::regReplicates( )
                   ComputeNode{ .sNodeName = "decay_values",
                                .fFunc = &PartialQuarry::setDecayValues,
                                .vIncomingFunctions = { NodeNames::DecayCoords, NodeNames::ActiveReplicates },
-                               .vIncomingSession = {} } );
+                               .vIncomingSession = { { "settings", "normalization", "ddd_samples", "val" } } } );
 
     registerNode( NodeNames::InGroup,
                   ComputeNode{ .sNodeName = "in_group_setting",
