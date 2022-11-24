@@ -276,6 +276,22 @@ bool PartialQuarry::setNormalized( )
         throw std::logic_error( "invalid value for normalize_by" );
 }
 
+bool PartialQuarry::setDistDepDecayRemoved( )
+{
+    if( this->xSession[ "settings" ][ "normalization" ][ "ddd" ].get<bool>( ) )
+        for( size_t uiI = 0; uiI < vvNormalized.size( ); uiI++ )
+            for(size_t uiJ = 0; uiJ < 2; uiJ++)
+                if(vBinCoords[uiI][uiJ].uiDecayCoordIndex != std::numeric_limits<size_t>::max())
+                {
+                    CANCEL_RETURN;
+                    if(vvFlatDecay[vBinCoords[uiI][uiJ].uiDecayCoordIndex][uiJ] > 0)
+                        vvNormalized[uiI][uiJ] /= vvFlatDecay[vBinCoords[uiI][uiJ].uiDecayCoordIndex][uiJ];
+                    else
+                        vvNormalized[uiI][uiJ] = 0;
+                }
+    END_RETURN;
+}
+
 bool PartialQuarry::setDivided( )
 {
     vDivided.clear( );
@@ -321,6 +337,12 @@ void PartialQuarry::regNormalization( )
                                .vIncomingFunctions = { NodeNames::FlatValues },
                                .vIncomingSession = { { "replicates", "by_name" },
                                                      { "settings", "normalization", "p_accept", "val" } } } );
+
+    registerNode( NodeNames::DistDepDecayRemoved,
+                  ComputeNode{ .sNodeName = "dist_dep_dec_normalized_bins",
+                               .fFunc = &PartialQuarry::setDistDepDecayRemoved,
+                               .vIncomingFunctions = { NodeNames::Normalized, NodeNames::FlatDecay },
+                               .vIncomingSession = { { "settings", "normalization", "ddd" } } } );
 
     registerNode( NodeNames::Divided,
                   ComputeNode{ .sNodeName = "divided_by_tracks",

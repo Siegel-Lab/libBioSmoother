@@ -155,6 +155,7 @@ PYBIND11_MODULE( libContactMapping, m )
         .def( "get_annotation_list", &cm::PartialQuarry::getAnnotationList ) //
         .def( "get_track_export", &cm::PartialQuarry::getTrackExport ) //
         .def( "get_track_export_names", &cm::PartialQuarry::getTrackExportNames ) //
+        .def( "get_decay", &cm::PartialQuarry::getDecayCDS ) //
         .def( "interpret_name", &cm::PartialQuarry::interpretName ) //
 
         .def( "print_sizes", &cm::PartialQuarry::printSizes ) //

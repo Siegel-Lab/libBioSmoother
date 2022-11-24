@@ -859,6 +859,55 @@ bool PartialQuarry::setBinCoords( )
     END_RETURN;
 }
 
+bool PartialQuarry::setDecayCoords()
+{
+    vDistDepDecCoords.clear();
+    vDistDepDecCoords.resize(vBinCoords.size());
+
+    std::map<std::array<DecayCoord, 2>, size_t> vPtr;
+    for( std::array<BinCoord, 2>& vCoords : vBinCoords )
+    {
+        if(vCoords[0].sChromosomeX != vCoords[0].sChromosomeY)
+            continue;
+        assert(vCoords[1].sChromosomeX != vCoords[1].sChromosomeY);
+        assert(vCoords[0].sChromosomeX != vCoords[1].sChromosomeY);
+        size_t uiChrSize = this->xSession["contigs"]["lengths"][vCoords[0].sChromosomeX].get<size_t>();
+
+        std::array<DecayCoord, 2> vKey;
+        for(size_t uiI = 0; uiI < 2; uiI++)
+        {
+            assert(uiChrSize + (vCoords[uiI].uiIndexX + vCoords[uiI].uiIndexW) >= vCoords[uiI].uiIndexY);
+            size_t uiA = uiChrSize + (vCoords[uiI].uiIndexX + vCoords[uiI].uiIndexW) - vCoords[uiI].uiIndexY;
+
+            assert(uiChrSize + vCoords[uiI].uiIndexX >= vCoords[uiI].uiIndexY + vCoords[uiI].uiIndexH);
+            size_t uiB = uiChrSize + vCoords[uiI].uiIndexX - (vCoords[uiI].uiIndexY + vCoords[uiI].uiIndexH);
+
+            size_t uiS = std::min(uiA, uiB);
+            size_t uiE = std::max(uiA, uiB);
+
+            vKey[uiI] = DecayCoord{vCoords[uiI].sChromosomeX, uiS, uiE};
+        }
+
+        if(vPtr.count(vKey) == 0)
+        {
+            vPtr[vKey] = vDistDepDecCoords.size();
+            vSortedDistDepDecCoords[0].push_back(vDistDepDecCoords.size());
+            vSortedDistDepDecCoords[1].push_back(vDistDepDecCoords.size());
+            vDistDepDecCoords.push_back(vKey);
+        }
+        
+        vCoords[0].uiDecayCoordIndex = vPtr[vKey];
+        vCoords[1].uiDecayCoordIndex = vCoords[0].uiDecayCoordIndex;
+    }
+
+    for(size_t uiI : {0, 1})
+        std::sort(vSortedDistDepDecCoords[uiI].begin(), vSortedDistDepDecCoords[uiI].end(), 
+            [&]( size_t uiA, size_t uiB ){
+                return vDistDepDecCoords[uiA][uiI].sChromosome < vDistDepDecCoords[uiB][uiI].sChromosome;
+            }
+        );
+    END_RETURN;
+}
 
 const std::vector<std::array<BinCoord, 2>>& PartialQuarry::getBinCoords( )
 {
@@ -944,6 +993,12 @@ void PartialQuarry::regCoords( )
                                .fFunc = &PartialQuarry::setBinCoords,
                                .vIncomingFunctions = { NodeNames::FilteredCoords },
                                .vIncomingSession = { { "settings", "filters", "min_diag_dist", "val" } } } );
+
+    registerNode( NodeNames::DecayCoords,
+                  ComputeNode{ .sNodeName = "decay_coords",
+                               .fFunc = &PartialQuarry::setDecayCoords,
+                               .vIncomingFunctions = { NodeNames::BinCoords },
+                               .vIncomingSession = { } } );
 }
 
 } // namespace cm

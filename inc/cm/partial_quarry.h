@@ -32,6 +32,24 @@ struct AxisCoord
     bool bFiltered = false;
 };
 
+struct DecayCoord
+{
+    std::string sChromosome;
+    size_t uiFrom;
+    size_t uiTo;
+    
+    friend bool operator<(const DecayCoord& l, const DecayCoord& r)
+    {
+        if(l.sChromosome != r.sChromosome)
+            return l.sChromosome < r.sChromosome;
+        if(l.uiFrom != r.uiFrom)
+            return l.uiFrom < r.uiFrom;
+        if(l.uiTo != r.uiTo)
+            return l.uiTo < r.uiTo;
+        return false;
+    }
+};
+
 struct AxisRegion : AxisCoord
 {
     size_t uiCoordStartIdx;
@@ -45,6 +63,7 @@ struct BinCoord
     size_t uiIndexX, uiIndexY;
     size_t uiScreenW, uiScreenH;
     size_t uiIndexW, uiIndexH;
+    size_t uiDecayCoordIndex = std::numeric_limits<size_t>::max();
 };
 
 struct Annotation
@@ -73,6 +92,8 @@ class PartialQuarry
         FilteredCoords,
         Symmetry,
         BinCoords,
+        DecayCoords,
+        FlatDecay,
         IntersectionType,
         ActiveReplicates,
         ActiveCoverage,
@@ -81,9 +102,12 @@ class PartialQuarry
         NormalizeCoverageValues,
         CombinedCoverageValues,
         BinValues,
+        DecayValues,
         FlatValues,
         InGroup,
         Normalized,
+        DistDepDecayRemoved,
+        DecayCDS,
         Colors,
         BetweenGroup,
         Combined,
@@ -474,6 +498,8 @@ class PartialQuarry
 
     std::array<std::vector<ChromDesc>, 2> vActiveChromosomes;
     std::array<std::vector<AxisCoord>, 2> vAxisCords;
+    std::vector<std::array<DecayCoord, 2>> vDistDepDecCoords;
+    std::array<std::vector<size_t>, 2> vSortedDistDepDecCoords;
     std::array<std::vector<AxisRegion>, 2> vAxisRegions;
 
     std::vector<std::string> vActiveReplicates;
@@ -491,7 +517,9 @@ class PartialQuarry
     size_t iInGroupSetting, iBetweenGroupSetting;
 
     std::vector<std::vector<size_t>> vvBinValues;
+    std::vector<std::vector<size_t>> vvDecayValues;
     std::vector<std::array<size_t, 2>> vvFlatValues;
+    std::vector<std::array<size_t, 2>> vvFlatDecay;
     std::array<size_t, 2> vvFlatTotal;
     std::vector<std::array<double, 2>> vvNormalized;
     std::vector<double> vCombined;
@@ -523,6 +551,7 @@ class PartialQuarry
     std::array<pybind11::dict, 2> vAnnotationCDS;
     std::array<pybind11::list, 2> vActiveAnnotationCDS;
     pybind11::dict xHeatmapCDS;
+    pybind11::dict xDistDepDecCDS;
     std::array<pybind11::dict, 2> vRankedSliceCDS;
     std::vector<std::tuple<std::string, size_t, size_t, std::string, size_t, size_t, double>> vHeatmapExport;
     std::array<std::vector<std::string>, 2> vTrackExportNames;
@@ -564,6 +593,8 @@ class PartialQuarry
     bool setSymmetry( );
     // coords.h
     bool setBinCoords( );
+    // coords.h
+    bool setDecayCoords( );
     // coords.h
     bool setLCS( );
     // coords.h
@@ -625,6 +656,8 @@ class PartialQuarry
 
     // replicates.h
     bool setBinValues( );
+    // replicates.h
+    bool setDecayValues( );
 
     // replicates.h
     size_t getFlatValue( std::vector<size_t> );
@@ -633,6 +666,10 @@ class PartialQuarry
 
     // replicates.h
     bool setFlatValues( );
+    // replicates.h
+    bool setFlatDecay( );
+    // replicates.h
+    bool setDecayCDS( );
 
     // replicates.h
     bool setInGroup( );
@@ -654,6 +691,8 @@ class PartialQuarry
     bool normalizeCoolIC( );
     // normalization.h
     bool setNormalized( );
+    // normalization.h
+    bool setDistDepDecayRemoved( );
 
     struct IceData
     {
@@ -829,6 +868,9 @@ class PartialQuarry
 
     // coverage.h
     const pybind11::dict getRankedSlices( bool );
+
+    // replicates.h
+    const pybind11::dict getDecayCDS( );
 
     // coverage.h
     const decltype( vTrackExport[ 0 ] ) getTrackExport( bool );

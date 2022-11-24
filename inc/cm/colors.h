@@ -374,7 +374,7 @@ void PartialQuarry::regColors( )
     registerNode( NodeNames::Combined,
                   ComputeNode{ .sNodeName = "combined_bins",
                                .fFunc = &PartialQuarry::setCombined,
-                               .vIncomingFunctions = { NodeNames::Normalized },
+                               .vIncomingFunctions = { NodeNames::DistDepDecayRemoved },
                                .vIncomingSession = {} } );
 
     registerNode( NodeNames::Scaled,

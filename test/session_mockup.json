@@ -69,13 +69,15 @@
                         "chr_1": 0,
                         "chr_2": 1,
                         "row": 0,
-                        "col": 1
+                        "col": 1,
+                        "dist_dep_dec": 8
                     },
                     "chr_2": {
                         "chr_1": 2,
                         "chr_2": 3,
                         "row": 2,
-                        "col": 3
+                        "col": 3,
+                        "dist_dep_dec": 9
                     }
                 },
                 "has_map_q": true,
@@ -89,13 +91,15 @@
                         "chr_1": 4,
                         "chr_2": 5,
                         "row": 4,
-                        "col": 5
+                        "col": 5,
+                        "dist_dep_dec": 10
                     },
                     "chr_2": {
                         "chr_1": 6,
                         "chr_2": 7,
                         "row": 6,
-                        "col": 7
+                        "col": 7,
+                        "dist_dep_dec": 11
                     }
                 },
                 "has_map_q": false,

@@ -882,7 +882,8 @@ void PartialQuarry::regCoverage( )
         NodeNames::Tracks,
         ComputeNode{ .sNodeName = "coverage_tracks",
                      .fFunc = &PartialQuarry::setTracks,
-                     .vIncomingFunctions = { NodeNames::LCS, NodeNames::Normalized, NodeNames::AnnotationColors },
+                     .vIncomingFunctions = { NodeNames::LCS, NodeNames::DistDepDecayRemoved,
+                                             NodeNames::AnnotationColors },
                      .vIncomingSession = { { "settings", "normalization", "display_ice_remainder" } } } );
 
     registerNode( NodeNames::TrackExport,
