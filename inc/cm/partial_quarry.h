@@ -518,9 +518,9 @@ class PartialQuarry
     size_t iInGroupSetting, iBetweenGroupSetting;
 
     std::vector<std::vector<size_t>> vvBinValues;
-    std::vector<std::vector<size_t>> vvDecayValues;
+    std::vector<std::vector<double>> vvDecayValues;
     std::vector<std::array<size_t, 2>> vvFlatValues;
-    std::vector<std::array<size_t, 2>> vvFlatDecay;
+    std::vector<std::array<double, 2>> vvFlatDecay;
     std::array<size_t, 2> vvFlatTotal;
     std::vector<std::array<double, 2>> vvNormalized;
     std::vector<double> vCombined;
@@ -653,7 +653,8 @@ class PartialQuarry
     void regCoverage( );
 
     // replicates.h
-    size_t symmetry( size_t, size_t );
+    template <typename v_t>
+    v_t symmetry( v_t, v_t );
 
     // replicates.h
     bool setBinValues( );
@@ -661,7 +662,7 @@ class PartialQuarry
     bool setDecayValues( );
 
     // replicates.h
-    size_t getFlatValue( std::vector<size_t> );
+    template<typename v_t> v_t getFlatValue( std::vector<v_t> );
     // replicates.h
     double getMixedValue( double, double );
 

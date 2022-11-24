@@ -61,7 +61,8 @@ bool PartialQuarry::setIntersectionType( )
     END_RETURN;
 }
 
-size_t PartialQuarry::symmetry( size_t uiA, size_t uiB )
+template <typename v_t>
+v_t PartialQuarry::symmetry( v_t uiA, v_t uiB )
 {
     switch( uiSymmetry )
     {
@@ -206,8 +207,8 @@ bool PartialQuarry::setDecayValues( )
         for( std::array<DecayCoord, 2>& vCoords : vDistDepDecCoords )
         {
             CANCEL_RETURN;
-            std::array<size_t, 2> vVals;
-            for( size_t uiI = 0; uiI < 2; uiI++ )
+            std::array<double, 2> vVals;
+            for( size_t uiI = 0; uiI < 2; uiI++ ) // @todo try sampling from normal heatmap
             {
                 if( vCoords[ uiI ].sChromosome != "" )
                 {
@@ -226,39 +227,42 @@ bool PartialQuarry::setDecayValues( )
 
                     size_t uiTop = 2 * uiChrSize - uiBot;
                     size_t uiH = std::max( (size_t)1, ( uiTop - uiBot ) / uiSamples );
+                    size_t uiMyH = std::min( uiH, (size_t)100 ); // @todo parameter
 
-                    for( size_t uiJ = 0; uiJ < uiSamples; uiJ++ )
+                    for( size_t uiJ = 0; uiJ < std::min(uiSamples, uiTop - uiBot ); uiJ++ )
                     {
                         size_t uiMyBot = uiBot + uiH * uiJ;
-                        size_t uiMyTop = uiMyBot + vCoords[ uiI ].uiTo - vCoords[ uiI ].uiFrom;
+                        size_t uiMyTop = uiMyBot + uiMyH * (vCoords[ uiI ].uiTo - vCoords[ uiI ].uiFrom);
+                        assert(uiMyTop < uiTop);
+
                         if( bHasMapQ && bHasMultiMap )
                             vvVals.push_back(
                                 xIndices.getIndex<3, 2>( )->count( iDataSetId,
-                                                                   { vCoords[ uiI ].uiFrom, uiMyBot, uiMapQMax },
-                                                                   { vCoords[ uiI ].uiTo, uiMyTop, uiMapQMin },
-                                                                   xIntersect,
-                                                                   0 ) );
+                                                                { vCoords[ uiI ].uiFrom, uiMyBot, uiMapQMax },
+                                                                { vCoords[ uiI ].uiTo, uiMyTop, uiMapQMin },
+                                                                xIntersect,
+                                                                0 ) );
                         else if( !bHasMapQ && bHasMultiMap )
                             vvVals.push_back(
                                 xIndices.getIndex<2, 2>( )->count( iDataSetId,
-                                                                   { vCoords[ uiI ].uiFrom, uiMyBot },
-                                                                   { vCoords[ uiI ].uiTo, uiMyTop },
-                                                                   xIntersect,
-                                                                   0 ) );
+                                                                { vCoords[ uiI ].uiFrom, uiMyBot },
+                                                                { vCoords[ uiI ].uiTo, uiMyTop },
+                                                                xIntersect,
+                                                                0 ) );
                         else if( bHasMapQ && !bHasMultiMap )
                             vvVals.push_back(
                                 xIndices.getIndex<3, 0>( )->count( iDataSetId,
-                                                                   { vCoords[ uiI ].uiFrom, uiMyBot, uiMapQMax },
-                                                                   { vCoords[ uiI ].uiTo, uiMyTop, uiMapQMin },
-                                                                   xIntersect,
-                                                                   0 ) );
+                                                                { vCoords[ uiI ].uiFrom, uiMyBot, uiMapQMax },
+                                                                { vCoords[ uiI ].uiTo, uiMyTop, uiMapQMin },
+                                                                xIntersect,
+                                                                0 ) );
                         else // if(!bHasMapQ && !bHasMultiMap)
                             vvVals.push_back(
                                 xIndices.getIndex<2, 0>( )->count( iDataSetId,
-                                                                   { vCoords[ uiI ].uiFrom, uiMyBot },
-                                                                   { vCoords[ uiI ].uiTo, uiMyTop },
-                                                                   xIntersect,
-                                                                   0 ) );
+                                                                { vCoords[ uiI ].uiFrom, uiMyBot },
+                                                                { vCoords[ uiI ].uiTo, uiMyTop },
+                                                                xIntersect,
+                                                                0 ) );
                     }
 
                     if( vvVals.back( ) > uiMinuend )
@@ -267,7 +271,10 @@ bool PartialQuarry::setDecayValues( )
                         vvVals.back( ) = 0;
                     
                     std::sort(vvVals.begin(), vvVals.end());
-                    vVals[ uiI ] = vvVals[vvVals.size() / 2];
+                    if(vvVals.size() > 0)
+                        vVals[ uiI ] = (double)vvVals[vvVals.size() / 2] / (double)uiMyH;
+                    else
+                        vVals[ uiI ] = 0;
                 }
                 else
                     vVals[ uiI ] = 0;
@@ -322,13 +329,14 @@ bool PartialQuarry::setBetweenGroup( )
 }
 
 
-size_t PartialQuarry::getFlatValue( std::vector<size_t> vCollected )
+template<typename v_t>
+v_t PartialQuarry::getFlatValue( std::vector<v_t> vCollected )
 {
-    size_t uiVal = 0;
+    v_t uiVal = 0;
     if( iInGroupSetting == 0 && vCollected.size( ) > 0 )
-        uiVal = std::numeric_limits<size_t>::max( );
+        uiVal = std::numeric_limits<v_t>::max( );
 
-    for( size_t uiC : vCollected )
+    for( v_t uiC : vCollected )
         switch( iInGroupSetting )
         {
             case 0:
@@ -338,8 +346,8 @@ size_t PartialQuarry::getFlatValue( std::vector<size_t> vCollected )
                 uiVal += uiC;
                 break;
             case 2:
-                for( size_t uiC2 : vCollected )
-                    uiVal += (size_t)std::abs( (int64_t)uiC - (int64_t)uiC2 );
+                for( v_t uiC2 : vCollected )
+                    uiVal += uiC >= uiC2 ? uiC - uiC2 : uiC2 - uiC;
                 break;
             case 3:
                 uiVal = std::max( uiVal, uiC );
@@ -433,7 +441,7 @@ bool PartialQuarry::setFlatDecay( )
             vvFlatDecay.push_back( { 0, 0 } );
             for( size_t uiJ = 0; uiJ < 2; uiJ++ )
             {
-                std::vector<size_t> vCollected;
+                std::vector<double> vCollected;
                 vCollected.reserve( vInGroup[ uiJ ].size( ) );
                 for( size_t uiX : vInGroup[ uiJ ] )
                 {

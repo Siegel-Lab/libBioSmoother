@@ -893,7 +893,7 @@ bool PartialQuarry::setDecayCoords( )
                     uiChrSize + vCoords[ uiI ].uiIndexX - ( vCoords[ uiI ].uiIndexY + vCoords[ uiI ].uiIndexH );
 
                 size_t uiS = std::min( uiA, uiB );
-                size_t uiE = std::max( uiA, uiB );
+                size_t uiE = std::max( std::max(uiA, uiB), uiS + 1 );
 
                 vKey[ uiI ] = DecayCoord{ vCoords[ uiI ].sChromosomeX, uiS, uiE };
             }
