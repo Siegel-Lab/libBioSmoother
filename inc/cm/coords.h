@@ -882,20 +882,16 @@ bool PartialQuarry::setDecayCoords( )
         {
             if( vCoords[ uiI ].sChromosomeX.size( ) > 0 )
             {
-                size_t uiChrSize =
-                    this->xSession[ "contigs" ][ "lengths" ][ vCoords[ uiI ].sChromosomeX ].get<size_t>( );
-                assert( uiChrSize + ( vCoords[ uiI ].uiIndexX + vCoords[ uiI ].uiIndexW ) >= vCoords[ uiI ].uiIndexY );
-                size_t uiA =
-                    uiChrSize + ( vCoords[ uiI ].uiIndexX + vCoords[ uiI ].uiIndexW ) - vCoords[ uiI ].uiIndexY;
+                int64_t iA =
+                    (int64_t)( vCoords[ uiI ].uiIndexX + vCoords[ uiI ].uiIndexW ) - (int64_t)vCoords[ uiI ].uiIndexY;
 
-                assert( uiChrSize + vCoords[ uiI ].uiIndexX >= vCoords[ uiI ].uiIndexY + vCoords[ uiI ].uiIndexH );
-                size_t uiB =
-                    uiChrSize + vCoords[ uiI ].uiIndexX - ( vCoords[ uiI ].uiIndexY + vCoords[ uiI ].uiIndexH );
+                int64_t iB =
+                    (int64_t)vCoords[ uiI ].uiIndexX - (int64_t)( vCoords[ uiI ].uiIndexY + vCoords[ uiI ].uiIndexH );
 
-                size_t uiS = std::min( uiA, uiB );
-                size_t uiE = std::max( std::max(uiA, uiB), uiS + 1 );
+                int64_t iS = std::min( iA, iB );
+                int64_t iE = std::max( std::max( iA, iB ), iS + 1 );
 
-                vKey[ uiI ] = DecayCoord{ vCoords[ uiI ].sChromosomeX, uiS, uiE };
+                vKey[ uiI ] = DecayCoord{ vCoords[ uiI ].sChromosomeX, iS, iE };
             }
             else
                 vKey[ uiI ] = DecayCoord{ "", 0, 0 };
@@ -915,13 +911,13 @@ bool PartialQuarry::setDecayCoords( )
 
     for( size_t uiI : { 0, 1 } )
     {
-        CANCEL_RETURN;
+        CANCEL_RETURN; // @todo not needed with new plotting?
         std::sort( vSortedDistDepDecCoords[ uiI ].begin( ), vSortedDistDepDecCoords[ uiI ].end( ),
                    [ & ]( size_t uiA, size_t uiB ) {
                        if( vDistDepDecCoords[ uiA ][ uiI ].sChromosome != vDistDepDecCoords[ uiB ][ uiI ].sChromosome )
                            return vDistDepDecCoords[ uiA ][ uiI ].sChromosome <
                                   vDistDepDecCoords[ uiB ][ uiI ].sChromosome;
-                       return vDistDepDecCoords[ uiA ][ uiI ].uiFrom < vDistDepDecCoords[ uiB ][ uiI ].uiFrom;
+                       return vDistDepDecCoords[ uiA ][ uiI ].iFrom < vDistDepDecCoords[ uiB ][ uiI ].iFrom;
                    } );
     }
     END_RETURN;

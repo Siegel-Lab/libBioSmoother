@@ -35,17 +35,17 @@ struct AxisCoord
 struct DecayCoord
 {
     std::string sChromosome;
-    size_t uiFrom;
-    size_t uiTo;
+    int64_t iFrom;
+    int64_t iTo;
 
     friend bool operator<( const DecayCoord& l, const DecayCoord& r )
     {
         if( l.sChromosome != r.sChromosome )
             return l.sChromosome < r.sChromosome;
-        if( l.uiFrom != r.uiFrom )
-            return l.uiFrom < r.uiFrom;
-        if( l.uiTo != r.uiTo )
-            return l.uiTo < r.uiTo;
+        if( l.iFrom != r.iFrom )
+            return l.iFrom < r.iFrom;
+        if( l.iTo != r.iTo )
+            return l.iTo < r.iTo;
         return false;
     }
 };
@@ -653,8 +653,7 @@ class PartialQuarry
     void regCoverage( );
 
     // replicates.h
-    template <typename v_t>
-    v_t symmetry( v_t, v_t );
+    template <typename v_t> v_t symmetry( v_t, v_t );
 
     // replicates.h
     bool setBinValues( );
@@ -662,7 +661,7 @@ class PartialQuarry
     bool setDecayValues( );
 
     // replicates.h
-    template<typename v_t> v_t getFlatValue( std::vector<v_t> );
+    template <typename v_t> v_t getFlatValue( std::vector<v_t> );
     // replicates.h
     double getMixedValue( double, double );
 

@@ -312,61 +312,6 @@ class Indexer:
                 self.set_session(["replicates", "by_name", name, "ids", chr_, "row" if x_axis else "col"], 
                                  self.indices.generate(d, o, verbosity=GENERATE_VERBOSITY))
 
-        o = 2 if multi_map else 0
-        d = o + 3 if has_map_q else 2
-        for chr_ in read_iterator.itr_diag():
-            below_zero = 0
-            above_zero = 0
-            self.progress_print("generating distance dependent decay for", chr_)
-            chr_size = self.session_default["contigs"]["lengths"][chr_]
-            for (
-                read_name,
-                pos_1_s,
-                pos_1_e,
-                pos_2_s,
-                pos_2_e,
-                map_q,
-            ) in read_iterator.itr_cell(chr_, chr_):
-                act_pos_1_s = int(pos_2_s) // self.session_default["dividend"]
-                act_pos_1_e = int(pos_2_e) // self.session_default["dividend"]
-                act_pos_2_s = int(pos_1_s) // self.session_default["dividend"]
-                act_pos_2_e = int(pos_1_e) // self.session_default["dividend"]
-
-                diag_a = act_pos_2_s - act_pos_1_e
-                diag_b = act_pos_2_e - act_pos_1_s
-                diag_s = min(diag_a, diag_b) + chr_size
-                diag_e = max(diag_a, diag_b) + chr_size
-
-                d2_s = act_pos_1_s + act_pos_2_s
-                d2_e = act_pos_1_e + act_pos_2_e
-
-                if min(diag_a, diag_b) < 0:
-                    below_zero += 1
-                if min(diag_a, diag_b) > 0:
-                    above_zero += 1
-
-                assert diag_s >= 0
-                assert diag_e >= 0
-
-                if has_map_q and multi_map:
-                    start = [diag_s, d2_s, MAP_Q_MAX - int(map_q) - 1]
-                    end = [diag_e, d2_e, MAP_Q_MAX - int(map_q) - 1]
-                elif has_map_q and not multi_map:
-                    start = [diag_s, d2_s, MAP_Q_MAX - int(map_q) - 1]
-                    end = [0, 0, 0]
-                elif not has_map_q and multi_map:
-                    start = [diag_s, d2_s]
-                    end = [diag_e, d2_e]
-                elif not has_map_q and not multi_map:
-                    start = [diag_s, d2_s]
-                    end = [0, 0]
-                else:
-                    raise RuntimeError("this statement should never be reached")
-                self.indices.insert(d, o, start, end)
-            self.set_session(["replicates", "by_name", name, "ids", chr_, "dist_dep_dec"], 
-                                self.indices.generate(d, o, verbosity=GENERATE_VERBOSITY))
-            print("-", below_zero, " +", above_zero)
-
         read_iterator.cleanup()
 
         if not keep_points:
