@@ -256,7 +256,7 @@ bool PartialQuarry::setCoverageValues( )
 
             size_t uiMapQMin = getValue<size_t>( { "settings", "filters", "mapping_q", "val_min" } );
             size_t uiMapQMax = getValue<size_t>( { "settings", "filters", "mapping_q", "val_max" } );
-            bool bIncomplAlignment = getValue<size_t>( { "settings", "filters", "incomplete_alignments" } );
+            bool bIncomplAlignment = getValue<bool>( { "settings", "filters", "incomplete_alignments" } );
 
             if( !( uiMapQMin == 0 && bIncomplAlignment ) )
                 ++uiMapQMin;

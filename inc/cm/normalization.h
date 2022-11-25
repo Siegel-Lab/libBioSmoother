@@ -52,7 +52,7 @@ size_t PartialQuarry::iceGetCount( IceData& rIceData, size_t uiX, size_t uiY, bo
     assert( uiX < rIceData.vSliceBias[ 0 ].size( ) );
     assert( uiY < rIceData.vSliceBias[ 1 ].size( ) );
     size_t uiIdx = uiY + uiX * ( rIceData.vSliceBias[ 1 ].size( ) );
-    assert( uiIdx < vvFlatValues.size( ) );
+    assert( uiIdx < vvFlatValues.size( ) ); // @todo this assert triggered with max coverage per bin columns active
     return vvFlatValues[ uiIdx ][ bA ? 0 : 1 ];
 }
 
@@ -337,7 +337,8 @@ void PartialQuarry::regNormalization( )
                                .vIncomingFunctions = { NodeNames::FlatValues },
                                .vIncomingSession = { { "settings", "normalization", "p_accept", "val" } },
                                .vSessionsIncomingInPrevious = { { "replicates", "by_name" },
-                                                                { "settings", "normalization", "normalize_by" } } } );
+                                                                { "settings", "normalization", "normalize_by" },
+                                                                {"contigs", "genome_size"} } } );
 
     registerNode( NodeNames::DistDepDecayRemoved,
                   ComputeNode{ .sNodeName = "dist_dep_dec_normalized_bins",

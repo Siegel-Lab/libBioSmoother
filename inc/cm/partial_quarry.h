@@ -426,6 +426,33 @@ class PartialQuarry
 
     template <typename T> T getValue( std::vector<std::string> vKeys )
     {
+#ifndef NDEBUG
+        if( xCurrNodeName != NodeNames::SIZE )
+        {
+            // currently computing a node
+            bool bFound = false;
+
+            for( std::vector<std::vector<std::string>> vSettings :
+                 { vGraph[ xCurrNodeName ].vIncomingSession, vGraph[ xCurrNodeName ].vSessionsIncomingInPrevious } )
+                if( !bFound )
+                    for( std::vector<std::string>& rSetting : vSettings )
+                        if( vKeys.size( ) >= rSetting.size( ) )
+                        {
+                            bool bMatches = true;
+                            for( size_t uiI = 0; uiI < rSetting.size( ) && bMatches; uiI++ )
+                                bMatches = rSetting[ uiI ] == vKeys[ uiI ];
+                            if( bMatches )
+                            {
+                                bFound = true;
+                                break;
+                            }
+                        }
+
+            if( !bFound )
+                std::cout << "undeclared session dependency warning: " << vGraph[ xCurrNodeName ].sNodeName << 
+                    " accesses " << toPointer( vKeys ) << " but does not declare this." << std::endl;
+        }
+#endif
         return this->xSession[ toPointer( vKeys ) ].get<T>( );
     }
 
