@@ -863,10 +863,6 @@ bool PartialQuarry::setDecayCoords( )
 {
     vDistDepDecCoords.clear( );
     vDistDepDecCoords.reserve( vBinCoords.size( ) );
-    vSortedDistDepDecCoords[ 0 ].clear( );
-    vSortedDistDepDecCoords[ 1 ].clear( );
-    vSortedDistDepDecCoords[ 0 ].reserve( vBinCoords.size( ) );
-    vSortedDistDepDecCoords[ 1 ].reserve( vBinCoords.size( ) );
 
     std::map<std::array<DecayCoord, 2>, size_t> vPtr;
     for( std::array<BinCoord, 2>& vCoords : vBinCoords )
@@ -900,8 +896,6 @@ bool PartialQuarry::setDecayCoords( )
         if( vPtr.count( vKey ) == 0 )
         {
             vPtr[ vKey ] = vDistDepDecCoords.size( );
-            vSortedDistDepDecCoords[ 0 ].push_back( vDistDepDecCoords.size( ) );
-            vSortedDistDepDecCoords[ 1 ].push_back( vDistDepDecCoords.size( ) );
             vDistDepDecCoords.push_back( vKey );
         }
 
@@ -909,17 +903,6 @@ bool PartialQuarry::setDecayCoords( )
         vCoords[ 1 ].uiDecayCoordIndex = vCoords[ 0 ].uiDecayCoordIndex;
     }
 
-    for( size_t uiI : { 0, 1 } )
-    {
-        CANCEL_RETURN; // @todo not needed with new plotting?
-        std::sort( vSortedDistDepDecCoords[ uiI ].begin( ), vSortedDistDepDecCoords[ uiI ].end( ),
-                   [ & ]( size_t uiA, size_t uiB ) {
-                       if( vDistDepDecCoords[ uiA ][ uiI ].sChromosome != vDistDepDecCoords[ uiB ][ uiI ].sChromosome )
-                           return vDistDepDecCoords[ uiA ][ uiI ].sChromosome <
-                                  vDistDepDecCoords[ uiB ][ uiI ].sChromosome;
-                       return vDistDepDecCoords[ uiA ][ uiI ].iFrom < vDistDepDecCoords[ uiB ][ uiI ].iFrom;
-                   } );
-    }
     END_RETURN;
 }
 

@@ -500,7 +500,6 @@ class PartialQuarry
     std::array<std::vector<ChromDesc>, 2> vActiveChromosomes;
     std::array<std::vector<AxisCoord>, 2> vAxisCords;
     std::vector<std::array<DecayCoord, 2>> vDistDepDecCoords;
-    std::array<std::vector<size_t>, 2> vSortedDistDepDecCoords;
     std::array<std::vector<AxisRegion>, 2> vAxisRegions;
 
     std::vector<std::string> vActiveReplicates;

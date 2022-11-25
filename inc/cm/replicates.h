@@ -209,7 +209,7 @@ bool PartialQuarry::setDecayValues( )
         {
             CANCEL_RETURN;
             std::array<double, 2> vVals;
-            for( size_t uiI = 0; uiI < 2; uiI++ ) // @todo try sampling from normal heatmap
+            for( size_t uiI = 0; uiI < 2; uiI++ )
             {
                 if( vCoords[ uiI ].sChromosome != "" )
                 {
@@ -471,8 +471,9 @@ bool PartialQuarry::setDecayCDS( )
     size_t uiCnt = 0;
     for( size_t uiJ = 0; uiJ < 2; uiJ++ )
     {
+        std::map<std::string, size_t> xColors;
         std::string sChr = "";
-        for( size_t uiI : vSortedDistDepDecCoords[ uiJ ] )
+        for( size_t uiI = 0; uiI < vDistDepDecCoords.size(); uiI++ )
         {
             std::string sChrCurr = vDistDepDecCoords[ uiI ][ uiJ ].sChromosome;
             if( sChrCurr.size( ) > 0 )
@@ -483,17 +484,21 @@ bool PartialQuarry::setDecayCDS( )
 
                 pybind11::list vX;
                 pybind11::list vY;
-                // @todo proper coord system display -> mbp kbp bp...
-                vX.append( vDistDepDecCoords[ uiI ][ uiJ ].iFrom * (int64_t)uiDividend ); 
-                vY.append( vvFlatDecay[ uiI ][ uiJ ] );
+                int64_t iF = vDistDepDecCoords[ uiI ][ uiJ ].iFrom * (int64_t)uiDividend;
+                int64_t iT = vDistDepDecCoords[ uiI ][ uiJ ].iTo * (int64_t)uiDividend;
+                double fVal = 1000.0 * 1000.0 * vvFlatDecay[ uiI ][ uiJ ] / (double)((iT - iF)*(iT-iF));
+                vX.append( iF ); 
+                vY.append( fVal );
 
-                vX.append( vDistDepDecCoords[ uiI ][ uiJ ].iTo * (int64_t)uiDividend );
-                vY.append( vvFlatDecay[ uiI ][ uiJ ] );
+                vX.append( iT );
+                vY.append( fVal );
 
                 vChrs.append( substringChr( sChrCurr ) + ( uiJ == 0 ? " A" : " B" ) );
                 vXs.append( vX );
                 vYs.append( vY );
-                vColors.append( vColorPaletteAnnotation[ uiCnt % vColorPaletteAnnotation.size( ) ] );
+                if(xColors.count(sChrCurr) == 0)
+                    xColors[sChrCurr] = (uiCnt++) % vColorPaletteAnnotation.size( );
+                vColors.append( vColorPaletteAnnotation[ xColors[sChrCurr] ] );
             }
 
             CANCEL_RETURN;
