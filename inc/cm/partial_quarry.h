@@ -136,6 +136,7 @@ class PartialQuarry
         bool ( PartialQuarry::*fFunc )( void );
         std::vector<NodeNames> vIncomingFunctions;
         std::vector<std::vector<std::string>> vIncomingSession;
+        std::vector<std::vector<std::string>> vSessionsIncomingInPrevious;
     };
 
     struct ComputeNodeData
@@ -360,7 +361,14 @@ class PartialQuarry
                     if( xDependentSettings.count( rSetting ) > 0 )
                         std::cerr << "unnecessary session dependency warning: " << vGraph[ uiNodeName ].sNodeName
                                   << " depends on " << toString( rSetting ) << ", but the previous node "
-                                  << xDependentSettings[ rSetting ] << " shares this dependency" << std::endl;
+                                  << xDependentSettings[ rSetting ] << " shares this dependency." << std::endl;
+
+                for( std::vector<std::string>& rSetting : vGraph[ uiNodeName ].vSessionsIncomingInPrevious )
+                    if( xDependentSettings.count( rSetting ) == 0 )
+                        std::cerr << "missing session dependency warning: " << vGraph[ uiNodeName ].sNodeName
+                                  << " declares " << toString( rSetting )
+                                  << " a dependency of a previous node, but no such previous node could be found."
+                                  << std::endl;
 
                 for( NodeNames& rPrev : vGraph[ uiNodeName ].vIncomingFunctions )
                     if( xDependents.count( rPrev ) > 0 )

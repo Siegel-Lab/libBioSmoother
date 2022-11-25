@@ -31,10 +31,10 @@ bool PartialQuarry::doNotNormalize( )
 
 bool PartialQuarry::normalizeBinominalTest( )
 {
-    size_t uiNumBinsInRowTotal = ( this->xSession[ "contigs" ][ "genome_size" ].get<size_t>( ) - 1 ) / uiBinWidth + 1;
-    vvNormalized = normalizeBinominalTestTrampoline(
-        vvFlatValues, vFlatNormValues[ 1 ], uiNumBinsInRowTotal,
-        this->xSession[ "settings" ][ "normalization" ][ "p_accept" ][ "val" ].get<double>( ) );
+    size_t uiNumBinsInRowTotal = ( getValue<size_t>( { "contigs", "genome_size" } ) - 1 ) / uiBinWidth + 1;
+    vvNormalized =
+        normalizeBinominalTestTrampoline( vvFlatValues, vFlatNormValues[ 1 ], uiNumBinsInRowTotal,
+                                          getValue<double>( { "settings", "normalization", "p_accept", "val" } ) );
     CANCEL_RETURN;
     END_RETURN;
 }
@@ -260,17 +260,17 @@ bool PartialQuarry::setNormalized( )
     vvNormalized.clear( );
     vvNormalized.reserve( vvFlatValues.size( ) );
 
-    if( this->xSession[ "settings" ][ "normalization" ][ "normalize_by" ].get<std::string>( ) == "dont" )
+    if( getValue<std::string>( { "settings", "normalization", "normalize_by" } ) == "dont" )
         return doNotNormalize( );
-    else if( this->xSession[ "settings" ][ "normalization" ][ "normalize_by" ].get<std::string>( ) == "radicl-seq" )
+    else if( getValue<std::string>( { "settings", "normalization", "normalize_by" } ) == "radicl-seq" )
         return normalizeBinominalTest( );
-    else if( this->xSession[ "settings" ][ "normalization" ][ "normalize_by" ].get<std::string>( ) == "rpm" )
+    else if( getValue<std::string>( { "settings", "normalization", "normalize_by" } ) == "rpm" )
         return normalizeSize( 1000000 );
-    else if( this->xSession[ "settings" ][ "normalization" ][ "normalize_by" ].get<std::string>( ) == "rpk" )
+    else if( getValue<std::string>( { "settings", "normalization", "normalize_by" } ) == "rpk" )
         return normalizeSize( 1000 );
-    else if( this->xSession[ "settings" ][ "normalization" ][ "normalize_by" ].get<std::string>( ) == "hi-c" )
+    else if( getValue<std::string>( { "settings", "normalization", "normalize_by" } ) == "hi-c" )
         return normalizeIC( );
-    else if( this->xSession[ "settings" ][ "normalization" ][ "normalize_by" ].get<std::string>( ) == "cool-hi-c" )
+    else if( getValue<std::string>( { "settings", "normalization", "normalize_by" } ) == "cool-hi-c" )
         return normalizeCoolIC( );
     else
         throw std::logic_error( "invalid value for normalize_by" );
@@ -278,7 +278,7 @@ bool PartialQuarry::setNormalized( )
 
 bool PartialQuarry::setDistDepDecayRemoved( )
 {
-    if( this->xSession[ "settings" ][ "normalization" ][ "ddd" ].get<bool>( ) )
+    if( getValue<bool>( { "settings", "normalization", "ddd" } ) )
         for( size_t uiI = 0; uiI < vvNormalized.size( ); uiI++ )
             for( size_t uiJ = 0; uiJ < 2; uiJ++ )
                 if( vBinCoords[ uiI ][ uiJ ].uiDecayCoordIndex != std::numeric_limits<size_t>::max( ) )
@@ -297,9 +297,9 @@ bool PartialQuarry::setDivided( )
     vDivided.clear( );
     vDivided.reserve( vCombined.size( ) );
 
-    const bool bByCol = this->xSession[ "settings" ][ "normalization" ][ "divide_by_column_coverage" ].get<bool>( ) &&
+    const bool bByCol = getValue<bool>( { "settings", "normalization", "divide_by_column_coverage" } ) &&
                         vvCombinedCoverageValues[ 0 ].size( ) != 0;
-    const bool bByRow = this->xSession[ "settings" ][ "normalization" ][ "divide_by_row_coverage" ].get<bool>( ) &&
+    const bool bByRow = getValue<bool>( { "settings", "normalization", "divide_by_row_coverage" } ) &&
                         vvCombinedCoverageValues[ 1 ].size( ) != 0;
 
     for( size_t uiI = 0; uiI < vCombined.size( ); uiI++ )
@@ -335,21 +335,24 @@ void PartialQuarry::regNormalization( )
                   ComputeNode{ .sNodeName = "normalized_bins",
                                .fFunc = &PartialQuarry::setNormalized,
                                .vIncomingFunctions = { NodeNames::FlatValues },
-                               .vIncomingSession = { { "replicates", "by_name" },
-                                                     { "settings", "normalization", "p_accept", "val" } } } );
+                               .vIncomingSession = { { "settings", "normalization", "p_accept", "val" } },
+                               .vSessionsIncomingInPrevious = { { "replicates", "by_name" },
+                                                                { "settings", "normalization", "normalize_by" } } } );
 
     registerNode( NodeNames::DistDepDecayRemoved,
                   ComputeNode{ .sNodeName = "dist_dep_dec_normalized_bins",
                                .fFunc = &PartialQuarry::setDistDepDecayRemoved,
                                .vIncomingFunctions = { NodeNames::Normalized, NodeNames::FlatDecay },
-                               .vIncomingSession = { { "settings", "normalization", "ddd" } } } );
+                               .vIncomingSession = { { "settings", "normalization", "ddd" } },
+                               .vSessionsIncomingInPrevious = {} } );
 
     registerNode( NodeNames::Divided,
                   ComputeNode{ .sNodeName = "divided_by_tracks",
                                .fFunc = &PartialQuarry::setDivided,
                                .vIncomingFunctions = { NodeNames::Combined },
                                .vIncomingSession = { { "settings", "normalization", "divide_by_column_coverage" },
-                                                     { "settings", "normalization", "divide_by_row_coverage" } } } );
+                                                     { "settings", "normalization", "divide_by_row_coverage" } },
+                               .vSessionsIncomingInPrevious = {} } );
 }
 
 } // namespace cm

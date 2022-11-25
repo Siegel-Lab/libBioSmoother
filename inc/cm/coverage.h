@@ -8,7 +8,8 @@ namespace cm
 
 bool PartialQuarry::setActiveCoverage( )
 {
-    size_t uiSize = this->xSession[ "coverage" ][ "list" ].size( ) + this->xSession[ "replicates" ][ "list" ].size( );
+    size_t uiSize =
+        getValue<json>( { "coverage", "list" } ).size( ) + getValue<json>( { "replicates", "list" } ).size( );
     for( size_t uiI = 0; uiI < 2; uiI++ )
     {
         for( size_t uiJ = 0; uiJ < 2; uiJ++ )
@@ -37,7 +38,7 @@ bool PartialQuarry::setActiveCoverage( )
         std::string sX = bB ? "coverage" : "replicates";
 
         for( std::string sY : { "in_column", "cov_column_a", "cov_column_b" } )
-            for( auto& rV : this->xSession[ sX ][ sY ] )
+            for( auto& rV : getValue<json>( { sX, sY } ) )
             {
                 CANCEL_RETURN;
                 std::pair<std::string, bool> xP( rV.get<std::string>( ), bB );
@@ -51,7 +52,7 @@ bool PartialQuarry::setActiveCoverage( )
             }
 
         for( std::string sY : { "in_row", "cov_row_a", "cov_row_b" } )
-            for( auto& rV : this->xSession[ sX ][ sY ] )
+            for( auto& rV : getValue<json>( { sX, sY } ) )
             {
                 CANCEL_RETURN;
                 std::pair<std::string, bool> xP( rV.get<std::string>( ), bB );
@@ -67,7 +68,7 @@ bool PartialQuarry::setActiveCoverage( )
     }
 
     std::array<std::set<std::string>, 2> vNormGroups;
-    const std::string sNorm = this->xSession[ "settings" ][ "normalization" ][ "normalize_by" ].get<std::string>( );
+    const std::string sNorm = getValue<std::string>( { "settings", "normalization", "normalize_by" } );
     const bool bRadicl = sNorm == "radicl-seq";
     const bool bIce = sNorm == "hi-c";
     if( bRadicl || bIce )
@@ -229,16 +230,15 @@ size_t PartialQuarry::getCoverageFromRepl( bool bHasMapQ,
 bool PartialQuarry::setCoverageValues( )
 {
 
-    size_t uiMinuend = this->xSession[ "settings" ][ "normalization" ][ "min_interactions" ][ "val" ].get<size_t>( );
+    size_t uiMinuend = getValue<size_t>( { "settings", "normalization", "min_interactions", "val" } );
     size_t uiCoverageGetMaxBinSize =
-        this->xSession[ "settings" ][ "replicates" ][ "coverage_get_max_bin_size" ][ "val" ].get<size_t>( ) /
-        this->xSession[ "dividend" ].get<size_t>( );
+        getValue<size_t>( { "settings", "replicates", "coverage_get_max_bin_size", "val" } ) /
+        getValue<size_t>( { "dividend" } );
 
     for( size_t uiJ = 0; uiJ < 2; uiJ++ )
     {
         bool bCoverageGetMax =
-            this->xSession[ "settings" ][ "replicates" ][ uiJ == 0 ? "coverage_get_max_col" : "coverage_get_max_row" ]
-                .get<bool>( );
+            getValue<bool>( { "settings", "replicates", uiJ == 0 ? "coverage_get_max_col" : "coverage_get_max_row" } );
         vvCoverageValues[ uiJ ].clear( );
         vvCoverageValues[ uiJ ].reserve( vActiveCoverage[ uiJ ].size( ) );
 
@@ -249,14 +249,14 @@ bool PartialQuarry::setCoverageValues( )
         {
             vvCoverageValues[ uiJ ].emplace_back( );
             vvCoverageValues[ uiJ ].back( ).reserve( vAxisCords[ uiJ ].size( ) );
-            auto& xRep = this->xSession[ sRep.second ? "coverage" : "replicates" ][ "by_name" ][ sRep.first ];
+            auto xRep = getValue<json>( { sRep.second ? "coverage" : "replicates", "by_name", sRep.first } );
 
             bool bHasMapQ = xRep[ "has_map_q" ];
             bool bHasMultiMap = xRep[ "has_multimapping" ];
 
-            size_t uiMapQMin = this->xSession[ "settings" ][ "filters" ][ "mapping_q" ][ "val_min" ].get<size_t>( );
-            size_t uiMapQMax = this->xSession[ "settings" ][ "filters" ][ "mapping_q" ][ "val_max" ].get<size_t>( );
-            bool bIncomplAlignment = this->xSession[ "settings" ][ "filters" ][ "incomplete_alignments" ].get<bool>( );
+            size_t uiMapQMin = getValue<size_t>( { "settings", "filters", "mapping_q", "val_min" } );
+            size_t uiMapQMax = getValue<size_t>( { "settings", "filters", "mapping_q", "val_max" } );
+            bool bIncomplAlignment = getValue<size_t>( { "settings", "filters", "incomplete_alignments" } );
 
             if( !( uiMapQMin == 0 && bIncomplAlignment ) )
                 ++uiMapQMin;
@@ -388,7 +388,7 @@ double normCoverage( size_t uiNorm, size_t uiVal, size_t uiTotal, size_t uiW, si
 
 bool PartialQuarry::setNormalizeCoverageValues( )
 {
-    std::string sNorm = this->xSession[ "settings" ][ "normalization" ][ "normalize_by_coverage" ].get<std::string>( );
+    std::string sNorm = getValue<std::string>( { "settings", "normalization", "normalize_by_coverage" } );
     size_t uiNorm;
     if( sNorm == "dont" )
         uiNorm = 0;
@@ -404,18 +404,16 @@ bool PartialQuarry::setNormalizeCoverageValues( )
         throw std::logic_error( "invalid value for normalize_by_coverage" );
 
     size_t uiCoverageGetMaxBinSize =
-        this->xSession[ "settings" ][ "replicates" ][ "coverage_get_max_bin_size" ][ "val" ].get<size_t>( ) /
-        this->xSession[ "dividend" ].get<size_t>( );
+        getValue<size_t>( { "settings", "replicates", "coverage_get_max_bin_size", "val" } ) /
+        getValue<size_t>( { "dividend" } );
 
     for( size_t uiJ = 0; uiJ < 2; uiJ++ )
     {
         CANCEL_RETURN;
         bool bCoverageGetMax =
-            this->xSession[ "settings" ][ "replicates" ][ uiJ == 0 ? "coverage_get_max_col" : "coverage_get_max_row" ]
-                .get<bool>( );
+            getValue<bool>( { "settings", "replicates", uiJ == 0 ? "coverage_get_max_col" : "coverage_get_max_row" } );
 
-        size_t uiH =
-            bCoverageGetMax ? uiCoverageGetMaxBinSize : this->xSession[ "contigs" ][ "genome_size" ].get<size_t>( );
+        size_t uiH = bCoverageGetMax ? uiCoverageGetMaxBinSize : getValue<size_t>( { "contigs", "genome_size" } );
         vvNormalizedCoverageValues[ uiJ ].clear( );
         vvNormalizedCoverageValues[ uiJ ].reserve( vvFlatCoverageValues[ uiJ ].size( ) );
 
@@ -455,7 +453,7 @@ bool PartialQuarry::setTracks( )
     using namespace pybind11::literals;
     pybind11::gil_scoped_acquire acquire;
 
-    size_t uiDividend = this->xSession[ "dividend" ].get<size_t>( );
+    size_t uiDividend = getValue<size_t>( { "dividend" } );
     for( size_t uiI = 0; uiI < 2; uiI++ )
     {
         vvMinMaxTracks[ uiI ][ 0 ] = std::numeric_limits<double>::max( );
@@ -691,7 +689,7 @@ bool PartialQuarry::setTracks( )
 
 bool PartialQuarry::setTrackExport( )
 {
-    size_t uiDividend = this->xSession[ "dividend" ].get<size_t>( );
+    size_t uiDividend = getValue<size_t>( { "dividend" } );
     for( size_t uiI = 0; uiI < 2; uiI++ )
     {
         vTrackExport[ uiI ].clear( );
@@ -742,7 +740,7 @@ bool PartialQuarry::setRankedSlicesCDS( )
 
     using namespace pybind11::literals;
     pybind11::gil_scoped_acquire acquire;
-    size_t uiDividend = this->xSession[ "dividend" ].get<size_t>( );
+    size_t uiDividend = getValue<size_t>( { "dividend" } );
 
     for( size_t uiI = 0; uiI < 2; uiI++ )
     {
@@ -843,7 +841,10 @@ void PartialQuarry::regCoverage( )
                                                      { "replicates", "cov_column_b" },
                                                      { "replicates", "cov_row_a" },
                                                      { "replicates", "cov_row_b" },
-                                                     { "settings", "normalization", "normalize_by" } } } );
+                                                     { "settings", "normalization", "normalize_by" },
+                                                     { "coverage", "list" },
+                                                     { "replicates", "list" } },
+                               .vSessionsIncomingInPrevious = {} } );
 
     registerNode( NodeNames::CoverageValues,
                   ComputeNode{ .sNodeName = "coverage_values",
@@ -855,48 +856,59 @@ void PartialQuarry::regCoverage( )
                                                      { "settings", "replicates", "coverage_get_max_col" },
                                                      { "settings", "replicates", "coverage_get_max_row" },
                                                      { "settings", "replicates", "coverage_get_max_bin_size", "val" },
-                                                     { "settings", "normalization", "min_interactions", "val" } } } );
+                                                     { "settings", "normalization", "min_interactions", "val" },
+                                                     { "coverage", "by_name" },
+                                                     { "replicates", "by_name" },
+                                                     { "settings", "filters", "incomplete_alignments" } },
+                               .vSessionsIncomingInPrevious = { { "dividend" } } } );
 
     registerNode( NodeNames::FlatCoverageValues,
                   ComputeNode{ .sNodeName = "flat_coverage",
                                .fFunc = &PartialQuarry::setFlatCoverageValues,
                                .vIncomingFunctions = { NodeNames::CoverageValues, NodeNames::InGroup },
-                               .vIncomingSession = {} } );
+                               .vIncomingSession = { },
+                               .vSessionsIncomingInPrevious = {} } );
 
-    registerNode( NodeNames::NormalizeCoverageValues,
-                  ComputeNode{ .sNodeName = "normalized_coverage",
-                               .fFunc = &PartialQuarry::setNormalizeCoverageValues,
-                               .vIncomingFunctions = { NodeNames::FlatCoverageValues },
-                               .vIncomingSession = { { "settings", "normalization", "normalize_by_coverage" } } } );
+    registerNode(
+        NodeNames::NormalizeCoverageValues,
+        ComputeNode{ .sNodeName = "normalized_coverage",
+                     .fFunc = &PartialQuarry::setNormalizeCoverageValues,
+                     .vIncomingFunctions = { NodeNames::FlatCoverageValues },
+                     .vIncomingSession = { { "settings", "normalization", "normalize_by_coverage" },
+                                           { "contigs", "genome_size" } },
+                     .vSessionsIncomingInPrevious = { { "settings", "replicates", "coverage_get_max_bin_size", "val" },
+                                                      { "dividend" },
+                                                      { "settings", "replicates", "coverage_get_max_col" },
+                                                      { "settings", "replicates", "coverage_get_max_row" } } } );
 
     registerNode( NodeNames::CombinedCoverageValues,
-                  ComputeNode{ .sNodeName = "normalized_coverage",
+                  ComputeNode{ .sNodeName = "combined_coverage",
                                .fFunc = &PartialQuarry::setCombinedCoverageValues,
                                .vIncomingFunctions = { NodeNames::NormalizeCoverageValues, NodeNames::BetweenGroup },
-                               .vIncomingSession = {} } );
+                               .vIncomingSession = { },
+                               .vSessionsIncomingInPrevious = {} } );
 
     registerNode( NodeNames::Tracks,
                   ComputeNode{ .sNodeName = "coverage_tracks",
                                .fFunc = &PartialQuarry::setTracks,
                                .vIncomingFunctions = { NodeNames::LCS, NodeNames::DistDepDecayRemoved,
                                                        NodeNames::AnnotationColors },
-                               .vIncomingSession = { { "settings", "normalization", "display_ice_remainder" } } } );
+                               .vIncomingSession = { { "settings", "normalization", "display_ice_remainder" } },
+                               .vSessionsIncomingInPrevious = { { "dividend" } } } );
 
     registerNode( NodeNames::TrackExport,
                   ComputeNode{ .sNodeName = "track_export",
                                .fFunc = &PartialQuarry::setTrackExport,
                                .vIncomingFunctions = { NodeNames::Tracks },
-                               .vIncomingSession = {} } );
+                               .vIncomingSession = { },
+                               .vSessionsIncomingInPrevious = { { "dividend" } } } );
 
-    registerNode(
-        NodeNames::RankedSlicesCDS,
-        ComputeNode{ .sNodeName = "ranked_slices",
-                     .fFunc = &PartialQuarry::setRankedSlicesCDS,
-                     .vIncomingFunctions = { NodeNames::CombinedCoverageValues },
-                     .vIncomingSession = { { "settings", "filters", "coverage_bin_filter_column", "val_min" },
-                                           { "settings", "filters", "coverage_bin_filter_column", "val_max" },
-                                           { "settings", "filters", "coverage_bin_filter_row", "val_min" },
-                                           { "settings", "filters", "coverage_bin_filter_row", "val_max" } } } );
+    registerNode( NodeNames::RankedSlicesCDS,
+                  ComputeNode{ .sNodeName = "ranked_slices",
+                               .fFunc = &PartialQuarry::setRankedSlicesCDS,
+                               .vIncomingFunctions = { NodeNames::FilteredCoords },
+                               .vIncomingSession = { },
+                               .vSessionsIncomingInPrevious = { { "dividend" } } } );
 }
 
 

@@ -8,13 +8,13 @@ namespace cm
 
 size_t PartialQuarry::nextEvenNumber( double fX )
 {
-    if( !this->xSession[ "settings" ][ "interface" ][ "snap_bin_size" ].get<bool>( ) )
+    if( !getValue<bool>( { "settings", "interface", "snap_bin_size" } ) )
         return std::ceil( fX );
 
     size_t uiN = 0;
     while( true )
     {
-        for( size_t uiI : this->xSession[ "settings" ][ "interface" ][ "snap_factors" ] )
+        for( size_t uiI : getValue<json>( { "settings", "interface", "snap_factors" } ) )
             if( uiI * std::pow( 10, uiN ) > fX )
                 return uiI * std::pow( 10, uiN );
         uiN += 1;
@@ -24,30 +24,28 @@ size_t PartialQuarry::nextEvenNumber( double fX )
 
 bool PartialQuarry::setBinSize( )
 {
-    size_t uiT = this->xSession[ "settings" ][ "interface" ][ "min_bin_size" ][ "val" ].get<size_t>( );
-    size_t uiMinBinSize = std::max( (size_t)1,
-                                    (size_t)std::ceil( ( 1 + uiT % 9 ) * std::pow( 10, uiT / 9 ) ) /
-                                        this->xSession[ "dividend" ].get<size_t>( ) );
-    size_t uiMaxNumBins = this->xSession[ "settings" ][ "interface" ][ "max_num_bins" ][ "val" ].get<size_t>( ) *
-                          this->xSession[ "settings" ][ "interface" ][ "max_num_bins_factor" ].get<size_t>( );
-    if( !this->xSession[ "settings" ][ "interface" ][ "squared_bins" ].get<bool>( ) )
+    size_t uiT = getValue<size_t>( { "settings", "interface", "min_bin_size", "val" } );
+    size_t uiMinBinSize =
+        std::max( (size_t)1,
+                  (size_t)std::ceil( ( 1 + uiT % 9 ) * std::pow( 10, uiT / 9 ) ) / getValue<size_t>( { "dividend" } ) );
+    size_t uiMaxNumBins = getValue<size_t>( { "settings", "interface", "max_num_bins", "val" } ) *
+                          getValue<size_t>( { "settings", "interface", "max_num_bins_factor" } );
+    if( !getValue<bool>( { "settings", "interface", "squared_bins" } ) )
     {
-        uiBinHeight = nextEvenNumber( ( this->xSession[ "area" ][ "y_end" ].get<double>( ) -
-                                        this->xSession[ "area" ][ "y_start" ].get<double>( ) ) /
-                                      std::sqrt( uiMaxNumBins ) );
+        uiBinHeight =
+            nextEvenNumber( ( getValue<double>( { "area", "y_end" } ) - getValue<double>( { "area", "y_start" } ) ) /
+                            std::sqrt( uiMaxNumBins ) );
         uiBinHeight = std::max( uiBinHeight, uiMinBinSize );
 
-        uiBinWidth = nextEvenNumber( ( this->xSession[ "area" ][ "x_end" ].get<double>( ) -
-                                       this->xSession[ "area" ][ "x_start" ].get<double>( ) ) /
-                                     std::sqrt( uiMaxNumBins ) );
+        uiBinWidth =
+            nextEvenNumber( ( getValue<double>( { "area", "x_end" } ) - getValue<double>( { "area", "x_start" } ) ) /
+                            std::sqrt( uiMaxNumBins ) );
         uiBinWidth = std::max( uiBinWidth, uiMinBinSize );
     }
     else
     {
-        size_t uiArea = ( this->xSession[ "area" ][ "x_end" ].get<size_t>( ) -
-                          this->xSession[ "area" ][ "x_start" ].get<size_t>( ) ) *
-                        ( this->xSession[ "area" ][ "y_end" ].get<size_t>( ) -
-                          this->xSession[ "area" ][ "y_start" ].get<size_t>( ) ) /
+        size_t uiArea = ( getValue<size_t>( { "area", "x_end" } ) - getValue<size_t>( { "area", "x_start" } ) ) *
+                        ( getValue<size_t>( { "area", "y_end" } ) - getValue<size_t>( { "area", "y_start" } ) ) /
                         uiMaxNumBins;
         uiBinHeight = nextEvenNumber( std::sqrt( uiArea ) );
         uiBinHeight = std::max( uiBinHeight, uiMinBinSize );
@@ -59,25 +57,25 @@ bool PartialQuarry::setBinSize( )
 
 bool PartialQuarry::setRenderArea( )
 {
-    if( this->xSession[ "settings" ][ "export" ][ "do_export_full" ] )
+    if( getValue<bool>( { "settings", "export", "do_export_full" } ) )
     {
         iStartX = 0;
         iStartY = 0;
 
-        iEndX = this->xSession[ "contigs" ][ "genome_size" ].get<int64_t>( );
-        iEndY = this->xSession[ "contigs" ][ "genome_size" ].get<int64_t>( );
+        iEndX = getValue<size_t>( { "contigs", "genome_size" } );
+        iEndY = getValue<size_t>( { "contigs", "genome_size" } );
     }
     else
     {
-        double fScale = this->xSession[ "settings" ][ "interface" ][ "add_draw_area" ][ "val" ].get<double>( ) / 100.0;
+        double fScale = getValue<double>( { "settings", "interface", "add_draw_area", "val" } ) / 100.0;
 
-        int64_t uiL = this->xSession[ "area" ][ "x_start" ].get<int64_t>( );
-        int64_t uiR = this->xSession[ "area" ][ "x_end" ].get<int64_t>( );
+        int64_t uiL = getValue<size_t>( { "area", "x_start" } );
+        int64_t uiR = getValue<size_t>( { "area", "x_end" } );
 
         int64_t uiW = uiR - uiL;
 
-        int64_t uiB = this->xSession[ "area" ][ "y_start" ].get<int64_t>( );
-        int64_t uiT = this->xSession[ "area" ][ "y_end" ].get<int64_t>( );
+        int64_t uiB = getValue<size_t>( { "area", "y_start" } );
+        int64_t uiT = getValue<size_t>( { "area", "y_end" } );
 
         int64_t uiH = uiT - uiB;
 
@@ -106,7 +104,7 @@ const std::array<int64_t, 4> PartialQuarry::getDrawingArea( )
 const std::array<size_t, 2> PartialQuarry::getBinSize( )
 {
     update( NodeNames::BinSize );
-    size_t uiD = this->xSession[ "dividend" ].get<size_t>( );
+    size_t uiD = getValue<size_t>( { "dividend" } );
     return std::array<size_t, 2>{ uiBinWidth * uiD, uiBinHeight * uiD };
 }
 
@@ -152,17 +150,20 @@ void PartialQuarry::regBinSize( )
                                                      { "settings", "interface", "max_num_bins_factor" },
                                                      { "settings", "interface", "squared_bins" },
                                                      { "dividend" },
-                                                     { "area" } } } );
+                                                     { "area" } },
+                               .vSessionsIncomingInPrevious = {} } );
 
     registerNode( NodeNames::RenderArea,
                   ComputeNode{ .sNodeName = "render_area",
                                .fFunc = &PartialQuarry::setRenderArea,
                                .vIncomingFunctions = { NodeNames::BinSize },
-                               .vIncomingSession = {
-                                   { "settings", "export", "do_export_full" },
-                                   { "settings", "contigs", "genome_size" },
-                                   { "settings", "interface", "add_draw_area", "val" },
-                               } } );
+                               .vIncomingSession =
+                                   {
+                                       { "settings", "export", "do_export_full" },
+                                       { "settings", "contigs", "genome_size" },
+                                       { "settings", "interface", "add_draw_area", "val" },
+                                   },
+                               .vSessionsIncomingInPrevious = { { "area" } } } );
 }
 
 

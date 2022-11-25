@@ -9,11 +9,11 @@ namespace cm
 bool PartialQuarry::setColors( )
 {
     vColorPalette.clear( );
-    vColorPalette = colorPalette( this->xSession[ "settings" ][ "interface" ][ "color_palette" ].get<std::string>( ),
-                                  this->xSession[ "settings" ][ "interface" ][ "color_low" ].get<std::string>( ),
-                                  this->xSession[ "settings" ][ "interface" ][ "color_high" ].get<std::string>( ) );
+    vColorPalette = colorPalette( getValue<std::string>( { "settings", "interface", "color_palette" } ),
+                                  getValue<std::string>( { "settings", "interface", "color_low" } ),
+                                  getValue<std::string>( { "settings", "interface", "color_high" } ) );
 
-    double fBase = this->xSession[ "settings" ][ "normalization" ][ "log_base" ][ "val" ].get<double>( );
+    double fBase = getValue<double>( { "settings", "normalization", "log_base", "val" } );
 
     if( iBetweenGroupSetting == 2 )
         sBackgroundColor = vColorPalette[ colorIndex( logScale( 0.5, fBase ) ) ];
@@ -25,7 +25,7 @@ bool PartialQuarry::setColors( )
 bool PartialQuarry::setAnnotationColors( )
 {
     vColorPaletteAnnotation.clear( );
-    auto& rList = this->xSession[ "settings" ][ "interface" ][ "annotation_color_palette" ];
+    auto rList = getValue<json>( { "settings", "interface", "annotation_color_palette" } );
     vColorPaletteAnnotation.reserve( rList.size( ) );
     for( auto& rC : rList )
     {
@@ -33,7 +33,7 @@ bool PartialQuarry::setAnnotationColors( )
         vColorPaletteAnnotation.push_back( rC.get<std::string>( ) );
     }
     vColorPaletteAnnotationDark.clear( );
-    auto& rList2 = this->xSession[ "settings" ][ "interface" ][ "annotation_color_palette_dark" ];
+    auto rList2 = getValue<json>( { "settings", "interface", "annotation_color_palette_dark" } );
     vColorPaletteAnnotationDark.reserve( rList2.size( ) );
     for( auto& rC : rList2 )
     {
@@ -74,7 +74,7 @@ bool PartialQuarry::setScaled( )
         }
     }
 
-    if( this->xSession[ "settings" ][ "normalization" ][ "scale" ].get<std::string>( ) == "minmax" )
+    if( getValue<std::string>( { "settings", "normalization", "scale" } ) == "minmax" )
     {
         for( double fVal : vDivided )
         {
@@ -87,7 +87,7 @@ bool PartialQuarry::setScaled( )
         fMin = 0;
         fMax = 1;
     }
-    else if( this->xSession[ "settings" ][ "normalization" ][ "scale" ].get<std::string>( ) == "abs" )
+    else if( getValue<std::string>( { "settings", "normalization", "scale" } ) == "abs" )
     {
         double fAbs = std::max( std::abs( fMax ), std::abs( fMin ) );
         for( double fVal : vDivided )
@@ -101,7 +101,7 @@ bool PartialQuarry::setScaled( )
         fMin = std::max( -1.0, fMin );
         fMax = std::min( 1.0, fMin );
     }
-    else if( this->xSession[ "settings" ][ "normalization" ][ "scale" ].get<std::string>( ) == "max" )
+    else if( getValue<std::string>( { "settings", "normalization", "scale" } ) == "max" )
     {
         for( double fVal : vDivided )
         {
@@ -113,7 +113,7 @@ bool PartialQuarry::setScaled( )
         }
         fMax = 1;
     }
-    else if( this->xSession[ "settings" ][ "normalization" ][ "scale" ].get<std::string>( ) == "dont" )
+    else if( getValue<std::string>( { "settings", "normalization", "scale" } ) == "dont" )
     {
         for( double fVal : vDivided )
         {
@@ -164,9 +164,9 @@ bool PartialQuarry::setColored( )
 {
     vColored.clear( );
     vColored.reserve( vScaled.size( ) );
-    double fMin = this->xSession[ "settings" ][ "normalization" ][ "color_range" ][ "val_min" ].get<double>( );
-    double fMax = this->xSession[ "settings" ][ "normalization" ][ "color_range" ][ "val_max" ].get<double>( );
-    double fBase = this->xSession[ "settings" ][ "normalization" ][ "log_base" ][ "val" ].get<double>( );
+    double fMin = getValue<double>( { "settings", "normalization", "color_range", "val_min" } );
+    double fMax = getValue<double>( { "settings", "normalization", "color_range", "val_max" } );
+    double fBase = getValue<double>( { "settings", "normalization", "log_base", "val" } );
 
     for( double fC : vScaled )
     {
@@ -183,9 +183,9 @@ bool PartialQuarry::setPalette( )
 {
     pybind11::gil_scoped_acquire acquire;
     pybind11::list vNew;
-    double fMinR = this->xSession[ "settings" ][ "normalization" ][ "color_range" ][ "val_min" ].get<double>( );
-    double fMaxR = this->xSession[ "settings" ][ "normalization" ][ "color_range" ][ "val_max" ].get<double>( );
-    double fBase = this->xSession[ "settings" ][ "normalization" ][ "log_base" ][ "val" ].get<double>( );
+    double fMinR = getValue<double>( { "settings", "normalization", "color_range", "val_min" } );
+    double fMaxR = getValue<double>( { "settings", "normalization", "color_range", "val_max" } );
+    double fBase = getValue<double>( { "settings", "normalization", "log_base", "val" } );
 
     for( double fC = std::min( fMin, fMinR ); fC <= std::max( fMax, fMaxR );
          fC += std::max( 1.0, std::max( fMax, fMaxR ) - std::min( fMin, fMinR ) ) / 255.0 )
@@ -234,6 +234,8 @@ bool PartialQuarry::setHeatmapCDS( )
     pybind11::list vScoreA;
     pybind11::list vScoreB;
 
+    size_t uiDividend = getValue<size_t>( { "dividend" } );
+
     for( size_t uiI = 0; uiI < vColored.size( ); uiI++ )
     {
         CANCEL_RETURN;
@@ -249,28 +251,23 @@ bool PartialQuarry::setHeatmapCDS( )
 
             vChrX.append( vBinCoords[ uiI ][ 0 ].sChromosomeX );
             vChrY.append( vBinCoords[ uiI ][ 0 ].sChromosomeY );
-            vIndexLeft.append(
-                readableBp( vBinCoords[ uiI ][ 0 ].uiIndexX * this->xSession[ "dividend" ].get<size_t>( ) ) );
-            vIndexRight.append( readableBp( ( vBinCoords[ uiI ][ 0 ].uiIndexX + vBinCoords[ uiI ][ 0 ].uiIndexW ) *
-                                            this->xSession[ "dividend" ].get<size_t>( ) ) );
-            vIndexBottom.append(
-                readableBp( vBinCoords[ uiI ][ 0 ].uiIndexY * this->xSession[ "dividend" ].get<size_t>( ) ) );
-            vIndexTop.append( readableBp( ( vBinCoords[ uiI ][ 0 ].uiIndexY + vBinCoords[ uiI ][ 0 ].uiIndexH ) *
-                                          this->xSession[ "dividend" ].get<size_t>( ) ) );
+            vIndexLeft.append( readableBp( vBinCoords[ uiI ][ 0 ].uiIndexX * uiDividend ) );
+            vIndexRight.append(
+                readableBp( ( vBinCoords[ uiI ][ 0 ].uiIndexX + vBinCoords[ uiI ][ 0 ].uiIndexW ) * uiDividend ) );
+            vIndexBottom.append( readableBp( vBinCoords[ uiI ][ 0 ].uiIndexY * uiDividend ) );
+            vIndexTop.append(
+                readableBp( ( vBinCoords[ uiI ][ 0 ].uiIndexY + vBinCoords[ uiI ][ 0 ].uiIndexH ) * uiDividend ) );
 
             if( vBinCoords[ uiI ][ 1 ].sChromosomeX != "" )
             {
                 vChrXSym.append( vBinCoords[ uiI ][ 1 ].sChromosomeX );
                 vChrYSym.append( vBinCoords[ uiI ][ 1 ].sChromosomeY );
-                vIndexSymLeft.append(
-                    readableBp( vBinCoords[ uiI ][ 1 ].uiIndexX * this->xSession[ "dividend" ].get<size_t>( ) ) );
+                vIndexSymLeft.append( readableBp( vBinCoords[ uiI ][ 1 ].uiIndexX * uiDividend ) );
                 vIndexSymRight.append(
-                    readableBp( ( vBinCoords[ uiI ][ 1 ].uiIndexX + vBinCoords[ uiI ][ 1 ].uiIndexW ) *
-                                this->xSession[ "dividend" ].get<size_t>( ) ) );
-                vIndexSymBottom.append(
-                    readableBp( vBinCoords[ uiI ][ 1 ].uiIndexY * this->xSession[ "dividend" ].get<size_t>( ) ) );
-                vIndexSymTop.append( readableBp( ( vBinCoords[ uiI ][ 1 ].uiIndexY + vBinCoords[ uiI ][ 1 ].uiIndexH ) *
-                                                 this->xSession[ "dividend" ].get<size_t>( ) ) );
+                    readableBp( ( vBinCoords[ uiI ][ 1 ].uiIndexX + vBinCoords[ uiI ][ 1 ].uiIndexW ) * uiDividend ) );
+                vIndexSymBottom.append( readableBp( vBinCoords[ uiI ][ 1 ].uiIndexY * uiDividend ) );
+                vIndexSymTop.append(
+                    readableBp( ( vBinCoords[ uiI ][ 1 ].uiIndexY + vBinCoords[ uiI ][ 1 ].uiIndexH ) * uiDividend ) );
             }
             else
             {
@@ -320,17 +317,16 @@ bool PartialQuarry::setHeatmapExport( )
 {
     vHeatmapExport.clear( );
     vHeatmapExport.reserve( vScaled.size( ) );
+    size_t uiDividend = getValue<size_t>( { "dividend" } );
     for( size_t uiI = 0; uiI < vScaled.size( ); uiI++ )
     {
         CANCEL_RETURN;
         vHeatmapExport.emplace_back( vBinCoords[ uiI ][ 0 ].sChromosomeX,
-                                     vBinCoords[ uiI ][ 0 ].uiIndexX * this->xSession[ "dividend" ].get<size_t>( ),
-                                     ( vBinCoords[ uiI ][ 0 ].uiIndexX + vBinCoords[ uiI ][ 0 ].uiIndexW ) *
-                                         this->xSession[ "dividend" ].get<size_t>( ),
+                                     vBinCoords[ uiI ][ 0 ].uiIndexX * uiDividend,
+                                     ( vBinCoords[ uiI ][ 0 ].uiIndexX + vBinCoords[ uiI ][ 0 ].uiIndexW ) * uiDividend,
                                      vBinCoords[ uiI ][ 0 ].sChromosomeY,
-                                     vBinCoords[ uiI ][ 0 ].uiIndexY * this->xSession[ "dividend" ].get<size_t>( ),
-                                     ( vBinCoords[ uiI ][ 0 ].uiIndexY + vBinCoords[ uiI ][ 0 ].uiIndexH ) *
-                                         this->xSession[ "dividend" ].get<size_t>( ),
+                                     vBinCoords[ uiI ][ 0 ].uiIndexY * uiDividend,
+                                     ( vBinCoords[ uiI ][ 0 ].uiIndexY + vBinCoords[ uiI ][ 0 ].uiIndexH ) * uiDividend,
                                      vScaled[ uiI ] );
     }
     END_RETURN;
@@ -363,50 +359,62 @@ void PartialQuarry::regColors( )
                                .vIncomingSession = { { "settings", "interface", "color_palette" },
                                                      { "settings", "interface", "color_low" },
                                                      { "settings", "interface", "color_high" },
-                                                     { "settings", "normalization", "log_base", "val" } } } );
+                                                     { "settings", "normalization", "log_base", "val" } },
+                               .vSessionsIncomingInPrevious = {} } );
 
     registerNode( NodeNames::AnnotationColors,
                   ComputeNode{ .sNodeName = "annotation_color_palette",
                                .fFunc = &PartialQuarry::setAnnotationColors,
                                .vIncomingFunctions = { },
-                               .vIncomingSession = { { "settings", "interface", "annotation_color_palette" } } } );
+                               .vIncomingSession = { { "settings", "interface", "annotation_color_palette" },
+                                                     { "settings", "interface", "annotation_color_palette_dark" } },
+                               .vSessionsIncomingInPrevious = {} } );
 
     registerNode( NodeNames::Combined,
                   ComputeNode{ .sNodeName = "combined_bins",
                                .fFunc = &PartialQuarry::setCombined,
                                .vIncomingFunctions = { NodeNames::DistDepDecayRemoved },
-                               .vIncomingSession = {} } );
+                               .vIncomingSession = { },
+                               .vSessionsIncomingInPrevious = {} } );
 
     registerNode( NodeNames::Scaled,
                   ComputeNode{ .sNodeName = "scaled_bins",
                                .fFunc = &PartialQuarry::setScaled,
                                .vIncomingFunctions = { NodeNames::Divided },
-                               .vIncomingSession = { { "settings", "normalization", "scale" } } } );
+                               .vIncomingSession = { { "settings", "normalization", "scale" } },
+                               .vSessionsIncomingInPrevious = {} } );
 
-    registerNode( NodeNames::Colored,
-                  ComputeNode{ .sNodeName = "colored_bins",
-                               .fFunc = &PartialQuarry::setColored,
-                               .vIncomingFunctions = { NodeNames::Colors, NodeNames::Scaled },
-                               .vIncomingSession = { { "settings", "normalization", "color_range", "val_max" },
-                                                     { "settings", "normalization", "color_range", "val_min" } } } );
+    registerNode(
+        NodeNames::Colored,
+        ComputeNode{ .sNodeName = "colored_bins",
+                     .fFunc = &PartialQuarry::setColored,
+                     .vIncomingFunctions = { NodeNames::Colors, NodeNames::Scaled },
+                     .vIncomingSession = { { "settings", "normalization", "color_range", "val_max" },
+                                           { "settings", "normalization", "color_range", "val_min" } },
+                     .vSessionsIncomingInPrevious = { { "settings", "normalization", "log_base", "val" } } } );
 
     registerNode( NodeNames::HeatmapCDS,
                   ComputeNode{ .sNodeName = "heatmap_cds",
                                .fFunc = &PartialQuarry::setHeatmapCDS,
                                .vIncomingFunctions = { NodeNames::Colored },
-                               .vIncomingSession = {} } );
+                               .vIncomingSession = { },
+                               .vSessionsIncomingInPrevious = { { "dividend" } } } );
 
     registerNode( NodeNames::HeatmapExport,
                   ComputeNode{ .sNodeName = "heatmap_export",
                                .fFunc = &PartialQuarry::setHeatmapExport,
                                .vIncomingFunctions = { NodeNames::Scaled },
-                               .vIncomingSession = {} } );
+                               .vIncomingSession = { },
+                               .vSessionsIncomingInPrevious = { { "dividend" } } } );
 
-    registerNode( NodeNames::Palette,
-                  ComputeNode{ .sNodeName = "rendered_palette",
-                               .fFunc = &PartialQuarry::setPalette,
-                               .vIncomingFunctions = { NodeNames::Scaled, NodeNames::Colors },
-                               .vIncomingSession = {} } );
+    registerNode(
+        NodeNames::Palette,
+        ComputeNode{ .sNodeName = "rendered_palette",
+                     .fFunc = &PartialQuarry::setPalette,
+                     .vIncomingFunctions = { NodeNames::Scaled, NodeNames::Colors },
+                     .vIncomingSession = { { "settings", "normalization", "color_range", "val_max" },
+                                           { "settings", "normalization", "color_range", "val_min" } },
+                     .vSessionsIncomingInPrevious = { { "settings", "normalization", "log_base", "val" } } } );
 }
 
 } // namespace cm

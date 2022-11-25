@@ -183,14 +183,13 @@ template <typename anno_t>
 std::pair<std::vector<AxisCoord>, std::vector<AxisRegion>>
 annoCoordsHelper( size_t uiBinSize, size_t uiScreenStartPos, size_t uiScreenEndPos, size_t /*iSmallerBins*/,
                   size_t iMultipleAnnosInBin, size_t iAnnoInMultipleBins, std::vector<ChromDesc> vChromosomes,
-                  bool& bCancel, const json& xSession, anno_t& rAnno, std::string sAnno )
+                  bool& bCancel, const json rJson, anno_t& rAnno, std::string /*sAnno*/ )
 {
     std::vector<AxisCoord> vRet;
     std::vector<AxisRegion> vRet2;
     vRet.reserve( 2 * ( uiScreenEndPos - uiScreenStartPos ) / uiBinSize );
     size_t uiCurrScreenPos = uiScreenStartPos;
     size_t uiChromosomeStartPos = 0;
-    auto& rJson = xSession[ "annotation" ][ "by_name" ][ sAnno ];
     for( auto xChr : vChromosomes )
     {
         if( bCancel )
@@ -387,11 +386,11 @@ size_t multiple_anno( std::string sVal )
     throw std::logic_error( "unknown multiple_annos_in_bin value" );
 }
 
-std::vector<ChromDesc> activeChromList( json& xChromLen, json& xChromDisp, std::string sExistenceKey )
+std::vector<ChromDesc> activeChromList( json xChromLen, json xChromDisp )
 {
     std::vector<ChromDesc> vRet;
-    vRet.reserve( xChromDisp[ sExistenceKey ].size( ) );
-    for( auto& xChrom : xChromDisp[ sExistenceKey ] )
+    vRet.reserve( xChromDisp.size( ) );
+    for( auto& xChrom : xChromDisp )
     {
         std::string sChrom = xChrom.get<std::string>( );
         vRet.emplace_back( ChromDesc{ .sName = sChrom, .uiLength = xChromLen[ sChrom ].get<size_t>( ) } );
@@ -403,7 +402,7 @@ bool PartialQuarry::setLCS( )
 {
     uiLogestCommonSuffix = 0;
 
-    if( this->xSession[ "contigs" ][ "list" ].size( ) > 1 )
+    if( getValue<json>( { "contigs", "list" } ).size( ) > 1 )
     {
         char cLast = '_';
         bool bContinue = true;
@@ -411,7 +410,7 @@ bool PartialQuarry::setLCS( )
         {
             ++uiLogestCommonSuffix;
             bool bFirst = true;
-            for( auto& rChr : this->xSession[ "contigs" ][ "list" ] )
+            for( auto& rChr : getValue<json>( { "contigs", "list" } ) )
             {
                 CANCEL_RETURN;
                 std::string sChr = rChr.get<std::string>( );
@@ -441,7 +440,7 @@ bool PartialQuarry::setCanvasSize( )
 
         size_t uiRunningStart = 0;
         std::string sCoords =
-            this->xSession[ "contigs" ][ uiI == 0 ? "column_coordinates" : "row_coordinates" ].get<std::string>( );
+            getValue<std::string>( { "contigs", uiI == 0 ? "column_coordinates" : "row_coordinates" } );
         if( sCoords == "full_genome" )
         {
             for( ChromDesc& rDesc : this->vActiveChromosomes[ uiI ] )
@@ -452,9 +451,9 @@ bool PartialQuarry::setCanvasSize( )
         }
         else
         {
-            size_t iAnnoInMultipleBins = multiple_bins(
-                this->xSession[ "settings" ][ "filters" ][ "anno_in_multiple_bins" ].get<std::string>( ) );
-            auto& rJson = this->xSession[ "annotation" ][ "by_name" ][ sCoords ];
+            size_t iAnnoInMultipleBins =
+                multiple_bins( getValue<std::string>( { "settings", "filters", "anno_in_multiple_bins" } ) );
+            auto rJson = getValue<json>( { "annotation", "by_name", sCoords } );
 
             uiRunningStart = 0;
             for( auto xChr : this->vActiveChromosomes[ uiI ] )
@@ -492,7 +491,7 @@ bool PartialQuarry::setTicks( )
 
         size_t uiRunningStart = 0;
         std::string sCoords =
-            this->xSession[ "contigs" ][ uiI == 0 ? "column_coordinates" : "row_coordinates" ].get<std::string>( );
+            getValue<std::string>( { "contigs", uiI == 0 ? "column_coordinates" : "row_coordinates" } );
         if( sCoords == "full_genome" )
         {
             for( ChromDesc& rDesc : this->vActiveChromosomes[ uiI ] )
@@ -506,9 +505,9 @@ bool PartialQuarry::setTicks( )
         }
         else
         {
-            size_t iAnnoInMultipleBins = multiple_bins(
-                this->xSession[ "settings" ][ "filters" ][ "anno_in_multiple_bins" ].get<std::string>( ) );
-            auto& rJson = this->xSession[ "annotation" ][ "by_name" ][ sCoords ];
+            size_t iAnnoInMultipleBins =
+                multiple_bins( getValue<std::string>( { "settings", "filters", "anno_in_multiple_bins" } ) );
+            auto rJson = getValue<json>( { "annotation", "by_name", sCoords } );
             for( AxisRegion& xRegion : vAxisRegions[ uiI ] )
             {
                 CANCEL_RETURN;
@@ -558,7 +557,7 @@ bool PartialQuarry::setTicks( )
 
         xTicksCDS[ uiI ] = pybind11::dict( "contig_starts"_a = vStartPos,
                                            "genome_end"_a = vCanvasSize[ uiI ],
-                                           "dividend"_a = this->xSession[ "dividend" ].get<size_t>( ),
+                                           "dividend"_a = this->getValue<size_t>( { "dividend" } ),
                                            "contig_names"_a = vNames );
         vTickLists[ uiI ] = vFullList;
     }
@@ -586,9 +585,9 @@ const std::array<size_t, 2> PartialQuarry::getCanvasSize( )
 bool PartialQuarry::setActiveChrom( )
 {
     for( bool bX : { true, false } )
-        this->vActiveChromosomes[ bX ? 0 : 1 ] = activeChromList( this->xSession[ "contigs" ][ "lengths" ],
-                                                                  this->xSession[ "contigs" ],
-                                                                  bX ? "displayed_on_x" : "displayed_on_y" );
+        this->vActiveChromosomes[ bX ? 0 : 1 ] =
+            activeChromList( getValue<json>( { "contigs", "lengths" } ),
+                             getValue<json>( { "contigs", bX ? "displayed_on_x" : "displayed_on_y" } ) );
     END_RETURN;
 }
 
@@ -597,13 +596,12 @@ bool PartialQuarry::setAxisCoords( )
     for( bool bX : { true, false } )
     {
         std::pair<std::vector<AxisCoord>, std::vector<AxisRegion>> xRet;
-        if( this->xSession[ "contigs" ][ bX ? "column_coordinates" : "row_coordinates" ].get<std::string>( ) ==
-            "full_genome" )
+        if( getValue<std::string>( { "contigs", bX ? "column_coordinates" : "row_coordinates" } ) == "full_genome" )
             xRet = axisCoordsHelper(
                 bX ? this->uiBinWidth : this->uiBinHeight,
                 bX ? std::max( 0l, this->iStartX ) : std::max( 0l, this->iStartY ),
                 bX ? std::max( 0l, this->iEndX ) : std::max( 0l, this->iEndY ),
-                smaller_bin_to_num( this->xSession[ "settings" ][ "filters" ][ "cut_off_bin" ].get<std::string>( ) ),
+                smaller_bin_to_num( getValue<std::string>( { "settings", "filters", "cut_off_bin" } ) ),
                 this->vActiveChromosomes[ bX ? 0 : 1 ],
                 this->bCancel );
         else
@@ -611,13 +609,11 @@ bool PartialQuarry::setAxisCoords( )
                 bX ? this->uiBinWidth : this->uiBinHeight,
                 bX ? std::max( 0l, this->iStartX ) : std::max( 0l, this->iStartY ),
                 bX ? std::max( 0l, this->iEndX ) : std::max( 0l, this->iEndY ),
-                smaller_bin_to_num( this->xSession[ "settings" ][ "filters" ][ "cut_off_bin" ].get<std::string>( ) ),
-                multiple_anno(
-                    this->xSession[ "settings" ][ "filters" ][ "multiple_annos_in_bin" ].get<std::string>( ) ),
-                multiple_bins(
-                    this->xSession[ "settings" ][ "filters" ][ "anno_in_multiple_bins" ].get<std::string>( ) ),
-                this->vActiveChromosomes[ bX ? 0 : 1 ], this->bCancel, this->xSession, xIndices.vAnno,
-                this->xSession[ "contigs" ][ bX ? "column_coordinates" : "row_coordinates" ].get<std::string>( ) );
+                smaller_bin_to_num( getValue<std::string>( { "settings", "filters", "cut_off_bin" } ) ),
+                multiple_anno( getValue<std::string>( { "settings", "filters", "multiple_annos_in_bin" } ) ),
+                multiple_bins( getValue<std::string>( { "settings", "filters", "anno_in_multiple_bins" } ) ),
+                this->vActiveChromosomes[ bX ? 0 : 1 ], this->bCancel, getValue<json>( { "annotation", "by_name" } ),
+                xIndices.vAnno, getValue<std::string>( { "contigs", bX ? "column_coordinates" : "row_coordinates" } ) );
         this->vAxisCords[ bX ? 0 : 1 ] = xRet.first;
         this->vAxisRegions[ bX ? 0 : 1 ] = xRet.second;
     }
@@ -629,14 +625,10 @@ bool PartialQuarry::setFilteredCoords( )
 {
     for( size_t uiI = 0; uiI < 2; uiI++ )
     {
-        double fFilterMin =
-            this->xSession[ "settings" ][ "filters" ]
-                          [ uiI == 0 ? "coverage_bin_filter_column" : "coverage_bin_filter_row" ][ "val_min" ]
-                              .get<double>( );
-        double fFilterMax =
-            this->xSession[ "settings" ][ "filters" ]
-                          [ uiI == 0 ? "coverage_bin_filter_column" : "coverage_bin_filter_row" ][ "val_max" ]
-                              .get<double>( );
+        double fFilterMin = getValue<double>(
+            { "settings", "filters", uiI == 0 ? "coverage_bin_filter_column" : "coverage_bin_filter_row", "val_min" } );
+        double fFilterMax = getValue<double>(
+            { "settings", "filters", uiI == 0 ? "coverage_bin_filter_column" : "coverage_bin_filter_row", "val_max" } );
         for( size_t uiX = 0; uiX < vvCombinedCoverageValues[ uiI ].size( ); uiX++ )
         {
             vAxisCords[ uiI ][ uiX ].bFiltered = vvCombinedCoverageValues[ uiI ][ uiX ] < fFilterMin ||
@@ -649,7 +641,7 @@ bool PartialQuarry::setFilteredCoords( )
 
 bool PartialQuarry::setSymmetry( )
 {
-    std::string sSymmetry = this->xSession[ "settings" ][ "filters" ][ "symmetry" ].get<std::string>( );
+    std::string sSymmetry = getValue<std::string>( { "settings", "filters", "symmetry" } );
     if( sSymmetry == "all" )
         uiSymmetry = 0;
     else if( sSymmetry == "sym" )
@@ -666,9 +658,8 @@ bool PartialQuarry::setSymmetry( )
 }
 bool PartialQuarry::setBinCoords( )
 {
-    size_t uiManhattenDist = 1000 *
-                             this->xSession[ "settings" ][ "filters" ][ "min_diag_dist" ][ "val" ].get<size_t>( ) /
-                             this->xSession[ "dividend" ].get<size_t>( );
+    size_t uiManhattenDist = 1000 * getValue<size_t>( { "settings", "filters", "min_diag_dist", "val" } ) /
+                             getValue<size_t>( { "dividend" } );
 
     vBinCoords.clear( );
     vBinCoords.reserve( vAxisCords[ 0 ].size( ) * vAxisCords[ 1 ].size( ) );
@@ -938,21 +929,29 @@ void PartialQuarry::regCoords( )
                   ComputeNode{ .sNodeName = "longest_common_substring",
                                .fFunc = &PartialQuarry::setLCS,
                                .vIncomingFunctions = { },
-                               .vIncomingSession = { { "contigs", "list" } } } );
+                               .vIncomingSession = { { "contigs", "list" } },
+                               .vSessionsIncomingInPrevious = {} } );
 
-    registerNode(
-        NodeNames::ActiveChrom,
-        ComputeNode{ .sNodeName = "active_chroms",
-                     .fFunc = &PartialQuarry::setActiveChrom,
-                     .vIncomingFunctions = { },
-                     .vIncomingSession = { { "contigs", "displayed_on_x" }, { "contigs", "displayed_on_y" } } } );
+    registerNode( NodeNames::ActiveChrom,
+                  ComputeNode{ .sNodeName = "active_chroms",
+                               .fFunc = &PartialQuarry::setActiveChrom,
+                               .vIncomingFunctions = { },
+                               .vIncomingSession = { { "contigs", "displayed_on_x" },
+                                                     { "contigs", "displayed_on_y" },
+                                                     { "contigs", "lengths" } },
+                               .vSessionsIncomingInPrevious = {} } );
 
     registerNode(
         NodeNames::Ticks,
         ComputeNode{ .sNodeName = "ticks",
                      .fFunc = &PartialQuarry::setTicks,
                      .vIncomingFunctions = { NodeNames::LCS, NodeNames::AnnotationValues, NodeNames::CanvasSize },
-                     .vIncomingSession = {} } );
+                     .vIncomingSession = { },
+                     .vSessionsIncomingInPrevious = { { "contigs", "column_coordinates" },
+                                                      { "contigs", "row_coordinates" },
+                                                      { "settings", "filters", "anno_in_multiple_bins" },
+                                                      { "annotation", "by_name" },
+                                                      { "dividend" } } } );
 
     registerNode( NodeNames::CanvasSize,
                   ComputeNode{ .sNodeName = "canvas_size",
@@ -960,7 +959,9 @@ void PartialQuarry::regCoords( )
                                .vIncomingFunctions = { NodeNames::ActiveChrom },
                                .vIncomingSession = { { "contigs", "column_coordinates" },
                                                      { "contigs", "row_coordinates" },
-                                                     { "settings", "filters", "anno_in_multiple_bins" } } } );
+                                                     { "settings", "filters", "anno_in_multiple_bins" },
+                                                     { "annotation", "by_name" } },
+                               .vSessionsIncomingInPrevious = {} } );
 
     registerNode( NodeNames::AxisCoords,
                   ComputeNode{ .sNodeName = "axis_coords",
@@ -970,33 +971,37 @@ void PartialQuarry::regCoords( )
                                                      { "settings", "filters", "multiple_annos_in_bin" },
                                                      { "settings", "filters", "anno_in_multiple_bins" },
                                                      { "contigs", "column_coordinates" },
-                                                     { "contigs", "row_coordinates" } } } );
-    registerNode(
-        NodeNames::FilteredCoords,
-        ComputeNode{ .sNodeName = "filtered_coords",
-                     .fFunc = &PartialQuarry::setFilteredCoords,
-                     .vIncomingFunctions = { NodeNames::AnnotationValues, NodeNames::CombinedCoverageValues },
-                     .vIncomingSession = { { "settings", "filters", "coverage_bin_filter_column", "val_min" },
-                                           { "settings", "filters", "coverage_bin_filter_column", "val_max" },
-                                           { "settings", "filters", "coverage_bin_filter_row", "val_min" },
-                                           { "settings", "filters", "coverage_bin_filter_row", "val_max" } } } );
+                                                     { "contigs", "row_coordinates" } },
+                               .vSessionsIncomingInPrevious = {} } );
+    registerNode( NodeNames::FilteredCoords,
+                  ComputeNode{ .sNodeName = "filtered_coords",
+                               .fFunc = &PartialQuarry::setFilteredCoords,
+                               .vIncomingFunctions = { NodeNames::AnnotationValues, NodeNames::CombinedCoverageValues },
+                               .vIncomingSession = { { "settings", "filters", "coverage_bin_filter_column", "val_min" },
+                                                     { "settings", "filters", "coverage_bin_filter_column", "val_max" },
+                                                     { "settings", "filters", "coverage_bin_filter_row", "val_min" },
+                                                     { "settings", "filters", "coverage_bin_filter_row", "val_max" } },
+                               .vSessionsIncomingInPrevious = {} } );
 
     registerNode( NodeNames::Symmetry, ComputeNode{ .sNodeName = "symmetry_setting",
                                                     .fFunc = &PartialQuarry::setSymmetry,
                                                     .vIncomingFunctions = { },
-                                                    .vIncomingSession = { { "settings", "filters", "symmetry" } } } );
+                                                    .vIncomingSession = { { "settings", "filters", "symmetry" } },
+                                                    .vSessionsIncomingInPrevious = {} } );
 
     registerNode( NodeNames::BinCoords,
                   ComputeNode{ .sNodeName = "bin_coords",
                                .fFunc = &PartialQuarry::setBinCoords,
                                .vIncomingFunctions = { NodeNames::FilteredCoords },
-                               .vIncomingSession = { { "settings", "filters", "min_diag_dist", "val" } } } );
+                               .vIncomingSession = { { "settings", "filters", "min_diag_dist", "val" } },
+                               .vSessionsIncomingInPrevious = { { "dividend" } } } );
 
     registerNode( NodeNames::DecayCoords,
                   ComputeNode{ .sNodeName = "decay_coords",
                                .fFunc = &PartialQuarry::setDecayCoords,
                                .vIncomingFunctions = { NodeNames::BinCoords },
-                               .vIncomingSession = {} } );
+                               .vIncomingSession = { },
+                               .vSessionsIncomingInPrevious = {} } );
 }
 
 } // namespace cm

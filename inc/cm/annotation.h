@@ -12,7 +12,7 @@ bool PartialQuarry::setActivateAnnotation( )
     for( size_t uiX : { 0, 1 } )
     {
         vActiveAnnotation[ uiX ].clear( );
-        auto& rList = this->xSession[ "annotation" ][ uiX == 0 ? "visible_x" : "visible_y" ];
+        auto rList = getValue<json>( { "annotation", uiX == 0 ? "visible_x" : "visible_y" } );
         vActiveAnnotation[ uiX ].reserve( rList.size( ) );
         for( auto& rRep : rList )
         {
@@ -53,10 +53,8 @@ size_t multiple_bins( std::string sVal )
 
 bool PartialQuarry::setAnnotationValues( )
 {
-    size_t uiMaxDetailedDisplay =
-        this->xSession[ "settings" ][ "interface" ][ "max_detailed_anno_display" ].get<size_t>( );
-    const bool bSqueeze =
-        this->xSession[ "settings" ][ "filters" ][ "anno_in_multiple_bins" ].get<std::string>( ) == "squeeze";
+    size_t uiMaxDetailedDisplay = getValue<size_t>( { "settings", "interface", "max_detailed_anno_display" } );
+    const bool bSqueeze = getValue<std::string>( { "settings", "filters", "anno_in_multiple_bins" } ) == "squeeze";
     for( size_t uiX : { 0, 1 } )
     {
         size_t uiMinAnnoDist = 2;
@@ -69,7 +67,7 @@ bool PartialQuarry::setAnnotationValues( )
         vMaxAnnoRows[ uiX ] = 1;
         for( std::string sCurrAnno : vActiveAnnotation[ uiX ] )
         {
-            auto& rJson = this->xSession[ "annotation" ][ "by_name" ][ sCurrAnno ];
+            auto rJson = getValue<json>( { "annotation", "by_name", sCurrAnno } );
             for( AxisRegion& xRegion : vAxisRegions[ uiX ] )
             {
                 CANCEL_RETURN;
@@ -82,7 +80,7 @@ bool PartialQuarry::setAnnotationValues( )
         }
         for( std::string sCurrAnno : vActiveAnnotation[ uiX ] )
         {
-            auto& rJson = this->xSession[ "annotation" ][ "by_name" ][ sCurrAnno ];
+            auto rJson = getValue<json>( { "annotation", "by_name", sCurrAnno } );
             vAnnotationValues[ uiX ].emplace_back( );
             if( uiTotalCount < uiMaxDetailedDisplay )
             {
@@ -168,9 +166,9 @@ bool PartialQuarry::setAnnotationCDS( )
     using namespace pybind11::literals;
     pybind11::gil_scoped_acquire acquire;
 
-    size_t uiDividend = this->xSession[ "dividend" ].get<size_t>( );
+    size_t uiDividend = getValue<size_t>( { "dividend" } );
 
-    double fMinAnnoDist = this->xSession[ "settings" ][ "interface" ][ "min_anno_dist" ].get<double>( );
+    double fMinAnnoDist = getValue<double>( { "settings", "interface", "min_anno_dist" } );
 
     for( size_t uiX : { 0, 1 } )
     {
@@ -291,25 +289,31 @@ void PartialQuarry::regAnnotation( )
                   ComputeNode{ .sNodeName = "active_annotation",
                                .fFunc = &PartialQuarry::setActivateAnnotation,
                                .vIncomingFunctions = { },
-                               .vIncomingSession = { { "annotation", "visible_x" }, { "annotation", "visible_y" } } } );
+                               .vIncomingSession = { { "annotation", "visible_x" }, { "annotation", "visible_y" } },
+                               .vSessionsIncomingInPrevious = {} } );
 
-    registerNode( NodeNames::AnnotationValues,
-                  ComputeNode{ .sNodeName = "annotation_values",
-                               .fFunc = &PartialQuarry::setAnnotationValues,
-                               .vIncomingFunctions = { NodeNames::ActivateAnnotation, NodeNames::AxisCoords },
-                               .vIncomingSession = { { "annotation", "by_name" } } } );
+    registerNode(
+        NodeNames::AnnotationValues,
+        ComputeNode{ .sNodeName = "annotation_values",
+                     .fFunc = &PartialQuarry::setAnnotationValues,
+                     .vIncomingFunctions = { NodeNames::ActivateAnnotation, NodeNames::AxisCoords },
+                     .vIncomingSession = { { "annotation", "by_name" },
+                                           { "settings", "interface", "max_detailed_anno_display" } },
+                     .vSessionsIncomingInPrevious = { { "settings", "filters", "anno_in_multiple_bins" } } } );
 
     registerNode( NodeNames::AnnotationCDS,
                   ComputeNode{ .sNodeName = "annotation_cds",
                                .fFunc = &PartialQuarry::setAnnotationCDS,
                                .vIncomingFunctions = { NodeNames::AnnotationValues, NodeNames::AnnotationColors },
-                               .vIncomingSession = {} } );
+                               .vIncomingSession = { { "settings", "interface", "min_anno_dist" } },
+                               .vSessionsIncomingInPrevious = { { "dividend" } } } );
 
     registerNode( NodeNames::ActivateAnnotationCDS,
                   ComputeNode{ .sNodeName = "active_annotation_cds",
                                .fFunc = &PartialQuarry::setActivateAnnotationCDS,
                                .vIncomingFunctions = { NodeNames::ActivateAnnotation },
-                               .vIncomingSession = {} } );
+                               .vIncomingSession = { },
+                               .vSessionsIncomingInPrevious = {} } );
 }
 
 } // namespace cm

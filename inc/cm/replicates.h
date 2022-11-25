@@ -8,14 +8,14 @@ namespace cm
 
 bool PartialQuarry::setActiveReplicates( )
 {
-    auto& rList = this->xSession[ "replicates" ][ "list" ];
+    auto rList = getValue<json>( { "replicates", "list" } );
     vActiveReplicates.clear( );
     vActiveReplicates.reserve( rList.size( ) );
 
     std::set<std::string> xHave{ };
     std::array<std::set<std::string>, 2> vGroups;
     for( size_t uiI = 0; uiI < 2; uiI++ )
-        for( auto& xRepl : this->xSession[ "replicates" ][ uiI == 0 ? "in_group_a" : "in_group_b" ] )
+        for( auto& xRepl : getValue<json>( { "replicates", uiI == 0 ? "in_group_a" : "in_group_b" } ) )
         {
             CANCEL_RETURN;
             xHave.insert( xRepl.get<std::string>( ) );
@@ -42,7 +42,7 @@ bool PartialQuarry::setActiveReplicates( )
 
 bool PartialQuarry::setIntersectionType( )
 {
-    std::string sRenderSetting = this->xSession[ "settings" ][ "filters" ][ "ambiguous_mapping" ].get<std::string>( );
+    std::string sRenderSetting = getValue<std::string>( { "settings", "filters", "ambiguous_mapping" } );
 
     if( sRenderSetting == "enclosed" )
         xIntersect = sps::IntersectionType::enclosed;
@@ -90,20 +90,20 @@ bool PartialQuarry::setBinValues( )
     vActiveReplicatesTotal.clear( );
     vActiveReplicatesTotal.reserve( vActiveReplicates.size( ) );
 
-    size_t uiMinuend = this->xSession[ "settings" ][ "normalization" ][ "min_interactions" ][ "val" ].get<size_t>( );
+    size_t uiMinuend = getValue<size_t>( { "settings", "normalization", "min_interactions", "val" } );
 
     for( std::string& sRep : vActiveReplicates )
     {
         vvBinValues.emplace_back( );
         vvBinValues.back( ).reserve( vBinCoords.size( ) );
 
-        bool bHasMapQ = this->xSession[ "replicates" ][ "by_name" ][ sRep ][ "has_map_q" ];
-        bool bHasMultiMap = this->xSession[ "replicates" ][ "by_name" ][ sRep ][ "has_multimapping" ];
+        bool bHasMapQ = getValue<bool>( { "replicates", "by_name", sRep, "has_map_q" } );
+        bool bHasMultiMap = getValue<bool>( { "replicates", "by_name", sRep, "has_multimapping" } );
 
-        size_t uiMapQMin = this->xSession[ "settings" ][ "filters" ][ "mapping_q" ][ "val_min" ].get<size_t>( );
-        size_t uiMapQMax = this->xSession[ "settings" ][ "filters" ][ "mapping_q" ][ "val_max" ].get<size_t>( );
+        size_t uiMapQMin = getValue<size_t>( { "settings", "filters", "mapping_q", "val_min" } );
+        size_t uiMapQMax = getValue<size_t>( { "settings", "filters", "mapping_q", "val_max" } );
 
-        bool bIncomplAlignment = this->xSession[ "settings" ][ "filters" ][ "incomplete_alignments" ].get<bool>( );
+        bool bIncomplAlignment = getValue<bool>( { "settings", "filters", "incomplete_alignments" } );
 
         if( !( uiMapQMin == 0 && bIncomplAlignment ) )
             ++uiMapQMin;
@@ -120,9 +120,9 @@ bool PartialQuarry::setBinValues( )
             {
                 if( vCoords[ uiI ].sChromosomeX != "" )
                 {
-                    size_t iDataSetId = this->xSession[ "replicates" ][ "by_name" ][ sRep ][ "ids" ]
-                                                      [ vCoords[ uiI ].sChromosomeX ][ vCoords[ uiI ].sChromosomeY ]
-                                                          .get<size_t>( );
+                    size_t iDataSetId =
+                        getValue<size_t>( { "replicates", "by_name", sRep, "ids", vCoords[ uiI ].sChromosomeX,
+                                            vCoords[ uiI ].sChromosomeY } );
 
                     if( bHasMapQ && bHasMultiMap )
                         vVals[ uiI ] = xIndices.getIndex<3, 2>( )->count(
@@ -168,7 +168,7 @@ bool PartialQuarry::setBinValues( )
 
             vvBinValues.back( ).push_back( symmetry( vVals[ 0 ], vVals[ 1 ] ) );
 
-            size_t uiTot = this->xSession[ "replicates" ][ "by_name" ][ sRep ][ "total_reads" ].get<size_t>( );
+            size_t uiTot = getValue<size_t>( { "replicates", "by_name", sRep, "total_reads" } );
             vActiveReplicatesTotal.push_back( symmetry( uiTot, uiTot ) );
         }
     }
@@ -180,23 +180,23 @@ bool PartialQuarry::setDecayValues( )
     vvDecayValues.clear( );
     vvDecayValues.reserve( vActiveReplicates.size( ) );
 
-    size_t uiMinuend = this->xSession[ "settings" ][ "normalization" ][ "min_interactions" ][ "val" ].get<size_t>( );
-    size_t uiSamplesMin = this->xSession[ "settings" ][ "normalization" ][ "ddd_samples" ][ "val_min" ].get<size_t>( );
-    size_t uiSamplesMax = this->xSession[ "settings" ][ "normalization" ][ "ddd_samples" ][ "val_max" ].get<size_t>( );
-    double fQuantExcl = this->xSession[ "settings" ][ "normalization" ][ "ddd_quantile" ][ "val" ].get<double>( );
+    size_t uiMinuend = getValue<size_t>( { "settings", "normalization", "min_interactions", "val" } );
+    size_t uiSamplesMin = getValue<size_t>( { "settings", "normalization", "ddd_samples", "val_min" } );
+    size_t uiSamplesMax = getValue<size_t>( { "settings", "normalization", "ddd_samples", "val_max" } );
+    double fQuantExcl = getValue<double>( { "settings", "normalization", "ddd_quantile", "val" } );
 
     for( std::string& sRep : vActiveReplicates )
     {
         vvDecayValues.emplace_back( );
         vvDecayValues.back( ).reserve( vDistDepDecCoords.size( ) );
 
-        bool bHasMapQ = this->xSession[ "replicates" ][ "by_name" ][ sRep ][ "has_map_q" ];
-        bool bHasMultiMap = this->xSession[ "replicates" ][ "by_name" ][ sRep ][ "has_multimapping" ];
+        bool bHasMapQ = getValue<bool>( { "replicates", "by_name", sRep, "has_map_q" } );
+        bool bHasMultiMap = getValue<bool>( { "replicates", "by_name", sRep, "has_multimapping" } );
 
-        size_t uiMapQMin = this->xSession[ "settings" ][ "filters" ][ "mapping_q" ][ "val_min" ].get<size_t>( );
-        size_t uiMapQMax = this->xSession[ "settings" ][ "filters" ][ "mapping_q" ][ "val_max" ].get<size_t>( );
+        size_t uiMapQMin = getValue<size_t>( { "settings", "filters", "mapping_q", "val_min" } );
+        size_t uiMapQMax = getValue<size_t>( { "settings", "filters", "mapping_q", "val_max" } );
 
-        bool bIncomplAlignment = this->xSession[ "settings" ][ "filters" ][ "incomplete_alignments" ].get<bool>( );
+        bool bIncomplAlignment = getValue<bool>( { "settings", "filters", "incomplete_alignments" } );
 
         if( !( uiMapQMin == 0 && bIncomplAlignment ) )
             ++uiMapQMin;
@@ -213,11 +213,10 @@ bool PartialQuarry::setDecayValues( )
             {
                 if( vCoords[ uiI ].sChromosome != "" )
                 {
-                    size_t iDataSetId = this->xSession[ "replicates" ][ "by_name" ][ sRep ][ "ids" ]
-                                                      [ vCoords[ uiI ].sChromosome ][ vCoords[ uiI ].sChromosome ]
-                                                          .get<size_t>( );
+                    size_t iDataSetId = getValue<size_t>( { "replicates", "by_name", sRep, "ids",
+                                                            vCoords[ uiI ].sChromosome, vCoords[ uiI ].sChromosome } );
                     int64_t iChrSize =
-                        (int64_t)this->xSession[ "contigs" ][ "lengths" ][ vCoords[ uiI ].sChromosome ].get<size_t>( );
+                        (int64_t)getValue<size_t>( { "contigs", "lengths", vCoords[ uiI ].sChromosome } );
 
                     int64_t iCornerPos = ( vCoords[ uiI ].iFrom + vCoords[ uiI ].iTo ) / 2;
 
@@ -225,13 +224,13 @@ bool PartialQuarry::setDecayValues( )
                     int64_t iTop = 2 * iChrSize - iBot;
 
                     int64_t iMyH = vCoords[ uiI ].iTo - vCoords[ uiI ].iFrom;
-                    int64_t iH = std::max( (int64_t)1, ( (iTop - iMyH) - iBot ) / (int64_t)uiSamplesMax );
+                    int64_t iH = std::max( (int64_t)1, ( ( iTop - iMyH ) - iBot ) / (int64_t)uiSamplesMax );
 
-                    if( (iTop - iMyH) - iBot >= (int64_t)uiSamplesMin * iMyH )
+                    if( ( iTop - iMyH ) - iBot >= (int64_t)uiSamplesMin * iMyH )
                     {
                         std::vector<size_t> vvVals;
                         vvVals.reserve( uiSamplesMax );
-                        for( int64_t iMyBot = iBot; iMyBot <= iTop - iMyH; iMyBot+=iH )
+                        for( int64_t iMyBot = iBot; iMyBot <= iTop - iMyH; iMyBot += iH )
                         {
                             int64_t iMyTop = iMyBot + iMyH;
 
@@ -241,8 +240,8 @@ bool PartialQuarry::setDecayValues( )
                             assert( iMyTop >= iCornerPos );
                             size_t uiYe = std::max( uiYs + 1, (size_t)( iMyTop + iCornerPos ) / 2 );
                             size_t uiXe = std::max( uiXs + 1, (size_t)( iMyTop - iCornerPos ) / 2 );
-                            assert(uiYe <= (size_t)iChrSize);
-                            assert(uiXe <= (size_t)iChrSize);
+                            assert( uiYe <= (size_t)iChrSize );
+                            assert( uiXe <= (size_t)iChrSize );
 
                             if( bHasMapQ && bHasMultiMap )
                                 vvVals.push_back( xIndices.getIndex<3, 2>( )->count(
@@ -264,14 +263,15 @@ bool PartialQuarry::setDecayValues( )
                         }
 
                         std::sort( vvVals.begin( ), vvVals.end( ) );
-                        if(fQuantExcl >= 0.5)
+                        if( fQuantExcl >= 0.5 )
                             vVals[ uiI ] = (double)vvVals[ vvVals.size( ) / 2 ];
                         else
                         {
                             vVals[ uiI ] = 0;
-                            for(size_t uiJ = vvVals.size( ) * fQuantExcl; uiJ < vvVals.size( ) * (1-fQuantExcl); uiJ++)
+                            for( size_t uiJ = vvVals.size( ) * fQuantExcl; uiJ < vvVals.size( ) * ( 1 - fQuantExcl );
+                                 uiJ++ )
                                 vVals[ uiI ] += (double)vvVals[ uiJ ];
-                            vVals[ uiI ] /= (size_t)((double)vvVals.size( ) * (1.0-2.0*fQuantExcl));
+                            vVals[ uiI ] /= (size_t)( (double)vvVals.size( ) * ( 1.0 - 2.0 * fQuantExcl ) );
                         }
                     }
                     else
@@ -289,7 +289,7 @@ bool PartialQuarry::setDecayValues( )
 
 bool PartialQuarry::setInGroup( )
 {
-    std::string sInGroupSetting = this->xSession[ "settings" ][ "replicates" ][ "in_group" ].get<std::string>( );
+    std::string sInGroupSetting = getValue<std::string>( { "settings", "replicates", "in_group" } );
     if( sInGroupSetting == "min" )
         iInGroupSetting = 0;
     else if( sInGroupSetting == "sum" )
@@ -307,7 +307,7 @@ bool PartialQuarry::setInGroup( )
 
 bool PartialQuarry::setBetweenGroup( )
 {
-    std::string sBetwGroupSetting = this->xSession[ "settings" ][ "replicates" ][ "between_group" ].get<std::string>( );
+    std::string sBetwGroupSetting = getValue<std::string>( { "settings", "replicates", "between_group" } );
     if( sBetwGroupSetting == "1st" )
         iBetweenGroupSetting = 0;
     else if( sBetwGroupSetting == "2nd" )
@@ -466,14 +466,14 @@ bool PartialQuarry::setDecayCDS( )
     pybind11::list vYs;
     pybind11::list vColors;
 
-    size_t uiDividend = this->xSession[ "dividend" ].get<size_t>( );
+    size_t uiDividend = getValue<size_t>( { "dividend" } );
 
     size_t uiCnt = 0;
     for( size_t uiJ = 0; uiJ < 2; uiJ++ )
     {
         std::map<std::string, size_t> xColors;
         std::string sChr = "";
-        for( size_t uiI = 0; uiI < vDistDepDecCoords.size(); uiI++ )
+        for( size_t uiI = 0; uiI < vDistDepDecCoords.size( ); uiI++ )
         {
             std::string sChrCurr = vDistDepDecCoords[ uiI ][ uiJ ].sChromosome;
             if( sChrCurr.size( ) > 0 )
@@ -486,8 +486,8 @@ bool PartialQuarry::setDecayCDS( )
                 pybind11::list vY;
                 int64_t iF = vDistDepDecCoords[ uiI ][ uiJ ].iFrom * (int64_t)uiDividend;
                 int64_t iT = vDistDepDecCoords[ uiI ][ uiJ ].iTo * (int64_t)uiDividend;
-                double fVal = 1000.0 * 1000.0 * vvFlatDecay[ uiI ][ uiJ ] / (double)((iT - iF)*(iT-iF));
-                vX.append( iF ); 
+                double fVal = 1000.0 * 1000.0 * vvFlatDecay[ uiI ][ uiJ ] / (double)( ( iT - iF ) * ( iT - iF ) );
+                vX.append( iF );
                 vY.append( fVal );
 
                 vX.append( iT );
@@ -496,9 +496,9 @@ bool PartialQuarry::setDecayCDS( )
                 vChrs.append( substringChr( sChrCurr ) + ( uiJ == 0 ? " A" : " B" ) );
                 vXs.append( vX );
                 vYs.append( vY );
-                if(xColors.count(sChrCurr) == 0)
-                    xColors[sChrCurr] = (uiCnt++) % vColorPaletteAnnotation.size( );
-                vColors.append( vColorPaletteAnnotation[ xColors[sChrCurr] ] );
+                if( xColors.count( sChrCurr ) == 0 )
+                    xColors[ sChrCurr ] = ( uiCnt++ ) % vColorPaletteAnnotation.size( );
+                vColors.append( vColorPaletteAnnotation[ xColors[ sChrCurr ] ] );
             }
 
             CANCEL_RETURN;
@@ -520,63 +520,83 @@ const pybind11::dict PartialQuarry::getDecayCDS( )
 
 void PartialQuarry::regReplicates( )
 {
-    registerNode(
-        NodeNames::ActiveReplicates,
-        ComputeNode{ .sNodeName = "active_replicates",
-                     .fFunc = &PartialQuarry::setActiveReplicates,
-                     .vIncomingFunctions = { },
-                     .vIncomingSession = { { "replicates", "in_group_a" }, { "replicates", "in_group_b" } } } );
+    registerNode( NodeNames::ActiveReplicates,
+                  ComputeNode{ .sNodeName = "active_replicates",
+                               .fFunc = &PartialQuarry::setActiveReplicates,
+                               .vIncomingFunctions = { },
+                               .vIncomingSession = { { "replicates", "in_group_a" },
+                                                     { "replicates", "in_group_b" },
+                                                     { "replicates", "list" } },
+                               .vSessionsIncomingInPrevious = {} } );
 
     registerNode( NodeNames::IntersectionType,
                   ComputeNode{ .sNodeName = "intersection_type",
                                .fFunc = &PartialQuarry::setIntersectionType,
                                .vIncomingFunctions = { },
-                               .vIncomingSession = { { "settings", "filters", "ambiguous_mapping" } } } );
+                               .vIncomingSession = { { "settings", "filters", "ambiguous_mapping" } },
+                               .vSessionsIncomingInPrevious = {} } );
 
-    registerNode( NodeNames::BinValues,
-                  ComputeNode{ .sNodeName = "bin_values",
-                               .fFunc = &PartialQuarry::setBinValues,
-                               .vIncomingFunctions = { NodeNames::BinCoords, NodeNames::ActiveReplicates },
-                               .vIncomingSession = {} } );
+    registerNode(
+        NodeNames::BinValues,
+        ComputeNode{ .sNodeName = "bin_values",
+                     .fFunc = &PartialQuarry::setBinValues,
+                     .vIncomingFunctions = { NodeNames::BinCoords, NodeNames::ActiveReplicates },
+                     .vIncomingSession = { },
+                     .vSessionsIncomingInPrevious = { { "settings", "normalization", "min_interactions", "val" },
+                                                      { "replicates", "by_name" },
+                                                      { "settings", "filters", "mapping_q", "val_min" },
+                                                      { "settings", "filters", "mapping_q", "val_max" },
+                                                      { "settings", "filters", "incomplete_alignments" } } } );
 
-    registerNode( NodeNames::DecayValues,
-                  ComputeNode{ .sNodeName = "decay_values",
-                               .fFunc = &PartialQuarry::setDecayValues,
-                               .vIncomingFunctions = { NodeNames::DecayCoords, NodeNames::ActiveReplicates },
-                               .vIncomingSession = { 
-                                { "settings", "normalization", "ddd_samples", "val_min" },
-                                { "settings", "normalization", "ddd_samples", "val_max" },
-                                                     { "settings", "normalization", "ddd_quantile", "val" } } } );
+    registerNode(
+        NodeNames::DecayValues,
+        ComputeNode{ .sNodeName = "decay_values",
+                     .fFunc = &PartialQuarry::setDecayValues,
+                     .vIncomingFunctions = { NodeNames::DecayCoords, NodeNames::ActiveReplicates },
+                     .vIncomingSession = { { "settings", "normalization", "ddd_samples", "val_min" },
+                                           { "settings", "normalization", "ddd_samples", "val_max" },
+                                           { "settings", "normalization", "ddd_quantile", "val" } },
+                     .vSessionsIncomingInPrevious = { { "settings", "normalization", "min_interactions", "val" },
+                                                      { "replicates", "by_name" },
+                                                      { "settings", "filters", "mapping_q", "val_min" },
+                                                      { "settings", "filters", "mapping_q", "val_max" },
+                                                      { "settings", "filters", "incomplete_alignments" },
+                                                      { "contigs", "lengths" } } } );
 
     registerNode( NodeNames::InGroup,
                   ComputeNode{ .sNodeName = "in_group_setting",
                                .fFunc = &PartialQuarry::setInGroup,
                                .vIncomingFunctions = { },
-                               .vIncomingSession = { { "settings", "replicates", "in_group" } } } );
+                               .vIncomingSession = { { "settings", "replicates", "in_group" } },
+                               .vSessionsIncomingInPrevious = {} } );
 
     registerNode( NodeNames::BetweenGroup,
                   ComputeNode{ .sNodeName = "between_group_setting",
                                .fFunc = &PartialQuarry::setBetweenGroup,
                                .vIncomingFunctions = { },
-                               .vIncomingSession = { { "settings", "replicates", "between_group" } } } );
+                               .vIncomingSession = { { "settings", "replicates", "between_group" } },
+                               .vSessionsIncomingInPrevious = {} } );
 
     registerNode( NodeNames::FlatValues,
                   ComputeNode{ .sNodeName = "flat_bins",
                                .fFunc = &PartialQuarry::setFlatValues,
                                .vIncomingFunctions = { NodeNames::BinValues },
-                               .vIncomingSession = {} } );
+                               .vIncomingSession = { },
+                               .vSessionsIncomingInPrevious = {} } );
 
     registerNode( NodeNames::FlatDecay,
                   ComputeNode{ .sNodeName = "flat_decay",
                                .fFunc = &PartialQuarry::setFlatDecay,
                                .vIncomingFunctions = { NodeNames::DecayValues },
-                               .vIncomingSession = {} } );
+                               .vIncomingSession = { },
+                               .vSessionsIncomingInPrevious = {} } );
 
     registerNode( NodeNames::DecayCDS,
                   ComputeNode{ .sNodeName = "decay_cds",
                                .fFunc = &PartialQuarry::setDecayCDS,
                                .vIncomingFunctions = { NodeNames::FlatDecay, NodeNames::AnnotationColors },
-                               .vIncomingSession = {} } );
+                               .vIncomingSession = { },
+                               .vSessionsIncomingInPrevious = { { "dividend" } } } );
 }
 
 } // namespace cm
