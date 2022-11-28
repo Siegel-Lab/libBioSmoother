@@ -28,187 +28,142 @@ def read_xa_tag(tags):
     return l
 
 
-def parse_heatmap(in_filename, test, chr_filter):
+def parse_tsv(in_filename, test, chr_filter, line_format):
     with open(in_filename, "r") as in_file_1:
         cnt = 0
         for line in in_file_1:
             # parse file columns
             num_cols = len(line.split())
-            if num_cols == 7:
-                read_name, chr_1, pos_1, chr_2, pos_2, mapq_1, mapq_2 = line.split()
-                tag_a = "?"
-                tag_b = "?"
-            elif num_cols == 9:
-                (
-                    read_name,
-                    chr_1,
-                    pos_1,
-                    chr_2,
-                    pos_2,
-                    mapq_1,
-                    mapq_2,
-                    tag_a,
-                    tag_b,
-                ) = line.split()
-            elif num_cols == 11:
-                (
-                    read_name,
-                    _1,
-                    chr_1,
-                    pos_1,
-                    _2,
-                    _3,
-                    chr_2,
-                    pos_2,
-                    _4,
-                    mapq_1,
-                    mapq_2,
-                ) = line.split()
-                tag_a = "?"
-                tag_b = "?"
-            elif num_cols == 13:
-                (
-                    read_name,
-                    _1,
-                    chr_1,
-                    pos_1,
-                    _2,
-                    _3,
-                    chr_2,
-                    pos_2,
-                    _4,
-                    mapq_1,
-                    mapq_2,
-                    tag_a,
-                    tag_b,
-                ) = line.split()
+            if num_cols in line_format:
+                read_name, chrs, poss, mapqs, tags = line_format[num_cols](*line.split())
+
+                cont = False
+                for chr_ in chrs:
+                    if not chr_ in chr_filter:
+                        cont = True
+                if cont:
+                    continue
+                mapqs = [0 if mapq in ["", "nomapq", "255", "*"] else mapq for mapq in mapqs]
+                poss = [int(x)-1 for x in poss]
+                mapqs = [int(x) for x in mapqs]
+
+                if cnt > TEST_FAC and test:
+                    break
+                cnt += 1
+
+                yield line, read_name, chrs, poss, mapqs, tags
             else:
                 raise ValueError(
                     'line "'
                     + line
                     + '" has '
                     + str(num_cols)
-                    + ", columns which is unexpected. There can be 7, 9, 11, or 13 columns."
+                    + ", columns which is unexpected. There can be ["
+                    + ", ".join(str(x) for x in line_format.keys())
+                    + "] columns."
                 )
 
-            if not chr_1 in chr_filter:
-                continue
-            if not chr_2 in chr_filter:
-                continue
-            if mapq_1 == "" or mapq_1 == "nomapq" or mapq_1 == "255" or mapq_1 == "*":
-                mapq_1 = 0
-            if mapq_2 == "" or mapq_2 == "nomapq" or mapq_2 == "255" or mapq_2 == "*":
-                mapq_2 = 0
-            # convert number values to ints
-            pos_1, pos_2, mapq_1, mapq_2 = (
-                int(x) for x in (pos_1, pos_2, mapq_1, mapq_2)
-            )
-            pos_1 -= 1
-            pos_2 -= 1
 
-            if cnt > TEST_FAC and test:
-                break
-            cnt += 1
+def parse_heatmap(in_filename, test, chr_filter):
+    yield from parse_tsv(in_filename, test, chr_filter, {
+        7: lambda read_name, chr_1, pos_1, chr_2, pos_2, mapq_1, mapq_2: 
+                (read_name, [chr_1, chr_2], [pos_1, pos_2], [mapq_1, mapq_2], ["?", "?"]),
+        9: lambda read_name, chr_1, pos_1, chr_2, pos_2, mapq_1, mapq_2, tag_a, tag_b: 
+                (read_name, [chr_1, chr_2], [pos_1, pos_2], [mapq_1, mapq_2], [tag_a, tag_b]),
+        11: lambda read_name, _1, chr_1, pos_1, _2, _3, chr_2, pos_2, _4, mapq_1, mapq_2: 
+                (read_name, [chr_1, chr_2], [pos_1, pos_2], [mapq_1, mapq_2], ["?", "?"]),
+        13: lambda read_name, _1, chr_1, pos_1, _2, _3, chr_2, pos_2, _4, mapq_1, mapq_2, tag_a, tag_b: 
+                (read_name, [chr_1, chr_2], [pos_1, pos_2], [mapq_1, mapq_2], [tag_a, tag_b]),
+    })
 
-            yield line, read_name, chr_1, int(pos_1), chr_2, int(
-                pos_2
-            ), mapq_1, mapq_2, tag_a, tag_b
+def parse_track(in_filename, test, chr_filter):
+    yield from parse_tsv(in_filename, test, chr_filter, {
+        4: lambda read_name, chr_1, pos_1, mapq_1: 
+                (read_name, [chr_1], [pos_1], [mapq_1], ["?"]),
+        5: lambda read_name, chr_1, pos_1, mapq_1, tag_a: 
+                (read_name, [chr_1], [pos_1], [mapq_1], [tag_a]),
+        6: lambda read_name, _1, chr_1, pos_1, _2, mapq_1: 
+                (read_name, [chr_1], [pos_1], [mapq_1], ["?"]),
+        7: lambda read_name, _1, chr_1, pos_1, _2, mapq_1, tag_a: 
+                (read_name, [chr_1], [pos_1], [mapq_1], [tag_a]),
+    })
 
 
-def has_map_q_and_multi_map(in_filename, test, chr_filter):
+def has_map_q_and_multi_map(in_filename, test, chr_filter, parse_func=parse_heatmap):
     map_q = False
     multi_map = False
     last_map_q = None
     last_read_name = None
-    for _, read_name, _, _, _, _, mapq_1, mapq_2, tag_a, tag_b in parse_heatmap(
-        in_filename, test, chr_filter
-    ):
+    for _, read_name, _, _, mapqs, tags in parse_func(in_filename, test, chr_filter):
         if last_read_name is None:
             last_read_name = read_name
         elif last_read_name == read_name:
             multi_map = True
-        if len(tag_a) >= 5 and tag_b != "notag":
-            multi_map = True
-        if len(tag_b) >= 5 and tag_b != "notag":
-            multi_map = True
+        for tag in tags:
+            if len(tag) >= 5 and tag != "notag":
+                multi_map = True
 
         if last_map_q is None:
-            last_map_q = mapq_1
-            if mapq_1 != mapq_2:
+            last_map_q = mapqs[0]
+        for mapq in mapqs:
+            if mapq != last_map_q:
                 map_q = True
-        elif last_map_q != mapq_1:
-            map_q = True
-        elif last_map_q != mapq_2:
-            map_q = True
 
         if map_q and multi_map:
             break
     return map_q, multi_map
 
 
-def group_heatmap(in_filename, file_size, chr_filter, no_groups=False, test=False):
+def group_reads(in_filename, file_size, chr_filter, parse_func=parse_heatmap, no_groups=False, test=False):
     file_name = simplified_filepath(in_filename)
     curr_read_name = None
-    group_1 = []
-    group_2 = []
+    group = []
 
     def deal_with_group():
-        nonlocal group_1
-        nonlocal group_2
+        nonlocal group
         do_cont = True
-        chr_1_cmp = group_1[0][0]
-        for chr_1, _1, _2 in group_1:
-            if chr_1_cmp != chr_1:
-                do_cont = False  # no reads that come from different chromosomes
-        chr_2_cmp = group_2[0][0]
-        for chr_2, _1, _2 in group_2:
-            if chr_2_cmp != chr_2:
-                do_cont = False  # no reads that come from different chromosomes
+        chrs = []
+        for g in group:
+            chr_1_cmp = g[0][0]
+            for chr_, _1, _2 in g:
+                if chr_1_cmp != chr_:
+                    do_cont = False # no reads that come from different chromosomes
+            chrs.append(chr_1_cmp)
         if do_cont:
-            if no_groups:
-                pos_1_s = group_1[1]
-                pos_1_e = group_1[1]
-                pos_2_s = group_2[1]
-                pos_2_e = group_2[1]
-            else:
-                pos_1_s = min([p for _1, p, _2 in group_1])
-                pos_1_e = max([p for _1, p, _2 in group_1])
-                pos_2_s = min([p for _1, p, _2 in group_2])
-                pos_2_e = max([p for _1, p, _2 in group_2])
-            map_q = min(
-                max(x for _1, _2, x in group_1), max(x for _1, _2, x in group_2)
-            )
-            if len(group_1) > 1 and len(group_2) > 1:
+            pos_s = []
+            pos_e = []
+            for g in group:
+                if no_groups:
+                    pos_s.append(g[0][1])
+                    pos_e.append(g[0][1])
+                else:
+                    pos_s.append(min([p for _1, p, _2 in g]))
+                    pos_e.append(max([p for _1, p, _2 in g]))
+            map_q = min( [max(x for _1, _2, x in g ) for g in group] )
+            if min(len(g) for g in group) > 1:
                 map_q += 1
-            yield curr_read_name, chr_1, pos_1_s, pos_1_e, chr_2, pos_2_s, pos_2_e, map_q
-        group_1 = []
-        group_2 = []
+            yield curr_read_name, chrs, pos_s, pos_e, map_q
+        group = []
 
     for idx_2, (
         _,
         read_name,
-        chr_1,
-        pos_1,
-        chr_2,
-        pos_2,
-        mapq_1,
-        mapq_2,
-        tag_1,
-        tag_2,
-    ) in enumerate(parse_heatmap(in_filename, test, chr_filter)):
-        if read_name != curr_read_name and len(group_1) > 0:
+        chrs,
+        poss,
+        mapqs,
+        tags,
+    ) in enumerate(parse_func(in_filename, test, chr_filter)):
+        if read_name != curr_read_name and len(group) > 0 and len(group[0]) > 0:
             yield from deal_with_group()
         curr_read_name = read_name
-        if tag_1 == "notag":
-            have_no_tag_1 = True
-        if tag_2 == "notag":
-            have_no_tag_1 = True
-        group_1.append((chr_1, int(pos_1), int(mapq_1)))
-        group_2.append((chr_2, int(pos_2), int(mapq_2)))
-        for chr_1, pos_1 in read_xa_tag(tag_1):
-            group_1.append((chr_1, int(pos_1), 0))
-        for chr_2, pos_2 in read_xa_tag(tag_2):
-            group_2.append((chr_2, int(pos_2), 0))
+        for tag in tags:
+            if tag == "notag":
+                have_no_tag_1 = True
+        for idx, (chr_, pos, mapq, tag) in enumerate(zip(chrs, poss, mapqs, tags)):
+            group.append([])
+            group[idx].append((chr_, pos, mapq))
+            for chr_1, pos_1 in read_xa_tag(tag):
+                group[idx].append((chr_1, int(pos_1), 0))
 
         if idx_2 % PRINT_MODULO == 0:
             print(
@@ -282,40 +237,98 @@ def chr_order_heatmap(
     chrs = {}
     for (
         read_name,
-        chr_1,
-        pos_1_s,
-        pos_1_e,
-        chr_2,
-        pos_2_s,
-        pos_2_e,
+        chrs_,
+        pos_s,
+        pos_e,
         map_q,
-    ) in group_heatmap(in_filename, file_size, chr_filter, no_groups, test):
+    ) in group_reads(in_filename, file_size, chr_filter, parse_heatmap, no_groups, test):
+        chr_1, chr_2 = chrs_
         if chr_1 not in out_files:
-            out_files[chr_1] = {}
+            out_files[chr_1] = set()
             chrs[chr_1] = set()
         if chr_2 not in out_files[chr_1]:
-            out_files[chr_1][chr_2] = open(prefix + "." + chr_1 + "." + chr_2, "x")
+            out_files[chr_1].add(chr_2)
             chrs[chr_1].add(chr_2)
+            ## clear file if exists
+            if os.path.exists(prefix + "." + chr_1 + "." + chr_2):
+                os.remove(prefix + "." + chr_1 + "." + chr_2)
 
-        out_files[chr_1][chr_2].write(
-            "\t".join(
-                [
-                    read_name,
-                    str(pos_1_s),
-                    str(pos_1_e),
-                    str(pos_2_s),
-                    str(pos_2_e),
-                    str(map_q),
-                ]
+        with open(prefix + "." + chr_1 + "." + chr_2, "a") as out_file:
+            out_file.write(
+                "\t".join(
+                    [
+                        read_name,
+                        str(pos_s[0]),
+                        str(pos_e[0]),
+                        str(pos_s[1]),
+                        str(pos_e[1]),
+                        str(map_q),
+                    ]
+                )
+                + "\n"
             )
-            + "\n"
-        )
-
-    for vals in out_files.values():
-        for val in vals.values():
-            val.close()
 
     return ChrOrderHeatmapIterator(chrs, prefix)
+
+
+class ChrOrderCoverageIterator:
+    def __init__(self, chrs, prefix):
+        self.chrs = chrs
+        self.prefix = prefix
+
+    def cleanup(self):
+        for chr_ in self.chrs:
+            os.remove(self.prefix + "." + chr_)
+
+    def itr_x_axis(self):
+        for x in self.chrs:
+            yield x
+
+    def itr_cell(self, chr_):
+        with open(self.prefix + "." + chr_, "r") as in_file:
+            for line in in_file:
+                yield line.split()
+
+
+def chr_order_coverage(
+    index_prefix,
+    dataset_name,
+    in_filename,
+    file_size,
+    chr_filter,
+    no_groups=False,
+    test=False,
+):
+    prefix = index_prefix + "/.tmp." + dataset_name
+    out_files = {}
+    chrs = set()
+    for (
+        read_name,
+        chrs_,
+        pos_s,
+        pos_e,
+        map_q,
+    ) in group_reads(in_filename, file_size, chr_filter, parse_track, no_groups, test):
+        if chrs_[0] not in chrs:
+            ## clear file if exists
+            if os.path.exists(prefix + "." + chrs_[0]):
+                os.remove(prefix + "." + chrs_[0])
+        chrs.add(chrs_[0])
+
+        with open(prefix + "." + chrs_[0], "a") as out_file:
+            out_file.write(
+                "\t".join(
+                    [
+                        read_name,
+                        str(pos_s[0]),
+                        str(pos_e[0]),
+                        str(map_q),
+                    ]
+                )
+                + "\n"
+            )
+
+    return ChrOrderCoverageIterator(chrs, prefix)
 
 
 def get_filesize(path):

@@ -197,7 +197,7 @@ class Indexer:
             multi_map = False
 
         self.progress_print(
-            "generating index",
+            "generating replicate",
             "with" if has_map_q else "without",
             "mapping quality and",
             "with" if multi_map else "without",
@@ -320,3 +320,107 @@ class Indexer:
         self.save_session()
 
         print("done generating index")
+
+    def add_normalization(
+        self,
+        path,
+        name,
+        group="a",
+        no_groups=False,
+        keep_points=False,
+        only_points=False,
+        no_map_q=False,
+        no_multi_map=False,
+    ):
+        if not self.name_unique(name):
+            raise RuntimeError(
+                "The track name you provide must be unique but is not. "
+                + "Use the <list> command to see all tracks."
+            )
+
+        if not (no_map_q and no_multi_map):
+            self.progress_print("pre-scanning file for index parameters...")
+            has_map_q, multi_map = has_map_q_and_multi_map(
+                path,
+                "test" in self.session_default,
+                self.session_default["contigs"]["list"],
+                parse_func=parse_track
+            )
+        if no_map_q:
+            has_map_q = False
+        if no_multi_map:
+            multi_map = False
+
+        self.progress_print(
+            "generating track",
+            "with" if has_map_q else "without",
+            "mapping quality and",
+            "with" if multi_map else "without",
+            "multi mapping.",
+        )
+
+        self.append_session(["coverage", "list"], name)
+        self.set_session(["coverage", "by_name", name], {
+            "ids": {},
+            "has_map_q": has_map_q,
+            "has_multimapping": multi_map,
+            "path": path,
+        })
+        if group in ["col", "both"]:
+            self.append_session(["coverage", "in_column"], name)
+        if group in ["row", "both"]:
+            self.append_session(["coverage", "in_row"], name)
+
+        o = 1 if multi_map else 0
+        d = o + 2 if has_map_q else 1
+
+        read_iterator = chr_order_coverage(
+            self.prefix + ".smoother_index",
+            name,
+            path,
+            get_filesize(path),
+            self.session_default["contigs"]["list"],
+            no_groups,
+            "test" in self.session_default,
+        )
+        total_reads = 0
+
+        for chr_x in read_iterator.itr_x_axis():
+            self.progress_print("generating track for contig", chr_x)
+            for (
+                read_name,
+                pos_1_s,
+                pos_1_e,
+                map_q,
+            ) in read_iterator.itr_cell(chr_x):
+                total_reads += 1
+                act_pos_1_s = int(pos_1_s) // self.session_default["dividend"]
+                act_pos_1_e = int(pos_1_e) // self.session_default["dividend"]
+                if has_map_q and multi_map:
+                    start = [act_pos_1_s, MAP_Q_MAX - int(map_q) - 1]
+                    end = [act_pos_1_e, MAP_Q_MAX - int(map_q) - 1]
+                elif has_map_q and not multi_map:
+                    start = [act_pos_1_s, MAP_Q_MAX - int(map_q) - 1]
+                    end = [0, 0]
+                elif not has_map_q and multi_map:
+                    start = [act_pos_1_s]
+                    end = [act_pos_1_e]
+                elif not has_map_q and not multi_map:
+                    start = [act_pos_1_s]
+                    end = [0]
+                else:
+                    raise RuntimeError("this statement should never be reached")
+                self.indices.insert(d, o, start, end)
+            self.set_session(["coverage", "by_name", name, "ids", chr_x], 
+                                self.indices.generate(d, o, verbosity=GENERATE_VERBOSITY))
+
+        self.set_session(["coverage", "by_name", name, "total_reads"], total_reads)
+
+        read_iterator.cleanup()
+
+        if not keep_points:
+            self.indices.clear_points_and_desc()
+
+        self.save_session()
+
+        print("done generating track")
