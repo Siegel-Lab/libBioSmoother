@@ -310,8 +310,7 @@ bool PartialQuarry::setFlatCoverageValues( )
         vvFlatCoverageValues[ uiJ ].clear( );
         vFlatCoverageTotal[ uiJ ][ 0 ] = 0;
         vFlatCoverageTotal[ uiJ ][ 1 ] = 1;
-        if( vvCoverageValues[ uiJ ].size( ) > 0 &&
-            vInGroupCoverage[ uiJ ][ 0 ].size( ) + vInGroupCoverage[ uiJ ][ 1 ].size( ) > 0 )
+        if( vvCoverageValues[ uiJ ].size( ) > 0 )
         {
             vvFlatCoverageValues[ uiJ ].reserve( vvCoverageValues[ uiJ ][ 0 ].size( ) );
             for( size_t uiI = 0; uiI < vvCoverageValues[ uiJ ][ 0 ].size( ); uiI++ )

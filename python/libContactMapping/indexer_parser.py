@@ -23,6 +23,19 @@ def repl(args):
     )
 
 
+def norm(args):
+    Indexer(args.index_prefix).add_normalization(
+        args.path,
+        args.name,
+        args.group,
+        args.no_groups,
+        args.keep_points,
+        args.only_points,
+        args.no_map_q,
+        args.no_multi_map,
+    )
+
+
 def add_parsers(main_parser):
     parser = main_parser.add_parser(
         "indexer", help="Create and extend indices for the smoother Hi-C data viewer."
@@ -102,6 +115,37 @@ def add_parsers(main_parser):
         "--only_points", help=argparse.SUPPRESS, action="store_true"
     )
     parser.add_argument("--no_groups", help=argparse.SUPPRESS, action="store_true")
+
+
+    norm_parser = sub_parsers.add_parser("track", help="Add a normalization track to an index, using external sequencing data.")
+    norm_parser.add_argument('index_prefix', 
+        help="Prefix that was used to create the index (see the init subcommand).")
+    norm_parser.add_argument('path', 
+        help="Path to the file that contains the aligned reads.")
+    norm_parser.add_argument('name', 
+        help="Name for the new normalization track.")
+    norm_parser.add_argument('-g', '--group', default="neither", 
+                             choices=["row", "col", "both", "neither"], 
+        help="Where to to place the new normalization track when opening the interface. (default: %(default)s)")
+    norm_parser.set_defaults(func=norm)
+    norm_parser.add_argument(
+        "--keep_points", help=argparse.SUPPRESS, action="store_true"
+    )
+    norm_parser.add_argument(
+        "--only_points", help=argparse.SUPPRESS, action="store_true"
+    )
+    norm_parser.add_argument(
+        "-q",
+        "--no_map_q",
+        action="store_true",
+        help="Do not store mapping quality information. This will make the index faster and smaller. (default: off)",
+    )
+    norm_parser.add_argument(
+        "-m",
+        "--no_multi_map",
+        action="store_true",
+        help="Do not multi mapping information (reads that map to multiple loci). This will make the index faster and smaller. (default: off)",
+    )
 
 
 def make_main_parser():

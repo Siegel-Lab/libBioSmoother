@@ -23,9 +23,6 @@ rm -r ${INDEX_PREFIX}.smoother_index
 echo "working on index ${INDEX_PREFIX}"
 
 
-
-rm -r ${INDEX_PREFIX}.smoother_index
-
 python3 python/main.py indexer init "${INDEX_PREFIX}" "../smoother_in/Lister427.sizes" -d 1000
 
 python3 python/main.py indexer anno "${INDEX_PREFIX}" "../smoother_in/HGAP3_Tb427v10_merged_2021_06_21.gff3"
