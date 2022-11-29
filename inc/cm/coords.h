@@ -853,8 +853,8 @@ bool PartialQuarry::setBinCoords( )
 bool PartialQuarry::setDecayCoords( )
 {
     vDistDepDecCoords.clear( );
-    if(getValue<bool>({"settings", "normalization", "ddd"}) || 
-        getValue<bool>({"settings", "normalization", "ddd_show"}))
+    if( getValue<bool>( { "settings", "normalization", "ddd" } ) ||
+        getValue<bool>( { "settings", "normalization", "ddd_show" } ) )
     {
         vDistDepDecCoords.reserve( vBinCoords.size( ) );
 
@@ -872,11 +872,11 @@ bool PartialQuarry::setDecayCoords( )
             {
                 if( vCoords[ uiI ].sChromosomeX.size( ) > 0 )
                 {
-                    int64_t iA =
-                        (int64_t)( vCoords[ uiI ].uiIndexX + vCoords[ uiI ].uiIndexW ) - (int64_t)vCoords[ uiI ].uiIndexY;
+                    int64_t iA = (int64_t)( vCoords[ uiI ].uiIndexX + vCoords[ uiI ].uiIndexW ) -
+                                 (int64_t)vCoords[ uiI ].uiIndexY;
 
-                    int64_t iB =
-                        (int64_t)vCoords[ uiI ].uiIndexX - (int64_t)( vCoords[ uiI ].uiIndexY + vCoords[ uiI ].uiIndexH );
+                    int64_t iB = (int64_t)vCoords[ uiI ].uiIndexX -
+                                 (int64_t)( vCoords[ uiI ].uiIndexY + vCoords[ uiI ].uiIndexH );
 
                     int64_t iS = std::min( iA, iB );
                     int64_t iE = std::max( std::max( iA, iB ), iS + 1 );
@@ -1004,9 +1004,8 @@ void PartialQuarry::regCoords( )
                   ComputeNode{ .sNodeName = "decay_coords",
                                .fFunc = &PartialQuarry::setDecayCoords,
                                .vIncomingFunctions = { NodeNames::BinCoords },
-                               .vIncomingSession = {
-                                           { "settings", "normalization", "ddd" } ,
-                                           { "settings", "normalization", "ddd_show" } },
+                               .vIncomingSession = { { "settings", "normalization", "ddd" },
+                                                     { "settings", "normalization", "ddd_show" } },
                                .vSessionsIncomingInPrevious = {} } );
 }
 

@@ -168,8 +168,8 @@ bool PartialQuarry::setColored( )
     double fMax = getValue<double>( { "settings", "normalization", "color_range", "val_max" } );
     double fBase = getValue<double>( { "settings", "normalization", "log_base", "val" } );
 
-    fDataMin = std::numeric_limits<double>::max();
-    fDataMax = std::numeric_limits<double>::min();
+    fDataMin = std::numeric_limits<double>::max( );
+    fDataMax = std::numeric_limits<double>::min( );
 
     for( double fC : vScaled )
     {
@@ -178,11 +178,10 @@ bool PartialQuarry::setColored( )
             vColored.push_back( sBackgroundColor );
         else
         {
-            fDataMin = std::min(fDataMin, fC);
-            fDataMax = std::max(fDataMax, fC);
+            fDataMin = std::min( fDataMin, fC );
+            fDataMax = std::max( fDataMax, fC );
 
             vColored.push_back( vColorPalette[ colorIndex( logScale( colorRange( fMin, fMax, fC ), fBase ) ) ] );
-
         }
     }
     END_RETURN;
@@ -220,15 +219,12 @@ const std::array<double, 4> PartialQuarry::getPaletteTicks( )
     double fMinR = getValue<double>( { "settings", "normalization", "color_range", "val_min" } );
     double fMaxR = getValue<double>( { "settings", "normalization", "color_range", "val_max" } );
 
-    double fCRMin = std::min(fDataMin, fMinR);
-    double fCRMax = std::max(fDataMax, fMaxR);
+    double fCRMin = std::min( fDataMin, fMinR );
+    double fCRMax = std::max( fDataMax, fMaxR );
 
-    return std::array<double, 4> {
-        (fDataMin - fCRMin) / (fCRMax - fCRMin),
-        (fDataMax - fCRMin) / (fCRMax - fCRMin),
-        (fMinR - fCRMin) / (fCRMax - fCRMin),
-        (fMaxR - fCRMin) / (fCRMax - fCRMin)
-    };
+    return std::array<double, 4>{ ( fDataMin - fCRMin ) / ( fCRMax - fCRMin ),
+                                  ( fDataMax - fCRMin ) / ( fCRMax - fCRMin ), ( fMinR - fCRMin ) / ( fCRMax - fCRMin ),
+                                  ( fMaxR - fCRMin ) / ( fCRMax - fCRMin ) };
 }
 
 bool PartialQuarry::setHeatmapCDS( )

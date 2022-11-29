@@ -449,8 +449,8 @@ class PartialQuarry
                         }
 
             if( !bFound )
-                std::cout << "undeclared session dependency warning: " << vGraph[ xCurrNodeName ].sNodeName << 
-                    " accesses " << toPointer( vKeys ) << " but does not declare this." << std::endl;
+                std::cout << "undeclared session dependency warning: " << vGraph[ xCurrNodeName ].sNodeName
+                          << " accesses " << toPointer( vKeys ) << " but does not declare this." << std::endl;
         }
 #endif
         return this->xSession[ toPointer( vKeys ) ].get<T>( );
@@ -739,6 +739,8 @@ class PartialQuarry
 
     // normalization.h
     size_t iceGetCount( IceData&, size_t, size_t, bool );
+    // normalization.h
+    void icePreFilter( IceData&, bool, size_t, size_t, bool );
     // normalization.h
     void iceFilter( IceData&, size_t, size_t );
     // normalization.h
