@@ -597,6 +597,7 @@ class PartialQuarry
     std::array<size_t, 2> vCanvasSize;
     std::array<std::array<double, 2>, 2> vvMinMaxTracks;
     double fMax, fMin;
+    double fDataMax, fDataMin;
     size_t uiLogestCommonSuffix;
 
     bool bCancel = false;
@@ -885,6 +886,9 @@ class PartialQuarry
 
     // colors.h
     const pybind11::dict getHeatmap( );
+
+    // colors.h
+    const std::array<double, 4> getPaletteTicks( );
 
     // colors.h
     const decltype( vHeatmapExport ) getHeatmapExport( );

@@ -157,6 +157,7 @@ PYBIND11_MODULE( libContactMapping, m )
         .def( "get_track_export_names", &cm::PartialQuarry::getTrackExportNames ) //
         .def( "get_decay", &cm::PartialQuarry::getDecayCDS ) //
         .def( "interpret_name", &cm::PartialQuarry::interpretName ) //
+        .def( "get_palette_ticks", &cm::PartialQuarry::getPaletteTicks ) //
 
         .def( "print_sizes", &cm::PartialQuarry::printSizes ) //
         .def( "cancel", &cm::PartialQuarry::cancel ) //
