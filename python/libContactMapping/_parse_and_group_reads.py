@@ -206,9 +206,10 @@ class ChrOrderHeatmapIterator:
                 yield chr_x, chr_y
 
     def itr_cell(self, chr_x, chr_y):
-        with open(self.prefix + "." + chr_x + "." + chr_y, "r") as in_file:
-            for line in in_file:
-                yield line.split()
+        if chr_x in self.chrs and chr_y in self.chrs[chr_x]:
+            with open(self.prefix + "." + chr_x + "." + chr_y, "r") as in_file:
+                for line in in_file:
+                    yield line.split()
 
     def itr_row(self, chr_y):
         for chr_x in self.itr_x_axis():
