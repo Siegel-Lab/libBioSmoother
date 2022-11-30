@@ -284,7 +284,7 @@ class PartialQuarry
 
                 auto ms_int = std::chrono::duration_cast<std::chrono::milliseconds>( t2 - t1 );
                 if( uiVerbosity >= 1 )
-                    std::cout << ms_int.count( ) << " ms (" << xNode.sNodeName << ")" << std::endl;
+                    print(std::to_string(ms_int.count( )) + " ms (" + xNode.sNodeName + ")");
                 if( uiVerbosity >= 2 )
                     std::cout << pms_int.count( ) << " ms (predecessors)" << std::endl << std::endl;
 
@@ -449,8 +449,8 @@ class PartialQuarry
                         }
 
             if( !bFound )
-                std::cout << "undeclared session dependency warning: " << vGraph[ xCurrNodeName ].sNodeName << 
-                    " accesses " << toPointer( vKeys ) << " but does not declare this." << std::endl;
+                std::cout << "undeclared session dependency warning: " << vGraph[ xCurrNodeName ].sNodeName
+                          << " accesses " << toPointer( vKeys ) << " but does not declare this." << std::endl;
         }
 #endif
         return this->xSession[ toPointer( vKeys ) ].get<T>( );
@@ -597,6 +597,7 @@ class PartialQuarry
     std::array<size_t, 2> vCanvasSize;
     std::array<std::array<double, 2>, 2> vvMinMaxTracks;
     double fMax, fMin;
+    double fDataMax, fDataMin;
     size_t uiLogestCommonSuffix;
 
     bool bCancel = false;
@@ -739,6 +740,8 @@ class PartialQuarry
     // normalization.h
     size_t iceGetCount( IceData&, size_t, size_t, bool );
     // normalization.h
+    void icePreFilter( IceData&, bool, size_t, size_t, bool );
+    // normalization.h
     void iceFilter( IceData&, size_t, size_t );
     // normalization.h
     void iceTimesOuterProduct( IceData&, bool, size_t, size_t );
@@ -828,6 +831,11 @@ class PartialQuarry
         throw std::logic_error( "Function not implemented" );
     }
 
+    virtual void print( std::string )
+    {
+        throw std::logic_error( "Function not implemented" );
+    }
+
   public:
     PartialQuarry( )
         : sPrefix( "" ),
@@ -885,6 +893,9 @@ class PartialQuarry
 
     // colors.h
     const pybind11::dict getHeatmap( );
+
+    // colors.h
+    const std::array<double, 4> getPaletteTicks( );
 
     // colors.h
     const decltype( vHeatmapExport ) getHeatmapExport( );

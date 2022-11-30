@@ -84,6 +84,9 @@ class Quarry(PartialQuarry):
                     for x in range(256)
                 ]
 
+    def print(self, s):
+        print("xxx:", s)
+
     @staticmethod
     def get_libSps_version():
         return SPS_VERSION

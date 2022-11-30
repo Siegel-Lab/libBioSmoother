@@ -59,6 +59,26 @@ size_t PartialQuarry::iceGetCount( IceData& rIceData, size_t uiX, size_t uiY, bo
 void PartialQuarry::iceFilter( IceData& /*rIceData*/, size_t /*uiFrom*/, size_t /*uiTo*/ )
 {}
 
+void PartialQuarry::icePreFilter( IceData& rIceData, bool bCol, size_t uiFrom, size_t uiTo, bool bA )
+{
+    // filter out rows and columns that have less than 1/4 of their cells filled
+    double fFilter = getValue<double>( { "settings", "normalization", "ice_sparse_slice_filter", "val" } );
+    if( fFilter > 0 )
+    {
+        const size_t uiWSlice = rIceData.vSliceBias[ bCol ? 1 : 0 ].size( );
+        for( size_t uiI = uiFrom; uiI < uiTo; uiI++ )
+        {
+            size_t uiCnt = 0;
+            for( size_t uiJ = 0; uiJ < uiWSlice; uiJ++ )
+                if( iceGetCount( rIceData, bCol ? uiI : uiJ, bCol ? uiJ : uiI, bA ) > 0 )
+                    ++uiCnt;
+            if( (double)uiCnt <= uiWSlice * fFilter )
+                rIceData.vSliceBias[ bCol ? 0 : 1 ][ uiI ] = 0;
+        }
+    }
+}
+
+
 void PartialQuarry::iceTimesOuterProduct( IceData& rIceData, bool bA, size_t uiFrom, size_t uiTo )
 {
     const size_t uiH = rIceData.vSliceBias[ 1 ].size( );
@@ -205,6 +225,8 @@ bool PartialQuarry::normalizeIC( )
                           .vBiases = std::vector<double>( uiW * uiH, 1.0 ) };
         std::array<double, 2> vVar{ 0, 0 };
         std::array<double, 2> vMean{ 0, 0 };
+        for( bool bCol : { true, false } )
+            icePreFilter( xData, bCol, 0, xData.vSliceBias[ bCol ? 0 : 1 ].size( ), uiI == 0 );
         for( size_t uiItr = 0; uiItr < uiMaxIters; uiItr++ )
         {
             CANCEL_RETURN;
@@ -331,21 +353,23 @@ bool PartialQuarry::setDivided( )
 
 void PartialQuarry::regNormalization( )
 {
-    registerNode( NodeNames::Normalized,
-                  ComputeNode{ .sNodeName = "normalized_bins",
-                               .fFunc = &PartialQuarry::setNormalized,
-                               .vIncomingFunctions = { NodeNames::FlatValues },
-                               .vIncomingSession = { { "settings", "normalization", "p_accept", "val" } },
-                               .vSessionsIncomingInPrevious = { { "replicates", "by_name" },
-                                                                { "settings", "normalization", "normalize_by" },
-                                                                {"contigs", "genome_size"} } } );
+    registerNode(
+        NodeNames::Normalized,
+        ComputeNode{ .sNodeName = "normalized_bins",
+                     .fFunc = &PartialQuarry::setNormalized,
+                     .vIncomingFunctions = { NodeNames::FlatValues },
+                     .vIncomingSession = { { "settings", "normalization", "p_accept", "val" },
+                                           { "settings", "normalization", "ice_sparse_slice_filter", "val" } },
+                     .vSessionsIncomingInPrevious = { { "replicates", "by_name" },
+                                                      { "settings", "normalization", "normalize_by" },
+                                                      { "contigs", "genome_size" } } } );
 
     registerNode( NodeNames::DistDepDecayRemoved,
                   ComputeNode{ .sNodeName = "dist_dep_dec_normalized_bins",
                                .fFunc = &PartialQuarry::setDistDepDecayRemoved,
                                .vIncomingFunctions = { NodeNames::Normalized, NodeNames::FlatDecay },
-                               .vIncomingSession = { { "settings", "normalization", "ddd" } },
-                               .vSessionsIncomingInPrevious = {} } );
+                               .vIncomingSession = {  },
+                               .vSessionsIncomingInPrevious = { { "settings", "normalization", "ddd" } } } );
 
     registerNode( NodeNames::Divided,
                   ComputeNode{ .sNodeName = "divided_by_tracks",
