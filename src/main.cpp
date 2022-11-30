@@ -60,11 +60,22 @@ class PyPartialQuarry : public PartialQuarry
                            sColorHigh /* Argument(s) */
         );
     }
+
+    void print( std::string sText ) override
+    {
+        pybind11::gil_scoped_acquire acquire;
+        PYBIND11_OVERRIDE( void, /* Return type */
+                           PartialQuarry, /* Parent class */
+                           print, /* Name of function in C++ (must match Python name) */
+                           sText, /* Argument(s) */
+        );
+    }
 };
 
 class ContectMappingPublicist : public PartialQuarry
 {
   public:
+    using PartialQuarry::print;
     using PartialQuarry::colorPalette;
     using PartialQuarry::normalizeBinominalTestTrampoline;
     using PartialQuarry::normalizeCoolerTrampoline;
@@ -77,6 +88,36 @@ void testFunc( )
     std::cout << "Sleeping..." << std::endl;
     std::this_thread::sleep_for( std::chrono::seconds( 3 ) );
     std::cout << "I'm awake! I'm awake!" << std::endl;
+}
+
+pybind11::dict test_py_dict(size_t uiA, size_t uiB)
+{
+    using namespace pybind11::literals;
+    pybind11::gil_scoped_acquire acquire;
+
+    pybind11::dict xRet;
+    for(size_t uiI = 0; uiI < uiA; uiI++)
+    {
+        pybind11::list vL;
+        for(size_t uiJ = 0; uiJ < uiB; uiJ++)
+            vL.append(uiJ);
+        xRet[std::to_string(uiI).c_str()] = vL;
+    }
+    return xRet;
+}
+std::map<std::string, std::vector<size_t>> test_cpp_dict(size_t uiA, size_t uiB)
+{
+    std::map<std::string, std::vector<size_t>> xRet;
+    
+    for(size_t uiI = 0; uiI < uiA; uiI++)
+    {
+        std::vector<size_t> vL;
+        vL.reserve(uiB);
+        for(size_t uiJ = 0; uiJ < uiB; uiJ++)
+            vL.push_back(uiJ);
+        xRet[std::to_string(uiI)] = vL;
+    }
+    return xRet;
 }
 
 } // namespace cm
@@ -98,6 +139,7 @@ template <bool CACHE> void exportSpsInterface( pybind11::module& m )
 }
 
 
+
 PYBIND11_MODULE( libContactMapping, m )
 {
     // prevent creation of stxxl log files
@@ -112,6 +154,10 @@ PYBIND11_MODULE( libContactMapping, m )
     m.attr( "SPS_BUILD_TIME" ) = SPS_BUILD_TIME;
 
     m.def( "test", &cm::testFunc );
+
+    // observation: both functions are roughly the same speed -> not worth optimizing
+    m.def( "test_py_dict", &cm::test_py_dict );
+    m.def( "test_cpp_dict", &cm::test_cpp_dict );
 
 
     pybind11::class_<cm::PartialQuarry, cm::PyPartialQuarry>( m, "PartialQuarry" ) //
@@ -168,6 +214,7 @@ PYBIND11_MODULE( libContactMapping, m )
         .def( "normalizeBinominalTestTrampoline", &cm::ContectMappingPublicist::normalizeBinominalTestTrampoline ) //
         .def( "normalizeCoolerTrampoline", &cm::ContectMappingPublicist::normalizeCoolerTrampoline ) //
         .def( "colorPalette", &cm::ContectMappingPublicist::colorPalette ) //
+        .def( "print", &cm::ContectMappingPublicist::print ) //
         ;
 
     pybind11::class_<cm::AnnotationDescIndex<DiskVecGenerator>>( m, ( "AnnoIndex" ) ) //

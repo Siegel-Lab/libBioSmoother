@@ -284,7 +284,7 @@ class PartialQuarry
 
                 auto ms_int = std::chrono::duration_cast<std::chrono::milliseconds>( t2 - t1 );
                 if( uiVerbosity >= 1 )
-                    std::cout << ms_int.count( ) << " ms (" << xNode.sNodeName << ")" << std::endl;
+                    print(std::to_string(ms_int.count( )) + " ms (" + xNode.sNodeName + ")");
                 if( uiVerbosity >= 2 )
                     std::cout << pms_int.count( ) << " ms (predecessors)" << std::endl << std::endl;
 
@@ -827,6 +827,11 @@ class PartialQuarry
     }
 
     virtual std::vector<std::string> colorPalette( std::string, std::string, std::string )
+    {
+        throw std::logic_error( "Function not implemented" );
+    }
+
+    virtual void print( std::string )
     {
         throw std::logic_error( "Function not implemented" );
     }
