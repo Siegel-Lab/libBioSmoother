@@ -67,7 +67,7 @@ class PyPartialQuarry : public PartialQuarry
         PYBIND11_OVERRIDE( void, /* Return type */
                            PartialQuarry, /* Parent class */
                            print, /* Name of function in C++ (must match Python name) */
-                           sText, /* Argument(s) */
+                           sText /* Argument(s) */
         );
     }
 };
@@ -105,6 +105,7 @@ pybind11::dict test_py_dict(size_t uiA, size_t uiB)
     }
     return xRet;
 }
+
 std::map<std::string, std::vector<size_t>> test_cpp_dict(size_t uiA, size_t uiB)
 {
     std::map<std::string, std::vector<size_t>> xRet;
