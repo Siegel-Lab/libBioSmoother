@@ -13,8 +13,14 @@ except ImportError:
     HAS_PALETTES = False
     pass
 
-from statsmodels.stats.multitest import multipletests
-from scipy.stats import binom_test
+try:
+    from statsmodels.stats.multitest import multipletests
+    from scipy.stats import binom_test
+    HAS_STATS = True
+except ImportError:
+    # Error handling
+    HAS_STATS = False
+    pass
 from .libContactMapping import PartialQuarry, SPS_VERSION, CM_VERSION
 
 
