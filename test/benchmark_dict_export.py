@@ -1,7 +1,8 @@
 import sys
 import os
 sys.path.append(os.getcwd())
-from build_rel.libContactMapping import test_py_dict, test_cpp_dict
+#from build_rel.libContactMapping import test_py_dict, test_cpp_dict
+from build_rel_w_dbg.libContactMapping import test_py_dict, test_cpp_dict
 import random
 import time
 
@@ -31,3 +32,6 @@ for _ in range(100):
         py_wins += 1
 print()
 print("cpp won", cpp_wins, "times, while py won", py_wins, "times")
+
+# ${perf} record -g -e cpu-clock 
+# ${perf} report --hierarchy
