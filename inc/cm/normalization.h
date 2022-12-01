@@ -368,7 +368,7 @@ void PartialQuarry::regNormalization( )
                   ComputeNode{ .sNodeName = "dist_dep_dec_normalized_bins",
                                .fFunc = &PartialQuarry::setDistDepDecayRemoved,
                                .vIncomingFunctions = { NodeNames::Normalized, NodeNames::FlatDecay },
-                               .vIncomingSession = {  },
+                               .vIncomingSession = { },
                                .vSessionsIncomingInPrevious = { { "settings", "normalization", "ddd" } } } );
 
     registerNode( NodeNames::Divided,

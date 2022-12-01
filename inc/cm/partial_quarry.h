@@ -284,7 +284,7 @@ class PartialQuarry
 
                 auto ms_int = std::chrono::duration_cast<std::chrono::milliseconds>( t2 - t1 );
                 if( uiVerbosity >= 1 )
-                    print(std::to_string(ms_int.count( )) + " ms (" + xNode.sNodeName + ")");
+                    print( std::to_string( ms_int.count( ) ) + " ms (" + xNode.sNodeName + ")" );
                 if( uiVerbosity >= 2 )
                     std::cout << pms_int.count( ) << " ms (predecessors)" << std::endl << std::endl;
 
