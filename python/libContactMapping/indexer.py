@@ -223,7 +223,7 @@ class Indexer:
             self.prefix + ".smoother_index",
             name,
             path,
-            get_filesize(path),
+            1, #get_filesize(path),
             self.session_default["contigs"]["list"],
             no_groups,
             "test" in self.session_default,

@@ -160,7 +160,8 @@ def group_reads(in_filename, file_size, chr_filter, parse_func=parse_heatmap, no
             if tag == "notag":
                 have_no_tag_1 = True
         for idx, (chr_, pos, mapq, tag) in enumerate(zip(chrs, poss, mapqs, tags)):
-            group.append([])
+            if idx >= len(group):
+                group.append([])
             group[idx].append((chr_, pos, mapq))
             for chr_1, pos_1 in read_xa_tag(tag):
                 group[idx].append((chr_1, int(pos_1), 0))

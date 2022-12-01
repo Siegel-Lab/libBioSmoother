@@ -1,4 +1,5 @@
 build_rel/*
+build_rel_w_dbg/*
 build_dbg/*
 build_test/*
 build_benchmark/*
@@ -22,3 +23,5 @@ callgrind.out.*
 settings.json
 *.prof
 *.pyc
+perf.data
+perf.data.old

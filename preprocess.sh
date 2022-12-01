@@ -2,16 +2,10 @@
 #SBATCH --mem 100G -J preprocess_smoother --time=240:00:00 -o slurm_preprocess_heatmap-%j.out --mail-user=markus.rainer.schmidt@gmail.com --mail-type END
 
 
-module load ngs/samtools/1.9
-
 source activate $(pwd)/conda_env/smoother
 
 #./bin/conf_version.sh
 #cat VERSION
-
-
-BEDS="/work/project/ladsie_012/ABS.2.2/2021-10-26_NS502-NS521_ABS_CR_RADICL_inputMicroC/bed_files/minus_N"
-BED_SUF="RNA.PRE_K1K2.PRE_K3.PRE_R_D.PRE_R_D_K1K2.PRE_R_D_PRE2.bedsorted.PRE2"
 
 BAMS="/work/project/ladsie_012/ABS.2.2/20210608_Inputs"
 BAM_SUF="R1.sorted.bam"
@@ -42,3 +36,4 @@ python3  python/main.py indexer repl "${INDEX_PREFIX}" "${BEDS}/NS510_P10_NPM_3.
 python3  python/main.py indexer repl "${INDEX_PREFIX}" "${BEDS}/NS511_N50_NPM_1.${BED_SUF}" "N50_NPM_Rep1" -g b
 python3  python/main.py indexer repl "${INDEX_PREFIX}" "${BEDS}/NS512_N50_NPM_2.${BED_SUF}" "N50_NPM_Rep2" -g b
 python3  python/main.py indexer repl "${INDEX_PREFIX}" "${BEDS}/NS513_N50_NPM_3.${BED_SUF}" "N50_NPM_Rep3" -g b
+

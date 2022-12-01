@@ -19,6 +19,10 @@ from .libContactMapping import PartialQuarry, SPS_VERSION, CM_VERSION
 
 
 class Quarry(PartialQuarry):
+    def __init__(self, *args):
+        PartialQuarry.__init__(self, *args)
+        self.print_callback = lambda s: print(s)
+
     def normalizeBinominalTestTrampoline(
         self, bin_values, num_interactions_total, num_bins, p_accept
     ):
@@ -85,7 +89,7 @@ class Quarry(PartialQuarry):
                 ]
 
     def print(self, s):
-        print("xxx:", s)
+        self.print_callback(s)
 
     @staticmethod
     def get_libSps_version():
