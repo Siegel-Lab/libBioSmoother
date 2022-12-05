@@ -224,6 +224,17 @@ class ChrOrderHeatmapIterator:
         for x in set([*self.itr_x_axis(), *self.itr_y_axis()]):
             yield x
 
+    def __len__(self):
+        cnt = 0
+        for x in self.chrs.keys():
+            for _ in self.chrs[x]:
+                cnt += 1
+        for _ in self.itr_x_axis():
+            cnt += 1
+        for _ in self.itr_y_axis():
+            cnt += 1
+        return cnt
+
 
 def chr_order_heatmap(
     index_prefix,
