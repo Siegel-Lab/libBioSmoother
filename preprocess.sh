@@ -18,6 +18,7 @@ INDEX_PREFIX="../smoother_out/radicl"
 
 rm -r ${INDEX_PREFIX}.smoother_index
 
+
 echo "working on index ${INDEX_PREFIX}"
 
 
@@ -40,4 +41,3 @@ python3  python/main.py indexer repl "${INDEX_PREFIX}" "${BEDS}/NS510_P10_NPM_3.
 python3  python/main.py indexer repl "${INDEX_PREFIX}" "${BEDS}/NS511_N50_NPM_1.${BED_SUF}" "N50_NPM_Rep1" -g b
 python3  python/main.py indexer repl "${INDEX_PREFIX}" "${BEDS}/NS512_N50_NPM_2.${BED_SUF}" "N50_NPM_Rep2" -g b
 python3  python/main.py indexer repl "${INDEX_PREFIX}" "${BEDS}/NS513_N50_NPM_3.${BED_SUF}" "N50_NPM_Rep3" -g b
-

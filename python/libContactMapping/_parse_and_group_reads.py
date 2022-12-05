@@ -166,7 +166,7 @@ def group_reads(in_filename, file_size, chr_filter, parse_func=parse_heatmap, no
             for chr_1, pos_1 in read_xa_tag(tag):
                 group[idx].append((chr_1, int(pos_1), 0))
 
-        if idx_2 % PRINT_MODULO == 0:
+        if idx_2 % PRINT_MODULO == PRINT_MODULO - 1:
             print(
                 "loading file",
                 file_name,
@@ -189,9 +189,9 @@ class ChrOrderHeatmapIterator:
         self.prefix = prefix
 
     def cleanup(self):
-        for chr_1 in self.chrs:
-            for chr_2 in self.chrs:
-                os.remove(self.prefix + "." + chr_1 + "." + chr_2)
+        for chr_1 in set(self.chrs.keys()):
+            for chr_2 in set(self.chrs[chr_1]):
+                    os.remove(self.prefix + "." + chr_1 + "." + chr_2)
 
     def itr_x_axis(self):
         for x in set(self.chrs.keys()):

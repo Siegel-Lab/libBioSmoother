@@ -8,10 +8,12 @@
 namespace cm
 {
 
+static const bool BIN_SEARCH_SPARSE = false;
+
 template <bool CACHED> class SpsInterface;
 
-template <template <size_t D, size_t orthope> typename storage_t, size_t D, size_t O, bool CACHED>
-std::shared_ptr<sps::Index<storage_t<D, O>>> getIndexHelper( SpsInterface<CACHED>* );
+template <template <size_t, size_t, bool> typename storage_t, size_t D, size_t O, bool CACHED>
+std::shared_ptr<sps::Index<storage_t<D, O, BIN_SEARCH_SPARSE>>> getIndexHelper( SpsInterface<CACHED>* );
 
 
 #define RELEVANT_COMBINATIONS( MACRO )                                                                                 \
@@ -76,7 +78,8 @@ template <bool CACHED> class SpsInterface
 {
   private:
     template <size_t D, size_t orthope>
-    using storage_t = typename std::conditional<CACHED, CachedTypeDef<D, orthope>, DiskTypeDef<D, orthope>>::type;
+    using storage_t = typename std::conditional<CACHED, CachedTypeDef<D, orthope, BIN_SEARCH_SPARSE>,
+                                                DiskTypeDef<D, orthope, BIN_SEARCH_SPARSE>>::type;
 
     RELEVANT_COMBINATIONS( DECLARE_INDEX_TYPE )
 
@@ -160,14 +163,14 @@ template <bool CACHED> class SpsInterface
 
 #define IMPLEMENT_GET_INDEX_HELPER( D, O )                                                                             \
     template <>                                                                                                        \
-    std::shared_ptr<sps::Index<CachedTypeDef<D, O>>> getIndexHelper<CachedTypeDef, D, O, true>( SpsInterface<true> *   \
-                                                                                                pInterface )           \
+    std::shared_ptr<sps::Index<CachedTypeDef<D, O, BIN_SEARCH_SPARSE>>> getIndexHelper<CachedTypeDef, D, O, true>(     \
+        SpsInterface<true> * pInterface )                                                                              \
     {                                                                                                                  \
         return pInterface->pIndex##D##O;                                                                               \
     }                                                                                                                  \
     template <>                                                                                                        \
-    std::shared_ptr<sps::Index<DiskTypeDef<D, O>>> getIndexHelper<DiskTypeDef, D, O, false>( SpsInterface<false> *     \
-                                                                                             pInterface )              \
+    std::shared_ptr<sps::Index<DiskTypeDef<D, O, BIN_SEARCH_SPARSE>>> getIndexHelper<DiskTypeDef, D, O, false>(        \
+        SpsInterface<false> * pInterface )                                                                             \
     {                                                                                                                  \
         return pInterface->pIndex##D##O;                                                                               \
     }
