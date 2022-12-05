@@ -8,7 +8,7 @@
 namespace cm
 {
 
-static const bool BIN_SEARCH_SPARSE = true;
+static const bool BIN_SEARCH_SPARSE = false;
 
 template <bool CACHED> class SpsInterface;
 
