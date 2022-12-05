@@ -230,9 +230,12 @@ class Indexer:
         )
         total_reads = 0
 
+        num_itr = len(read_iterator)
+        cnt = 0
         for chr_x in read_iterator.itr_x_axis():
             for chr_y in read_iterator.itr_y_axis():
-                self.progress_print("generating heatmap for contig-pair", chr_x, chr_y)
+                cnt += 1
+                self.progress_print("generating heatmap for contig-pair", chr_x, chr_y + ".", cnt, "of", num_itr)
                 for (
                     read_name,
                     pos_1_s,
@@ -283,7 +286,9 @@ class Indexer:
             for chr_ in (
                 read_iterator.itr_x_axis() if x_axis else read_iterator.itr_y_axis()
             ):
-                self.progress_print("generating tracks for contig", chr_+"'s", "x-axis" if x_axis else "y-axis")
+                cnt += 1
+                self.progress_print("generating tracks for contig", chr_+"'s", "x-axis." if x_axis else "y-axis.", 
+                                    cnt, "of", num_itr)
                 for (read_name, pos_1_s, pos_1_e, pos_2_s, pos_2_e, map_q,) in (
                     read_iterator.itr_row(chr_)
                     if x_axis
