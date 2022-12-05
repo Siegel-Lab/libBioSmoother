@@ -2,10 +2,14 @@
 #SBATCH --mem 100G -J preprocess_smoother --time=240:00:00 -o slurm_preprocess_heatmap-%j.out --mail-user=markus.rainer.schmidt@gmail.com --mail-type END
 
 
-source activate $(pwd)/conda_env/smoother
+# source activate $(pwd)/conda_env/smoother
+source activate libContactMapping
 
 #./bin/conf_version.sh
 #cat VERSION
+
+BEDS="/work/project/ladsie_012/ABS.2.2/2021-10-26_NS502-NS521_ABS_CR_RADICL_inputMicroC/bed_files/minus_N"
+BED_SUF="RNA.PRE_K1K2.PRE_K3.PRE_R_D.PRE_R_D_K1K2.PRE_R_D_PRE2.bedsorted.PRE2"
 
 BAMS="/work/project/ladsie_012/ABS.2.2/20210608_Inputs"
 BAM_SUF="R1.sorted.bam"
