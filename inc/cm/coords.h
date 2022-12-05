@@ -183,7 +183,7 @@ template <typename anno_t>
 std::pair<std::vector<AxisCoord>, std::vector<AxisRegion>>
 annoCoordsHelper( size_t uiBinSize, size_t uiScreenStartPos, size_t uiScreenEndPos, size_t /*iSmallerBins*/,
                   size_t iMultipleAnnosInBin, size_t iAnnoInMultipleBins, std::vector<ChromDesc> vChromosomes,
-                  bool& bCancel, const json rJson, anno_t& rAnno, std::string /*sAnno*/ )
+                  bool& bCancel, const json rJson, anno_t& rAnno )
 {
     std::vector<AxisCoord> vRet;
     std::vector<AxisRegion> vRet2;
@@ -612,8 +612,8 @@ bool PartialQuarry::setAxisCoords( )
                 smaller_bin_to_num( getValue<std::string>( { "settings", "filters", "cut_off_bin" } ) ),
                 multiple_anno( getValue<std::string>( { "settings", "filters", "multiple_annos_in_bin" } ) ),
                 multiple_bins( getValue<std::string>( { "settings", "filters", "anno_in_multiple_bins" } ) ),
-                this->vActiveChromosomes[ bX ? 0 : 1 ], this->bCancel, getValue<json>( { "annotation", "by_name" } ),
-                xIndices.vAnno, getValue<std::string>( { "contigs", bX ? "column_coordinates" : "row_coordinates" } ) );
+                this->vActiveChromosomes[ bX ? 0 : 1 ], this->bCancel, getValue<json>( { "annotation", "by_name", getValue<std::string>( { "contigs", bX ? "column_coordinates" : "row_coordinates" } ) } ),
+                xIndices.vAnno );
         this->vAxisCords[ bX ? 0 : 1 ] = xRet.first;
         this->vAxisRegions[ bX ? 0 : 1 ] = xRet.second;
     }

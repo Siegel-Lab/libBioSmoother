@@ -205,6 +205,7 @@ PYBIND11_MODULE( libContactMapping, m )
         .def( "interpret_name", &cm::PartialQuarry::interpretName ) //
         .def( "get_palette_ticks", &cm::PartialQuarry::getPaletteTicks ) //
 
+        .def( "print_num_reads_and_overlays", &cm::PartialQuarry::printNumReadsNumOverlays ) //
         .def( "print_sizes", &cm::PartialQuarry::printSizes ) //
         .def( "cancel", &cm::PartialQuarry::cancel ) //
         .def( "get_error", &cm::PartialQuarry::getError ) //
