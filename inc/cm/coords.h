@@ -435,6 +435,7 @@ bool PartialQuarry::setLCS( )
 
 bool PartialQuarry::setCanvasSize( )
 {
+    size_t uiDividend = getValue<size_t>( { "dividend" } );
     for( size_t uiI = 0; uiI < 2; uiI++ )
     {
 
@@ -465,7 +466,7 @@ bool PartialQuarry::setCanvasSize( )
                 {
                     case 0: // separate
                     case 1: // stretch
-                        uiRunningStart += xIndices.vAnno.totalIntervalSize( iDataSetId );
+                        uiRunningStart += xIndices.vAnno.totalIntervalSize( iDataSetId ) / uiDividend;
                         break;
                     case 2: // squeeze
                         uiRunningStart += xIndices.vAnno.numIntervals( iDataSetId );
@@ -481,6 +482,7 @@ bool PartialQuarry::setTicks( )
 {
     using namespace pybind11::literals;
     pybind11::gil_scoped_acquire acquire;
+    size_t uiDividend = getValue<size_t>( { "dividend" } );
 
 
     for( size_t uiI = 0; uiI < 2; uiI++ )
@@ -512,7 +514,8 @@ bool PartialQuarry::setTicks( )
             {
                 CANCEL_RETURN;
                 int64_t iDataSetId = rJson[ xRegion.sChromosome ].get<int64_t>( );
-                auto xFirst = xIndices.vAnno.lowerBound( iDataSetId, xRegion.uiIndexPos, iAnnoInMultipleBins < 2,
+                auto xFirst = xIndices.vAnno.lowerBound( iDataSetId, xRegion.uiIndexPos * uiDividend,
+                                                         iAnnoInMultipleBins < 2,
                                                          iAnnoInMultipleBins == 2 );
 
                 std::vector<std::string> vSplit =
@@ -545,7 +548,7 @@ bool PartialQuarry::setTicks( )
                 {
                     case 0: // separate
                     case 1: // stretch
-                        uiRunningStart += xIndices.vAnno.totalIntervalSize( iDataSetId );
+                        uiRunningStart += xIndices.vAnno.totalIntervalSize( iDataSetId ) / uiDividend;
                         break;
                     case 2: // squeeze
                         uiRunningStart += xIndices.vAnno.numIntervals( iDataSetId );
@@ -557,7 +560,7 @@ bool PartialQuarry::setTicks( )
 
         xTicksCDS[ uiI ] = pybind11::dict( "contig_starts"_a = vStartPos,
                                            "genome_end"_a = vCanvasSize[ uiI ],
-                                           "dividend"_a = this->getValue<size_t>( { "dividend" } ),
+                                           "dividend"_a = uiDividend,
                                            "contig_names"_a = vNames );
         vTickLists[ uiI ] = vFullList;
     }
@@ -965,7 +968,7 @@ void PartialQuarry::regCoords( )
                                                      { "contigs", "row_coordinates" },
                                                      { "settings", "filters", "anno_in_multiple_bins" },
                                                      { "annotation", "by_name" } },
-                               .vSessionsIncomingInPrevious = {} } );
+                               .vSessionsIncomingInPrevious = { { "dividend" } } } );
 
     registerNode( NodeNames::AxisCoords,
                   ComputeNode{ .sNodeName = "axis_coords",

@@ -62,13 +62,13 @@ std::shared_ptr<sps::Index<storage_t<D, O, BIN_SEARCH_SPARSE>>> getIndexHelper( 
         std::copy_n( vStart.begin( ), D - O, aStart##D##O.begin( ) );                                                  \
                                                                                                                        \
         if constexpr( O == 0 )                                                                                         \
-            pIndex##D##O->addPoint( aStart##D##O, 1 );                                                                 \
+            pIndex##D##O->addPoint( aStart##D##O, iVal );                                                              \
         else                                                                                                           \
         {                                                                                                              \
             std::array<uint64_t, D - O> aEnd##D##O;                                                                    \
             std::copy_n( vEnd.begin( ), D - O, aEnd##D##O.begin( ) );                                                  \
                                                                                                                        \
-            pIndex##D##O->addPoint( aStart##D##O, aEnd##D##O, 1 );                                                     \
+            pIndex##D##O->addPoint( aStart##D##O, aEnd##D##O, iVal );                                                  \
         }                                                                                                              \
         break;
 
@@ -127,7 +127,7 @@ template <bool CACHED> class SpsInterface
     }
 
   public:
-    void insert( size_t uiD, size_t uiO, std::vector<uint64_t> vStart, std::vector<uint64_t> vEnd )
+    void insert( size_t uiD, size_t uiO, std::vector<uint64_t> vStart, std::vector<uint64_t> vEnd, int32_t iVal=1 )
     {
         switch( combine( uiD, uiO ) )
         {

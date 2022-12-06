@@ -70,7 +70,7 @@ struct Annotation
 {
     std::string sInfo;
     bool bForw;
-    size_t uiScreenX, uiScreenY;
+    double fScreenX, fScreenY;
     size_t uiIndexX, uiIndexY;
     size_t uiRow;
     std::string sChromosome;

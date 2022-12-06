@@ -142,9 +142,7 @@ class Indexer:
                 sorted_list[name] = {}
             if chrom not in sorted_list[name]:
                 sorted_list[name][chrom] = []
-            sorted_list[name][chrom].append((start // self.session_default["dividend"], 
-                                             end // self.session_default["dividend"], 
-                                            info, on_forw_strnd))
+            sorted_list[name][chrom].append((start, end, info, on_forw_strnd))
         for name, chroms in sorted_list.items():
             if name not in self.session_default["annotation"]["list"]:
                 self.append_session(["annotation", "list"], name)
