@@ -242,7 +242,6 @@ class Indexer:
         for chr_x in read_iterator.itr_x_axis():
             for chr_y in read_iterator.itr_y_axis():
                 cnt += 1
-                t1 = time.time()
                 for (
                     read_name,
                     pos_1_s,
@@ -271,7 +270,6 @@ class Indexer:
                     else:
                         raise RuntimeError("this statement should never be reached")
                     self.indices.insert(d, o, start, end)
-                t2 = time.time()
                 if (
                     chr_x
                     not in self.session_default["replicates"]["by_name"][name]["ids"]
@@ -285,9 +283,8 @@ class Indexer:
                 )
                 self.set_session(["replicates", "by_name", name, "ids", chr_x, chr_y], 
                                     self.indices.generate(d, o, verbosity=GENERATE_VERBOSITY))
-                t3 = time.time()
                 self.progress_print("generating heatmap for contig-pair", chr_x, chr_y + ".", cnt, "of", num_itr,
-                                    str(round(100*cnt/num_itr, 2)) + "%", t2 - t1, t3-t2)
+                                    str(round(100*cnt/num_itr, 2)) + "%")
 
         self.set_session(["replicates", "by_name", name, "total_reads"], total_reads)
         o = 1 if multi_map else 0
