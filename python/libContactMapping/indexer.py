@@ -3,6 +3,7 @@ from ._parse_and_group_reads import *
 import json
 import os
 import copy
+import time
 
 MAP_Q_MAX = 255
 
@@ -10,10 +11,12 @@ def touch(f_name):
     with open(f_name, "a"):  # Create file if does not exist
         pass
 
-GENERATE_VERBOSITY = 1
+GENERATE_VERBOSITY = 0
+PROGRESS_PRINT_TIME = 3
 
 class Indexer:
     def __init__(self, prefix):
+        self.last_prog_print = None
         self.prefix = prefix
         if os.path.exists(prefix + ".smoother_index/default_session.json"):
             # self.indices = CachedSpsInterface(prefix + ".smoother_index")
@@ -28,7 +31,10 @@ class Indexer:
             self.session = {}
 
     def progress_print(self, *text):
-        print(*text)
+        t = time.time()
+        if self.last_prog_print is None or t - self.last_prog_print >= PROGRESS_PRINT_TIME:
+            print(*text)
+            self.last_prog_print = t
 
     def save_session(self):
         with open(self.prefix + ".smoother_index/default_session.json", "w") as f:
@@ -243,6 +249,7 @@ class Indexer:
             self.session_default["contigs"]["list"],
             no_groups,
             "test" in self.session_default,
+            lambda *x: self.progress_print(*x)
         )
         total_reads = 0
 
@@ -251,7 +258,7 @@ class Indexer:
         for chr_x in read_iterator.itr_x_axis():
             for chr_y in read_iterator.itr_y_axis():
                 cnt += 1
-                self.progress_print("generating heatmap for contig-pair", chr_x, chr_y + ".", cnt, "of", num_itr)
+                t1 = time.time()
                 for (
                     read_name,
                     pos_1_s,
@@ -299,6 +306,9 @@ class Indexer:
                 )
                 self.set_session(["replicates", "by_name", name, "ids", chr_x, chr_y], 
                                     self.indices.generate(d, o, verbosity=GENERATE_VERBOSITY))
+                t3 = time.time()
+                self.progress_print("generating heatmap for contig-pair", chr_x, chr_y + ".", cnt, "of", num_itr,
+                                    str(round(100*cnt/num_itr, 2)) + "%", t2 - t1, t3-t2)
 
         self.set_session(["replicates", "by_name", name, "total_reads"], total_reads)
         o = 1 if multi_map else 0 + 1 if has_cat else 0
@@ -310,7 +320,7 @@ class Indexer:
             ):
                 cnt += 1
                 self.progress_print("generating tracks for contig", chr_+"'s", "x-axis." if x_axis else "y-axis.", 
-                                    cnt, "of", num_itr)
+                                    cnt, "of", num_itr, str(round(100*cnt/num_itr, 2)) + "%")
                 for (read_name, pos_1_s, pos_1_e, pos_2_s, pos_2_e, map_q,) in (
                     read_iterator.itr_row(chr_)
                     if x_axis
@@ -418,11 +428,16 @@ class Indexer:
             self.session_default["contigs"]["list"],
             no_groups,
             "test" in self.session_default,
+            lambda *x: self.progress_print(*x)
         )
         total_reads = 0
 
+        cnt = 0
+        num_itr = len(read_iterator)
         for chr_x in read_iterator.itr_x_axis():
-            self.progress_print("generating track for contig", chr_x)
+            cnt += 1
+            self.progress_print("generating track for contig", chr_x + ".", cnt, "of", num_itr, 
+                                str(round(100*cnt/num_itr, 2)) + "%")
             for (
                 read_name,
                 pos_1_s,
