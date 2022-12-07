@@ -364,6 +364,16 @@ template <template <typename> typename vec_gen_t> class AnnotationDescIndex
         return xRange[ 1 ] - xRange[ 0 ];
     }
 
+    std::vector<bool> getCategories(size_t uiFrom, size_t uiTo, bool bIntervalCoords = false,
+                                    bool bIntervalCount = false)
+    {
+        std::vector<bool> vRet;
+        vRet.reserve(vDatasets.size());
+        for(size_t uiI = 0; uiI < vDatasets.size(); uiI++)
+            vRet.push_back(count(uiI, uiFrom, uiTo, bIntervalCoords, bIntervalCount) > 0);
+        return vRet;
+    }
+
     size_t totalIntervalSize( size_t uiDatasetId )
     {
         auto xBegin = begin( uiDatasetId );

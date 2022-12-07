@@ -133,7 +133,7 @@ class Indexer:
 
         self.save_session()
 
-    def add_annotation(self, file_name):
+    def add_annotation(self, file_name, annotation_order=None):
         sorted_list = {}
         for name, chrom, start, end, info, on_forw_strnd in parse_annotations(file_name):
             if not chrom in self.session_default["contigs"]["list"]:
@@ -143,7 +143,20 @@ class Indexer:
             if chrom not in sorted_list[name]:
                 sorted_list[name][chrom] = []
             sorted_list[name][chrom].append((start, end, info, on_forw_strnd))
-        for name, chroms in sorted_list.items():
+        order = []
+        if annotation_order is None:
+            if "gene" in sorted_list:
+                order.append("gene")
+        else:
+            with open(annotation_order, "r") as anno_order_file:
+                for line in anno_order_file:
+                    if line in sorted_list:
+                        order.append(line)
+        for name in sorted(list(sorted_list.keys())):
+            if not name in order:
+                order.append(name)
+        for name in order:
+            chroms = sorted_list[order]
             if name not in self.session_default["annotation"]["list"]:
                 self.append_session(["annotation", "list"], name)
                 self.append_session(["annotation", "visible_x"], name)
@@ -175,6 +188,7 @@ class Indexer:
         only_points=False,
         no_map_q=False,
         no_multi_map=False,
+        no_cat=False,
     ):
         if not self.name_unique(name):
             raise RuntimeError(
@@ -193,6 +207,10 @@ class Indexer:
             has_map_q = False
         if no_multi_map:
             multi_map = False
+        if no_cat:
+            has_cat = False
+        else:
+            has_cat = len(self.session_default["annotation"]["list"]) > 0
 
         self.progress_print(
             "generating replicate",
@@ -214,8 +232,8 @@ class Indexer:
         if group in ["b", "both"]:
             self.append_session(["replicates", "in_group_b"], name)
 
-        o = 2 if multi_map else 0
-        d = o + 3 if has_map_q else 2
+        o = 2 if multi_map else 0 + 1 if has_cat else 0
+        d = o + 3 if has_map_q else 2 + 1 if has_cat else 0
 
         read_iterator = chr_order_heatmap(
             self.prefix + ".smoother_index",
@@ -243,6 +261,12 @@ class Indexer:
                     map_q,
                 ) in read_iterator.itr_cell(chr_x, chr_y):
                     total_reads += 1
+                    if no_cat:
+                        cat = []
+                    else:
+                        cat_x = self.indices.anno.get_categories(pos_2_s, pos_2_e)
+                        cat_y = self.indices.anno.get_categories(pos_1_s, pos_1_e)
+                        cat = [val for pair in zip(cat_x, cat_y) for val in pair]
                     act_pos_1_s = int(pos_2_s) // self.session_default["dividend"]
                     act_pos_1_e = int(pos_2_e) // self.session_default["dividend"]
                     act_pos_2_s = int(pos_1_s) // self.session_default["dividend"]
@@ -261,7 +285,7 @@ class Indexer:
                         end = [0, 0]
                     else:
                         raise RuntimeError("this statement should never be reached")
-                    self.indices.insert(d, o, start, end)
+                    self.indices.insert(d, o, start, end, cat)
                 if (
                     chr_x
                     not in self.session_default["replicates"]["by_name"][name]["ids"]
@@ -277,8 +301,8 @@ class Indexer:
                                     self.indices.generate(d, o, verbosity=GENERATE_VERBOSITY))
 
         self.set_session(["replicates", "by_name", name, "total_reads"], total_reads)
-        o = 1 if multi_map else 0
-        d = o + 2 if has_map_q else 1
+        o = 1 if multi_map else 0 + 1 if has_cat else 0
+        d = o + 2 if has_map_q else 1 + 1 if has_cat else 0
 
         for x_axis in [True, False]:
             for chr_ in (
@@ -294,6 +318,10 @@ class Indexer:
                 ):
                     pos_s = pos_1_s if x_axis else pos_2_s
                     pos_e = pos_1_e if x_axis else pos_2_e
+                    if no_cat:
+                        cat = []
+                    else:
+                        cat = self.indices.anno.get_categories(pos_s, pos_e)
                     act_pos_s = int(pos_s) // self.session_default["dividend"]
                     act_pos_e = int(pos_e) // self.session_default["dividend"]
                     if has_map_q and multi_map:
@@ -310,7 +338,7 @@ class Indexer:
                         end = [0]
                     else:
                         raise RuntimeError("this statement should never be reached")
-                    self.indices.insert(d, o, start, end)
+                    self.indices.insert(d, o, start, end, cat)
 
                 self.set_session(["replicates", "by_name", name, "ids", chr_, "row" if x_axis else "col"], 
                                  self.indices.generate(d, o, verbosity=GENERATE_VERBOSITY))
@@ -334,6 +362,7 @@ class Indexer:
         only_points=False,
         no_map_q=False,
         no_multi_map=False,
+        no_cat=False,
     ):
         if not self.name_unique(name):
             raise RuntimeError(
@@ -353,6 +382,10 @@ class Indexer:
             has_map_q = False
         if no_multi_map:
             multi_map = False
+        if no_cat:
+            has_cat = False
+        else:
+            has_cat = len(self.session_default["annotation"]["list"]) > 0
 
         self.progress_print(
             "generating track",
@@ -374,8 +407,8 @@ class Indexer:
         if group in ["row", "both"]:
             self.append_session(["coverage", "in_row"], name)
 
-        o = 1 if multi_map else 0
-        d = o + 2 if has_map_q else 1
+        o = 1 if multi_map else 0 + 1 if has_cat else 0
+        d = o + 2 if has_map_q else 1 + 1 if has_cat else 0
 
         read_iterator = chr_order_coverage(
             self.prefix + ".smoother_index",
@@ -397,6 +430,10 @@ class Indexer:
                 map_q,
             ) in read_iterator.itr_cell(chr_x):
                 total_reads += 1
+                if no_cat:
+                    cat = []
+                else:
+                    cat = self.indices.anno.get_categories(pos_1_s, pos_1_e)
                 act_pos_1_s = int(pos_1_s) // self.session_default["dividend"]
                 act_pos_1_e = int(pos_1_e) // self.session_default["dividend"]
                 if has_map_q and multi_map:
@@ -413,7 +450,7 @@ class Indexer:
                     end = [0]
                 else:
                     raise RuntimeError("this statement should never be reached")
-                self.indices.insert(d, o, start, end)
+                self.indices.insert(d, o, start, end, cat)
             self.set_session(["coverage", "by_name", name, "ids", chr_x], 
                                 self.indices.generate(d, o, verbosity=GENERATE_VERBOSITY))
 

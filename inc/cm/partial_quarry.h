@@ -1050,61 +1050,63 @@ class PartialQuarry
         std::cout << "vColored " << vColored.size( ) << std::endl;
     }
 
-    void printNumReadsNumOverlays()
+    void printNumReadsNumOverlays( )
     {
-        std::cout << "replicate\tcontig_a\tcontig_b\treads\toverlays" << std::endl; 
-        for(const json& rJson : this->xSession["replicates"]["list"])
+        std::cout << "replicate\tcontig_a\tcontig_b\treads\toverlays" << std::endl;
+        for( const json& rJson : this->xSession[ "replicates" ][ "list" ] )
         {
-            std::string sRep = rJson.get<std::string>();
-            for(const json& rJson : this->xSession["contigs"]["list"])
+            std::string sRep = rJson.get<std::string>( );
+            for( const json& rJson : this->xSession[ "contigs" ][ "list" ] )
             {
-                std::string sContigA = rJson.get<std::string>();
-                size_t uiSizeA = this->xSession["contigs"]["lengths"][sContigA].get<size_t>();
-                for(const json& rJson : this->xSession["contigs"]["list"])
+                std::string sContigA = rJson.get<std::string>( );
+                size_t uiSizeA = this->xSession[ "contigs" ][ "lengths" ][ sContigA ].get<size_t>( );
+                for( const json& rJson : this->xSession[ "contigs" ][ "list" ] )
                 {
-                    std::string sContigB = rJson.get<std::string>();
-                    size_t uiSizeB = this->xSession["contigs"]["lengths"][sContigB].get<size_t>();
+                    std::string sContigB = rJson.get<std::string>( );
+                    size_t uiSizeB = this->xSession[ "contigs" ][ "lengths" ][ sContigB ].get<size_t>( );
                     std::cout << sRep << "\t" << sContigA << "\t" << sContigB << "\t";
 
-                    size_t iDataSetId = this->xSession["replicates"]["by_name"][sRep]["ids"][sContigA][sContigB].get<size_t>();
+                    size_t iDataSetId =
+                        this->xSession[ "replicates" ][ "by_name" ][ sRep ][ "ids" ][ sContigA ][ sContigB ]
+                            .get<size_t>( );
                     bool bHasMapQ = getValue<bool>( { "replicates", "by_name", sRep, "has_map_q" } );
                     bool bHasMultiMap = getValue<bool>( { "replicates", "by_name", sRep, "has_multimapping" } );
 
                     if( bHasMapQ && bHasMultiMap )
                     {
-                        std::cout << xIndices.getIndex<3, 2>( )->count(
-                            iDataSetId,
-                            { 0, 0, 0 },
-                            { uiSizeA, uiSizeB, 256 },
-                            sps::IntersectionType::overlaps,
-                            0 ) << "\t" << xIndices.getIndex<3, 2>( )->getNumOverlays(iDataSetId);
+                        std::cout << xIndices.getIndex<3, 2>( )->count( iDataSetId,
+                                                                        { 0, 0, 0 },
+                                                                        { uiSizeA, uiSizeB, 256 },
+                                                                        sps::IntersectionType::overlaps,
+                                                                        0 )
+                                  << "\t" << xIndices.getIndex<3, 2>( )->getNumOverlays( iDataSetId );
                     }
                     else if( !bHasMapQ && bHasMultiMap )
                     {
-                        std::cout << xIndices.getIndex<2, 2>( )->count(
-                            iDataSetId,
-                            { 0, 0 },
-                            { uiSizeA, uiSizeB },
-                            sps::IntersectionType::overlaps,
-                            0 ) << "\t" << xIndices.getIndex<2, 2>( )->getNumOverlays(iDataSetId);
+                        std::cout << xIndices.getIndex<2, 2>( )->count( iDataSetId,
+                                                                        { 0, 0 },
+                                                                        { uiSizeA, uiSizeB },
+                                                                        sps::IntersectionType::overlaps,
+                                                                        0 )
+                                  << "\t" << xIndices.getIndex<2, 2>( )->getNumOverlays( iDataSetId );
                     }
                     else if( bHasMapQ && !bHasMultiMap )
                     {
-                        std::cout << xIndices.getIndex<3, 0>( )->count(
-                            iDataSetId,
-                            { 0, 0, 0 },
-                            { uiSizeA, uiSizeB, 256 },
-                            sps::IntersectionType::overlaps,
-                            0 ) << "\t" << xIndices.getIndex<3, 0>( )->getNumOverlays(iDataSetId);
+                        std::cout << xIndices.getIndex<3, 0>( )->count( iDataSetId,
+                                                                        { 0, 0, 0 },
+                                                                        { uiSizeA, uiSizeB, 256 },
+                                                                        sps::IntersectionType::overlaps,
+                                                                        0 )
+                                  << "\t" << xIndices.getIndex<3, 0>( )->getNumOverlays( iDataSetId );
                     }
                     else // if(!bHasMapQ && !bHasMultiMap)
                     {
-                        std::cout << xIndices.getIndex<2, 0>( )->count(
-                            iDataSetId,
-                            { 0, 0 },
-                            { uiSizeA, uiSizeB },
-                            sps::IntersectionType::overlaps,
-                            0 ) << "\t" << xIndices.getIndex<2, 0>( )->getNumOverlays(iDataSetId);
+                        std::cout << xIndices.getIndex<2, 0>( )->count( iDataSetId,
+                                                                        { 0, 0 },
+                                                                        { uiSizeA, uiSizeB },
+                                                                        sps::IntersectionType::overlaps,
+                                                                        0 )
+                                  << "\t" << xIndices.getIndex<2, 0>( )->getNumOverlays( iDataSetId );
                     }
 
                     std::cout << std::endl;

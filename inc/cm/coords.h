@@ -515,8 +515,7 @@ bool PartialQuarry::setTicks( )
                 CANCEL_RETURN;
                 int64_t iDataSetId = rJson[ xRegion.sChromosome ].get<int64_t>( );
                 auto xFirst = xIndices.vAnno.lowerBound( iDataSetId, xRegion.uiIndexPos * uiDividend,
-                                                         iAnnoInMultipleBins < 2,
-                                                         iAnnoInMultipleBins == 2 );
+                                                         iAnnoInMultipleBins < 2, iAnnoInMultipleBins == 2 );
 
                 std::vector<std::string> vSplit =
                     splitString<std::vector<std::string>>( xIndices.vAnno.desc( *xFirst ), '\n' );
@@ -615,7 +614,10 @@ bool PartialQuarry::setAxisCoords( )
                 smaller_bin_to_num( getValue<std::string>( { "settings", "filters", "cut_off_bin" } ) ),
                 multiple_anno( getValue<std::string>( { "settings", "filters", "multiple_annos_in_bin" } ) ),
                 multiple_bins( getValue<std::string>( { "settings", "filters", "anno_in_multiple_bins" } ) ),
-                this->vActiveChromosomes[ bX ? 0 : 1 ], this->bCancel, getValue<json>( { "annotation", "by_name", getValue<std::string>( { "contigs", bX ? "column_coordinates" : "row_coordinates" } ) } ),
+                this->vActiveChromosomes[ bX ? 0 : 1 ], this->bCancel,
+                getValue<json>(
+                    { "annotation", "by_name",
+                      getValue<std::string>( { "contigs", bX ? "column_coordinates" : "row_coordinates" } ) } ),
                 xIndices.vAnno );
         this->vAxisCords[ bX ? 0 : 1 ] = xRet.first;
         this->vAxisRegions[ bX ? 0 : 1 ] = xRet.second;

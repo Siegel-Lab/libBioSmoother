@@ -75,9 +75,8 @@ bool PartialQuarry::setAnnotationValues( )
 
                 int64_t iDataSetId = rJson[ xRegion.sChromosome ].get<int64_t>( );
 
-                uiTotalCount +=
-                    xIndices.vAnno.count( iDataSetId, xRegion.uiIndexPos * uiDividend, 
-                                          (xRegion.uiIndexPos + xRegion.uiIndexSize) * uiDividend );
+                uiTotalCount += xIndices.vAnno.count( iDataSetId, xRegion.uiIndexPos * uiDividend,
+                                                      ( xRegion.uiIndexPos + xRegion.uiIndexSize ) * uiDividend );
             }
         }
         for( std::string sCurrAnno : vActiveAnnotation[ uiX ] )
@@ -91,27 +90,28 @@ bool PartialQuarry::setAnnotationValues( )
                 for( AxisRegion& xRegion : vAxisRegions[ uiX ] )
                 {
                     int64_t iDataSetId = rJson[ xRegion.sChromosome ].get<int64_t>( );
-                    for( auto& xAnno : xIndices.vAnno.query(
-                             iDataSetId, xRegion.uiIndexPos * uiDividend, (xRegion.uiIndexPos + xRegion.uiIndexSize) * uiDividend ) )
+                    for( auto& xAnno :
+                         xIndices.vAnno.query( iDataSetId, xRegion.uiIndexPos * uiDividend,
+                                               ( xRegion.uiIndexPos + xRegion.uiIndexSize ) * uiDividend ) )
                     {
                         size_t uiStartPos;
                         size_t uiEndPos;
                         if( bSqueeze )
                         {
                             uiStartPos = xRegion.uiScreenPos * uiDividend;
-                            uiEndPos = (xRegion.uiScreenPos + xRegion.uiScreenSize) * uiDividend;
+                            uiEndPos = ( xRegion.uiScreenPos + xRegion.uiScreenSize ) * uiDividend;
                         }
                         else
                         {
-                            uiStartPos =
-                                ( std::get<0>( xAnno ) > xRegion.uiIndexPos * uiDividend ? std::get<0>( xAnno ) - xRegion.uiIndexPos * uiDividend
-                                                                            : 0 ) +
-                                xRegion.uiScreenPos * uiDividend;
+                            uiStartPos = ( std::get<0>( xAnno ) > xRegion.uiIndexPos * uiDividend
+                                               ? std::get<0>( xAnno ) - xRegion.uiIndexPos * uiDividend
+                                               : 0 ) +
+                                         xRegion.uiScreenPos * uiDividend;
                             uiEndPos = std::min( ( std::get<1>( xAnno ) > xRegion.uiIndexPos * uiDividend
                                                        ? std::get<1>( xAnno ) - xRegion.uiIndexPos * uiDividend
                                                        : 0 ) +
                                                      xRegion.uiScreenPos * uiDividend,
-                                                 (xRegion.uiScreenPos + xRegion.uiScreenSize)*uiDividend );
+                                                 ( xRegion.uiScreenPos + xRegion.uiScreenSize ) * uiDividend );
                         }
 
                         if( uiEndPos > uiStartPos )
@@ -143,8 +143,9 @@ bool PartialQuarry::setAnnotationValues( )
                 for( AxisCoord& xCoords : vAxisCords[ uiX ] )
                 {
                     int64_t iDataSetId = rJson[ xCoords.sChromosome ].get<int64_t>( );
-                    vAnnotationValues[ uiX ].back( ).first.push_back( xIndices.vAnno.count(
-                        iDataSetId, xCoords.uiIndexPos * uiDividend, (xCoords.uiIndexPos + xCoords.uiIndexSize) * uiDividend ) );
+                    vAnnotationValues[ uiX ].back( ).first.push_back(
+                        xIndices.vAnno.count( iDataSetId, xCoords.uiIndexPos * uiDividend,
+                                              ( xCoords.uiIndexPos + xCoords.uiIndexSize ) * uiDividend ) );
                 }
             }
         }
@@ -294,15 +295,14 @@ void PartialQuarry::regAnnotation( )
                                .vIncomingSession = { { "annotation", "visible_x" }, { "annotation", "visible_y" } },
                                .vSessionsIncomingInPrevious = {} } );
 
-    registerNode(
-        NodeNames::AnnotationValues,
-        ComputeNode{ .sNodeName = "annotation_values",
-                     .fFunc = &PartialQuarry::setAnnotationValues,
-                     .vIncomingFunctions = { NodeNames::ActivateAnnotation, NodeNames::AxisCoords },
-                     .vIncomingSession = { { "annotation", "by_name" },
-                                           { "settings", "interface", "max_detailed_anno_display" } },
-                     .vSessionsIncomingInPrevious = { { "settings", "filters", "anno_in_multiple_bins" }, 
-                                                      {"dividend"} } } );
+    registerNode( NodeNames::AnnotationValues,
+                  ComputeNode{ .sNodeName = "annotation_values",
+                               .fFunc = &PartialQuarry::setAnnotationValues,
+                               .vIncomingFunctions = { NodeNames::ActivateAnnotation, NodeNames::AxisCoords },
+                               .vIncomingSession = { { "annotation", "by_name" },
+                                                     { "settings", "interface", "max_detailed_anno_display" } },
+                               .vSessionsIncomingInPrevious = { { "settings", "filters", "anno_in_multiple_bins" },
+                                                                { "dividend" } } } );
 
     registerNode( NodeNames::AnnotationCDS,
                   ComputeNode{ .sNodeName = "annotation_cds",
