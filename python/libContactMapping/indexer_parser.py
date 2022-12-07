@@ -7,7 +7,7 @@ def init(args):
 
 
 def anno(args):
-    Indexer(args.index_prefix).add_annotation(args.file_path)
+    Indexer(args.index_prefix).add_annotation(args.file_path, args.order_path)
 
 
 def repl(args):
@@ -74,6 +74,9 @@ def add_parsers(main_parser):
     )
     anno_parser.add_argument(
         "file_path", help="Path to a file that contains the annotations."
+    )
+    anno_parser.add_argument(
+        "order_path", help="Path to a file that contains the order of annotations, default: gene first, then alphabetic for others."
     )
     anno_parser.set_defaults(func=anno)
 
