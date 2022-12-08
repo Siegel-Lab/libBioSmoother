@@ -11,7 +11,7 @@ def touch(f_name):
     with open(f_name, "a"):  # Create file if does not exist
         pass
 
-GENERATE_VERBOSITY = 0
+GENERATE_VERBOSITY = 2
 PROGRESS_PRINT_TIME = 3
 
 class Indexer:
@@ -162,7 +162,7 @@ class Indexer:
             if not name in order:
                 order.append(name)
         for name in order:
-            chroms = sorted_list[order]
+            chroms = sorted_list[name]
             if name not in self.session_default["annotation"]["list"]:
                 self.append_session(["annotation", "list"], name)
                 self.append_session(["annotation", "visible_x"], name)
@@ -213,6 +213,7 @@ class Indexer:
             has_map_q = False
         if no_multi_map:
             multi_map = False
+        no_cat = True
         if no_cat:
             has_cat = False
         else:
@@ -238,8 +239,8 @@ class Indexer:
         if group in ["b", "both"]:
             self.append_session(["replicates", "in_group_b"], name)
 
-        o = 2 if multi_map else 0 + 1 if has_cat else 0
-        d = o + 3 if has_map_q else 2 + 1 if has_cat else 0
+        o = (2 if multi_map else 0) + (1 if has_cat else 0)
+        d = o + (3 if has_map_q else 2) + (1 if has_cat else 0)
 
         read_iterator = chr_order_heatmap(
             self.prefix + ".smoother_index",
@@ -258,7 +259,8 @@ class Indexer:
         for chr_x in read_iterator.itr_x_axis():
             for chr_y in read_iterator.itr_y_axis():
                 cnt += 1
-                t1 = time.time()
+                self.progress_print("generating heatmap for contig-pair", chr_x, chr_y + ".", cnt, "of", num_itr,
+                                    str(round(100*cnt/num_itr, 2)) + "%")
                 for (
                     read_name,
                     pos_1_s,
@@ -306,13 +308,10 @@ class Indexer:
                 )
                 self.set_session(["replicates", "by_name", name, "ids", chr_x, chr_y], 
                                     self.indices.generate(d, o, verbosity=GENERATE_VERBOSITY))
-                t3 = time.time()
-                self.progress_print("generating heatmap for contig-pair", chr_x, chr_y + ".", cnt, "of", num_itr,
-                                    str(round(100*cnt/num_itr, 2)) + "%", t2 - t1, t3-t2)
 
         self.set_session(["replicates", "by_name", name, "total_reads"], total_reads)
-        o = 1 if multi_map else 0 + 1 if has_cat else 0
-        d = o + 2 if has_map_q else 1 + 1 if has_cat else 0
+        o = (1 if multi_map else 0) + (1 if has_cat else 0)
+        d = o + (2 if has_map_q else 1) + (1 if has_cat else 0)
 
         for x_axis in [True, False]:
             for chr_ in (
@@ -392,6 +391,7 @@ class Indexer:
             has_map_q = False
         if no_multi_map:
             multi_map = False
+        no_cat = True
         if no_cat:
             has_cat = False
         else:
@@ -417,8 +417,8 @@ class Indexer:
         if group in ["row", "both"]:
             self.append_session(["coverage", "in_row"], name)
 
-        o = 1 if multi_map else 0 + 1 if has_cat else 0
-        d = o + 2 if has_map_q else 1 + 1 if has_cat else 0
+        o = (1 if multi_map else 0) + (1 if has_cat else 0)
+        d = o + (2 if has_map_q else 1) + (1 if has_cat else 0)
 
         read_iterator = chr_order_coverage(
             self.prefix + ".smoother_index",

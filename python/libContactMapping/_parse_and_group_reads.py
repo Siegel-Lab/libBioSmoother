@@ -3,7 +3,7 @@ import subprocess
 import errno
 import os
 
-TEST_FAC = 1000000
+TEST_FAC = 100000
 MAX_READS_IM_MEM = 1000000
 
 
@@ -29,10 +29,19 @@ def read_xa_tag(tags):
     return l
 
 
-def parse_tsv(in_filename, test, chr_filter, line_format):
+def parse_tsv(in_filename, test, chr_filter, line_format, progress_print=print):
     with open(in_filename, "r") as in_file_1:
         cnt = 0
-        for line in in_file_1:
+        file_pos = 0
+        file_size = get_filesize(in_filename)
+        for idx_2, line in enumerate(in_file_1):
+            file_pos += len(line) + 1
+            if idx_2 % PRINT_MODULO == PRINT_MODULO - 1:
+                progress_print(
+                    "loading file",
+                    in_filename + ":",
+                    str(round(100 * (file_pos) / file_size, 2)) + "%",
+                )
             # parse file columns
             num_cols = len(line.split())
             if num_cols in line_format:
@@ -65,7 +74,7 @@ def parse_tsv(in_filename, test, chr_filter, line_format):
                 )
 
 
-def parse_heatmap(in_filename, test, chr_filter):
+def parse_heatmap(in_filename, test, chr_filter, progress_print=print):
     yield from parse_tsv(in_filename, test, chr_filter, {
         7: lambda read_name, chr_1, pos_1, chr_2, pos_2, mapq_1, mapq_2: 
                 (read_name, [chr_1, chr_2], [pos_1, pos_2], [mapq_1, mapq_2], ["?", "?"]),
@@ -75,9 +84,9 @@ def parse_heatmap(in_filename, test, chr_filter):
                 (read_name, [chr_1, chr_2], [pos_1, pos_2], [mapq_1, mapq_2], ["?", "?"]),
         13: lambda read_name, _1, chr_1, pos_1, _2, _3, chr_2, pos_2, _4, mapq_1, mapq_2, tag_a, tag_b: 
                 (read_name, [chr_1, chr_2], [pos_1, pos_2], [mapq_1, mapq_2], [tag_a, tag_b]),
-    })
+    }, progress_print)
 
-def parse_track(in_filename, test, chr_filter):
+def parse_track(in_filename, test, chr_filter, progress_print=print):
     yield from parse_tsv(in_filename, test, chr_filter, {
         4: lambda read_name, chr_1, pos_1, mapq_1: 
                 (read_name, [chr_1], [pos_1], [mapq_1], ["?"]),
@@ -87,7 +96,7 @@ def parse_track(in_filename, test, chr_filter):
                 (read_name, [chr_1], [pos_1], [mapq_1], ["?"]),
         7: lambda read_name, _1, chr_1, pos_1, _2, mapq_1, tag_a: 
                 (read_name, [chr_1], [pos_1], [mapq_1], [tag_a]),
-    })
+    }, progress_print)
 
 
 def has_map_q_and_multi_map(in_filename, test, chr_filter, parse_func=parse_heatmap):
@@ -154,7 +163,7 @@ def group_reads(in_filename, file_size, chr_filter, progress_print=print, parse_
         poss,
         mapqs,
         tags,
-    ) in enumerate(parse_func(in_filename, test, chr_filter)):
+    ) in enumerate(parse_func(in_filename, test, chr_filter, progress_print)):
         if read_name != curr_read_name and len(group) > 0 and len(group[0]) > 0:
             yield from deal_with_group()
         curr_read_name = read_name
@@ -167,16 +176,6 @@ def group_reads(in_filename, file_size, chr_filter, progress_print=print, parse_
             group[idx].append((chr_, pos, mapq))
             for chr_1, pos_1 in read_xa_tag(tag):
                 group[idx].append((chr_1, int(pos_1), 0))
-
-        if idx_2 % PRINT_MODULO == PRINT_MODULO - 1:
-            progress_print(
-                "loading file",
-                file_name + ", line",
-                idx_2 + 1,
-                "of",
-                str(file_size) + ".",
-                str(round(100 * (idx_2 + 1) / file_size, 2)) + "%",
-            )
     yield from deal_with_group()
 
 
@@ -367,11 +366,12 @@ def chr_order_coverage(
 def get_filesize(path):
     if not os.path.exists(path):
         raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), path)
-    return int(
-        subprocess.run(["wc", "-l", path], stdout=subprocess.PIPE)
-        .stdout.decode("utf-8")
-        .split(" ")[0]
-    )
+    return os.path.getsize(path)
+    #return int(
+    #    subprocess.run(["wc", "-l", path], stdout=subprocess.PIPE)
+    #    .stdout.decode("utf-8")
+    #    .split(" ")[0]
+    #)
 
 
 def parse_annotations(annotation_file):

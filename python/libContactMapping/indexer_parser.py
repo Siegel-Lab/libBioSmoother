@@ -73,10 +73,10 @@ def add_parsers(main_parser):
         help="Path where the index shall be saved. Note: a folder with multiple files will be created.",
     )
     anno_parser.add_argument(
-        "file_path", help="Path to a file that contains the annotations."
+        "file_path", help="Path to a file that contains the annotations.", default=None
     )
     anno_parser.add_argument(
-        "order_path", help="Path to a file that contains the order of annotations, default: gene first, then alphabetic for others."
+        "--order_path", help="Path to a file that contains the order of annotations, default: gene first, then alphabetic for others."
     )
     anno_parser.set_defaults(func=anno)
 
