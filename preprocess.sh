@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --mem 100G -J preprocess_smoother --time=240:00:00 -o slurm_preprocess_heatmap-%j.out --mail-user=markus.rainer.schmidt@gmail.com --mail-type END
 
-if false;
+if true;
 then
     # source activate $(pwd)/conda_env/smoother
     source activate libContactMapping
@@ -15,7 +15,7 @@ then
     BAMS="/work/project/ladsie_012/ABS.2.2/20210608_Inputs"
     BAM_SUF="R1.sorted.bam"
 
-    INDEX_PREFIX="../smoother_out/radicl"
+    INDEX_PREFIX="../smoother_out/radicl-2"
 
     rm -r ${INDEX_PREFIX}.smoother_index
 
@@ -24,6 +24,7 @@ then
 
 
     python3 python/main.py indexer init "${INDEX_PREFIX}" "../smoother_in/Lister427.sizes" -d 1000
+
 
     python3 python/main.py indexer anno "${INDEX_PREFIX}" "../smoother_in/HGAP3_Tb427v10_merged_2021_06_21.gff3"
 

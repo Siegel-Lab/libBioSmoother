@@ -114,9 +114,9 @@ std::pair<std::vector<AxisCoord>, std::vector<AxisRegion>> axisCoordsHelper( siz
             uiIndexPos += uiCurrBinSize;
         }
 
-        if( uiStartScreenPos >= uiChromosomeStartPos )
+        if( vRet.size( ) > uiStartIdx )
         {
-            assert( uiItrEndPos > uiStartChromPos );
+            assert( uiItrEndPos >= uiStartChromPos );
             vRet2.push_back( AxisRegion{
                 {
                     .sChromosome = xChr.sName, //
@@ -426,6 +426,7 @@ bool PartialQuarry::setLCS( )
                     bContinue = false;
                     break;
                 }
+                bFirst = false;
             }
         }
         --uiLogestCommonSuffix;

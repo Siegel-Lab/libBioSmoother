@@ -11,7 +11,7 @@ def touch(f_name):
     with open(f_name, "a"):  # Create file if does not exist
         pass
 
-GENERATE_VERBOSITY = 2
+GENERATE_VERBOSITY = 0
 PROGRESS_PRINT_TIME = 3
 
 class Indexer:
@@ -294,7 +294,7 @@ class Indexer:
                         end = [0, 0]
                     else:
                         raise RuntimeError("this statement should never be reached")
-                    self.indices.insert(d, o, start, end)
+                    self.indices.insert(d, o, start, end, cat)
                 if (
                     chr_x
                     not in self.session_default["replicates"]["by_name"][name]["ids"]
@@ -347,7 +347,7 @@ class Indexer:
                         end = [0]
                     else:
                         raise RuntimeError("this statement should never be reached")
-                    self.indices.insert(d, o, start, end)
+                    self.indices.insert(d, o, start, end, cat)
 
                 self.set_session(["replicates", "by_name", name, "ids", chr_, "row" if x_axis else "col"], 
                                  self.indices.generate(d, o, verbosity=GENERATE_VERBOSITY))
@@ -465,7 +465,7 @@ class Indexer:
                     end = [0]
                 else:
                     raise RuntimeError("this statement should never be reached")
-                self.indices.insert(d, o, start, end)
+                self.indices.insert(d, o, start, end, cat)
             self.set_session(["coverage", "by_name", name, "ids", chr_x], 
                                 self.indices.generate(d, o, verbosity=GENERATE_VERBOSITY))
 

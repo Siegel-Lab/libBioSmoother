@@ -54,8 +54,9 @@ size_t multiple_bins( std::string sVal )
 bool PartialQuarry::setAnnotationValues( )
 {
     size_t uiMaxDetailedDisplay = getValue<size_t>( { "settings", "interface", "max_detailed_anno_display" } );
+    // @todo and anno coords
     const bool bSqueeze = getValue<std::string>( { "settings", "filters", "anno_in_multiple_bins" } ) == "squeeze";
-    size_t uiDividend = getValue<size_t>( { "dividend" } );
+    const uint32_t uiDividend = getValue<uint32_t>( { "dividend" } );
     for( size_t uiX : { 0, 1 } )
     {
         size_t uiMinAnnoDist = 2;
@@ -73,10 +74,13 @@ bool PartialQuarry::setAnnotationValues( )
             {
                 CANCEL_RETURN;
 
-                int64_t iDataSetId = rJson[ xRegion.sChromosome ].get<int64_t>( );
+                if(rJson.contains(xRegion.sChromosome))
+                {
+                    int64_t iDataSetId = rJson[ xRegion.sChromosome ].get<int64_t>( );
 
-                uiTotalCount += xIndices.vAnno.count( iDataSetId, xRegion.uiIndexPos * uiDividend,
-                                                      ( xRegion.uiIndexPos + xRegion.uiIndexSize ) * uiDividend );
+                    uiTotalCount += xIndices.vAnno.count( iDataSetId, xRegion.uiIndexPos * uiDividend,
+                                                        ( xRegion.uiIndexPos + xRegion.uiIndexSize ) * uiDividend );
+                }
             }
         }
         for( std::string sCurrAnno : vActiveAnnotation[ uiX ] )
@@ -89,48 +93,49 @@ bool PartialQuarry::setAnnotationValues( )
                 std::vector<size_t> vEndPos;
                 for( AxisRegion& xRegion : vAxisRegions[ uiX ] )
                 {
-                    int64_t iDataSetId = rJson[ xRegion.sChromosome ].get<int64_t>( );
-                    for( auto& xAnno :
-                         xIndices.vAnno.query( iDataSetId, xRegion.uiIndexPos * uiDividend,
-                                               ( xRegion.uiIndexPos + xRegion.uiIndexSize ) * uiDividend ) )
+                    if(rJson.contains(xRegion.sChromosome))
                     {
-                        size_t uiStartPos;
-                        size_t uiEndPos;
-                        if( bSqueeze )
+                        int64_t iDataSetId = rJson[ xRegion.sChromosome ].get<int64_t>( );
+                        for( auto& xAnno :
+                            xIndices.vAnno.query( iDataSetId, xRegion.uiIndexPos * uiDividend,
+                                                ( xRegion.uiIndexPos + xRegion.uiIndexSize ) * uiDividend ) )
                         {
-                            uiStartPos = xRegion.uiScreenPos * uiDividend;
-                            uiEndPos = ( xRegion.uiScreenPos + xRegion.uiScreenSize ) * uiDividend;
-                        }
-                        else
-                        {
-                            uiStartPos = ( std::get<0>( xAnno ) > xRegion.uiIndexPos * uiDividend
-                                               ? std::get<0>( xAnno ) - xRegion.uiIndexPos * uiDividend
-                                               : 0 ) +
-                                         xRegion.uiScreenPos * uiDividend;
-                            uiEndPos = std::min( ( std::get<1>( xAnno ) > xRegion.uiIndexPos * uiDividend
-                                                       ? std::get<1>( xAnno ) - xRegion.uiIndexPos * uiDividend
-                                                       : 0 ) +
-                                                     xRegion.uiScreenPos * uiDividend,
-                                                 ( xRegion.uiScreenPos + xRegion.uiScreenSize ) * uiDividend );
-                        }
+                            double uiStartPos;
+                            double uiEndPos;
+                            if( bSqueeze )
+                            {
+                                uiStartPos = xRegion.uiScreenPos;
+                                uiEndPos = ( xRegion.uiScreenPos + xRegion.uiScreenSize );
+                            }
+                            else
+                            {
+                                double fAnnoF = (double)std::get<0>( xAnno ) / (double)uiDividend;
+                                double fAnnoT = (double)std::get<1>( xAnno ) / (double)uiDividend;
+                                double fRegF = xRegion.uiIndexPos;
+                                double fRegF2 = xRegion.uiScreenPos;
+                                double fRegT = xRegion.uiScreenPos + xRegion.uiScreenSize;
+                                uiStartPos = ( fAnnoF > fRegF ? fAnnoF - fRegF : 0.0 ) + fRegF2;
+                                uiEndPos = std::min( ( fAnnoT > fRegF ? fAnnoT - fRegF : 0.0 ) + fRegF2, fRegT );
+                            }
 
-                        if( uiEndPos > uiStartPos )
-                        {
-                            size_t uiRow = 0;
-                            while( uiRow < vEndPos.size( ) && uiStartPos < vEndPos[ uiRow ] + uiMinAnnoDist )
-                                ++uiRow;
-                            if( uiRow == vEndPos.size( ) )
-                                vEndPos.emplace_back( 0 );
-                            vEndPos[ uiRow ] = uiEndPos;
-                            vAnnotationValues[ uiX ].back( ).second.push_back(
-                                Annotation{ .sInfo = std::get<2>( xAnno ),
-                                            .bForw = std::get<3>( xAnno ),
-                                            .fScreenX = uiStartPos / (double)uiDividend,
-                                            .fScreenY = uiEndPos / (double)uiDividend,
-                                            .uiIndexX = std::get<0>( xAnno ) / uiDividend,
-                                            .uiIndexY = std::get<1>( xAnno ) / uiDividend,
-                                            .uiRow = uiRow,
-                                            .sChromosome = xRegion.sChromosome } );
+                            if( uiEndPos > uiStartPos )
+                            {
+                                size_t uiRow = 0;
+                                while( uiRow < vEndPos.size( ) && uiStartPos < vEndPos[ uiRow ] + uiMinAnnoDist )
+                                    ++uiRow;
+                                if( uiRow == vEndPos.size( ) )
+                                    vEndPos.emplace_back( 0 );
+                                vEndPos[ uiRow ] = uiEndPos;
+                                vAnnotationValues[ uiX ].back( ).second.push_back(
+                                    Annotation{ .sInfo = std::get<2>( xAnno ),
+                                                .bForw = std::get<3>( xAnno ),
+                                                .fScreenX = uiStartPos,
+                                                .fScreenY = uiEndPos,
+                                                .uiIndexX = std::get<0>( xAnno ),
+                                                .uiIndexY = std::get<1>( xAnno ),
+                                                .uiRow = uiRow,
+                                                .sChromosome = xRegion.sChromosome } );
+                            }
                         }
                     }
                 }
@@ -142,10 +147,15 @@ bool PartialQuarry::setAnnotationValues( )
                 vAnnotationValues[ uiX ].back( ).first.reserve( vAxisCords[ uiX ].size( ) );
                 for( AxisCoord& xCoords : vAxisCords[ uiX ] )
                 {
-                    int64_t iDataSetId = rJson[ xCoords.sChromosome ].get<int64_t>( );
-                    vAnnotationValues[ uiX ].back( ).first.push_back(
-                        xIndices.vAnno.count( iDataSetId, xCoords.uiIndexPos * uiDividend,
-                                              ( xCoords.uiIndexPos + xCoords.uiIndexSize ) * uiDividend ) );
+                    if(rJson.contains(xCoords.sChromosome))
+                    {
+                        int64_t iDataSetId = rJson[ xCoords.sChromosome ].get<int64_t>( );
+                        vAnnotationValues[ uiX ].back( ).first.push_back(
+                            xIndices.vAnno.count( iDataSetId, xCoords.uiIndexPos * uiDividend,
+                                                ( xCoords.uiIndexPos + xCoords.uiIndexSize ) * uiDividend ) );
+                    }
+                    else
+                        vAnnotationValues[ uiX ].back( ).first.push_back( 0 );
                 }
             }
         }
@@ -223,8 +233,8 @@ bool PartialQuarry::setAnnotationCDS( )
                 CANCEL_RETURN;
 
                 vChr.append( rA.sChromosome );
-                vIndexStart.append( readableBp( rA.uiIndexX * uiDividend ) );
-                vIndexEnd.append( readableBp( rA.uiIndexY * uiDividend ) );
+                vIndexStart.append( readableBp( rA.uiIndexX ) );
+                vIndexEnd.append( readableBp( rA.uiIndexY ) );
                 vAnnoName.append( py::make_tuple(
                     rAnnoName,
                     ( rA.uiRow % 2 == 0 ? 1.0 : -1.0 ) * fAnnoHeight * ( ( rA.uiRow + 1 ) / 2 ) +
