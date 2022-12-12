@@ -170,7 +170,7 @@ template <template <typename> typename vec_gen_t> class AnnotationDescIndex
     AnnotationDescIndex( )
     {}
 
-    size_t addIntervals( std::vector<std::tuple<size_t, size_t, std::string, bool>> vIntervalsIn,
+    size_t addIntervals( std::vector<std::tuple<size_t, size_t, std::string, bool>> vIntervalsIn, size_t uiDividend,
                          size_t /*uiVerbosity = 0*/ )
     {
         size_t uiStartSize = vIntervals.size( );
@@ -179,8 +179,8 @@ template <template <typename> typename vec_gen_t> class AnnotationDescIndex
         vDescID.resize( vIntervalsIn.size( ) );
         for( size_t uiI = 0; uiI < vIntervalsIn.size( ); uiI++ )
         {
-            vLineSweepPos.push_back( std::make_tuple( std::get<0>( vIntervalsIn[ uiI ] ), uiI, false ) );
-            vLineSweepPos.push_back( std::make_tuple( std::get<1>( vIntervalsIn[ uiI ] ), uiI, true ) );
+            vLineSweepPos.push_back( std::make_tuple( std::get<0>( vIntervalsIn[ uiI ] ) / uiDividend, uiI, false ) );
+            vLineSweepPos.push_back( std::make_tuple( std::get<1>( vIntervalsIn[ uiI ] ) / uiDividend, uiI, true ) );
             vDescID[ uiI ] = vDesc.add( std::get<2>( vIntervalsIn[ uiI ] ) );
         }
         std::sort( vLineSweepPos.begin( ), vLineSweepPos.end( ) );
@@ -227,8 +227,10 @@ template <template <typename> typename vec_gen_t> class AnnotationDescIndex
                         .uiIntervalCoordsStart = uiIntervalCoordPos,
                         .uiIntervalCoordsEnd = uiIntervalCoordPos + ( uiNextPos - uiCurrPos ),
 
-                        .uiAnnoCoordsStart = uiIntervalCoordPos + std::get<0>( vIntervalsIn[ uiActive ] ) - uiCurrPos,
-                        .uiAnnoCoordsEnd = uiIntervalCoordPos + std::get<1>( vIntervalsIn[ uiActive ] ) - uiCurrPos,
+                        .uiAnnoCoordsStart = uiIntervalCoordPos * uiDividend + std::get<0>( vIntervalsIn[ uiActive ] ) -
+                                             uiCurrPos * uiDividend,
+                        .uiAnnoCoordsEnd = uiIntervalCoordPos * uiDividend + std::get<1>( vIntervalsIn[ uiActive ] ) -
+                                           uiCurrPos * uiDividend,
                     } );
                 uiIntervalCoordPos += ( uiNextPos - uiCurrPos );
                 ++uiIntervalId;
@@ -364,13 +366,13 @@ template <template <typename> typename vec_gen_t> class AnnotationDescIndex
         return xRange[ 1 ] - xRange[ 0 ];
     }
 
-    std::vector<bool> getCategories(size_t uiFrom, size_t uiTo, bool bIntervalCoords = false,
-                                    bool bIntervalCount = false)
+    std::vector<bool> getCategories( size_t uiFrom, size_t uiTo, bool bIntervalCoords = false,
+                                     bool bIntervalCount = false )
     {
         std::vector<bool> vRet;
-        vRet.reserve(vDatasets.size());
-        for(size_t uiI = 0; uiI < vDatasets.size(); uiI++)
-            vRet.push_back(count(uiI, uiFrom, uiTo, bIntervalCoords, bIntervalCount) > 0);
+        vRet.reserve( vDatasets.size( ) );
+        for( size_t uiI = 0; uiI < vDatasets.size( ); uiI++ )
+            vRet.push_back( count( uiI, uiFrom, uiTo, bIntervalCoords, bIntervalCount ) > 0 );
         return vRet;
     }
 

@@ -59,6 +59,9 @@ bool PartialQuarry::setAnnotationValues( )
     const uint32_t uiDividend = getValue<uint32_t>( { "dividend" } );
     for( size_t uiX : { 0, 1 } )
     {
+        const bool bIsGenomeCoords =
+            getValue<std::string>( { "contigs", ( uiX == 0 ) ? "column_coordinates" : "row_coordinates" } ) ==
+            "full_genome";
         size_t uiMinAnnoDist = 2;
         vAnnotationValues[ uiX ].clear( );
         vAnnotationValues[ uiX ].reserve( vActiveAnnotation[ uiX ].size( ) );
@@ -74,12 +77,13 @@ bool PartialQuarry::setAnnotationValues( )
             {
                 CANCEL_RETURN;
 
-                if(rJson.contains(xRegion.sChromosome))
+                if( rJson.contains( xRegion.sChromosome ) )
                 {
                     int64_t iDataSetId = rJson[ xRegion.sChromosome ].get<int64_t>( );
 
-                    uiTotalCount += xIndices.vAnno.count( iDataSetId, xRegion.uiIndexPos * uiDividend,
-                                                        ( xRegion.uiIndexPos + xRegion.uiIndexSize ) * uiDividend );
+                    uiTotalCount += xIndices.vAnno.count( iDataSetId, xRegion.uiIndexPos,
+                                                          ( xRegion.uiIndexPos + xRegion.uiIndexSize ),
+                                                          !bIsGenomeCoords && !bSqueeze, !bIsGenomeCoords && bSqueeze );
                 }
             }
         }
@@ -93,12 +97,12 @@ bool PartialQuarry::setAnnotationValues( )
                 std::vector<size_t> vEndPos;
                 for( AxisRegion& xRegion : vAxisRegions[ uiX ] )
                 {
-                    if(rJson.contains(xRegion.sChromosome))
+                    if( rJson.contains( xRegion.sChromosome ) )
                     {
                         int64_t iDataSetId = rJson[ xRegion.sChromosome ].get<int64_t>( );
-                        for( auto& xAnno :
-                            xIndices.vAnno.query( iDataSetId, xRegion.uiIndexPos * uiDividend,
-                                                ( xRegion.uiIndexPos + xRegion.uiIndexSize ) * uiDividend ) )
+                        for( auto& xAnno : xIndices.vAnno.query(
+                                 iDataSetId, xRegion.uiIndexPos, ( xRegion.uiIndexPos + xRegion.uiIndexSize ),
+                                 !bIsGenomeCoords && !bSqueeze, !bIsGenomeCoords && bSqueeze ) )
                         {
                             double uiStartPos;
                             double uiEndPos;
@@ -109,8 +113,13 @@ bool PartialQuarry::setAnnotationValues( )
                             }
                             else
                             {
-                                double fAnnoF = (double)std::get<0>( xAnno ) / (double)uiDividend;
-                                double fAnnoT = (double)std::get<1>( xAnno ) / (double)uiDividend;
+                                double fAnnoF = (double)std::get<0>( xAnno );
+                                double fAnnoT = (double)std::get<1>( xAnno );
+                                if( !bSqueeze || bIsGenomeCoords )
+                                {
+                                    fAnnoF /= (double)uiDividend;
+                                    fAnnoT /= (double)uiDividend;
+                                }
                                 double fRegF = xRegion.uiIndexPos;
                                 double fRegF2 = xRegion.uiScreenPos;
                                 double fRegT = xRegion.uiScreenPos + xRegion.uiScreenSize;
@@ -147,12 +156,12 @@ bool PartialQuarry::setAnnotationValues( )
                 vAnnotationValues[ uiX ].back( ).first.reserve( vAxisCords[ uiX ].size( ) );
                 for( AxisCoord& xCoords : vAxisCords[ uiX ] )
                 {
-                    if(rJson.contains(xCoords.sChromosome))
+                    if( rJson.contains( xCoords.sChromosome ) )
                     {
                         int64_t iDataSetId = rJson[ xCoords.sChromosome ].get<int64_t>( );
-                        vAnnotationValues[ uiX ].back( ).first.push_back(
-                            xIndices.vAnno.count( iDataSetId, xCoords.uiIndexPos * uiDividend,
-                                                ( xCoords.uiIndexPos + xCoords.uiIndexSize ) * uiDividend ) );
+                        vAnnotationValues[ uiX ].back( ).first.push_back( xIndices.vAnno.count(
+                            iDataSetId, xCoords.uiIndexPos, ( xCoords.uiIndexPos + xCoords.uiIndexSize ),
+                            !bIsGenomeCoords && !bSqueeze, !bIsGenomeCoords && bSqueeze ) );
                     }
                     else
                         vAnnotationValues[ uiX ].back( ).first.push_back( 0 );

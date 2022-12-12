@@ -172,7 +172,8 @@ class Indexer:
                 for chrom, annos in chroms.items():
                     self.progress_print("annotating", name + "(s)", "for contig", chrom)
                     self.set_session(["annotation", "by_name", name, chrom], 
-                                     self.indices.anno.add_intervals(annos, verbosity=GENERATE_VERBOSITY))
+                                     self.indices.anno.add_intervals(annos, self.session_default["dividend"],
+                                                                     verbosity=GENERATE_VERBOSITY))
             else:
                 raise RuntimeError("annotation with this name already exists")
 

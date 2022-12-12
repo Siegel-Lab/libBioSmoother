@@ -29,6 +29,7 @@ struct AxisCoord
     size_t uiIndexPos;
     size_t uiScreenSize;
     size_t uiIndexSize;
+    size_t uiRegionIdx;
     bool bFiltered = false;
 };
 
