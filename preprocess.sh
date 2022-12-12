@@ -15,16 +15,16 @@ then
     BAMS="/work/project/ladsie_012/ABS.2.2/20210608_Inputs"
     BAM_SUF="R1.sorted.bam"
 
-    INDEX_PREFIX="../smoother_out/radicl-2"
+    INDEX_PREFIX="../smoother_out/radicl"
 
     rm -r ${INDEX_PREFIX}.smoother_index
 
 
     echo "working on index ${INDEX_PREFIX}"
 
-
+    # Anna #
     #python3 python/main.py indexer init "${INDEX_PREFIX}" "../smoother_in/Lister427.sizes" -d 1000
-    python3 python/main.py indexer init "${INDEX_PREFIX}" "../smoother_in/Lister427_no_uni.sizes" -d 10
+    python3 python/main.py indexer init "${INDEX_PREFIX}" "../smoother_in/Lister427_no_uni.sizes" -d 1000
 
 
     python3 python/main.py indexer anno "${INDEX_PREFIX}" "../smoother_in/HGAP3_Tb427v10_merged_2021_06_21.gff3"
@@ -45,6 +45,20 @@ then
     #python3  python/main.py indexer repl "${INDEX_PREFIX}" "${BEDS}/NS511_N50_NPM_1.${BED_SUF}" "N50_NPM_Rep1" -g b
     #python3  python/main.py indexer repl "${INDEX_PREFIX}" "${BEDS}/NS512_N50_NPM_2.${BED_SUF}" "N50_NPM_Rep2" -g b
     #python3  python/main.py indexer repl "${INDEX_PREFIX}" "${BEDS}/NS513_N50_NPM_3.${BED_SUF}" "N50_NPM_Rep3" -g b
+    
+    #samtools view ${BAMS}/WT1_gDNA_inputATAC.${BAM_SUF} | awk -F '\t' 'BEGIN {OFS="\t";ORS=""} {if ($1 ~ !/^@/ && $3 ~ !/*/) {print $1,$3,$4,$5; for(i=12;i<=NF;i+=1) if ($i ~ /^XA:Z:/) print "",$i; print "\n"}}' | awk -F '\t' 'BEGIN {OFS="\t";ORS=""} {print $1,$2,$3,$4; if(NF<5) print "\tnotag"; else print "",$5; print "\n"}' > ../smoother_in/WT1_gDNA_inputATAC.tsv
+
+    #samtools view ${BAMS}/WT1_RNAseq_NS320.${BAM_SUF} | awk -F '\t' 'BEGIN {OFS="\t";ORS=""} {if ($1 ~ !/^@/ && $3 ~ !/*/) {print $1,$3,$4,$5; for(i=12;i<=NF;i+=1) if ($i ~ /^XA:Z:/) print "",$i; print "\n"}}' | awk -F '\t' 'BEGIN {OFS="\t";ORS=""} {print $1,$2,$3,$4; if(NF<5) print "\tnotag"; else print "",$5; print "\n"}' > ../smoother_in/WT1_RNAseq_NS320.tsv
+
+    #python3 python/main.py indexer track "${INDEX_PREFIX}" ../smoother_in/WT1_gDNA_inputATAC.tsv "gDNA_inputATAC" -g col
+    python3 python/main.py indexer track "${INDEX_PREFIX}" ../smoother_in/WT1_RNAseq_NS320.tsv "RNAseq_NS320" -g row
+
+
+    # CLAUDIA #
+    CR_BEDS="/work/project/ladsie_010/CR3_Smoother/pre_files_smoother"
+
+    #python3 python/main.py indexer repl "${INDEX_PREFIX}" "${CR_BEDS}/pre1_P10_1" "P10_Lib1" -g a
+    #python3 python/main.py indexer repl "${INDEX_PREFIX}" "${CR_BEDS}/pre1_N50_2" "N50_Lib2" -g b
 
 else
     INDEX_PREFIX="../smoother_out/radicl-2"

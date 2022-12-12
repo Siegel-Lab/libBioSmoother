@@ -38,7 +38,7 @@ def parse_tsv(in_filename, test, chr_filter, line_format, progress_print=print):
             file_pos += len(line) + 1
             if idx_2 % PRINT_MODULO == PRINT_MODULO - 1:
                 progress_print(
-                    "loading file",
+                    "file",
                     in_filename + ":",
                     str(round(100 * (file_pos) / file_size, 2)) + "%",
                 )
@@ -99,12 +99,12 @@ def parse_track(in_filename, test, chr_filter, progress_print=print):
     }, progress_print)
 
 
-def has_map_q_and_multi_map(in_filename, test, chr_filter, parse_func=parse_heatmap):
+def has_map_q_and_multi_map(in_filename, test, chr_filter, progress_print=print, parse_func=parse_heatmap):
     map_q = False
     multi_map = False
     last_map_q = None
     last_read_name = None
-    for _, read_name, _, _, mapqs, tags in parse_func(in_filename, test, chr_filter):
+    for _, read_name, _, _, mapqs, tags in parse_func(in_filename, test, chr_filter, progress_print):
         if last_read_name is None:
             last_read_name = read_name
         elif last_read_name == read_name:
@@ -276,7 +276,7 @@ def chr_order_heatmap(
             if len(chrs[chr_1][chr_2]) >= MAX_READS_IM_MEM:
                 with open(prefix + "." + chr_1 + "." + chr_2, "w") as out_file:
                     for tup in chrs[chr_1][chr_2]:
-                        out_file.write("\t".join(tup) + "\n")
+                        out_file.write("\t".join([str(x) for x in tup]) + "\n")
                 chrs[chr_1][chr_2] = None
 
 
@@ -290,7 +290,8 @@ class ChrOrderCoverageIterator:
 
     def cleanup(self):
         for chr_ in self.chrs.keys():
-            os.remove(self.prefix + "." + chr_)
+            if self.chrs[chr_] is None:
+                os.remove(self.prefix + "." + chr_)
 
     def itr_x_axis(self):
         for x in self.chrs.keys():
@@ -350,7 +351,7 @@ def chr_order_coverage(
             if len(chrs[chrs_[0]]) >= MAX_READS_IM_MEM:
                 with open(prefix + "." + chrs_[0], "w") as out_file:
                     for tup in chrs[chrs_[0]]:
-                        out_file.write("\t".join(tup) + "\n")
+                        out_file.write("\t".join([str(x) for x in tup]) + "\n")
                 chrs[chrs_[0]] = None
 
 

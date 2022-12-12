@@ -209,6 +209,7 @@ class Indexer:
                 path,
                 "test" in self.session_default,
                 self.session_default["contigs"]["list"],
+                lambda *x: self.progress_print("scanning", *x),
             )
         if no_map_q:
             has_map_q = False
@@ -251,7 +252,7 @@ class Indexer:
             self.session_default["contigs"]["list"],
             no_groups,
             "test" in self.session_default,
-            lambda *x: self.progress_print(*x)
+            lambda *x: self.progress_print("loading", *x)
         )
         total_reads = 0
 
@@ -274,13 +275,13 @@ class Indexer:
                     if no_cat:
                         cat = []
                     else:
-                        cat_x = self.indices.anno.get_categories(pos_2_s, pos_2_e)
-                        cat_y = self.indices.anno.get_categories(pos_1_s, pos_1_e)
+                        cat_x = self.indices.anno.get_categories(pos_1_s, pos_1_e)
+                        cat_y = self.indices.anno.get_categories(pos_2_s, pos_2_e)
                         cat = [val for pair in zip(cat_x, cat_y) for val in pair]
-                    act_pos_1_s = int(pos_2_s) // self.session_default["dividend"]
-                    act_pos_1_e = int(pos_2_e) // self.session_default["dividend"]
-                    act_pos_2_s = int(pos_1_s) // self.session_default["dividend"]
-                    act_pos_2_e = int(pos_1_e) // self.session_default["dividend"]
+                    act_pos_1_s = int(pos_1_s) // self.session_default["dividend"]
+                    act_pos_1_e = int(pos_1_e) // self.session_default["dividend"]
+                    act_pos_2_s = int(pos_2_s) // self.session_default["dividend"]
+                    act_pos_2_e = int(pos_2_e) // self.session_default["dividend"]
                     if has_map_q and multi_map:
                         start = [act_pos_1_s, act_pos_2_s, MAP_Q_MAX - int(map_q) - 1]
                         end = [act_pos_1_e, act_pos_2_e, MAP_Q_MAX - int(map_q) - 1]
@@ -386,6 +387,7 @@ class Indexer:
                 path,
                 "test" in self.session_default,
                 self.session_default["contigs"]["list"],
+                lambda *x: self.progress_print("scanning", *x),
                 parse_func=parse_track
             )
         if no_map_q:
@@ -429,7 +431,7 @@ class Indexer:
             self.session_default["contigs"]["list"],
             no_groups,
             "test" in self.session_default,
-            lambda *x: self.progress_print(*x)
+            lambda *x: self.progress_print("loading", *x)
         )
         total_reads = 0
 
