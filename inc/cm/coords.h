@@ -199,183 +199,186 @@ annoCoordsHelper( size_t uiBinSize, size_t uiScreenStartPos, size_t uiScreenEndP
     {
         if( bCancel )
             return std::make_pair( vRet, vRet2 );
-        int64_t iDataSetId = rJson[ xChr.sName ].get<int64_t>( );
-
-        size_t uiChromSize;
-        switch( iAnnoInMultipleBins )
+        if (rJson.contains(xChr.sName))
         {
-            case 0: // separate
-            case 1: // stretch
-                uiChromSize = rAnno.totalIntervalSize( iDataSetId );
-                break;
-            case 2: // squeeze
-                uiChromSize = rAnno.numIntervals( iDataSetId );
-                break;
-            default:
-                throw std::logic_error( "unknown iAnnoInMultipleBins value" );
-        }
+            int64_t iDataSetId = rJson[ xChr.sName ].get<int64_t>( );
 
-        size_t uiChromosomeEndPos = uiChromosomeStartPos + uiChromSize;
-        size_t uiItrEndPos = std::min( uiScreenEndPos, uiChromosomeEndPos );
-
-        while( uiCurrScreenPos >= uiChromosomeStartPos && uiCurrScreenPos < uiItrEndPos )
-        {
-            if( bCancel )
-                return std::make_pair( vRet, vRet2 );
-            auto xLower = rAnno.lowerBound(
-                iDataSetId, uiCurrScreenPos - uiChromosomeStartPos, iAnnoInMultipleBins < 2, iAnnoInMultipleBins == 2 );
-            auto xUpper = rAnno.upperBound( iDataSetId, uiCurrScreenPos - uiChromosomeStartPos + uiBinSize,
-                                            iAnnoInMultipleBins < 2, iAnnoInMultipleBins == 2 );
-            typename anno_t::interval_it_t xBegin, xPick;
-
-            while( xLower < xUpper )
+            size_t uiChromSize;
+            switch( iAnnoInMultipleBins )
             {
-                // uiDescId, uiAnnoStart, uiAnnoEnd
+                case 0: // separate
+                case 1: // stretch
+                    uiChromSize = rAnno.totalIntervalSize( iDataSetId );
+                    break;
+                case 2: // squeeze
+                    uiChromSize = rAnno.numIntervals( iDataSetId );
+                    break;
+                default:
+                    throw std::logic_error( "unknown iAnnoInMultipleBins value" );
+            }
+
+            size_t uiChromosomeEndPos = uiChromosomeStartPos + uiChromSize;
+            size_t uiItrEndPos = std::min( uiScreenEndPos, uiChromosomeEndPos );
+
+            while( uiCurrScreenPos >= uiChromosomeStartPos && uiCurrScreenPos < uiItrEndPos )
+            {
                 if( bCancel )
                     return std::make_pair( vRet, vRet2 );
-                // find bin coords
-                size_t uiIndexPos;
-                switch( iAnnoInMultipleBins )
+                auto xLower = rAnno.lowerBound(
+                    iDataSetId, uiCurrScreenPos - uiChromosomeStartPos, iAnnoInMultipleBins < 2, iAnnoInMultipleBins == 2 );
+                auto xUpper = rAnno.upperBound( iDataSetId, uiCurrScreenPos - uiChromosomeStartPos + uiBinSize,
+                                                iAnnoInMultipleBins < 2, iAnnoInMultipleBins == 2 );
+                typename anno_t::interval_it_t xBegin, xPick;
+
+                while( xLower < xUpper )
                 {
-                    case 0: // separate
-                    case 1: // stretch
-                        uiIndexPos = xLower->uiIntervalStart + uiCurrScreenPos - xLower->uiIntervalCoordsStart;
-                        break;
-                    case 2: // squeeze
-                        uiIndexPos = xLower->uiIntervalStart + uiCurrScreenPos - xLower->uiIntervalId;
-                        break;
-                    default:
-                        throw std::logic_error( "unknown iAnnoInMultipleBins value" );
-                }
-                size_t uiCurrScreenSize;
-                size_t uiCurrIndexSize;
-                size_t uiAdd;
-                assert( xLower->uiIntervalEnd >= uiIndexPos );
-                assert( ( xUpper - 1 )->uiIntervalEnd >= uiIndexPos );
-                switch( iMultipleAnnosInBin )
-                {
-                    case 0: // combine
-                        assert( ( xUpper - 1 )->uiIntervalEnd >= uiIndexPos );
-                        uiCurrIndexSize = ( xUpper - 1 )->uiIntervalEnd - uiIndexPos;
-                        uiCurrScreenSize = ( xUpper - 1 )->uiIntervalCoordsEnd - xLower->uiIntervalCoordsStart;
-                        break;
-                    case 1: // first
-                        assert( xLower->uiIntervalEnd >= uiIndexPos );
-                        uiCurrIndexSize = xLower->uiIntervalEnd - uiIndexPos;
-                        uiCurrScreenSize = ( xUpper - 1 )->uiIntervalCoordsEnd - xLower->uiIntervalCoordsStart;
-                        break;
-                    case 2: // max_fac_pow_two
-                        xBegin = rAnno.begin( iDataSetId );
-                        if( xLower->uiIntervalId < ( xUpper - 1 )->uiIntervalId )
-                            uiAdd = getEvenlyDividableByMaxTwoPowNIn( xLower - xBegin, xUpper - xBegin );
-                        else
-                            uiAdd = xLower - xBegin;
-                        if( uiAdd != std::numeric_limits<size_t>::max( ) )
-                        {
-                            xPick = xBegin + uiAdd;
-                            switch( iAnnoInMultipleBins )
+                    // uiDescId, uiAnnoStart, uiAnnoEnd
+                    if( bCancel )
+                        return std::make_pair( vRet, vRet2 );
+                    // find bin coords
+                    size_t uiIndexPos;
+                    switch( iAnnoInMultipleBins )
+                    {
+                        case 0: // separate
+                        case 1: // stretch
+                            uiIndexPos = xLower->uiIntervalStart + uiCurrScreenPos - xLower->uiIntervalCoordsStart;
+                            break;
+                        case 2: // squeeze
+                            uiIndexPos = xLower->uiIntervalStart + uiCurrScreenPos - xLower->uiIntervalId;
+                            break;
+                        default:
+                            throw std::logic_error( "unknown iAnnoInMultipleBins value" );
+                    }
+                    size_t uiCurrScreenSize;
+                    size_t uiCurrIndexSize;
+                    size_t uiAdd;
+                    assert( xLower->uiIntervalEnd >= uiIndexPos );
+                    assert( ( xUpper - 1 )->uiIntervalEnd >= uiIndexPos );
+                    switch( iMultipleAnnosInBin )
+                    {
+                        case 0: // combine
+                            assert( ( xUpper - 1 )->uiIntervalEnd >= uiIndexPos );
+                            uiCurrIndexSize = ( xUpper - 1 )->uiIntervalEnd - uiIndexPos;
+                            uiCurrScreenSize = ( xUpper - 1 )->uiIntervalCoordsEnd - xLower->uiIntervalCoordsStart;
+                            break;
+                        case 1: // first
+                            assert( xLower->uiIntervalEnd >= uiIndexPos );
+                            uiCurrIndexSize = xLower->uiIntervalEnd - uiIndexPos;
+                            uiCurrScreenSize = ( xUpper - 1 )->uiIntervalCoordsEnd - xLower->uiIntervalCoordsStart;
+                            break;
+                        case 2: // max_fac_pow_two
+                            xBegin = rAnno.begin( iDataSetId );
+                            if( xLower->uiIntervalId < ( xUpper - 1 )->uiIntervalId )
+                                uiAdd = getEvenlyDividableByMaxTwoPowNIn( xLower - xBegin, xUpper - xBegin );
+                            else
+                                uiAdd = xLower - xBegin;
+                            if( uiAdd != std::numeric_limits<size_t>::max( ) )
                             {
-                                case 0: // separate
-                                    uiIndexPos =
-                                        xPick->uiIntervalStart + uiCurrScreenPos - xPick->uiIntervalCoordsStart;
-                                    uiCurrIndexSize = xPick->uiIntervalEnd - uiIndexPos;
-                                    break;
-                                case 1: // stretch
-                                case 2: // squeeze
-                                    uiIndexPos = xPick->uiIntervalStart;
-                                    uiCurrIndexSize = xPick->uiIntervalEnd - xPick->uiIntervalStart;
-                                    break;
-                                default:
-                                    throw std::logic_error( "unknown iAnnoInMultipleBins value" );
+                                xPick = xBegin + uiAdd;
+                                switch( iAnnoInMultipleBins )
+                                {
+                                    case 0: // separate
+                                        uiIndexPos =
+                                            xPick->uiIntervalStart + uiCurrScreenPos - xPick->uiIntervalCoordsStart;
+                                        uiCurrIndexSize = xPick->uiIntervalEnd - uiIndexPos;
+                                        break;
+                                    case 1: // stretch
+                                    case 2: // squeeze
+                                        uiIndexPos = xPick->uiIntervalStart;
+                                        uiCurrIndexSize = xPick->uiIntervalEnd - xPick->uiIntervalStart;
+                                        break;
+                                    default:
+                                        throw std::logic_error( "unknown iAnnoInMultipleBins value" );
+                                }
                             }
-                        }
-                        else
-                        {
-                            uiIndexPos = 0;
-                            uiCurrIndexSize = 0;
-                        }
+                            else
+                            {
+                                uiIndexPos = 0;
+                                uiCurrIndexSize = 0;
+                            }
 
-                        uiCurrScreenSize = ( xUpper - 1 )->uiIntervalCoordsEnd - xLower->uiIntervalCoordsStart;
-                        break;
-                    case 3: // force_separate
-                        assert( xLower->uiIntervalEnd >= uiIndexPos );
-                        uiCurrIndexSize = xLower->uiIntervalEnd - uiIndexPos;
-                        uiCurrScreenSize = uiCurrIndexSize;
-                        break;
-                    default:
-                        throw std::logic_error( "unknown iMultipleAnnosInBin value" );
-                }
+                            uiCurrScreenSize = ( xUpper - 1 )->uiIntervalCoordsEnd - xLower->uiIntervalCoordsStart;
+                            break;
+                        case 3: // force_separate
+                            assert( xLower->uiIntervalEnd >= uiIndexPos );
+                            uiCurrIndexSize = xLower->uiIntervalEnd - uiIndexPos;
+                            uiCurrScreenSize = uiCurrIndexSize;
+                            break;
+                        default:
+                            throw std::logic_error( "unknown iMultipleAnnosInBin value" );
+                    }
 
-                switch( iAnnoInMultipleBins )
-                {
-                    case 0: // separate
-                        uiCurrIndexSize = std::min( uiBinSize, uiCurrIndexSize );
-                        uiCurrScreenSize = std::min( uiBinSize, uiCurrScreenSize );
-                        break;
-                    case 1: // stretch
-                        // do nothing
-                        break;
-                    case 2: // squeeze
-                        if( iMultipleAnnosInBin == 3 )
-                            uiCurrScreenSize = 1;
-                        else
-                            uiCurrScreenSize = xUpper - xLower;
-                        break;
-                    default:
-                        throw std::logic_error( "unknown iAnnoInMultipleBins value" );
-                }
+                    switch( iAnnoInMultipleBins )
+                    {
+                        case 0: // separate
+                            uiCurrIndexSize = std::min( uiBinSize, uiCurrIndexSize );
+                            uiCurrScreenSize = std::min( uiBinSize, uiCurrScreenSize );
+                            break;
+                        case 1: // stretch
+                            // do nothing
+                            break;
+                        case 2: // squeeze
+                            if( iMultipleAnnosInBin == 3 )
+                                uiCurrScreenSize = 1;
+                            else
+                                uiCurrScreenSize = xUpper - xLower;
+                            break;
+                        default:
+                            throw std::logic_error( "unknown iAnnoInMultipleBins value" );
+                    }
 
-                vRet.push_back( AxisCoord{
-                    .sChromosome = xChr.sName, //
-                    .uiScreenPos = uiCurrScreenPos, //
-                    .uiIndexPos = uiIndexPos, //
-                    .uiScreenSize = uiCurrScreenSize, //
-                    .uiIndexSize = uiCurrIndexSize, //
-                    .uiRegionIdx = uiChr //
-                } );
-                if( iAnnoInMultipleBins != 2 && vRet2.size( ) > 0 && vRet2.back( ).sChromosome == xChr.sName &&
-                    vRet2.back( ).uiIndexPos + vRet2.back( ).uiIndexSize == uiIndexPos )
-                { // extend last AxisRegion
-                    vRet2.back( ).uiScreenSize += uiCurrScreenSize;
-                    vRet2.back( ).uiIndexSize += uiCurrIndexSize;
-                    ++vRet2.back( ).uiNumCoords;
-                }
-                else // create new AxisRegion
-                    vRet2.push_back( AxisRegion{
-                        {
-                            .sChromosome = xChr.sName, //
-                            .uiScreenPos = uiCurrScreenPos, //
-                            .uiIndexPos = uiIndexPos, //
-                            .uiScreenSize = uiCurrScreenSize, //
-                            .uiIndexSize = uiCurrIndexSize, //
-                            .uiRegionIdx = uiChr //
-                        },
-                        .uiCoordStartIdx = vRet.size( ) - 1, //
-                        .uiNumCoords = 1 //
+                    vRet.push_back( AxisCoord{
+                        .sChromosome = xChr.sName, //
+                        .uiScreenPos = uiCurrScreenPos, //
+                        .uiIndexPos = uiIndexPos, //
+                        .uiScreenSize = uiCurrScreenSize, //
+                        .uiIndexSize = uiCurrIndexSize, //
+                        .uiRegionIdx = uiChr //
                     } );
+                    if( iAnnoInMultipleBins != 2 && vRet2.size( ) > 0 && vRet2.back( ).sChromosome == xChr.sName &&
+                        vRet2.back( ).uiIndexPos + vRet2.back( ).uiIndexSize == uiIndexPos )
+                    { // extend last AxisRegion
+                        vRet2.back( ).uiScreenSize += uiCurrScreenSize;
+                        vRet2.back( ).uiIndexSize += uiCurrIndexSize;
+                        ++vRet2.back( ).uiNumCoords;
+                    }
+                    else // create new AxisRegion
+                        vRet2.push_back( AxisRegion{
+                            {
+                                .sChromosome = xChr.sName, //
+                                .uiScreenPos = uiCurrScreenPos, //
+                                .uiIndexPos = uiIndexPos, //
+                                .uiScreenSize = uiCurrScreenSize, //
+                                .uiIndexSize = uiCurrIndexSize, //
+                                .uiRegionIdx = uiChr //
+                            },
+                            .uiCoordStartIdx = vRet.size( ) - 1, //
+                            .uiNumCoords = 1 //
+                        } );
 
-                uiCurrScreenPos += uiCurrScreenSize;
+                    uiCurrScreenPos += uiCurrScreenSize;
 
-                // inc xLower
-                size_t uiPos;
-                switch( iMultipleAnnosInBin )
-                {
-                    case 0: // combine
-                    case 1: // first
-                    case 2: // max_fac_pow_two
-                        xLower = xUpper;
-                        break;
-                    case 3: // force_separate
-                        uiPos = xLower->uiIntervalId;
-                        while( xLower != xUpper && xLower->uiIntervalId == uiPos )
-                            ++xLower;
-                        break;
-                    default:
-                        throw std::logic_error( "unknown iMultipleAnnosInBin value" );
+                    // inc xLower
+                    size_t uiPos;
+                    switch( iMultipleAnnosInBin )
+                    {
+                        case 0: // combine
+                        case 1: // first
+                        case 2: // max_fac_pow_two
+                            xLower = xUpper;
+                            break;
+                        case 3: // force_separate
+                            uiPos = xLower->uiIntervalId;
+                            while( xLower != xUpper && xLower->uiIntervalId == uiPos )
+                                ++xLower;
+                            break;
+                        default:
+                            throw std::logic_error( "unknown iMultipleAnnosInBin value" );
+                    }
                 }
             }
+            ++uiChr;
         }
-        ++uiChr;
     }
 
     return std::make_pair( vRet, vRet2 );
@@ -444,7 +447,6 @@ bool PartialQuarry::setLCS( )
 
 bool PartialQuarry::setCanvasSize( )
 {
-    size_t uiDividend = getValue<size_t>( { "dividend" } );
     for( size_t uiI = 0; uiI < 2; uiI++ )
     {
 
@@ -469,16 +471,20 @@ bool PartialQuarry::setCanvasSize( )
             for( auto xChr : this->vActiveChromosomes[ uiI ] )
             {
                 CANCEL_RETURN;
-                int64_t iDataSetId = rJson[ xChr.sName ].get<int64_t>( );
-
-                switch( iAnnoInMultipleBins )
+                
+                if (rJson.contains(xChr.sName))
                 {
-                    case 0: // separate
-                    case 1: // stretch
-                        uiRunningStart += xIndices.vAnno.totalIntervalSize( iDataSetId ) / uiDividend;
-                        break;
-                    case 2: // squeeze
-                        uiRunningStart += xIndices.vAnno.numIntervals( iDataSetId );
+                    int64_t iDataSetId = rJson[ xChr.sName ].get<int64_t>( );
+
+                    switch( iAnnoInMultipleBins )
+                    {
+                        case 0: // separate
+                        case 1: // stretch
+                            uiRunningStart += xIndices.vAnno.totalIntervalSize( iDataSetId );
+                            break;
+                        case 2: // squeeze
+                            uiRunningStart += xIndices.vAnno.numIntervals( iDataSetId );
+                    }
                 }
             }
         }
@@ -549,17 +555,20 @@ bool PartialQuarry::setTicks( )
             for( auto xChr : this->vActiveChromosomes[ uiI ] )
             {
                 CANCEL_RETURN;
-                int64_t iDataSetId = rJson[ xChr.sName ].get<int64_t>( );
-                vFullList.append( uiRunningStart );
-
-                switch( iAnnoInMultipleBins )
+                if (rJson.contains(xChr.sName))
                 {
-                    case 0: // separate
-                    case 1: // stretch
-                        uiRunningStart += xIndices.vAnno.totalIntervalSize( iDataSetId ) / uiDividend;
-                        break;
-                    case 2: // squeeze
-                        uiRunningStart += xIndices.vAnno.numIntervals( iDataSetId );
+                    int64_t iDataSetId = rJson[ xChr.sName ].get<int64_t>( );
+                    vFullList.append( uiRunningStart );
+
+                    switch( iAnnoInMultipleBins )
+                    {
+                        case 0: // separate
+                        case 1: // stretch
+                            uiRunningStart += xIndices.vAnno.totalIntervalSize( iDataSetId );
+                            break;
+                        case 2: // squeeze
+                            uiRunningStart += xIndices.vAnno.numIntervals( iDataSetId );
+                    }
                 }
             }
         }
@@ -960,7 +969,7 @@ void PartialQuarry::regCoords( )
                                                      { "contigs", "row_coordinates" },
                                                      { "settings", "filters", "anno_in_multiple_bins" },
                                                      { "annotation", "by_name" } },
-                               .vSessionsIncomingInPrevious = { { "dividend" } } } );
+                               .vSessionsIncomingInPrevious = { } } );
 
     registerNode( NodeNames::AxisCoords,
                   ComputeNode{ .sNodeName = "axis_coords",
@@ -970,7 +979,8 @@ void PartialQuarry::regCoords( )
                                                      { "settings", "filters", "multiple_annos_in_bin" },
                                                      { "settings", "filters", "anno_in_multiple_bins" },
                                                      { "contigs", "column_coordinates" },
-                                                     { "contigs", "row_coordinates" } },
+                                                     { "contigs", "row_coordinates" },
+                                                     { "annotation", "by_name" } },
                                .vSessionsIncomingInPrevious = {} } );
     registerNode( NodeNames::FilteredCoords,
                   ComputeNode{ .sNodeName = "filtered_coords",

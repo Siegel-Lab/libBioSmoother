@@ -61,17 +61,18 @@ then
     #python3 python/main.py indexer repl "${INDEX_PREFIX}" "${CR_BEDS}/pre1_N50_2" "N50_Lib2" -g b
 
 else
-    INDEX_PREFIX="../smoother_out/radicl-2"
+    INDEX_PREFIX="../smoother_out/radicl"
 
     echo "working on index ${INDEX_PREFIX}"
 
     rm -r ${INDEX_PREFIX}.smoother_index
 
-    python3 python/main.py indexer init ${INDEX_PREFIX} ../smoother/Lister427.sizes -d 1000 --test
+    python3 python/main.py indexer init ${INDEX_PREFIX} ../smoother/Lister427_no_unitig.sizes -d 1000 #--test
 
-    python3 python/main.py indexer anno ${INDEX_PREFIX} ../smoother/HGAP3_Tb427v10_merged_2021_06_21.gff3
+    #python3 python/main.py indexer anno ${INDEX_PREFIX} ../smoother/HGAP3_Tb427v10_merged_2021_06_21.gff3
 
-    python3 python/main.py indexer repl ${INDEX_PREFIX} ../smoother_in/anna.sort.test.PRE2 P10_Total
+    #python3 python/main.py indexer repl ${INDEX_PREFIX} ../smoother_in/anna.sort.test.PRE2 P10_Total
+    gdb python3 -ex "run python/main.py indexer repl ${INDEX_PREFIX} ../smoother_in/anna.sort.test.PRE2 P10_Total"
     #gdb python3 -ex "run python/main.py indexer repl ${INDEX_PREFIX} ../smoother_in/claudia.pre1 P10_R1"
 
     #python3 python/main.py indexer repl -q -m ${INDEX_PREFIX} ../smoother_in/claudia.pre1 P10_R1

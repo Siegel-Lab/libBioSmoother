@@ -1,4 +1,4 @@
-from .libContactMapping import CachedSpsInterface, DiskSpsInterface
+from ._import_lib_cm import CachedSpsInterface, DiskSpsInterface
 from ._parse_and_group_reads import *
 import json
 import os
@@ -30,9 +30,9 @@ class Indexer:
             self.session_default = {}
             self.session = {}
 
-    def progress_print(self, *text):
+    def progress_print(self, *text, force_print=False):
         t = time.time()
-        if self.last_prog_print is None or t - self.last_prog_print >= PROGRESS_PRINT_TIME:
+        if self.last_prog_print is None or t - self.last_prog_print >= PROGRESS_PRINT_TIME or force_print:
             print(*text)
             self.last_prog_print = t
 
@@ -116,7 +116,7 @@ class Indexer:
         with open(chr_len_file_name, "r") as len_file:
             for line in len_file:
                 chr_name, chr_len = line.split()
-                if not test or ("Chr1_3A" in chr_name):
+                if not test or ("Chr1" in chr_name):
                     self.append_session(["contigs", "list"], chr_name)
                     self.set_session(["contigs", "lengths", chr_name], int(chr_len) // dividend)
                     self.append_session(["contigs", "displayed_on_x"], chr_name)
@@ -204,7 +204,7 @@ class Indexer:
             )
 
         if not (no_map_q and no_multi_map):
-            self.progress_print("pre-scanning file for index parameters...")
+            self.progress_print("pre-scanning file for index parameters...", force_print=True)
             has_map_q, multi_map = has_map_q_and_multi_map(
                 path,
                 "test" in self.session_default,
@@ -227,6 +227,7 @@ class Indexer:
             "mapping quality and",
             "with" if multi_map else "without",
             "multi mapping.",
+            force_print=True
         )
 
         self.append_session(["replicates", "list"], name)
@@ -275,13 +276,13 @@ class Indexer:
                     if no_cat:
                         cat = []
                     else:
-                        cat_x = self.indices.anno.get_categories(pos_1_s, pos_1_e)
-                        cat_y = self.indices.anno.get_categories(pos_2_s, pos_2_e)
+                        cat_x = self.indices.anno.get_categories(pos_2_s, pos_2_e)
+                        cat_y = self.indices.anno.get_categories(pos_1_s, pos_1_e)
                         cat = [val for pair in zip(cat_x, cat_y) for val in pair]
-                    act_pos_1_s = int(pos_1_s) // self.session_default["dividend"]
-                    act_pos_1_e = int(pos_1_e) // self.session_default["dividend"]
-                    act_pos_2_s = int(pos_2_s) // self.session_default["dividend"]
-                    act_pos_2_e = int(pos_2_e) // self.session_default["dividend"]
+                    act_pos_1_s = int(pos_2_s) // self.session_default["dividend"]
+                    act_pos_1_e = int(pos_2_e) // self.session_default["dividend"]
+                    act_pos_2_s = int(pos_1_s) // self.session_default["dividend"]
+                    act_pos_2_e = int(pos_1_e) // self.session_default["dividend"]
                     if has_map_q and multi_map:
                         start = [act_pos_1_s, act_pos_2_s, MAP_Q_MAX - int(map_q) - 1]
                         end = [act_pos_1_e, act_pos_2_e, MAP_Q_MAX - int(map_q) - 1]
@@ -351,6 +352,11 @@ class Indexer:
                         raise RuntimeError("this statement should never be reached")
                     self.indices.insert(d, o, start, end, cat)
 
+                if (
+                    chr_
+                    not in self.session_default["replicates"]["by_name"][name]["ids"]
+                ):
+                    self.set_session(["replicates", "by_name", name, "ids", chr_], {})
                 self.set_session(["replicates", "by_name", name, "ids", chr_, "row" if x_axis else "col"], 
                                  self.indices.generate(d, o, verbosity=GENERATE_VERBOSITY))
 
@@ -382,7 +388,7 @@ class Indexer:
             )
 
         if not (no_map_q and no_multi_map):
-            self.progress_print("pre-scanning file for index parameters...")
+            self.progress_print("pre-scanning file for index parameters...", force_print=True)
             has_map_q, multi_map = has_map_q_and_multi_map(
                 path,
                 "test" in self.session_default,
@@ -406,6 +412,7 @@ class Indexer:
             "mapping quality and",
             "with" if multi_map else "without",
             "multi mapping.",
+            force_print=True
         )
 
         self.append_session(["coverage", "list"], name)

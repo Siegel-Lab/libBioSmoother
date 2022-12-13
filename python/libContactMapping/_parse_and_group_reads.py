@@ -57,8 +57,8 @@ def parse_tsv(in_filename, test, chr_filter, line_format, progress_print=print):
                 poss = [int(x)-1 for x in poss]
                 mapqs = [int(x) for x in mapqs]
 
-                if cnt > TEST_FAC and test:
-                    break
+                #if cnt > TEST_FAC and test:
+                #    break
                 cnt += 1
 
                 yield line, read_name, chrs, poss, mapqs, tags
@@ -273,7 +273,7 @@ def chr_order_heatmap(
         else:
             chrs[chr_1][chr_2].append((read_name, pos_s[0], pos_e[0], pos_s[1], pos_e[1], map_q))
 
-            if len(chrs[chr_1][chr_2]) >= MAX_READS_IM_MEM:
+            if len(chrs[chr_1][chr_2]) >= MAX_READS_IM_MEM and False:
                 with open(prefix + "." + chr_1 + "." + chr_2, "w") as out_file:
                     for tup in chrs[chr_1][chr_2]:
                         out_file.write("\t".join([str(x) for x in tup]) + "\n")
