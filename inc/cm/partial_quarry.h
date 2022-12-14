@@ -35,14 +35,17 @@ struct AxisCoord
 
 struct DecayCoord
 {
-    std::string sChromosome;
+    std::string sChromosomeX;
+    std::string sChromosomeY;
     int64_t iFrom;
     int64_t iTo;
 
     friend bool operator<( const DecayCoord& l, const DecayCoord& r )
     {
-        if( l.sChromosome != r.sChromosome )
-            return l.sChromosome < r.sChromosome;
+        if( l.sChromosomeX != r.sChromosomeX )
+            return l.sChromosomeX < r.sChromosomeX;
+        if( l.sChromosomeY != r.sChromosomeY )
+            return l.sChromosomeY < r.sChromosomeY;
         if( l.iFrom != r.iFrom )
             return l.iFrom < r.iFrom;
         if( l.iTo != r.iTo )

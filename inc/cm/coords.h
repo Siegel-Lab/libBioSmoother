@@ -866,10 +866,10 @@ bool PartialQuarry::setDecayCoords( )
         for( std::array<BinCoord, 2>& vCoords : vBinCoords )
         {
             CANCEL_RETURN;
-            if( vCoords[ 0 ].sChromosomeX != vCoords[ 0 ].sChromosomeY )
-                continue;
-            assert( vCoords[ 1 ].sChromosomeX == vCoords[ 1 ].sChromosomeY );
-            assert( vCoords[ 1 ].sChromosomeY == "" || vCoords[ 0 ].sChromosomeX == vCoords[ 1 ].sChromosomeY );
+            //if( vCoords[ 0 ].sChromosomeX != vCoords[ 0 ].sChromosomeY )
+            //    continue;
+            //assert( vCoords[ 1 ].sChromosomeX == vCoords[ 1 ].sChromosomeY );
+            //assert( vCoords[ 1 ].sChromosomeY == "" || vCoords[ 0 ].sChromosomeX == vCoords[ 1 ].sChromosomeY );
 
             std::array<DecayCoord, 2> vKey;
             for( size_t uiI = 0; uiI < 2; uiI++ )
@@ -885,10 +885,10 @@ bool PartialQuarry::setDecayCoords( )
                     int64_t iS = std::min( iA, iB );
                     int64_t iE = std::max( std::max( iA, iB ), iS + 1 );
 
-                    vKey[ uiI ] = DecayCoord{ vCoords[ uiI ].sChromosomeX, iS, iE };
+                    vKey[ uiI ] = DecayCoord{ vCoords[ uiI ].sChromosomeX, vCoords[ uiI ].sChromosomeY, iS, iE };
                 }
                 else
-                    vKey[ uiI ] = DecayCoord{ "", 0, 0 };
+                    vKey[ uiI ] = DecayCoord{ "", "", 0, 0 };
             }
 
             if( vPtr.count( vKey ) == 0 )
