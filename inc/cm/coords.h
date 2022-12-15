@@ -199,7 +199,7 @@ annoCoordsHelper( size_t uiBinSize, size_t uiScreenStartPos, size_t uiScreenEndP
     {
         if( bCancel )
             return std::make_pair( vRet, vRet2 );
-        if (rJson.contains(xChr.sName))
+        if( rJson.contains( xChr.sName ) )
         {
             int64_t iDataSetId = rJson[ xChr.sName ].get<int64_t>( );
 
@@ -224,8 +224,8 @@ annoCoordsHelper( size_t uiBinSize, size_t uiScreenStartPos, size_t uiScreenEndP
             {
                 if( bCancel )
                     return std::make_pair( vRet, vRet2 );
-                auto xLower = rAnno.lowerBound(
-                    iDataSetId, uiCurrScreenPos - uiChromosomeStartPos, iAnnoInMultipleBins < 2, iAnnoInMultipleBins == 2 );
+                auto xLower = rAnno.lowerBound( iDataSetId, uiCurrScreenPos - uiChromosomeStartPos,
+                                                iAnnoInMultipleBins < 2, iAnnoInMultipleBins == 2 );
                 auto xUpper = rAnno.upperBound( iDataSetId, uiCurrScreenPos - uiChromosomeStartPos + uiBinSize,
                                                 iAnnoInMultipleBins < 2, iAnnoInMultipleBins == 2 );
                 typename anno_t::interval_it_t xBegin, xPick;
@@ -471,8 +471,8 @@ bool PartialQuarry::setCanvasSize( )
             for( auto xChr : this->vActiveChromosomes[ uiI ] )
             {
                 CANCEL_RETURN;
-                
-                if (rJson.contains(xChr.sName))
+
+                if( rJson.contains( xChr.sName ) )
                 {
                     int64_t iDataSetId = rJson[ xChr.sName ].get<int64_t>( );
 
@@ -555,7 +555,7 @@ bool PartialQuarry::setTicks( )
             for( auto xChr : this->vActiveChromosomes[ uiI ] )
             {
                 CANCEL_RETURN;
-                if (rJson.contains(xChr.sName))
+                if( rJson.contains( xChr.sName ) )
                 {
                     int64_t iDataSetId = rJson[ xChr.sName ].get<int64_t>( );
                     vFullList.append( uiRunningStart );
@@ -639,6 +639,36 @@ bool PartialQuarry::setAxisCoords( )
                 xIndices.vAnno );
         this->vAxisCords[ bX ? 0 : 1 ] = xRet.first;
         this->vAxisRegions[ bX ? 0 : 1 ] = xRet.second;
+    }
+    CANCEL_RETURN;
+    END_RETURN;
+}
+
+bool PartialQuarry::setGridSeqCoords( )
+{
+    if( getValue<std::string>( { "settings", "normalization", "normalize_by" } ) == "grid-seq" )
+    {
+        size_t uiGenomeSize = 0;
+        for( ChromDesc& rDesc : this->vActiveChromosomes[ 0 ] )
+        {
+            CANCEL_RETURN;
+            uiGenomeSize += rDesc.uiLength;
+        }
+
+        auto xRet = annoCoordsHelper<SpsInterface<false>::anno_t>(
+            uiGenomeSize / getValue<size_t>( { "settings", "normalization", "grid_seq_slice_samples" } ), 0,
+            uiGenomeSize, 0 /*<- unused */, 1 /* use first annotation in bin */,
+            1 /* stretch bin over entire annotation*/, this->vActiveChromosomes[ 0 ], this->bCancel,
+            getValue<json>( { "annotation", "by_name",
+                            getValue<std::string>( { "settings", "normalization", "grid_seq_anno_type" } ) } ),
+            xIndices.vAnno );
+        vGridSeqCoords = xRet.first;
+        vGridSeqRegions = xRet.second;
+    }
+    else
+    {
+        vGridSeqCoords.clear();
+        vGridSeqRegions.clear();
     }
     CANCEL_RETURN;
     END_RETURN;
@@ -866,10 +896,10 @@ bool PartialQuarry::setDecayCoords( )
         for( std::array<BinCoord, 2>& vCoords : vBinCoords )
         {
             CANCEL_RETURN;
-            //if( vCoords[ 0 ].sChromosomeX != vCoords[ 0 ].sChromosomeY )
-            //    continue;
-            //assert( vCoords[ 1 ].sChromosomeX == vCoords[ 1 ].sChromosomeY );
-            //assert( vCoords[ 1 ].sChromosomeY == "" || vCoords[ 0 ].sChromosomeX == vCoords[ 1 ].sChromosomeY );
+            // if( vCoords[ 0 ].sChromosomeX != vCoords[ 0 ].sChromosomeY )
+            //     continue;
+            // assert( vCoords[ 1 ].sChromosomeX == vCoords[ 1 ].sChromosomeY );
+            // assert( vCoords[ 1 ].sChromosomeY == "" || vCoords[ 0 ].sChromosomeX == vCoords[ 1 ].sChromosomeY );
 
             std::array<DecayCoord, 2> vKey;
             for( size_t uiI = 0; uiI < 2; uiI++ )
@@ -969,7 +999,7 @@ void PartialQuarry::regCoords( )
                                                      { "contigs", "row_coordinates" },
                                                      { "settings", "filters", "anno_in_multiple_bins" },
                                                      { "annotation", "by_name" } },
-                               .vSessionsIncomingInPrevious = { } } );
+                               .vSessionsIncomingInPrevious = {} } );
 
     registerNode( NodeNames::AxisCoords,
                   ComputeNode{ .sNodeName = "axis_coords",
@@ -1011,6 +1041,16 @@ void PartialQuarry::regCoords( )
                                .vIncomingFunctions = { NodeNames::BinCoords },
                                .vIncomingSession = { { "settings", "normalization", "ddd" },
                                                      { "settings", "normalization", "ddd_show" } },
+                               .vSessionsIncomingInPrevious = {} } );
+
+    registerNode( NodeNames::GridSeqCoords,
+                  ComputeNode{ .sNodeName = "grid_seq_coords",
+                               .fFunc = &PartialQuarry::setGridSeqCoords,
+                               .vIncomingFunctions = { NodeNames::ActiveChrom },
+                               .vIncomingSession = { { "settings", "normalization", "grid_seq_slice_samples" },
+                                                     { "settings", "normalization", "grid_seq_anno_type" },
+                                                     { "annotation", "by_name" },
+                                                     { "settings", "normalization", "normalize_by" } },
                                .vSessionsIncomingInPrevious = {} } );
 }
 

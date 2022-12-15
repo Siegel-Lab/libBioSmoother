@@ -20,6 +20,7 @@ def repl(args):
         args.only_points,
         args.no_map_q,
         args.no_multi_map,
+        args.shekelyan,
     )
 
 
@@ -116,6 +117,9 @@ def add_parsers(main_parser):
     )
     repl_parser.add_argument(
         "--only_points", help=argparse.SUPPRESS, action="store_true"
+    )
+    repl_parser.add_argument(
+        "--shekelyan", help=argparse.SUPPRESS, action="store_true"
     )
     parser.add_argument("--no_groups", help=argparse.SUPPRESS, action="store_true")
 

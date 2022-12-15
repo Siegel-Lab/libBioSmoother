@@ -132,6 +132,7 @@ class PartialQuarry
         LCS,
         RankedSlicesCDS,
         CanvasSize,
+        GridSeqCoords,
         SIZE
     };
     struct ComputeNode
@@ -540,6 +541,9 @@ class PartialQuarry
     std::array<std::vector<AxisCoord>, 2> vAxisCords;
     std::vector<std::array<DecayCoord, 2>> vDistDepDecCoords;
     std::array<std::vector<AxisRegion>, 2> vAxisRegions;
+    std::vector<AxisCoord> vGridSeqCoords;
+    std::vector<AxisRegion> vGridSeqRegions;
+    std::array<std::vector<std::vector<size_t>>, 2> vvGridSeqCoverageValues;
 
     std::vector<std::string> vActiveReplicates;
     std::vector<size_t> vActiveReplicatesTotal;
@@ -644,6 +648,8 @@ class PartialQuarry
 
     // coords.h
     void regCoords( );
+    // coords.h
+    bool setGridSeqCoords( );
 
     // replicates.h
     bool setIntersectionType( );
@@ -984,10 +990,10 @@ class PartialQuarry
             {
                 std::string sSearch = "chromosome=" + xChr.sName;
                 size_t uiEq = stringCompare( sName, sSearch );
-                size_t uiLen;
+                size_t uiLen = 0;
                 if( bFullGenome )
                     uiLen = xChr.uiLength;
-                else
+                else if(this->xSession[ "annotation" ][ "by_name" ][ sCoords ].contains(xChr.sName))
                 {
                     int64_t iDataSetId =
                         this->xSession[ "annotation" ][ "by_name" ][ sCoords ][ xChr.sName ].get<int64_t>( );
@@ -996,7 +1002,8 @@ class PartialQuarry
                     else
                         uiLen = xIndices.vAnno.totalIntervalSize( iDataSetId );
                 }
-                if( uiEq > uiMaxEquality || ( uiEq == uiMaxEquality && xChr.sName.size( ) < uiMinRefSize ) )
+                if( uiLen > 0 && (uiEq > uiMaxEquality || 
+                                  ( uiEq == uiMaxEquality && xChr.sName.size( ) < uiMinRefSize )) )
                 {
                     uiMaxEquality = uiEq;
                     if( bBottom )
@@ -1017,28 +1024,29 @@ class PartialQuarry
             {
                 auto& rJson = this->xSession[ "annotation" ][ "by_name" ][ sAnno ];
                 for( auto xChr : vActiveChromosomes[ bX ? 0 : 1 ] )
-                {
-                    int64_t iDataSetId = rJson[ xChr.sName ].get<int64_t>( );
-                    xIndices.vAnno.iterate(
-                        iDataSetId,
-                        [ & ]( std::tuple<size_t, size_t, std::string, bool> xTup ) {
-                            std::string sSearch = sAnno + "=" + std::get<2>( xTup );
-                            size_t uiEq = stringCompare( sName, sSearch );
-                            if( uiEq > uiMaxEquality ||
-                                ( uiEq == uiMaxEquality && std::get<2>( xTup ).size( ) < uiMinRefSize ) )
-                            {
-                                uiMaxEquality = uiEq;
-                                uiMinRefSize = std::get<2>( xTup ).size( );
-                                if( bBottom )
-                                    uiMaxPos = std::get<0>( xTup );
-                                else
-                                    uiMaxPos = std::get<1>( xTup );
-                            }
+                    if(rJson.contains(xChr.sName))
+                    {
+                        int64_t iDataSetId = rJson[ xChr.sName ].get<int64_t>( );
+                        xIndices.vAnno.iterate(
+                            iDataSetId,
+                            [ & ]( std::tuple<size_t, size_t, std::string, bool> xTup ) {
+                                std::string sSearch = sAnno + "=" + std::get<2>( xTup );
+                                size_t uiEq = stringCompare( sName, sSearch );
+                                if( uiEq > uiMaxEquality ||
+                                    ( uiEq == uiMaxEquality && std::get<2>( xTup ).size( ) < uiMinRefSize ) )
+                                {
+                                    uiMaxEquality = uiEq;
+                                    uiMinRefSize = std::get<2>( xTup ).size( );
+                                    if( bBottom )
+                                        uiMaxPos = std::get<0>( xTup );
+                                    else
+                                        uiMaxPos = std::get<1>( xTup );
+                                }
 
-                            return true;
-                        },
-                        !bFullGenome && !bSqueeze, !bFullGenome && bSqueeze );
-                }
+                                return true;
+                            },
+                            !bFullGenome && !bSqueeze, !bFullGenome && bSqueeze );
+                    }
             }
         }
         return pybind11::int_( uiMaxPos );

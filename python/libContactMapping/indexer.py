@@ -196,6 +196,7 @@ class Indexer:
         no_map_q=False,
         no_multi_map=False,
         no_cat=False,
+        shekelyan=False
     ):
         if not self.name_unique(name):
             raise RuntimeError(
@@ -310,7 +311,8 @@ class Indexer:
                     ]
                 )
                 self.set_session(["replicates", "by_name", name, "ids", chr_x, chr_y], 
-                                    self.indices.generate(d, o, verbosity=GENERATE_VERBOSITY))
+                                    self.indices.generate(d, o, fac=-2 if shekelyan else -1,
+                                                          verbosity=GENERATE_VERBOSITY))
 
         self.set_session(["replicates", "by_name", name, "total_reads"], total_reads)
         o = (1 if multi_map else 0) + (1 if has_cat else 0)
@@ -358,7 +360,7 @@ class Indexer:
                 ):
                     self.set_session(["replicates", "by_name", name, "ids", chr_], {})
                 self.set_session(["replicates", "by_name", name, "ids", chr_, "row" if x_axis else "col"], 
-                                 self.indices.generate(d, o, verbosity=GENERATE_VERBOSITY))
+                                 self.indices.generate(d, o, fac=-2 if shekelyan else -1, verbosity=GENERATE_VERBOSITY))
 
         read_iterator.cleanup()
 

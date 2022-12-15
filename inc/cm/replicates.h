@@ -213,31 +213,30 @@ bool PartialQuarry::setDecayValues( )
             {
                 if( vCoords[ uiI ].sChromosomeX != "" && vCoords[ uiI ].sChromosomeY != "" )
                 {
-                    size_t iDataSetId = getValue<size_t>( { "replicates", "by_name", sRep, "ids",
-                                            vCoords[ uiI ].sChromosomeX,
+                    size_t iDataSetId =
+                        getValue<size_t>( { "replicates", "by_name", sRep, "ids", vCoords[ uiI ].sChromosomeX,
                                             vCoords[ uiI ].sChromosomeY } );
-                    int64_t iChrX = getValue<int64_t>( { "contigs", "lengths", 
-                            vCoords[ uiI ].sChromosomeX } );
-                    int64_t iChrY = getValue<int64_t>( { "contigs", "lengths", 
-                            vCoords[ uiI ].sChromosomeY } );
+                    int64_t iChrX = getValue<int64_t>( { "contigs", "lengths", vCoords[ uiI ].sChromosomeX } );
+                    int64_t iChrY = getValue<int64_t>( { "contigs", "lengths", vCoords[ uiI ].sChromosomeY } );
 
                     /* The two contigs span a rectange of size cW x cH.
-                     * The bin has a bottom left corner with a distance of c form the diagonal (positive = to right, neg = to left)
-                     * 
+                     * The bin has a bottom left corner with a distance of c form the diagonal (positive = to right, neg
+                     * = to left)
+                     *
                      */
 
                     int64_t iCornerPos = ( vCoords[ uiI ].iFrom + vCoords[ uiI ].iTo ) / 2;
                     // corner pos within contig rectangle
-                    if(iCornerPos >= -iChrY && iCornerPos <= iChrX)
+                    if( iCornerPos >= -iChrY && iCornerPos <= iChrX )
                     {
                         int64_t iBot = std::abs( iCornerPos );
                         int64_t iChrTopRightCornerPos = iChrX - iChrY;
-                        int64_t iTop = iChrX + iChrY - std::abs(iChrTopRightCornerPos - iCornerPos);
+                        int64_t iTop = iChrX + iChrY - std::abs( iChrTopRightCornerPos - iCornerPos );
 
                         int64_t iMyH = vCoords[ uiI ].iTo - vCoords[ uiI ].iFrom;
                         int64_t iH = std::max( (int64_t)1, ( ( iTop - iMyH ) - iBot ) / (int64_t)uiSamplesMax );
 
-                        if( ( iTop - iMyH ) - iBot >= (int64_t)uiSamplesMin * iMyH )
+                        if( ( iTop - iMyH ) - iBot >= (int64_t)(uiSamplesMin-1) * iMyH )
                         {
                             std::vector<size_t> vvVals;
                             vvVals.reserve( uiSamplesMax );
@@ -255,14 +254,20 @@ bool PartialQuarry::setDecayValues( )
                                 assert( uiXe <= (size_t)iChrSize );
 
                                 if( bHasMapQ && bHasMultiMap )
-                                    vvVals.push_back( xIndices.getIndex<3, 2>( )->count(
-                                        iDataSetId, { uiXs, uiYs, uiMapQMax }, { uiXe, uiYe, uiMapQMin }, xIntersect, 0 ) );
+                                    vvVals.push_back( xIndices.getIndex<3, 2>( )->count( iDataSetId,
+                                                                                         { uiXs, uiYs, uiMapQMax },
+                                                                                         { uiXe, uiYe, uiMapQMin },
+                                                                                         xIntersect,
+                                                                                         0 ) );
                                 else if( !bHasMapQ && bHasMultiMap )
                                     vvVals.push_back( xIndices.getIndex<2, 2>( )->count(
                                         iDataSetId, { uiXs, uiYs }, { uiXe, uiYe }, xIntersect, 0 ) );
                                 else if( bHasMapQ && !bHasMultiMap )
-                                    vvVals.push_back( xIndices.getIndex<3, 0>( )->count(
-                                        iDataSetId, { uiXs, uiYs, uiMapQMax }, { uiXe, uiYe, uiMapQMin }, xIntersect, 0 ) );
+                                    vvVals.push_back( xIndices.getIndex<3, 0>( )->count( iDataSetId,
+                                                                                         { uiXs, uiYs, uiMapQMax },
+                                                                                         { uiXe, uiYe, uiMapQMin },
+                                                                                         xIntersect,
+                                                                                         0 ) );
                                 else // if(!bHasMapQ && !bHasMultiMap)
                                     vvVals.push_back( xIndices.getIndex<2, 0>( )->count(
                                         iDataSetId, { uiXs, uiYs }, { uiXe, uiYe }, xIntersect, 0 ) );
@@ -279,7 +284,7 @@ bool PartialQuarry::setDecayValues( )
                             else
                             {
                                 vVals[ uiI ] = 0;
-                                for( size_t uiJ = vvVals.size( ) * fQuantExcl; 
+                                for( size_t uiJ = vvVals.size( ) * fQuantExcl;
                                      uiJ < vvVals.size( ) * ( 1 - fQuantExcl );
                                      uiJ++ )
                                     vVals[ uiI ] += (double)vvVals[ uiJ ];
@@ -488,8 +493,8 @@ bool PartialQuarry::setDecayCDS( )
         std::map<std::string, size_t> xColors;
         for( size_t uiI = 0; uiI < vDistDepDecCoords.size( ); uiI++ )
         {
-            std::string sChrCurr = vDistDepDecCoords[ uiI ][ uiJ ].sChromosomeX + " - " + 
-                                   vDistDepDecCoords[ uiI ][ uiJ ].sChromosomeY;
+            std::string sChrCurr =
+                vDistDepDecCoords[ uiI ][ uiJ ].sChromosomeX + " - " + vDistDepDecCoords[ uiI ][ uiJ ].sChromosomeY;
             if( sChrCurr.size( ) > 0 )
             {
                 pybind11::list vX;
@@ -503,13 +508,13 @@ bool PartialQuarry::setDecayCDS( )
                 vX.append( iT );
                 vY.append( fVal );
 
-                vChrs.append( substringChr( vDistDepDecCoords[ uiI ][ uiJ ].sChromosomeX ) + " - " + 
-                              substringChr( vDistDepDecCoords[ uiI ][ uiJ ].sChromosomeY ) + 
+                vChrs.append( substringChr( vDistDepDecCoords[ uiI ][ uiJ ].sChromosomeX ) + " - " +
+                              substringChr( vDistDepDecCoords[ uiI ][ uiJ ].sChromosomeY ) +
                               ( uiJ == 0 ? ", Group A" : ", Group B" ) );
                 vXs.append( vX );
                 vYs.append( vY );
                 if( xColors.count( sChrCurr ) == 0 )
-                    xColors[ sChrCurr ] = xColors.size() % vColorPaletteAnnotation.size( );
+                    xColors[ sChrCurr ] = xColors.size( ) % vColorPaletteAnnotation.size( );
                 vColors.append( vColorPaletteAnnotation[ xColors[ sChrCurr ] ] );
             }
 

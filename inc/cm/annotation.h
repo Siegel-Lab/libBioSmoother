@@ -318,13 +318,14 @@ void PartialQuarry::regAnnotation( )
                   ComputeNode{ .sNodeName = "annotation_values",
                                .fFunc = &PartialQuarry::setAnnotationValues,
                                .vIncomingFunctions = { NodeNames::ActivateAnnotation, NodeNames::AxisCoords },
-                               .vIncomingSession = {
-                                                     { "settings", "interface", "max_detailed_anno_display" } },
-                               .vSessionsIncomingInPrevious = { { "settings", "filters", "anno_in_multiple_bins" },
-                                                                { "dividend" },
-                                                                 { "annotation", "by_name" },
-                                                                 { "contigs", "column_coordinates" },
-                                                     { "contigs", "row_coordinates" }, } } );
+                               .vIncomingSession = { { "settings", "interface", "max_detailed_anno_display" } },
+                               .vSessionsIncomingInPrevious = {
+                                   { "settings", "filters", "anno_in_multiple_bins" },
+                                   { "dividend" },
+                                   { "annotation", "by_name" },
+                                   { "contigs", "column_coordinates" },
+                                   { "contigs", "row_coordinates" },
+                               } } );
 
     registerNode( NodeNames::AnnotationCDS,
                   ComputeNode{ .sNodeName = "annotation_cds",
