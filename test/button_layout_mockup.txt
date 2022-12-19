@@ -1,0 +1,91 @@
+- Always open
+    - Status -> move to bar to bottom?
+    - Tools (Pan, Zoom, Undo, ...) (one line, top)
+    - Coordinate Prompt (one line, top)
+
+- Normalize
+    - Approach
+        - Normalize Heatmap
+        - Normalize Coverage
+    - RADICL-seq
+        - p_accept Binominal test
+    - Distance Dependant Decay
+        - Normalize out
+        - Display
+        - Num Samples
+        - Exclusion Quantile
+        - Disable bin size
+    - Grid-seq
+        - Num annotation samples
+        - Used annotation
+        - Num samples per annotation
+        - Minimal average coverage
+        - Minimal max coverage
+        - plot average coverage
+        - plot max coverage
+        - plot average & max coverage
+    - Icing: 
+        - sparse slice filter
+        - Disable bin size
+
+- Interface
+    - Colors
+        - Color Range
+        - Color Log Base
+        - Scale to
+        - Palette
+        - Color High
+        - Color Low
+        - Legend
+    - Panels
+        - Show/hide
+        - annotation plot size
+        - coverage plot size
+        - stretch/scale heatmap
+        - axis lables
+        - active annotations
+    - Bins
+        - Number of bins
+        - Minimum bin size
+        - make bins squares
+        - snap bin size
+    - Redrawing
+        - Update frequency
+        - redraw if zoomed
+        - additional draw area
+
+- Filter
+    - Replicates
+        - In group combination
+        - Between group combination
+        - 1d replicates picker
+        - 2d replicates picker
+    - Mapping
+        - mapping quality bounds
+        - reads with incomplete alignments
+        - ambiguous mapping (when to count multimapping reads)
+    - Coordinates
+        - column coordinates
+        - row coordinates
+        - multiple bins in anno
+        - multiple annos in bin
+        - binsize not evenly dividable
+        - active contigs
+    - Miscellaneous
+        - symmetry
+        - minimum distance from diagonal
+        - interactions subtrahend
+        - annotation filter
+
+- File
+    - Presetting
+        - ...
+    - Export
+        - filepath
+        - selection
+        - format
+        - export now button
+    - Info
+        - Version
+        - Log
+        - Error

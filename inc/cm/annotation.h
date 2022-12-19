@@ -54,7 +54,6 @@ size_t multiple_bins( std::string sVal )
 bool PartialQuarry::setAnnotationValues( )
 {
     size_t uiMaxDetailedDisplay = getValue<size_t>( { "settings", "interface", "max_detailed_anno_display" } );
-    // @todo and anno coords
     const bool bSqueeze = getValue<std::string>( { "settings", "filters", "anno_in_multiple_bins" } ) == "squeeze";
     const uint32_t uiDividend = getValue<uint32_t>( { "dividend" } );
     for( size_t uiX : { 0, 1 } )
@@ -83,7 +82,7 @@ bool PartialQuarry::setAnnotationValues( )
 
                     uiTotalCount += xIndices.vAnno.count( iDataSetId, xRegion.uiIndexPos,
                                                           ( xRegion.uiIndexPos + xRegion.uiIndexSize ),
-                                                          !bIsGenomeCoords && !bSqueeze, !bIsGenomeCoords && bSqueeze );
+                                                          false, false );
                 }
             }
         }
@@ -101,12 +100,12 @@ bool PartialQuarry::setAnnotationValues( )
                     {
                         int64_t iDataSetId = rJson[ xRegion.sChromosome ].get<int64_t>( );
                         for( auto& xAnno : xIndices.vAnno.query(
-                                 iDataSetId, xRegion.uiIndexPos, ( xRegion.uiIndexPos + xRegion.uiIndexSize ),
-                                 !bIsGenomeCoords && !bSqueeze, !bIsGenomeCoords && bSqueeze ) )
+                                 iDataSetId, xRegion.uiIndexPos, xRegion.uiIndexPos + xRegion.uiIndexSize,
+                                 false, false ) )
                         {
                             double uiStartPos;
                             double uiEndPos;
-                            if( bSqueeze )
+                            if( bSqueeze && !bIsGenomeCoords )
                             {
                                 uiStartPos = xRegion.uiScreenPos;
                                 uiEndPos = ( xRegion.uiScreenPos + xRegion.uiScreenSize );
@@ -127,7 +126,7 @@ bool PartialQuarry::setAnnotationValues( )
                                 uiEndPos = std::min( ( fAnnoT > fRegF ? fAnnoT - fRegF : 0.0 ) + fRegF2, fRegT );
                             }
 
-                            if( uiEndPos > uiStartPos )
+                            if( uiEndPos >= uiStartPos )
                             {
                                 size_t uiRow = 0;
                                 while( uiRow < vEndPos.size( ) && uiStartPos < vEndPos[ uiRow ] + uiMinAnnoDist )
@@ -161,7 +160,7 @@ bool PartialQuarry::setAnnotationValues( )
                         int64_t iDataSetId = rJson[ xCoords.sChromosome ].get<int64_t>( );
                         vAnnotationValues[ uiX ].back( ).first.push_back( xIndices.vAnno.count(
                             iDataSetId, xCoords.uiIndexPos, ( xCoords.uiIndexPos + xCoords.uiIndexSize ),
-                            !bIsGenomeCoords && !bSqueeze, !bIsGenomeCoords && bSqueeze ) );
+                            false, false ) );
                     }
                     else
                         vAnnotationValues[ uiX ].back( ).first.push_back( 0 );

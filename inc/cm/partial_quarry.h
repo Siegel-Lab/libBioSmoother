@@ -602,6 +602,7 @@ class PartialQuarry
     std::array<pybind11::dict, 2> xTicksCDS;
     std::array<pybind11::dict, 2> xTracksCDS;
     std::array<pybind11::list, 2> vTickLists;
+    std::array<pybind11::list, 2> vTickLists2;
     std::array<size_t, 2> vCanvasSize;
     std::array<std::array<double, 2>, 2> vvMinMaxTracks;
     double fMax, fMin;
@@ -891,6 +892,7 @@ class PartialQuarry
 
     // colors.h
     const pybind11::list getTickList( bool );
+    const pybind11::list getTickList2( bool );
 
     // coords.h
     const std::vector<AxisCoord>& getAxisCoords( bool );

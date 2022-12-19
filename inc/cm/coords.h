@@ -343,6 +343,7 @@ annoCoordsHelper( size_t uiBinSize, size_t uiScreenStartPos, size_t uiScreenEndP
                         ++vRet2.back( ).uiNumCoords;
                     }
                     else // create new AxisRegion
+                    {
                         vRet2.push_back( AxisRegion{
                             {
                                 .sChromosome = xChr.sName, //
@@ -355,6 +356,7 @@ annoCoordsHelper( size_t uiBinSize, size_t uiScreenStartPos, size_t uiScreenEndP
                             .uiCoordStartIdx = vRet.size( ) - 1, //
                             .uiNumCoords = 1 //
                         } );
+                    }
 
                     uiCurrScreenPos += uiCurrScreenSize;
 
@@ -378,6 +380,7 @@ annoCoordsHelper( size_t uiBinSize, size_t uiScreenStartPos, size_t uiScreenEndP
                 }
             }
             ++uiChr;
+            uiChromosomeStartPos += uiChromSize;
         }
     }
 
@@ -498,6 +501,7 @@ bool PartialQuarry::setTicks( )
     using namespace pybind11::literals;
     pybind11::gil_scoped_acquire acquire;
     size_t uiDividend = getValue<size_t>( { "dividend" } );
+    const bool bSqueeze = getValue<std::string>( { "settings", "filters", "anno_in_multiple_bins" } ) == "squeeze";
 
 
     for( size_t uiI = 0; uiI < 2; uiI++ )
@@ -522,36 +526,34 @@ bool PartialQuarry::setTicks( )
         }
         else
         {
-            size_t iAnnoInMultipleBins =
-                multiple_bins( getValue<std::string>( { "settings", "filters", "anno_in_multiple_bins" } ) );
             auto rJson = getValue<json>( { "annotation", "by_name", sCoords } );
             for( AxisRegion& xRegion : vAxisRegions[ uiI ] )
             {
                 CANCEL_RETURN;
-                int64_t iDataSetId = rJson[ xRegion.sChromosome ].get<int64_t>( );
-                auto xFirst = xIndices.vAnno.lowerBound( iDataSetId, xRegion.uiIndexPos * uiDividend,
-                                                         iAnnoInMultipleBins < 2, iAnnoInMultipleBins == 2 );
+                if( rJson.contains( xRegion.sChromosome ) )
+                {
+                    int64_t iDataSetId = rJson[ xRegion.sChromosome ].get<int64_t>( );
+                    auto xFirst = xIndices.vAnno.lowerBound( iDataSetId, xRegion.uiIndexPos, !bSqueeze, bSqueeze );
 
-                std::vector<std::string> vSplit =
-                    splitString<std::vector<std::string>>( xIndices.vAnno.desc( *xFirst ), '\n' );
-                std::string sId = "n/a";
-                const std::string csID = "ID=";
-                for( std::string sX : vSplit )
-                    if( sX.substr( 0, csID.size( ) ) == csID )
-                    {
-                        size_t uiX = sX.rfind( ":" );
-                        if( uiX != std::string::npos )
-                            sId = sX.substr( csID.size( ), uiX - csID.size( ) );
-                        else
-                            sId = sX.substr( csID.size( ) );
-                    }
+                    std::vector<std::string> vSplit =
+                        splitString<std::vector<std::string>>( xIndices.vAnno.desc( *xFirst ), '\n' );
+                    std::string sId = "n/a";
+                    const std::string csID = "ID=";
+                    for( std::string sX : vSplit )
+                        if( sX.substr( 0, csID.size( ) ) == csID )
+                        {
+                            size_t uiX = sX.rfind( ":" );
+                            if( uiX != std::string::npos )
+                                sId = sX.substr( csID.size( ), uiX - csID.size( ) );
+                            else
+                                sId = sX.substr( csID.size( ) );
+                        }
 
-                vNames.append( substringChr( xRegion.sChromosome ) + " - " + sId );
-                vStartPos.append( uiRunningStart );
-                uiRunningStart += xRegion.uiScreenSize;
+                    vNames.append( substringChr( xRegion.sChromosome ) + " - " + sId );
+                    vStartPos.append( xRegion.uiScreenPos );
+                }
             }
 
-            uiRunningStart = 0;
             for( auto xChr : this->vActiveChromosomes[ uiI ] )
             {
                 CANCEL_RETURN;
@@ -560,15 +562,10 @@ bool PartialQuarry::setTicks( )
                     int64_t iDataSetId = rJson[ xChr.sName ].get<int64_t>( );
                     vFullList.append( uiRunningStart );
 
-                    switch( iAnnoInMultipleBins )
-                    {
-                        case 0: // separate
-                        case 1: // stretch
-                            uiRunningStart += xIndices.vAnno.totalIntervalSize( iDataSetId );
-                            break;
-                        case 2: // squeeze
-                            uiRunningStart += xIndices.vAnno.numIntervals( iDataSetId );
-                    }
+                    if(bSqueeze)
+                        uiRunningStart += xIndices.vAnno.numIntervals( iDataSetId );
+                    else
+                        uiRunningStart += xIndices.vAnno.totalIntervalSize( iDataSetId );
                 }
             }
         }
@@ -580,6 +577,7 @@ bool PartialQuarry::setTicks( )
                                            "dividend"_a = uiDividend,
                                            "contig_names"_a = vNames );
         vTickLists[ uiI ] = vFullList;
+        vTickLists2[ uiI ] = vStartPos;
     }
     END_RETURN;
 }
@@ -594,6 +592,12 @@ const pybind11::list PartialQuarry::getTickList( bool bXAxis )
 {
     update( NodeNames::Ticks );
     return vTickLists[ bXAxis ? 0 : 1 ];
+}
+
+const pybind11::list PartialQuarry::getTickList2( bool bXAxis )
+{
+    update( NodeNames::Ticks );
+    return vTickLists2[ bXAxis ? 0 : 1 ];
 }
 
 const std::array<size_t, 2> PartialQuarry::getCanvasSize( )
