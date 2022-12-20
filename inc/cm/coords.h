@@ -241,10 +241,10 @@ annoCoordsHelper( size_t uiBinSize, size_t uiScreenStartPos, size_t uiScreenEndP
                     {
                         case 0: // separate
                         case 1: // stretch
-                            uiIndexPos = xLower->uiIntervalStart + uiCurrScreenPos - xLower->uiIntervalCoordsStart;
+                            uiIndexPos = xLower->uiIntervalStart + uiCurrScreenPos - xLower->uiIntervalCoordsStart - uiChromosomeStartPos;
                             break;
                         case 2: // squeeze
-                            uiIndexPos = xLower->uiIntervalStart + uiCurrScreenPos - xLower->uiIntervalId;
+                            uiIndexPos = xLower->uiIntervalStart + uiCurrScreenPos - xLower->uiIntervalId - uiChromosomeStartPos;
                             break;
                         default:
                             throw std::logic_error( "unknown iAnnoInMultipleBins value" );
