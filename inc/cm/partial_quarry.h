@@ -10,9 +10,9 @@ using json = nlohmann::json;
 
 #define CANCEL_RETURN                                                                                                  \
     if( this->bCancel )                                                                                                \
-        return false; \
-    if (PyErr_CheckSignals() != 0) /* allow Ctrl-C cancel */ \
-        throw pybind11::error_already_set()
+        return false;                                                                                                  \
+    if( PyErr_CheckSignals( ) != 0 ) /* allow Ctrl-C cancel */                                                         \
+    throw pybind11::error_already_set( )
 #define END_RETURN return true
 
 namespace cm
@@ -26,7 +26,7 @@ struct ChromDesc
 
 struct AxisCoord
 {
-    std::string sChromosome;
+    size_t uiChromosome;
     size_t uiScreenPos;
     size_t uiIndexPos;
     size_t uiScreenSize;
@@ -37,17 +37,17 @@ struct AxisCoord
 
 struct DecayCoord
 {
-    std::string sChromosomeX;
-    std::string sChromosomeY;
+    size_t uiChromosomeX;
+    size_t uiChromosomeY;
     int64_t iFrom;
     int64_t iTo;
 
     friend bool operator<( const DecayCoord& l, const DecayCoord& r )
     {
-        if( l.sChromosomeX != r.sChromosomeX )
-            return l.sChromosomeX < r.sChromosomeX;
-        if( l.sChromosomeY != r.sChromosomeY )
-            return l.sChromosomeY < r.sChromosomeY;
+        if( l.uiChromosomeX != r.uiChromosomeX )
+            return l.uiChromosomeX < r.uiChromosomeX;
+        if( l.uiChromosomeY != r.uiChromosomeY )
+            return l.uiChromosomeY < r.uiChromosomeY;
         if( l.iFrom != r.iFrom )
             return l.iFrom < r.iFrom;
         if( l.iTo != r.iTo )
@@ -64,7 +64,8 @@ struct AxisRegion : AxisCoord
 
 struct BinCoord
 {
-    std::string sChromosomeX, sChromosomeY;
+    size_t uiChromosomeX = std::numeric_limits<size_t>::max( );
+    size_t uiChromosomeY = std::numeric_limits<size_t>::max( );
     size_t uiScreenX, uiScreenY;
     size_t uiIndexX, uiIndexY;
     size_t uiScreenW, uiScreenH;
@@ -79,7 +80,7 @@ struct Annotation
     double fScreenX, fScreenY;
     size_t uiIndexX, uiIndexY;
     size_t uiRow;
-    std::string sChromosome;
+    size_t uiChromosome;
 };
 
 
@@ -131,6 +132,7 @@ class PartialQuarry
         Tracks,
         Divided,
         Palette,
+        AnnoFilters,
         LCS,
         RankedSlicesCDS,
         CanvasSize,
@@ -574,6 +576,11 @@ class PartialQuarry
 
     std::string sBackgroundColor;
 
+    std::vector<std::string> vFilterableAnnotations;
+    std::array<std::array<std::vector<bool>, MAX_ANNO_FILTERS>, 2> vContigsHaveAnno;
+    std::array<size_t, MAX_ANNO_FILTERS> vFromAnnoFilter;
+    std::array<size_t, MAX_ANNO_FILTERS> vToAnnoFilter;
+
     std::array<std::vector<std::vector<size_t>>, 2> vvCoverageValues;
     std::array<std::array<std::vector<size_t>, 3>, 2> vInGroupCoverage;
     std::array<std::array<std::vector<size_t>, 2>, 2> vNormCoverage;
@@ -631,6 +638,8 @@ class PartialQuarry
 
     // coords.h
     bool setActiveChrom( );
+    // coords.h
+    bool setAnnoFilters( );
     // coords.h
     bool setAxisCoords( );
     // coords.h

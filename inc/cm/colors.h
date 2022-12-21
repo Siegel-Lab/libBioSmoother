@@ -272,8 +272,11 @@ bool PartialQuarry::setHeatmapCDS( )
 
             vColor.append( vColored[ uiI ] );
 
-            vChrX.append( vBinCoords[ uiI ][ 0 ].sChromosomeX );
-            vChrY.append( vBinCoords[ uiI ][ 0 ].sChromosomeY );
+
+            std::string sChromNameX = vActiveChromosomes[ 0 ][ vBinCoords[ uiI ][ 0 ].uiChromosomeX ].sName;
+            std::string sChromNameY = vActiveChromosomes[ 1 ][ vBinCoords[ uiI ][ 0 ].uiChromosomeY ].sName;
+            vChrX.append( sChromNameX );
+            vChrY.append( sChromNameY );
             vIndexLeft.append( readableBp( vBinCoords[ uiI ][ 0 ].uiIndexX * uiDividend ) );
             vIndexRight.append(
                 readableBp( ( vBinCoords[ uiI ][ 0 ].uiIndexX + vBinCoords[ uiI ][ 0 ].uiIndexW ) * uiDividend ) );
@@ -281,10 +284,12 @@ bool PartialQuarry::setHeatmapCDS( )
             vIndexTop.append(
                 readableBp( ( vBinCoords[ uiI ][ 0 ].uiIndexY + vBinCoords[ uiI ][ 0 ].uiIndexH ) * uiDividend ) );
 
-            if( vBinCoords[ uiI ][ 1 ].sChromosomeX != "" )
+            if( vBinCoords[ uiI ][ 1 ].uiChromosomeX != std::numeric_limits<size_t>::max( ) )
             {
-                vChrXSym.append( vBinCoords[ uiI ][ 1 ].sChromosomeX );
-                vChrYSym.append( vBinCoords[ uiI ][ 1 ].sChromosomeY );
+                std::string sChromNameX = vActiveChromosomes[ 0 ][ vBinCoords[ uiI ][ 1 ].uiChromosomeX ].sName;
+                std::string sChromNameY = vActiveChromosomes[ 1 ][ vBinCoords[ uiI ][ 1 ].uiChromosomeY ].sName;
+                vChrXSym.append( sChromNameX );
+                vChrYSym.append( sChromNameY );
                 vIndexSymLeft.append( readableBp( vBinCoords[ uiI ][ 1 ].uiIndexX * uiDividend ) );
                 vIndexSymRight.append(
                     readableBp( ( vBinCoords[ uiI ][ 1 ].uiIndexX + vBinCoords[ uiI ][ 1 ].uiIndexW ) * uiDividend ) );
@@ -344,10 +349,12 @@ bool PartialQuarry::setHeatmapExport( )
     for( size_t uiI = 0; uiI < vScaled.size( ); uiI++ )
     {
         CANCEL_RETURN;
-        vHeatmapExport.emplace_back( vBinCoords[ uiI ][ 0 ].sChromosomeX,
+        std::string sChromNameX = vActiveChromosomes[ 0 ][ vBinCoords[ uiI ][ 0 ].uiChromosomeX ].sName;
+        std::string sChromNameY = vActiveChromosomes[ 1 ][ vBinCoords[ uiI ][ 0 ].uiChromosomeY ].sName;
+        vHeatmapExport.emplace_back( sChromNameX,
                                      vBinCoords[ uiI ][ 0 ].uiIndexX * uiDividend,
                                      ( vBinCoords[ uiI ][ 0 ].uiIndexX + vBinCoords[ uiI ][ 0 ].uiIndexW ) * uiDividend,
-                                     vBinCoords[ uiI ][ 0 ].sChromosomeY,
+                                     sChromNameY,
                                      vBinCoords[ uiI ][ 0 ].uiIndexY * uiDividend,
                                      ( vBinCoords[ uiI ][ 0 ].uiIndexY + vBinCoords[ uiI ][ 0 ].uiIndexH ) * uiDividend,
                                      vScaled[ uiI ] );

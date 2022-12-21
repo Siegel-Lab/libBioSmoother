@@ -36,9 +36,9 @@ std::pair<std::vector<AxisCoord>, std::vector<AxisRegion>> axisCoordsHelper( siz
     size_t uiCurrScreenPos = uiScreenStartPos;
     size_t uiChromosomeStartPos = 0;
     size_t uiChr = 0;
-    for( auto xChr : vChromosomes )
+    for( size_t uiI = 0; uiI < vChromosomes.size( ); uiI++ )
     {
-        size_t uiChromosomeEndPos = uiChromosomeStartPos + xChr.uiLength;
+        size_t uiChromosomeEndPos = uiChromosomeStartPos + vChromosomes[ uiI ].uiLength;
         size_t uiItrEndPos = std::min( uiScreenEndPos, uiChromosomeEndPos );
         size_t uiStartIdx = vRet.size( );
         size_t uiStartScreenPos = uiCurrScreenPos;
@@ -53,12 +53,15 @@ std::pair<std::vector<AxisCoord>, std::vector<AxisRegion>> axisCoordsHelper( siz
             {
                 case 0:
                 case 1:
-                    assert( xChr.uiLength >= uiIndexPos );
-                    uiCurrBinSize = std::min( uiBinSize, xChr.uiLength - uiIndexPos );
+                    assert( vChromosomes[ uiI ].uiLength >= uiIndexPos );
+                    uiCurrBinSize = std::min( uiBinSize, vChromosomes[ uiI ].uiLength - uiIndexPos );
                     break;
                 case 2:
-                    assert( uiIndexPos + 2 * uiBinSize <= xChr.uiLength || xChr.uiLength >= uiIndexPos );
-                    uiCurrBinSize = uiIndexPos + 2 * uiBinSize > xChr.uiLength ? xChr.uiLength - uiIndexPos : uiBinSize;
+                    assert( uiIndexPos + 2 * uiBinSize <= vChromosomes[ uiI ].uiLength ||
+                            vChromosomes[ uiI ].uiLength >= uiIndexPos );
+                    uiCurrBinSize = uiIndexPos + 2 * uiBinSize > vChromosomes[ uiI ].uiLength
+                                        ? vChromosomes[ uiI ].uiLength - uiIndexPos
+                                        : uiBinSize;
                     break;
                 case 3:
                 case 4:
@@ -88,7 +91,7 @@ std::pair<std::vector<AxisCoord>, std::vector<AxisRegion>> axisCoordsHelper( siz
             }
             if( bAddBin )
                 vRet.push_back( AxisCoord{
-                    .sChromosome = xChr.sName, //
+                    .uiChromosome = uiI, //
                     .uiScreenPos = uiCurrScreenPos, //
                     .uiIndexPos = uiIndexPos, //
                     .uiScreenSize = uiCurrBinSize, //
@@ -121,7 +124,7 @@ std::pair<std::vector<AxisCoord>, std::vector<AxisRegion>> axisCoordsHelper( siz
             assert( uiItrEndPos >= uiStartChromPos );
             vRet2.push_back( AxisRegion{
                 {
-                    .sChromosome = xChr.sName, //
+                    .uiChromosome = uiI, //
                     .uiScreenPos = uiStartScreenPos, //
                     .uiIndexPos = uiStartChromPos, //
                     .uiScreenSize = uiCurrScreenPos - uiStartScreenPos, //
@@ -195,13 +198,13 @@ annoCoordsHelper( size_t uiBinSize, size_t uiScreenStartPos, size_t uiScreenEndP
     size_t uiCurrScreenPos = uiScreenStartPos;
     size_t uiChromosomeStartPos = 0;
     size_t uiChr = 0;
-    for( auto xChr : vChromosomes )
+    for( size_t uiI = 0; uiI < vChromosomes.size( ); uiI++ )
     {
         if( bCancel )
             return std::make_pair( vRet, vRet2 );
-        if( rJson.contains( xChr.sName ) )
+        if( rJson.contains( vChromosomes[ uiI ].sName ) )
         {
-            int64_t iDataSetId = rJson[ xChr.sName ].get<int64_t>( );
+            int64_t iDataSetId = rJson[ vChromosomes[ uiI ].sName ].get<int64_t>( );
 
             size_t uiChromSize;
             switch( iAnnoInMultipleBins )
@@ -330,14 +333,14 @@ annoCoordsHelper( size_t uiBinSize, size_t uiScreenStartPos, size_t uiScreenEndP
                     }
 
                     vRet.push_back( AxisCoord{
-                        .sChromosome = xChr.sName, //
+                        .uiChromosome = uiI, //
                         .uiScreenPos = uiCurrScreenPos, //
                         .uiIndexPos = uiIndexPos, //
                         .uiScreenSize = uiCurrScreenSize, //
                         .uiIndexSize = uiCurrIndexSize, //
                         .uiRegionIdx = uiChr //
                     } );
-                    if( iAnnoInMultipleBins != 2 && vRet2.size( ) > 0 && vRet2.back( ).sChromosome == xChr.sName &&
+                    if( iAnnoInMultipleBins != 2 && vRet2.size( ) > 0 && vRet2.back( ).uiChromosome == uiI &&
                         vRet2.back( ).uiIndexPos + vRet2.back( ).uiIndexSize == uiIndexPos )
                     { // extend last AxisRegion
                         vRet2.back( ).uiScreenSize += uiCurrScreenSize;
@@ -348,7 +351,7 @@ annoCoordsHelper( size_t uiBinSize, size_t uiScreenStartPos, size_t uiScreenEndP
                     {
                         vRet2.push_back( AxisRegion{
                             {
-                                .sChromosome = xChr.sName, //
+                                .uiChromosome = uiI, //
                                 .uiScreenPos = uiCurrScreenPos, //
                                 .uiIndexPos = uiIndexPos, //
                                 .uiScreenSize = uiCurrScreenSize, //
@@ -532,9 +535,10 @@ bool PartialQuarry::setTicks( )
             for( AxisRegion& xRegion : vAxisRegions[ uiI ] )
             {
                 CANCEL_RETURN;
-                if( rJson.contains( xRegion.sChromosome ) )
+                std::string sChromName = vActiveChromosomes[ uiI ][ xRegion.uiChromosome ].sName;
+                if( rJson.contains( sChromName ) )
                 {
-                    int64_t iDataSetId = rJson[ xRegion.sChromosome ].get<int64_t>( );
+                    int64_t iDataSetId = rJson[ sChromName ].get<int64_t>( );
                     auto xFirst = xIndices.vAnno.lowerBound( iDataSetId, xRegion.uiIndexPos, !bSqueeze, bSqueeze );
 
                     std::vector<std::string> vSplit =
@@ -551,7 +555,7 @@ bool PartialQuarry::setTicks( )
                                 sId = sX.substr( csID.size( ) );
                         }
 
-                    vNames.append( substringChr( xRegion.sChromosome ) + " - " + sId );
+                    vNames.append( substringChr( sChromName ) + " - " + sId );
                     vStartPos.append( xRegion.uiScreenPos );
                 }
             }
@@ -698,6 +702,45 @@ bool PartialQuarry::setFilteredCoords( )
     END_RETURN;
 }
 
+bool PartialQuarry::setAnnoFilters( )
+{
+    const std::array<std::array<size_t, 2>, 2> vvAF{ /*x false*/ std::array<size_t, 2>{ /*y false*/ 0, /*y true*/ 0 },
+                                                     /*x true */ std::array<size_t, 2>{ /*y false*/ 1, /*y true*/ 1 } };
+    const std::array<std::array<size_t, 2>, 2> vvAT{ /*x false*/ std::array<size_t, 2>{ /*y false*/ 4, /*y true*/ 2 },
+                                                     /*x true */ std::array<size_t, 2>{ /*y false*/ 3, /*y true*/ 2 } };
+
+    vFilterableAnnotations.clear( );
+    for( std::string sA : getValue<json>( { "annotation", "filterable" } ) )
+        vFilterableAnnotations.push_back( sA );
+
+    for( size_t uiI = 0; uiI < vFilterableAnnotations.size( ); uiI++ )
+    {
+        CANCEL_RETURN;
+        const bool bXFiltered =
+            getValue<json>( { "annotation", "row_filter" } ).contains( vFilterableAnnotations[ uiI ] ) ||
+            getValue<std::string>( { "contigs", "row_coordinates" } ) == vFilterableAnnotations[ uiI ];
+        const bool bYFiltered =
+            getValue<json>( { "annotation", "column_filter" } ).contains( vFilterableAnnotations[ uiI ] ) ||
+            getValue<std::string>( { "contigs", "column_coordinates" } ) == vFilterableAnnotations[ uiI ];
+
+        vFromAnnoFilter[ uiI ] = { vvAF[ bXFiltered ][ bYFiltered ] };
+        vToAnnoFilter[ uiI ] = { vvAT[ bXFiltered ][ bYFiltered ] };
+    }
+
+    for( size_t uiX = 0; uiX < 2; uiX++ )
+        for( size_t uiI = 0; uiI < vFilterableAnnotations.size( ); uiI++ )
+        {
+            CANCEL_RETURN;
+            vContigsHaveAnno[ uiX ][ uiI ].clear( );
+            vContigsHaveAnno[ uiX ][ uiI ].reserve( vActiveChromosomes.size( ) );
+            for( size_t uiJ = 0; uiJ < vActiveChromosomes.size( ); uiJ++ )
+                vContigsHaveAnno[ uiX ][ uiI ].push_back(
+                    getValue<json>( { "annotation", "by_name", vFilterableAnnotations[ uiI ] } )
+                        .contains( vActiveChromosomes[ uiX ][ uiJ ].sName ) );
+        }
+    END_RETURN;
+}
+
 bool PartialQuarry::setSymmetry( )
 {
     std::string sSymmetry = getValue<std::string>( { "settings", "filters", "symmetry" } );
@@ -728,13 +771,13 @@ bool PartialQuarry::setBinCoords( )
                 if( !xY.bFiltered )
                 {
                     CANCEL_RETURN;
-                    if( xX.sChromosome != xY.sChromosome ||
+                    if( xX.uiChromosome != xY.uiChromosome ||
                         (size_t)std::abs( (int64_t)xX.uiIndexPos - (int64_t)xY.uiIndexPos ) >= uiManhattenDist )
                         switch( uiSymmetry )
                         {
                             case 0:
-                                vBinCoords.push_back( { BinCoord{ .sChromosomeX = xX.sChromosome,
-                                                                  .sChromosomeY = xY.sChromosome,
+                                vBinCoords.push_back( { BinCoord{ .uiChromosomeX = xX.uiChromosome,
+                                                                  .uiChromosomeY = xY.uiChromosome,
 
                                                                   .uiScreenX = xX.uiScreenPos,
                                                                   .uiScreenY = xY.uiScreenPos,
@@ -751,8 +794,8 @@ bool PartialQuarry::setBinCoords( )
                                 break;
                             case 1:
                             case 2:
-                                vBinCoords.push_back( { BinCoord{ .sChromosomeX = xX.sChromosome,
-                                                                  .sChromosomeY = xY.sChromosome,
+                                vBinCoords.push_back( { BinCoord{ .uiChromosomeX = xX.uiChromosome,
+                                                                  .uiChromosomeY = xY.uiChromosome,
 
                                                                   .uiScreenX = xX.uiScreenPos,
                                                                   .uiScreenY = xY.uiScreenPos,
@@ -765,8 +808,8 @@ bool PartialQuarry::setBinCoords( )
 
                                                                   .uiIndexW = xX.uiIndexSize,
                                                                   .uiIndexH = xY.uiIndexSize },
-                                                        BinCoord{ .sChromosomeX = xY.sChromosome,
-                                                                  .sChromosomeY = xX.sChromosome,
+                                                        BinCoord{ .uiChromosomeX = xY.uiChromosome,
+                                                                  .uiChromosomeY = xX.uiChromosome,
 
                                                                   .uiScreenX = xX.uiScreenPos,
                                                                   .uiScreenY = xY.uiScreenPos,
@@ -796,8 +839,8 @@ bool PartialQuarry::setBinCoords( )
                                     size_t uiIndexW = uiDiagIntersect2X - uiDiagIntersect1X;
                                     size_t uiIndexH = uiDiagIntersect2Y - uiDiagIntersect1Y;
 
-                                    vBinCoords.push_back( { BinCoord{ .sChromosomeX = xY.sChromosome,
-                                                                      .sChromosomeY = xX.sChromosome,
+                                    vBinCoords.push_back( { BinCoord{ .uiChromosomeX = xY.uiChromosome,
+                                                                      .uiChromosomeY = xX.uiChromosome,
 
                                                                       .uiScreenX = xX.uiScreenPos,
                                                                       .uiScreenY = xY.uiScreenPos,
@@ -814,8 +857,8 @@ bool PartialQuarry::setBinCoords( )
                                                             BinCoord{} } );
                                 }
                                 else
-                                    vBinCoords.push_back( { BinCoord{ .sChromosomeX = xX.sChromosome,
-                                                                      .sChromosomeY = xY.sChromosome,
+                                    vBinCoords.push_back( { BinCoord{ .uiChromosomeX = xX.uiChromosome,
+                                                                      .uiChromosomeY = xY.uiChromosome,
 
                                                                       .uiScreenX = xX.uiScreenPos,
                                                                       .uiScreenY = xY.uiScreenPos,
@@ -847,8 +890,8 @@ bool PartialQuarry::setBinCoords( )
                                     // size_t uiIndexW = uiDiagIntersect2X - uiDiagIntersect1X;
                                     // size_t uiIndexH = uiDiagIntersect2Y - uiDiagIntersect1Y;
 
-                                    vBinCoords.push_back( { BinCoord{ .sChromosomeX = xY.sChromosome,
-                                                                      .sChromosomeY = xX.sChromosome,
+                                    vBinCoords.push_back( { BinCoord{ .uiChromosomeX = xY.uiChromosome,
+                                                                      .uiChromosomeY = xX.uiChromosome,
 
                                                                       .uiScreenX = xX.uiScreenPos,
                                                                       .uiScreenY = xY.uiScreenPos,
@@ -864,8 +907,8 @@ bool PartialQuarry::setBinCoords( )
                                                             BinCoord{} } );
                                 }
                                 else
-                                    vBinCoords.push_back( { BinCoord{ .sChromosomeX = xX.sChromosome,
-                                                                      .sChromosomeY = xY.sChromosome,
+                                    vBinCoords.push_back( { BinCoord{ .uiChromosomeX = xX.uiChromosome,
+                                                                      .uiChromosomeY = xY.uiChromosome,
 
                                                                       .uiScreenX = xX.uiScreenPos,
                                                                       .uiScreenY = xY.uiScreenPos,
@@ -902,29 +945,20 @@ bool PartialQuarry::setDecayCoords( )
         for( std::array<BinCoord, 2>& vCoords : vBinCoords )
         {
             CANCEL_RETURN;
-            // if( vCoords[ 0 ].sChromosomeX != vCoords[ 0 ].sChromosomeY )
-            //     continue;
-            // assert( vCoords[ 1 ].sChromosomeX == vCoords[ 1 ].sChromosomeY );
-            // assert( vCoords[ 1 ].sChromosomeY == "" || vCoords[ 0 ].sChromosomeX == vCoords[ 1 ].sChromosomeY );
 
             std::array<DecayCoord, 2> vKey;
             for( size_t uiI = 0; uiI < 2; uiI++ )
             {
-                if( vCoords[ uiI ].sChromosomeX.size( ) > 0 )
-                {
-                    int64_t iA = (int64_t)( vCoords[ uiI ].uiIndexX + vCoords[ uiI ].uiIndexW ) -
-                                 (int64_t)vCoords[ uiI ].uiIndexY;
+                int64_t iA =
+                    (int64_t)( vCoords[ uiI ].uiIndexX + vCoords[ uiI ].uiIndexW ) - (int64_t)vCoords[ uiI ].uiIndexY;
 
-                    int64_t iB = (int64_t)vCoords[ uiI ].uiIndexX -
-                                 (int64_t)( vCoords[ uiI ].uiIndexY + vCoords[ uiI ].uiIndexH );
+                int64_t iB =
+                    (int64_t)vCoords[ uiI ].uiIndexX - (int64_t)( vCoords[ uiI ].uiIndexY + vCoords[ uiI ].uiIndexH );
 
-                    int64_t iS = std::min( iA, iB );
-                    int64_t iE = std::max( std::max( iA, iB ), iS + 1 );
+                int64_t iS = std::min( iA, iB );
+                int64_t iE = std::max( std::max( iA, iB ), iS + 1 );
 
-                    vKey[ uiI ] = DecayCoord{ vCoords[ uiI ].sChromosomeX, vCoords[ uiI ].sChromosomeY, iS, iE };
-                }
-                else
-                    vKey[ uiI ] = DecayCoord{ "", "", 0, 0 };
+                vKey[ uiI ] = DecayCoord{ vCoords[ uiI ].uiChromosomeX, vCoords[ uiI ].uiChromosomeY, iS, iE };
             }
 
             if( vPtr.count( vKey ) == 0 )
@@ -1040,6 +1074,18 @@ void PartialQuarry::regCoords( )
                                .vIncomingFunctions = { NodeNames::FilteredCoords },
                                .vIncomingSession = { { "settings", "filters", "min_diag_dist", "val" } },
                                .vSessionsIncomingInPrevious = { { "dividend" } } } );
+
+    registerNode( NodeNames::AnnoFilters,
+                  ComputeNode{ .sNodeName = "bin_coords",
+                               .fFunc = &PartialQuarry::setAnnoFilters,
+                               .vIncomingFunctions = { },
+                               .vIncomingSession = { { "annotation", "filterable" },
+                                                     { "annotation", "row_filter" },
+                                                     { "annotation", "by_name" },
+                                                     { "annotation", "column_filter" },
+                                                     { "contigs", "row_coordinates" },
+                                                     { "contigs", "column_coordinates" } },
+                               .vSessionsIncomingInPrevious = {} } );
 
     registerNode( NodeNames::DecayCoords,
                   ComputeNode{ .sNodeName = "decay_coords",

@@ -92,17 +92,6 @@ bool PartialQuarry::setBinValues( )
 
     size_t uiMinuend = getValue<size_t>( { "settings", "normalization", "min_interactions", "val" } );
 
-    const std::array<std::array<size_t, 2>, 2> vvAF{ /*x false*/ std::array<size_t, 2>{ /*y false*/ 0, /*y true*/ 0 },
-                                                     /*x true */ std::array<size_t, 2>{ /*y false*/ 1, /*y true*/ 1 } };
-    const std::array<std::array<size_t, 2>, 2> vvAT{ /*x false*/ std::array<size_t, 2>{ /*y false*/ 4, /*y true*/ 2 },
-                                                     /*x true */ std::array<size_t, 2>{ /*y false*/ 3, /*y true*/ 2 } };
-
-    const bool bXFiltered = getValue<std::string>( { "contigs", "row_coordinates" } ) != "full_genome";
-    const bool bYFiltered = getValue<std::string>( { "contigs", "column_coordinates" } ) != "full_genome";
-
-    std::array<size_t, 1> vFromAnno = { vvAF[ bXFiltered ][ bYFiltered ] };
-    std::array<size_t, 1> vToAnno = { vvAT[ bXFiltered ][ bYFiltered ] };
-
     for( std::string& sRep : vActiveReplicates )
     {
         vvBinValues.emplace_back( );
@@ -122,90 +111,49 @@ bool PartialQuarry::setBinValues( )
 
         uiMapQMin = 255 - uiMapQMin;
         uiMapQMax = 255 - uiMapQMax;
+        std::array<bool, MAX_ANNO_FILTERS> vHasAnno;
 
         for( std::array<BinCoord, 2>& vCoords : vBinCoords )
         {
             CANCEL_RETURN;
-            bool bHasAnnoFilter = getValue<json>( { "annotation", "by_name", "gene" } ).contains(vCoords[ 0 ].sChromosomeX) && getValue<json>( { "annotation", "by_name", "gene" } ).contains(vCoords[ 0 ].sChromosomeY);
             std::array<size_t, 2> vVals;
             for( size_t uiI = 0; uiI < 2; uiI++ )
             {
-                if( vCoords[ uiI ].sChromosomeX != "" )
+                if( vCoords[ uiI ].uiChromosomeX != std::numeric_limits<size_t>::max( ) )
                 {
-                    size_t iDataSetId =
-                        getValue<size_t>( { "replicates", "by_name", sRep, "ids", vCoords[ uiI ].sChromosomeX,
-                                            vCoords[ uiI ].sChromosomeY } );
 
-                    if( bHasAnnoFilter )
+                    std::string sChromNameX = vActiveChromosomes[ uiI ][ vCoords[ uiI ].uiChromosomeX ].sName;
+                    std::string sChromNameY = vActiveChromosomes[ uiI ][ vCoords[ uiI ].uiChromosomeY ].sName;
+                    size_t iDataSetId =
+                        getValue<size_t>( { "replicates", "by_name", sRep, "ids", sChromNameX, sChromNameY } );
+
+                    size_t uiNumAnno = 0;
+                    for( size_t uiJ = 0; uiJ < vFilterableAnnotations.size( ); uiJ++ )
                     {
-                        if( bHasMapQ && bHasMultiMap )
-                            vVals[ uiI ] = xIndices.getIndex<4, 2>( )->count(
-                                iDataSetId,
-                                { vFromAnno[ 0 ], vCoords[ uiI ].uiIndexY, vCoords[ uiI ].uiIndexX, uiMapQMax },
-                                { vToAnno[ 0 ], vCoords[ uiI ].uiIndexY + vCoords[ uiI ].uiIndexH,
-                                  vCoords[ uiI ].uiIndexX + vCoords[ uiI ].uiIndexW, uiMapQMin },
-                                xIntersect,
-                                0 );
-                        else if( !bHasMapQ && bHasMultiMap )
-                            vVals[ uiI ] = xIndices.getIndex<3, 2>( )->count(
-                                iDataSetId,
-                                { vFromAnno[ 0 ], vCoords[ uiI ].uiIndexY, vCoords[ uiI ].uiIndexX },
-                                { vToAnno[ 0 ], vCoords[ uiI ].uiIndexY + vCoords[ uiI ].uiIndexH,
-                                  vCoords[ uiI ].uiIndexX + vCoords[ uiI ].uiIndexW },
-                                xIntersect,
-                                0 );
-                        else if( bHasMapQ && !bHasMultiMap )
-                            vVals[ uiI ] = xIndices.getIndex<4, 0>( )->count(
-                                iDataSetId,
-                                { vFromAnno[ 0 ], vCoords[ uiI ].uiIndexY, vCoords[ uiI ].uiIndexX, uiMapQMax },
-                                { vToAnno[ 0 ], vCoords[ uiI ].uiIndexY + vCoords[ uiI ].uiIndexH,
-                                  vCoords[ uiI ].uiIndexX + vCoords[ uiI ].uiIndexW, uiMapQMin },
-                                xIntersect,
-                                0 );
-                        else // if(!bHasMapQ && !bHasMultiMap)
-                            vVals[ uiI ] = xIndices.getIndex<3, 0>( )->count(
-                                iDataSetId,
-                                { vFromAnno[ 0 ], vCoords[ uiI ].uiIndexY, vCoords[ uiI ].uiIndexX },
-                                { vToAnno[ 0 ], vCoords[ uiI ].uiIndexY + vCoords[ uiI ].uiIndexH,
-                                  vCoords[ uiI ].uiIndexX + vCoords[ uiI ].uiIndexW },
-                                xIntersect,
-                                0 );
+                        if( vContigsHaveAnno[ uiI ][ uiJ ][ vCoords[ uiI ].uiChromosomeX ] &&
+                            vContigsHaveAnno[ uiI ][ uiJ ][ vCoords[ uiI ].uiChromosomeY ] )
+                        {
+                            uiNumAnno++;
+                            vHasAnno[ uiJ ] = true;
+                        }
+                        else
+                            vHasAnno[ uiJ ] = false;
                     }
-                    else
-                    {
-                        if( bHasMapQ && bHasMultiMap )
-                            vVals[ uiI ] = xIndices.getIndex<3, 2>( )->count(
-                                iDataSetId,
-                                { vCoords[ uiI ].uiIndexY, vCoords[ uiI ].uiIndexX, uiMapQMax },
-                                { vCoords[ uiI ].uiIndexY + vCoords[ uiI ].uiIndexH,
-                                  vCoords[ uiI ].uiIndexX + vCoords[ uiI ].uiIndexW, uiMapQMin },
-                                xIntersect,
-                                0 );
-                        else if( !bHasMapQ && bHasMultiMap )
-                            vVals[ uiI ] = xIndices.getIndex<2, 2>( )->count(
-                                iDataSetId,
-                                { vCoords[ uiI ].uiIndexY, vCoords[ uiI ].uiIndexX },
-                                { vCoords[ uiI ].uiIndexY + vCoords[ uiI ].uiIndexH,
-                                  vCoords[ uiI ].uiIndexX + vCoords[ uiI ].uiIndexW },
-                                xIntersect,
-                                0 );
-                        else if( bHasMapQ && !bHasMultiMap )
-                            vVals[ uiI ] = xIndices.getIndex<3, 0>( )->count(
-                                iDataSetId,
-                                { vCoords[ uiI ].uiIndexY, vCoords[ uiI ].uiIndexX, uiMapQMax },
-                                { vCoords[ uiI ].uiIndexY + vCoords[ uiI ].uiIndexH,
-                                  vCoords[ uiI ].uiIndexX + vCoords[ uiI ].uiIndexW, uiMapQMin },
-                                xIntersect,
-                                0 );
-                        else // if(!bHasMapQ && !bHasMultiMap)
-                            vVals[ uiI ] = xIndices.getIndex<2, 0>( )->count(
-                                iDataSetId,
-                                { vCoords[ uiI ].uiIndexY, vCoords[ uiI ].uiIndexX },
-                                { vCoords[ uiI ].uiIndexY + vCoords[ uiI ].uiIndexH,
-                                  vCoords[ uiI ].uiIndexX + vCoords[ uiI ].uiIndexW },
-                                xIntersect,
-                                0 );
-                    }
+
+                    vVals[ uiI ] = xIndices.count( 2 + ( bHasMapQ ? 1 : 0 ) + uiNumAnno + (bHasMultiMap ? 2 : 0),
+                                                   bHasMultiMap ? 2 : 0,
+                                                   iDataSetId,
+                                                   { vCoords[ uiI ].uiIndexY, vCoords[ uiI ].uiIndexX },
+                                                   { vCoords[ uiI ].uiIndexY + vCoords[ uiI ].uiIndexH,
+                                                     vCoords[ uiI ].uiIndexX + vCoords[ uiI ].uiIndexW },
+                                                   bHasMapQ,
+                                                   uiMapQMin,
+                                                   uiMapQMax,
+                                                   vHasAnno,
+                                                   vFromAnnoFilter,
+                                                   vToAnnoFilter,
+                                                   xIntersect,
+                                                   0 );
                 }
                 else
                     vVals[ uiI ] = 0;
@@ -261,13 +209,15 @@ bool PartialQuarry::setDecayValues( )
             std::array<double, 2> vVals;
             for( size_t uiI = 0; uiI < 2; uiI++ )
             {
-                if( vCoords[ uiI ].sChromosomeX != "" && vCoords[ uiI ].sChromosomeY != "" )
+                if( vCoords[ uiI ].uiChromosomeX != std::numeric_limits<size_t>::max( ) &&
+                    vCoords[ uiI ].uiChromosomeY != std::numeric_limits<size_t>::max( ) )
                 {
+                    std::string sChromNameX = vActiveChromosomes[ uiI ][ vCoords[ uiI ].uiChromosomeX ].sName;
+                    std::string sChromNameY = vActiveChromosomes[ uiI ][ vCoords[ uiI ].uiChromosomeY ].sName;
                     size_t iDataSetId =
-                        getValue<size_t>( { "replicates", "by_name", sRep, "ids", vCoords[ uiI ].sChromosomeX,
-                                            vCoords[ uiI ].sChromosomeY } );
-                    int64_t iChrX = getValue<int64_t>( { "contigs", "lengths", vCoords[ uiI ].sChromosomeX } );
-                    int64_t iChrY = getValue<int64_t>( { "contigs", "lengths", vCoords[ uiI ].sChromosomeY } );
+                        getValue<size_t>( { "replicates", "by_name", sRep, "ids", sChromNameX, sChromNameY } );
+                    int64_t iChrX = getValue<int64_t>( { "contigs", "lengths", sChromNameX } );
+                    int64_t iChrY = getValue<int64_t>( { "contigs", "lengths", sChromNameY } );
 
                     /* The two contigs span a rectange of size cW x cH.
                      * The bin has a bottom left corner with a distance of c form the diagonal (positive = to right, neg
@@ -540,33 +490,31 @@ bool PartialQuarry::setDecayCDS( )
 
     for( size_t uiJ = 0; uiJ < 2; uiJ++ )
     {
-        std::map<std::string, size_t> xColors;
+        std::map<std::pair<size_t, size_t>, size_t> xColors;
         for( size_t uiI = 0; uiI < vDistDepDecCoords.size( ); uiI++ )
         {
-            std::string sChrCurr =
-                vDistDepDecCoords[ uiI ][ uiJ ].sChromosomeX + " - " + vDistDepDecCoords[ uiI ][ uiJ ].sChromosomeY;
-            if( sChrCurr.size( ) > 0 )
-            {
-                pybind11::list vX;
-                pybind11::list vY;
-                int64_t iF = vDistDepDecCoords[ uiI ][ uiJ ].iFrom * (int64_t)uiDividend;
-                int64_t iT = vDistDepDecCoords[ uiI ][ uiJ ].iTo * (int64_t)uiDividend;
-                double fVal = 1000.0 * 1000.0 * vvFlatDecay[ uiI ][ uiJ ] / (double)( ( iT - iF ) * ( iT - iF ) );
-                vX.append( iF );
-                vY.append( fVal );
+            std::pair<size_t, size_t> xuiChrCurr = std::make_pair( vDistDepDecCoords[ uiI ][ uiJ ].uiChromosomeX,
+                                                                   vDistDepDecCoords[ uiI ][ uiJ ].uiChromosomeY );
+            pybind11::list vX;
+            pybind11::list vY;
+            int64_t iF = vDistDepDecCoords[ uiI ][ uiJ ].iFrom * (int64_t)uiDividend;
+            int64_t iT = vDistDepDecCoords[ uiI ][ uiJ ].iTo * (int64_t)uiDividend;
+            double fVal = 1000.0 * 1000.0 * vvFlatDecay[ uiI ][ uiJ ] / (double)( ( iT - iF ) * ( iT - iF ) );
+            vX.append( iF );
+            vY.append( fVal );
 
-                vX.append( iT );
-                vY.append( fVal );
+            vX.append( iT );
+            vY.append( fVal );
 
-                vChrs.append( substringChr( vDistDepDecCoords[ uiI ][ uiJ ].sChromosomeX ) + " - " +
-                              substringChr( vDistDepDecCoords[ uiI ][ uiJ ].sChromosomeY ) +
-                              ( uiJ == 0 ? ", Group A" : ", Group B" ) );
-                vXs.append( vX );
-                vYs.append( vY );
-                if( xColors.count( sChrCurr ) == 0 )
-                    xColors[ sChrCurr ] = xColors.size( ) % vColorPaletteAnnotation.size( );
-                vColors.append( vColorPaletteAnnotation[ xColors[ sChrCurr ] ] );
-            }
+            std::string sChromNameX = vActiveChromosomes[ uiI ][ vDistDepDecCoords[ uiI ][ uiJ ].uiChromosomeX ].sName;
+            std::string sChromNameY = vActiveChromosomes[ uiI ][ vDistDepDecCoords[ uiI ][ uiJ ].uiChromosomeY ].sName;
+            vChrs.append( substringChr( sChromNameX ) + " - " + substringChr( sChromNameY ) +
+                          ( uiJ == 0 ? ", Group A" : ", Group B" ) );
+            vXs.append( vX );
+            vYs.append( vY );
+            if( xColors.count( xuiChrCurr ) == 0 )
+                xColors[ xuiChrCurr ] = xColors.size( ) % vColorPaletteAnnotation.size( );
+            vColors.append( vColorPaletteAnnotation[ xColors[ xuiChrCurr ] ] );
 
             CANCEL_RETURN;
         }
@@ -606,7 +554,8 @@ void PartialQuarry::regReplicates( )
         NodeNames::BinValues,
         ComputeNode{ .sNodeName = "bin_values",
                      .fFunc = &PartialQuarry::setBinValues,
-                     .vIncomingFunctions = { NodeNames::BinCoords, NodeNames::ActiveReplicates },
+                     .vIncomingFunctions = { NodeNames::BinCoords, NodeNames::ActiveReplicates, 
+                                             NodeNames::AnnoFilters },
                      .vIncomingSession = { },
                      .vSessionsIncomingInPrevious = { { "settings", "normalization", "min_interactions", "val" },
                                                       { "replicates", "by_name" },

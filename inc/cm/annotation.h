@@ -76,9 +76,11 @@ bool PartialQuarry::setAnnotationValues( )
             {
                 CANCEL_RETURN;
 
-                if( rJson.contains( xRegion.sChromosome ) )
+                std::string sChromName = vActiveChromosomes[ uiX ][ xRegion.uiChromosome ].sName;
+
+                if( rJson.contains( sChromName ) )
                 {
-                    int64_t iDataSetId = rJson[ xRegion.sChromosome ].get<int64_t>( );
+                    int64_t iDataSetId = rJson[ sChromName ].get<int64_t>( );
 
                     uiTotalCount += xIndices.vAnno.count( iDataSetId, xRegion.uiIndexPos,
                                                           ( xRegion.uiIndexPos + xRegion.uiIndexSize ), false, false );
@@ -95,9 +97,10 @@ bool PartialQuarry::setAnnotationValues( )
                 std::vector<size_t> vEndPos;
                 for( AxisRegion& xRegion : vAxisRegions[ uiX ] )
                 {
-                    if( rJson.contains( xRegion.sChromosome ) )
+                    std::string sChromName = vActiveChromosomes[ uiX ][ xRegion.uiChromosome ].sName;
+                    if( rJson.contains( sChromName ) )
                     {
-                        int64_t iDataSetId = rJson[ xRegion.sChromosome ].get<int64_t>( );
+                        int64_t iDataSetId = rJson[ sChromName ].get<int64_t>( );
                         for( auto& xAnno :
                              xIndices.vAnno.query( iDataSetId, xRegion.uiIndexPos,
                                                    xRegion.uiIndexPos + xRegion.uiIndexSize, false, false ) )
@@ -141,7 +144,7 @@ bool PartialQuarry::setAnnotationValues( )
                                                 .uiIndexX = std::get<0>( xAnno ),
                                                 .uiIndexY = std::get<1>( xAnno ),
                                                 .uiRow = uiRow,
-                                                .sChromosome = xRegion.sChromosome } );
+                                                .uiChromosome = xRegion.uiChromosome } );
                             }
                         }
                     }
@@ -154,9 +157,10 @@ bool PartialQuarry::setAnnotationValues( )
                 vAnnotationValues[ uiX ].back( ).first.reserve( vAxisCords[ uiX ].size( ) );
                 for( AxisCoord& xCoords : vAxisCords[ uiX ] )
                 {
-                    if( rJson.contains( xCoords.sChromosome ) )
+                    std::string sChromName = vActiveChromosomes[ uiX ][ xCoords.uiChromosome ].sName;
+                    if( rJson.contains( sChromName ) )
                     {
-                        int64_t iDataSetId = rJson[ xCoords.sChromosome ].get<int64_t>( );
+                        int64_t iDataSetId = rJson[ sChromName ].get<int64_t>( );
                         vAnnotationValues[ uiX ].back( ).first.push_back(
                             xIndices.vAnno.count( iDataSetId, xCoords.uiIndexPos,
                                                   ( xCoords.uiIndexPos + xCoords.uiIndexSize ), false, false ) );
@@ -220,7 +224,8 @@ bool PartialQuarry::setAnnotationCDS( )
 
                 if( uiVal > 0 )
                 {
-                    vChr.append( rCoords.sChromosome );
+                    std::string sChromName = vActiveChromosomes[ uiX ][ rCoords.uiChromosome ].sName;
+                    vChr.append( sChromName );
                     vIndexStart.append( readableBp( rCoords.uiIndexPos * uiDividend ) );
                     vIndexEnd.append( readableBp( ( rCoords.uiIndexPos + rCoords.uiIndexSize ) * uiDividend ) );
                     vAnnoName.append( py::make_tuple( rAnnoName, 0 /*anno overlap*/ ) );
@@ -239,7 +244,8 @@ bool PartialQuarry::setAnnotationCDS( )
             {
                 CANCEL_RETURN;
 
-                vChr.append( rA.sChromosome );
+                std::string sChromName = vActiveChromosomes[ uiX ][ rA.uiChromosome ].sName;
+                vChr.append( sChromName );
                 vIndexStart.append( readableBp( rA.uiIndexX ) );
                 vIndexEnd.append( readableBp( rA.uiIndexY ) );
                 vAnnoName.append( py::make_tuple(

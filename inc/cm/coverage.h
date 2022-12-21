@@ -159,13 +159,15 @@ size_t PartialQuarry::getCoverageFromRepl( bool bHasMapQ,
                                            bool bCol,
                                            bool bSymPart )
 {
+    std::string sChromName = vChroms[ xCoords.uiChromosome ].sName;
     if( bIs1D || !bCoverageGetMax )
     {
         int64_t iDataSetId;
+
         if( bIs1D )
-            iDataSetId = xRep[ "ids" ][ xCoords.sChromosome ].get<int64_t>( );
+            iDataSetId = xRep[ "ids" ][ sChromName ].get<int64_t>( );
         else
-            iDataSetId = xRep[ "ids" ][ xCoords.sChromosome ][ bCol != bSymPart ? "col" : "row" ].get<int64_t>( );
+            iDataSetId = xRep[ "ids" ][ sChromName ][ bCol != bSymPart ? "col" : "row" ].get<int64_t>( );
 
         if( iDataSetId != -1 )
         {
@@ -195,8 +197,8 @@ size_t PartialQuarry::getCoverageFromRepl( bool bHasMapQ,
         std::vector<std::tuple<size_t, int64_t, size_t, size_t>> vHeap;
         for( const ChromDesc& rDesc : vChroms )
             vHeap.push_back( makeHeapTuple( bHasMapQ, bHasMultiMap, uiMapQMin, uiMapQMax, bCol, bSymPart, xCoords,
-                                            xRep[ "ids" ][ bCol != bSymPart ? xCoords.sChromosome : rDesc.sName ]
-                                                [ bCol != bSymPart ? rDesc.sName : xCoords.sChromosome ]
+                                            xRep[ "ids" ][ bCol != bSymPart ? sChromName : rDesc.sName ]
+                                                [ bCol != bSymPart ? rDesc.sName : sChromName ]
                                                     .get<int64_t>( ),
                                             0, rDesc.uiLength ) );
 
@@ -268,7 +270,7 @@ bool PartialQuarry::setCoverageValues( )
             for( AxisCoord& xCoords : vAxisCords[ uiJ ] )
             {
                 std::array<size_t, 2> vVals;
-                if( xCoords.sChromosome != "" )
+                if( xCoords.uiChromosome != std::numeric_limits<size_t>::max( ) )
                     for( size_t uiI = 0; uiI < ( sRep.second ? 1 : 2 ); uiI++ )
                     {
                         CANCEL_RETURN;
@@ -499,7 +501,8 @@ bool PartialQuarry::setTracks( )
             {
                 CANCEL_RETURN;
                 auto& xCoord = vAxisCords[ uiI ][ uiX ];
-                if( sChr != "" && sChr != xCoord.sChromosome )
+                std::string sChromName = vActiveChromosomes[ uiI ][ xCoord.uiChromosome ].sName;
+                if( sChr != "" && sChr != sChromName )
                 {
                     vChrs.append( substringChr( sChr ) );
 
@@ -531,7 +534,7 @@ bool PartialQuarry::setTracks( )
                     vScoreB.append( 0 );
                 }
 
-                sChr = xCoord.sChromosome;
+                sChr = sChromName;
                 auto uiVal = vvCombinedCoverageValues[ uiI ][ uiX ];
                 auto uiScoreA = vvFlatCoverageValues[ uiI ][ uiX ][ 0 ];
                 auto uiScoreB = vvFlatCoverageValues[ uiI ][ uiX ][ 1 ];
@@ -598,7 +601,8 @@ bool PartialQuarry::setTracks( )
             {
                 CANCEL_RETURN;
                 auto& xCoord = vAxisCords[ uiI ][ uiX ];
-                if( sChr != "" && sChr != xCoord.sChromosome )
+                std::string sChromName = vActiveChromosomes[ uiI ][ xCoord.uiChromosome ].sName;
+                if( sChr != "" && sChr != sChromName )
                 {
                     vChrs.append( substringChr( sChr ) );
 
@@ -630,7 +634,7 @@ bool PartialQuarry::setTracks( )
                     vScoreB.append( 0 );
                 }
 
-                sChr = xCoord.sChromosome;
+                sChr = sChromName;
                 auto uiVal = vvCoverageValues[ uiI ][ uiId ][ uiX ];
                 auto uiScoreA = vvFlatCoverageValues[ uiI ][ uiX ][ 0 ];
                 auto uiScoreB = vvFlatCoverageValues[ uiI ][ uiX ][ 1 ];
@@ -714,7 +718,8 @@ bool PartialQuarry::setTrackExport( )
                 vValues.push_back( vvCoverageValues[ uiI ][ uiId ][ uiX ] );
 
             auto& xCoord = vAxisCords[ uiI ][ uiX ];
-            vTrackExport[ uiI ].emplace_back( xCoord.sChromosome,
+            std::string sChromName = vActiveChromosomes[ uiI ][ xCoord.uiChromosome ].sName;
+            vTrackExport[ uiI ].emplace_back( sChromName,
                                               xCoord.uiIndexPos * uiDividend,
                                               ( xCoord.uiIndexPos + xCoord.uiIndexSize ) * uiDividend,
                                               vValues );
@@ -760,7 +765,8 @@ bool PartialQuarry::setRankedSlicesCDS( )
             auto uiA = vvFlatCoverageValues[ uiI ][ vSorted[ uiI ][ uiX ] ][ 0 ];
             auto uiB = vvFlatCoverageValues[ uiI ][ vSorted[ uiI ][ uiX ] ][ 1 ];
 
-            vChrs.append( substringChr( xCoord.sChromosome ) );
+            std::string sChromName = vActiveChromosomes[ uiI ][ xCoord.uiChromosome ].sName;
+            vChrs.append( substringChr( sChromName ) );
             vIndexStart.append( readableBp( xCoord.uiIndexPos * uiDividend ) );
             vIndexEnd.append( readableBp( ( xCoord.uiIndexPos + xCoord.uiIndexSize ) * uiDividend ) );
 

@@ -9,6 +9,7 @@ namespace cm
 {
 
 static const bool BIN_SEARCH_SPARSE = false;
+#define MAX_ANNO_FILTERS 3
 
 template <bool CACHED> class SpsInterface;
 
@@ -56,6 +57,37 @@ std::shared_ptr<sps::Index<storage_t<D, O, BIN_SEARCH_SPARSE>>> getIndexHelper( 
     case COMBINE( D, O ):                                                                                              \
         uiId = pIndex##D##O->generate( fFac, uiVerbosity );                                                            \
         break;
+
+#define COUNT( D, O )                                                                                                  \
+    case COMBINE( D, O ): {                                                                                            \
+        std::array<size_t, D - O> vF##D##O;                                                                            \
+        std::array<size_t, D - O> vT##D##O;                                                                            \
+        size_t uiI##D##O = 0;                                                                                          \
+                                                                                                                       \
+        for( bool bHasAnno : vHasAnno )                                                                                \
+            if( bHasAnno )                                                                                             \
+            {                                                                                                          \
+                vF##D##O[ uiI##D##O ] = vFromAnnoFilter[ uiI##D##O ];                                                  \
+                vT##D##O[ uiI##D##O ] = vToAnnoFilter[ uiI##D##O ];                                                    \
+                uiI##D##O++;                                                                                           \
+            }                                                                                                          \
+        vF##D##O[ uiI##D##O ] = vFrom[ 0 ];                                                                            \
+        vT##D##O[ uiI##D##O ] = vTo[ 0 ];                                                                              \
+        uiI##D##O++;                                                                                                   \
+        if constexpr( b2DPoints )                                                                                      \
+        {                                                                                                              \
+            vF##D##O[ uiI##D##O ] = vFrom[ 1 ];                                                                        \
+            vT##D##O[ uiI##D##O ] = vTo[ 1 ];                                                                          \
+            uiI##D##O++;                                                                                               \
+        }                                                                                                              \
+        if( bHasMapQ )                                                                                                 \
+        {                                                                                                              \
+            vF##D##O[ uiI##D##O ] = uiMapQMax;                                                                         \
+            vT##D##O[ uiI##D##O ] = uiMapQMin;                                                                         \
+        }                                                                                                              \
+        uiVal = pIndex##D##O->count( iDataSetId, vF##D##O, vT##D##O, xIntersect, uiVerbosity );                        \
+    }                                                                                                                  \
+    break;
 
 #define INSERT_COUNT( D, O )                                                                                           \
     case COMBINE( D, O ):                                                                                              \
@@ -147,6 +179,44 @@ template <bool CACHED> class SpsInterface
         }
     }
 
+
+    size_t count( size_t uiD, size_t uiO, size_t iDataSetId, std::array<size_t, 2> vFrom, std::array<size_t, 2> vTo,
+                  bool bHasMapQ, size_t uiMapQMin, size_t uiMapQMax, std::array<bool, MAX_ANNO_FILTERS> vHasAnno,
+                  std::array<size_t, MAX_ANNO_FILTERS>& vFromAnnoFilter,
+                  std::array<size_t, MAX_ANNO_FILTERS>& vToAnnoFilter, sps::IntersectionType xIntersect,
+                  size_t uiVerbosity = 1 )
+    {
+        constexpr bool b2DPoints = true;
+        size_t uiVal;
+        switch( combine( uiD, uiO ) )
+        {
+            RELEVANT_COMBINATIONS( COUNT )
+
+            default:
+                throw std::logic_error( "invalid combination of dimensions and orthotope dimensions" );
+                break;
+        }
+        return uiVal;
+    }
+
+    size_t count( size_t uiD, size_t uiO, size_t iDataSetId, std::array<size_t, 1> vFrom, std::array<size_t, 1> vTo,
+                  bool bHasMapQ, size_t uiMapQMin, size_t uiMapQMax, std::array<bool, MAX_ANNO_FILTERS> vHasAnno,
+                  std::array<size_t, MAX_ANNO_FILTERS>& vFromAnnoFilter,
+                  std::array<size_t, MAX_ANNO_FILTERS>& vToAnnoFilter, sps::IntersectionType xIntersect,
+                  size_t uiVerbosity = 1 )
+    {
+        constexpr bool b2DPoints = false;
+        size_t uiVal;
+        switch( combine( uiD, uiO ) )
+        {
+            RELEVANT_COMBINATIONS( COUNT )
+
+            default:
+                throw std::logic_error( "invalid combination of dimensions and orthotope dimensions" );
+                break;
+        }
+        return uiVal;
+    }
 
     size_t generate( size_t uiD, size_t uiO, double fFac = -1, size_t uiVerbosity = 1 )
     {
