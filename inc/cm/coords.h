@@ -241,10 +241,12 @@ annoCoordsHelper( size_t uiBinSize, size_t uiScreenStartPos, size_t uiScreenEndP
                     {
                         case 0: // separate
                         case 1: // stretch
-                            uiIndexPos = xLower->uiIntervalStart + uiCurrScreenPos - xLower->uiIntervalCoordsStart - uiChromosomeStartPos;
+                            uiIndexPos = xLower->uiIntervalStart + uiCurrScreenPos - xLower->uiIntervalCoordsStart -
+                                         uiChromosomeStartPos;
                             break;
                         case 2: // squeeze
-                            uiIndexPos = xLower->uiIntervalStart + uiCurrScreenPos - xLower->uiIntervalId - uiChromosomeStartPos;
+                            uiIndexPos =
+                                xLower->uiIntervalStart + uiCurrScreenPos - xLower->uiIntervalId - uiChromosomeStartPos;
                             break;
                         default:
                             throw std::logic_error( "unknown iAnnoInMultipleBins value" );
@@ -562,7 +564,7 @@ bool PartialQuarry::setTicks( )
                     int64_t iDataSetId = rJson[ xChr.sName ].get<int64_t>( );
                     vFullList.append( uiRunningStart );
 
-                    if(bSqueeze)
+                    if( bSqueeze )
                         uiRunningStart += xIndices.vAnno.numIntervals( iDataSetId );
                     else
                         uiRunningStart += xIndices.vAnno.totalIntervalSize( iDataSetId );
@@ -664,15 +666,15 @@ bool PartialQuarry::setGridSeqCoords( )
             uiGenomeSize, 0 /*<- unused */, 1 /* use first annotation in bin */,
             1 /* stretch bin over entire annotation*/, this->vActiveChromosomes[ 0 ], this->bCancel,
             getValue<json>( { "annotation", "by_name",
-                            getValue<std::string>( { "settings", "normalization", "grid_seq_anno_type" } ) } ),
+                              getValue<std::string>( { "settings", "normalization", "grid_seq_anno_type" } ) } ),
             xIndices.vAnno );
         vGridSeqCoords = xRet.first;
         vGridSeqRegions = xRet.second;
     }
     else
     {
-        vGridSeqCoords.clear();
-        vGridSeqRegions.clear();
+        vGridSeqCoords.clear( );
+        vGridSeqRegions.clear( );
     }
     CANCEL_RETURN;
     END_RETURN;

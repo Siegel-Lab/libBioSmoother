@@ -92,6 +92,17 @@ bool PartialQuarry::setBinValues( )
 
     size_t uiMinuend = getValue<size_t>( { "settings", "normalization", "min_interactions", "val" } );
 
+    const std::array<std::array<size_t, 2>, 2> vvAF{ /*x false*/ std::array<size_t, 2>{ /*y false*/ 0, /*y true*/ 0 },
+                                                     /*x true */ std::array<size_t, 2>{ /*y false*/ 1, /*y true*/ 1 } };
+    const std::array<std::array<size_t, 2>, 2> vvAT{ /*x false*/ std::array<size_t, 2>{ /*y false*/ 4, /*y true*/ 2 },
+                                                     /*x true */ std::array<size_t, 2>{ /*y false*/ 3, /*y true*/ 2 } };
+
+    const bool bXFiltered = getValue<std::string>( { "contigs", "row_coordinates" } ) != "full_genome";
+    const bool bYFiltered = getValue<std::string>( { "contigs", "column_coordinates" } ) != "full_genome";
+
+    std::array<size_t, 1> vFromAnno = { vvAF[ bXFiltered ][ bYFiltered ] };
+    std::array<size_t, 1> vToAnno = { vvAT[ bXFiltered ][ bYFiltered ] };
+
     for( std::string& sRep : vActiveReplicates )
     {
         vvBinValues.emplace_back( );
@@ -115,6 +126,7 @@ bool PartialQuarry::setBinValues( )
         for( std::array<BinCoord, 2>& vCoords : vBinCoords )
         {
             CANCEL_RETURN;
+            bool bHasAnnoFilter = getValue<json>( { "annotation", "by_name", "gene" } ).contains(vCoords[ 0 ].sChromosomeX) && getValue<json>( { "annotation", "by_name", "gene" } ).contains(vCoords[ 0 ].sChromosomeY);
             std::array<size_t, 2> vVals;
             for( size_t uiI = 0; uiI < 2; uiI++ )
             {
@@ -124,38 +136,76 @@ bool PartialQuarry::setBinValues( )
                         getValue<size_t>( { "replicates", "by_name", sRep, "ids", vCoords[ uiI ].sChromosomeX,
                                             vCoords[ uiI ].sChromosomeY } );
 
-                    if( bHasMapQ && bHasMultiMap )
-                        vVals[ uiI ] = xIndices.getIndex<3, 2>( )->count(
-                            iDataSetId,
-                            { vCoords[ uiI ].uiIndexY, vCoords[ uiI ].uiIndexX, uiMapQMax },
-                            { vCoords[ uiI ].uiIndexY + vCoords[ uiI ].uiIndexH,
-                              vCoords[ uiI ].uiIndexX + vCoords[ uiI ].uiIndexW, uiMapQMin },
-                            xIntersect,
-                            0 );
-                    else if( !bHasMapQ && bHasMultiMap )
-                        vVals[ uiI ] =
-                            xIndices.getIndex<2, 2>( )->count( iDataSetId,
-                                                               { vCoords[ uiI ].uiIndexY, vCoords[ uiI ].uiIndexX },
-                                                               { vCoords[ uiI ].uiIndexY + vCoords[ uiI ].uiIndexH,
-                                                                 vCoords[ uiI ].uiIndexX + vCoords[ uiI ].uiIndexW },
-                                                               xIntersect,
-                                                               0 );
-                    else if( bHasMapQ && !bHasMultiMap )
-                        vVals[ uiI ] = xIndices.getIndex<3, 0>( )->count(
-                            iDataSetId,
-                            { vCoords[ uiI ].uiIndexY, vCoords[ uiI ].uiIndexX, uiMapQMax },
-                            { vCoords[ uiI ].uiIndexY + vCoords[ uiI ].uiIndexH,
-                              vCoords[ uiI ].uiIndexX + vCoords[ uiI ].uiIndexW, uiMapQMin },
-                            xIntersect,
-                            0 );
-                    else // if(!bHasMapQ && !bHasMultiMap)
-                        vVals[ uiI ] =
-                            xIndices.getIndex<2, 0>( )->count( iDataSetId,
-                                                               { vCoords[ uiI ].uiIndexY, vCoords[ uiI ].uiIndexX },
-                                                               { vCoords[ uiI ].uiIndexY + vCoords[ uiI ].uiIndexH,
-                                                                 vCoords[ uiI ].uiIndexX + vCoords[ uiI ].uiIndexW },
-                                                               xIntersect,
-                                                               0 );
+                    if( bHasAnnoFilter )
+                    {
+                        if( bHasMapQ && bHasMultiMap )
+                            vVals[ uiI ] = xIndices.getIndex<4, 2>( )->count(
+                                iDataSetId,
+                                { vFromAnno[ 0 ], vCoords[ uiI ].uiIndexY, vCoords[ uiI ].uiIndexX, uiMapQMax },
+                                { vToAnno[ 0 ], vCoords[ uiI ].uiIndexY + vCoords[ uiI ].uiIndexH,
+                                  vCoords[ uiI ].uiIndexX + vCoords[ uiI ].uiIndexW, uiMapQMin },
+                                xIntersect,
+                                0 );
+                        else if( !bHasMapQ && bHasMultiMap )
+                            vVals[ uiI ] = xIndices.getIndex<3, 2>( )->count(
+                                iDataSetId,
+                                { vFromAnno[ 0 ], vCoords[ uiI ].uiIndexY, vCoords[ uiI ].uiIndexX },
+                                { vToAnno[ 0 ], vCoords[ uiI ].uiIndexY + vCoords[ uiI ].uiIndexH,
+                                  vCoords[ uiI ].uiIndexX + vCoords[ uiI ].uiIndexW },
+                                xIntersect,
+                                0 );
+                        else if( bHasMapQ && !bHasMultiMap )
+                            vVals[ uiI ] = xIndices.getIndex<4, 0>( )->count(
+                                iDataSetId,
+                                { vFromAnno[ 0 ], vCoords[ uiI ].uiIndexY, vCoords[ uiI ].uiIndexX, uiMapQMax },
+                                { vToAnno[ 0 ], vCoords[ uiI ].uiIndexY + vCoords[ uiI ].uiIndexH,
+                                  vCoords[ uiI ].uiIndexX + vCoords[ uiI ].uiIndexW, uiMapQMin },
+                                xIntersect,
+                                0 );
+                        else // if(!bHasMapQ && !bHasMultiMap)
+                            vVals[ uiI ] = xIndices.getIndex<3, 0>( )->count(
+                                iDataSetId,
+                                { vFromAnno[ 0 ], vCoords[ uiI ].uiIndexY, vCoords[ uiI ].uiIndexX },
+                                { vToAnno[ 0 ], vCoords[ uiI ].uiIndexY + vCoords[ uiI ].uiIndexH,
+                                  vCoords[ uiI ].uiIndexX + vCoords[ uiI ].uiIndexW },
+                                xIntersect,
+                                0 );
+                    }
+                    else
+                    {
+                        if( bHasMapQ && bHasMultiMap )
+                            vVals[ uiI ] = xIndices.getIndex<3, 2>( )->count(
+                                iDataSetId,
+                                { vCoords[ uiI ].uiIndexY, vCoords[ uiI ].uiIndexX, uiMapQMax },
+                                { vCoords[ uiI ].uiIndexY + vCoords[ uiI ].uiIndexH,
+                                  vCoords[ uiI ].uiIndexX + vCoords[ uiI ].uiIndexW, uiMapQMin },
+                                xIntersect,
+                                0 );
+                        else if( !bHasMapQ && bHasMultiMap )
+                            vVals[ uiI ] = xIndices.getIndex<2, 2>( )->count(
+                                iDataSetId,
+                                { vCoords[ uiI ].uiIndexY, vCoords[ uiI ].uiIndexX },
+                                { vCoords[ uiI ].uiIndexY + vCoords[ uiI ].uiIndexH,
+                                  vCoords[ uiI ].uiIndexX + vCoords[ uiI ].uiIndexW },
+                                xIntersect,
+                                0 );
+                        else if( bHasMapQ && !bHasMultiMap )
+                            vVals[ uiI ] = xIndices.getIndex<3, 0>( )->count(
+                                iDataSetId,
+                                { vCoords[ uiI ].uiIndexY, vCoords[ uiI ].uiIndexX, uiMapQMax },
+                                { vCoords[ uiI ].uiIndexY + vCoords[ uiI ].uiIndexH,
+                                  vCoords[ uiI ].uiIndexX + vCoords[ uiI ].uiIndexW, uiMapQMin },
+                                xIntersect,
+                                0 );
+                        else // if(!bHasMapQ && !bHasMultiMap)
+                            vVals[ uiI ] = xIndices.getIndex<2, 0>( )->count(
+                                iDataSetId,
+                                { vCoords[ uiI ].uiIndexY, vCoords[ uiI ].uiIndexX },
+                                { vCoords[ uiI ].uiIndexY + vCoords[ uiI ].uiIndexH,
+                                  vCoords[ uiI ].uiIndexX + vCoords[ uiI ].uiIndexW },
+                                xIntersect,
+                                0 );
+                    }
                 }
                 else
                     vVals[ uiI ] = 0;
@@ -236,7 +286,7 @@ bool PartialQuarry::setDecayValues( )
                         int64_t iMyH = vCoords[ uiI ].iTo - vCoords[ uiI ].iFrom;
                         int64_t iH = std::max( (int64_t)1, ( ( iTop - iMyH ) - iBot ) / (int64_t)uiSamplesMax );
 
-                        if( ( iTop - iMyH ) - iBot >= (int64_t)(uiSamplesMin-1) * iMyH )
+                        if( ( iTop - iMyH ) - iBot >= (int64_t)( uiSamplesMin - 1 ) * iMyH )
                         {
                             std::vector<size_t> vvVals;
                             vvVals.reserve( uiSamplesMax );
@@ -560,9 +610,12 @@ void PartialQuarry::regReplicates( )
                      .vIncomingSession = { },
                      .vSessionsIncomingInPrevious = { { "settings", "normalization", "min_interactions", "val" },
                                                       { "replicates", "by_name" },
+                                                      { "annotation", "by_name" },
                                                       { "settings", "filters", "mapping_q", "val_min" },
                                                       { "settings", "filters", "mapping_q", "val_max" },
-                                                      { "settings", "filters", "incomplete_alignments" } } } );
+                                                      { "settings", "filters", "incomplete_alignments" },
+                                                      { "contigs", "column_coordinates" },
+                                                      { "contigs", "row_coordinates" } } } );
 
     registerNode(
         NodeNames::DecayValues,

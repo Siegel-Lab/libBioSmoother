@@ -10,7 +10,9 @@ using json = nlohmann::json;
 
 #define CANCEL_RETURN                                                                                                  \
     if( this->bCancel )                                                                                                \
-    return false
+        return false; \
+    if (PyErr_CheckSignals() != 0) /* allow Ctrl-C cancel */ \
+        throw pybind11::error_already_set()
 #define END_RETURN return true
 
 namespace cm
@@ -995,7 +997,7 @@ class PartialQuarry
                 size_t uiLen = 0;
                 if( bFullGenome )
                     uiLen = xChr.uiLength;
-                else if(this->xSession[ "annotation" ][ "by_name" ][ sCoords ].contains(xChr.sName))
+                else if( this->xSession[ "annotation" ][ "by_name" ][ sCoords ].contains( xChr.sName ) )
                 {
                     int64_t iDataSetId =
                         this->xSession[ "annotation" ][ "by_name" ][ sCoords ][ xChr.sName ].get<int64_t>( );
@@ -1004,8 +1006,8 @@ class PartialQuarry
                     else
                         uiLen = xIndices.vAnno.totalIntervalSize( iDataSetId );
                 }
-                if( uiLen > 0 && (uiEq > uiMaxEquality || 
-                                  ( uiEq == uiMaxEquality && xChr.sName.size( ) < uiMinRefSize )) )
+                if( uiLen > 0 &&
+                    ( uiEq > uiMaxEquality || ( uiEq == uiMaxEquality && xChr.sName.size( ) < uiMinRefSize ) ) )
                 {
                     uiMaxEquality = uiEq;
                     if( bBottom )
@@ -1026,7 +1028,7 @@ class PartialQuarry
             {
                 auto& rJson = this->xSession[ "annotation" ][ "by_name" ][ sAnno ];
                 for( auto xChr : vActiveChromosomes[ bX ? 0 : 1 ] )
-                    if(rJson.contains(xChr.sName))
+                    if( rJson.contains( xChr.sName ) )
                     {
                         int64_t iDataSetId = rJson[ xChr.sName ].get<int64_t>( );
                         xIndices.vAnno.iterate(

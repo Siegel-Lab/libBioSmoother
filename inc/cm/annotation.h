@@ -81,8 +81,7 @@ bool PartialQuarry::setAnnotationValues( )
                     int64_t iDataSetId = rJson[ xRegion.sChromosome ].get<int64_t>( );
 
                     uiTotalCount += xIndices.vAnno.count( iDataSetId, xRegion.uiIndexPos,
-                                                          ( xRegion.uiIndexPos + xRegion.uiIndexSize ),
-                                                          false, false );
+                                                          ( xRegion.uiIndexPos + xRegion.uiIndexSize ), false, false );
                 }
             }
         }
@@ -99,9 +98,9 @@ bool PartialQuarry::setAnnotationValues( )
                     if( rJson.contains( xRegion.sChromosome ) )
                     {
                         int64_t iDataSetId = rJson[ xRegion.sChromosome ].get<int64_t>( );
-                        for( auto& xAnno : xIndices.vAnno.query(
-                                 iDataSetId, xRegion.uiIndexPos, xRegion.uiIndexPos + xRegion.uiIndexSize,
-                                 false, false ) )
+                        for( auto& xAnno :
+                             xIndices.vAnno.query( iDataSetId, xRegion.uiIndexPos,
+                                                   xRegion.uiIndexPos + xRegion.uiIndexSize, false, false ) )
                         {
                             double uiStartPos;
                             double uiEndPos;
@@ -158,9 +157,9 @@ bool PartialQuarry::setAnnotationValues( )
                     if( rJson.contains( xCoords.sChromosome ) )
                     {
                         int64_t iDataSetId = rJson[ xCoords.sChromosome ].get<int64_t>( );
-                        vAnnotationValues[ uiX ].back( ).first.push_back( xIndices.vAnno.count(
-                            iDataSetId, xCoords.uiIndexPos, ( xCoords.uiIndexPos + xCoords.uiIndexSize ),
-                            false, false ) );
+                        vAnnotationValues[ uiX ].back( ).first.push_back(
+                            xIndices.vAnno.count( iDataSetId, xCoords.uiIndexPos,
+                                                  ( xCoords.uiIndexPos + xCoords.uiIndexSize ), false, false ) );
                     }
                     else
                         vAnnotationValues[ uiX ].back( ).first.push_back( 0 );

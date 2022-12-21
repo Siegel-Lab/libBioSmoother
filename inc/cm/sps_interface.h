@@ -15,17 +15,23 @@ template <bool CACHED> class SpsInterface;
 template <template <size_t, size_t, bool> typename storage_t, size_t D, size_t O, bool CACHED>
 std::shared_ptr<sps::Index<storage_t<D, O, BIN_SEARCH_SPARSE>>> getIndexHelper( SpsInterface<CACHED>* );
 
-
+// @todo some of these are not actually needed
 #define RELEVANT_COMBINATIONS( MACRO )                                                                                 \
     MACRO( 1, 0 )                                                                                                      \
     MACRO( 2, 1 )                                                                                                      \
                                                                                                                        \
     MACRO( 2, 0 )                                                                                                      \
+    MACRO( 4, 0 )                                                                                                      \
+    MACRO( 4, 1 )                                                                                                      \
     MACRO( 3, 1 )                                                                                                      \
     MACRO( 4, 2 )                                                                                                      \
+    MACRO( 5, 1 )                                                                                                      \
                                                                                                                        \
     MACRO( 3, 0 )                                                                                                      \
-    MACRO( 5, 2 )
+    MACRO( 5, 0 )                                                                                                      \
+    MACRO( 5, 2 )                                                                                                      \
+    MACRO( 6, 2 )                                                                                                      \
+    MACRO( 7, 2 )
 
 
 #define DECLARE_INDEX_TYPE( D, O ) using I##D##O##_t = sps::Index<storage_t<D, O>>;
@@ -59,35 +65,18 @@ std::shared_ptr<sps::Index<storage_t<D, O, BIN_SEARCH_SPARSE>>> getIndexHelper( 
             throw std::logic_error( "end position of count must have dimensionality equal to uiD - uiO" );             \
                                                                                                                        \
         if constexpr( O == 0 )                                                                                         \
-            if( vCategory.size( ) == 0 )                                                                               \
-            {                                                                                                          \
-                std::array<uint64_t, D - O> aStart##D##O;                                                              \
-                std::copy_n( vStart.begin( ), D - O, aStart##D##O.begin( ) );                                          \
-                pIndex##D##O->addPoint( aStart##D##O );                                                                \
-            }                                                                                                          \
-            else                                                                                                       \
-                throw std::logic_error( "category index must have uiO >= 1" );                                         \
+        {                                                                                                              \
+            std::array<uint64_t, D - O> aStart##D##O;                                                                  \
+            std::copy_n( vStart.begin( ), D - O, aStart##D##O.begin( ) );                                              \
+            pIndex##D##O->addPoint( aStart##D##O );                                                                    \
+        }                                                                                                              \
         else                                                                                                           \
         {                                                                                                              \
-            if( vCategory.size( ) == 0 )                                                                               \
-            {                                                                                                          \
-                std::array<uint64_t, D - O> aStart##D##O;                                                              \
-                std::copy_n( vStart.begin( ), D - O, aStart##D##O.begin( ) );                                          \
-                std::array<uint64_t, D - O> aEnd##D##O;                                                                \
-                std::copy_n( vEnd.begin( ), D - O, aEnd##D##O.begin( ) );                                              \
-                pIndex##D##O->addPoint( aStart##D##O, aEnd##D##O );                                                    \
-            }                                                                                                          \
-            else                                                                                                       \
-            {                                                                                                          \
-                std::array<uint64_t, D - O - 1> aStartCat##D##O;                                                       \
-                std::copy_n( vStart.begin( ), D - O - 1, aStartCat##D##O.begin( ) );                                   \
-                std::array<uint64_t, D - O - 1> aEndCat##D##O;                                                         \
-                std::copy_n( vEnd.begin( ), D - O - 1, aEndCat##D##O.begin( ) );                                       \
-                if constexpr( O == 1 )                                                                                 \
-                    pIndex##D##O->addPoint( aStartCat##D##O, vCategory );                                              \
-                else                                                                                                   \
-                    pIndex##D##O->addPoint( aStartCat##D##O, aEndCat##D##O, vCategory );                               \
-            }                                                                                                          \
+            std::array<uint64_t, D - O> aStart##D##O;                                                                  \
+            std::copy_n( vStart.begin( ), D - O, aStart##D##O.begin( ) );                                              \
+            std::array<uint64_t, D - O> aEnd##D##O;                                                                    \
+            std::copy_n( vEnd.begin( ), D - O, aEnd##D##O.begin( ) );                                                  \
+            pIndex##D##O->addPoint( aStart##D##O, aEnd##D##O );                                                        \
         }                                                                                                              \
         break;
 
@@ -146,8 +135,7 @@ template <bool CACHED> class SpsInterface
     }
 
   public:
-    void insert( size_t uiD, size_t uiO, std::vector<uint64_t> vStart, std::vector<uint64_t> vEnd,
-                 std::vector<bool> vCategory = { } )
+    void insert( size_t uiD, size_t uiO, std::vector<uint64_t> vStart, std::vector<uint64_t> vEnd )
     {
         switch( combine( uiD, uiO ) )
         {

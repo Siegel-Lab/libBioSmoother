@@ -1,9 +1,9 @@
 #include "sps/desc.h"
 #include <algorithm>
 #include <cassert>
+#include <cmath>
 #include <set>
 #include <tuple>
-#include <cmath>
 
 #pragma once
 
@@ -66,10 +66,10 @@ template <template <typename> typename vec_gen_t> class AnnotationDescIndex
         vDescID.resize( vIntervalsIn.size( ) );
         for( size_t uiI = 0; uiI < vIntervalsIn.size( ); uiI++ )
         {
-            vLineSweepPos.push_back( std::make_tuple( 
-                (size_t)std::round(std::get<0>( vIntervalsIn[ uiI ] ) / (double)uiDividend), uiI, false ) );
-            vLineSweepPos.push_back( std::make_tuple( 
-                (size_t)std::round(std::get<1>( vIntervalsIn[ uiI ] ) / (double)uiDividend), uiI, true ) );
+            vLineSweepPos.push_back( std::make_tuple(
+                (size_t)std::round( std::get<0>( vIntervalsIn[ uiI ] ) / (double)uiDividend ), uiI, false ) );
+            vLineSweepPos.push_back( std::make_tuple(
+                (size_t)std::round( std::get<1>( vIntervalsIn[ uiI ] ) / (double)uiDividend ), uiI, true ) );
             vDescID[ uiI ] = vDesc.add( std::get<2>( vIntervalsIn[ uiI ] ) );
         }
         std::sort( vLineSweepPos.begin( ), vLineSweepPos.end( ) );
@@ -185,7 +185,7 @@ template <template <typename> typename vec_gen_t> class AnnotationDescIndex
     query( size_t uiDatasetId, size_t uiFrom, size_t uiTo, bool bIntervalCoords = false, bool bIntervalCount = false )
     {
         assert( !( bIntervalCoords && bIntervalCount ) );
-        std::vector<std::tuple<size_t, size_t, std::string, bool>> vRet = {};
+        std::vector<std::tuple<size_t, size_t, std::string, bool>> vRet = { };
 
         iterate(
             uiDatasetId, uiFrom, uiTo,
@@ -254,16 +254,31 @@ template <template <typename> typename vec_gen_t> class AnnotationDescIndex
     {
         auto xRange = getRange( uiDatasetId, uiFrom, uiTo, bIntervalCoords, bIntervalCount );
 
+        if(xRange[ 1 ] < xRange[ 0 ])
+            return 0;
         return xRange[ 1 ] - xRange[ 0 ];
     }
 
-    std::vector<bool> getCategories( size_t uiFrom, size_t uiTo, bool bIntervalCoords = false,
-                                     bool bIntervalCount = false )
+    std::vector<bool> getCategories( size_t uiFrom, size_t uiTo, size_t uiDividend, std::vector<size_t> vCats,
+                                     bool bIntervalCoords = false, bool bIntervalCount = false )
     {
         std::vector<bool> vRet;
-        vRet.reserve( vDatasets.size( ) );
-        for( size_t uiI = 0; uiI < vDatasets.size( ); uiI++ )
-            vRet.push_back( count( uiI, uiFrom, uiTo, bIntervalCoords, bIntervalCount ) > 0 );
+        vRet.reserve( vCats.size( ) );
+        for( size_t uiDatasetId : vCats )
+        {
+            bool bFound = false;
+            iterate(
+                uiDatasetId, 
+                (size_t)std::round( uiFrom / (double)uiDividend ),
+                (size_t)std::round( uiTo / (double)uiDividend ),
+                [ & ]( std::tuple<size_t, size_t, std::string, bool> xTup ) {
+                    if(std::get<0>(xTup) <= uiTo && std::get<1>(xTup) > uiFrom)
+                        bFound = true;
+                    return !bFound;
+                },
+                bIntervalCoords, bIntervalCount );
+            vRet.push_back( bFound ? 1 : 0 );
+        }
         return vRet;
     }
 

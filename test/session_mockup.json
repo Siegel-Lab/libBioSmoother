@@ -135,6 +135,7 @@
         "list": [
             "gene"
         ],
+        "filterable": ["gene"],
         "visible_x": [],
         "visible_y": [],
         "row_filter": [],

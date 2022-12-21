@@ -132,8 +132,7 @@ template <bool CACHE> void exportSpsInterface( pybind11::module& m )
         .def( "loaded", &cm::SpsInterface<CACHE>::loaded )
         .def( "clear_points_and_desc", &cm::SpsInterface<CACHE>::clearPointsAndDesc )
         .def( "insert", &cm::SpsInterface<CACHE>::insert, //
-              pybind11::arg( "d" ), pybind11::arg( "o" ), pybind11::arg( "start" ), pybind11::arg( "end" ),
-              pybind11::arg( "category" ) )
+              pybind11::arg( "d" ), pybind11::arg( "o" ), pybind11::arg( "start" ), pybind11::arg( "end" ) )
         .def( "generate", &cm::SpsInterface<CACHE>::generate, //
               pybind11::arg( "d" ), pybind11::arg( "o" ), pybind11::arg( "fac" ) = -1,
               pybind11::arg( "verbosity" ) = 1 )
@@ -225,7 +224,8 @@ PYBIND11_MODULE( libContactMapping, m )
               pybind11::arg( "divided" ),
               pybind11::arg( "verbosity" ) = 0 ) //
         .def( "get_categories", &cm::AnnotationDescIndex<DiskVecGenerator>::getCategories, pybind11::arg( "from" ),
-              pybind11::arg( "to" ), pybind11::arg( "interval_coords" ) = false,
+              pybind11::arg( "to" ), pybind11::arg( "dividend" ), pybind11::arg( "relevant" ),
+              pybind11::arg( "interval_coords" ) = false,
               pybind11::arg( "interval_count" ) = false ) //
         ;
 
