@@ -259,28 +259,23 @@ template <template <typename> typename vec_gen_t> class AnnotationDescIndex
         return xRange[ 1 ] - xRange[ 0 ];
     }
 
-    std::vector<bool> getCategories( size_t uiFrom, size_t uiTo, size_t uiDividend, std::vector<int> vCats,
+    std::vector<bool> getCategories( size_t uiFrom, size_t uiTo, size_t uiDividend, std::vector<size_t> vCats,
                                      bool bIntervalCoords = false, bool bIntervalCount = false )
     {
         std::vector<bool> vRet;
         vRet.reserve( vCats.size( ) );
-        for( int iDatasetId : vCats )
+        for( size_t uiDatasetId : vCats )
         {
-            if( iDatasetId == -1 )
-                vRet.push_back( false );
-            else
-            {
-                bool bFound = false;
-                iterate( (size_t)iDatasetId, (size_t)std::round( uiFrom / (double)uiDividend ),
-                         (size_t)std::round( uiTo / (double)uiDividend ),
-                         [ & ]( std::tuple<size_t, size_t, std::string, bool> xTup ) {
-                             if( std::get<0>( xTup ) <= uiTo && std::get<1>( xTup ) > uiFrom )
-                                 bFound = true;
-                             return !bFound;
-                         },
-                         bIntervalCoords, bIntervalCount );
-                vRet.push_back( bFound );
-            }
+            bool bFound = false;
+            iterate( uiDatasetId, (size_t)std::round( uiFrom / (double)uiDividend ),
+                        (size_t)std::round( uiTo / (double)uiDividend ),
+                        [ & ]( std::tuple<size_t, size_t, std::string, bool> xTup ) {
+                            if( std::get<0>( xTup ) <= uiTo && std::get<1>( xTup ) > uiFrom )
+                                bFound = true;
+                            return !bFound;
+                        },
+                        bIntervalCoords, bIntervalCount );
+            vRet.push_back( bFound );
         }
         return vRet;
     }

@@ -316,9 +316,12 @@ annoCoordsHelper( size_t uiBinSize, size_t uiScreenStartPos, size_t uiScreenEndP
                     switch( iAnnoInMultipleBins )
                     {
                         case 0: // separate
-                            uiCurrIndexSize = std::min( uiBinSize, uiCurrIndexSize );
+                        {
+                            size_t uiAddGap = (( xUpper - 1 )->uiIntervalStart - xLower->uiIntervalEnd) - 
+                                              (( xUpper - 1 )->uiIntervalCoordsStart - xLower->uiIntervalCoordsEnd);
+                            uiCurrIndexSize = std::min( uiBinSize + uiAddGap, uiCurrIndexSize );
                             uiCurrScreenSize = std::min( uiBinSize, uiCurrScreenSize );
-                            break;
+                        }   break;
                         case 1: // stretch
                             // do nothing
                             break;
@@ -732,8 +735,8 @@ bool PartialQuarry::setAnnoFilters( )
         {
             CANCEL_RETURN;
             vContigsHaveAnno[ uiX ][ uiI ].clear( );
-            vContigsHaveAnno[ uiX ][ uiI ].reserve( vActiveChromosomes.size( ) );
-            for( size_t uiJ = 0; uiJ < vActiveChromosomes.size( ); uiJ++ )
+            vContigsHaveAnno[ uiX ][ uiI ].reserve( vActiveChromosomes[uiX].size( ) );
+            for( size_t uiJ = 0; uiJ < vActiveChromosomes[uiX].size( ); uiJ++ )
                 vContigsHaveAnno[ uiX ][ uiI ].push_back(
                     getValue<json>( { "annotation", "by_name", vFilterableAnnotations[ uiI ] } )
                         .contains( vActiveChromosomes[ uiX ][ uiJ ].sName ) );
@@ -1076,9 +1079,9 @@ void PartialQuarry::regCoords( )
                                .vSessionsIncomingInPrevious = { { "dividend" } } } );
 
     registerNode( NodeNames::AnnoFilters,
-                  ComputeNode{ .sNodeName = "bin_coords",
+                  ComputeNode{ .sNodeName = "anno_filters",
                                .fFunc = &PartialQuarry::setAnnoFilters,
-                               .vIncomingFunctions = { },
+                               .vIncomingFunctions = { NodeNames::ActiveChrom },
                                .vIncomingSession = { { "annotation", "filterable" },
                                                      { "annotation", "row_filter" },
                                                      { "annotation", "by_name" },

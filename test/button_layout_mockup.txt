@@ -60,6 +60,10 @@
         - Between group combination
         - 1d replicates picker
         - 2d replicates picker
+        - symmetry
+        - interactions subtrahend
+        - minimum distance from diagonal
+        - annotation filter
     - Mapping
         - mapping quality bounds
         - reads with incomplete alignments
@@ -71,11 +75,6 @@
         - multiple annos in bin
         - binsize not evenly dividable
         - active contigs
-    - Miscellaneous
-        - symmetry
-        - minimum distance from diagonal
-        - interactions subtrahend
-        - annotation filter
 
 - File
     - Presetting
