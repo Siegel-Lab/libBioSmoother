@@ -8,6 +8,8 @@
 
 using json = nlohmann::json;
 
+#define USE_GRID_QUERIES 0
+
 #define CANCEL_RETURN                                                                                                  \
     if( this->bCancel )                                                                                                \
         return false;                                                                                                  \
@@ -62,7 +64,7 @@ struct AxisRegion : AxisCoord
     size_t uiNumCoords;
 };
 
-struct BinCoord
+struct BinCoordBase
 {
     size_t uiChromosomeX = std::numeric_limits<size_t>::max( );
     size_t uiChromosomeY = std::numeric_limits<size_t>::max( );
@@ -70,7 +72,17 @@ struct BinCoord
     size_t uiIndexX, uiIndexY;
     size_t uiScreenW, uiScreenH;
     size_t uiIndexW, uiIndexH;
+};
+
+struct BinCoord : BinCoordBase
+{
     size_t uiDecayCoordIndex = std::numeric_limits<size_t>::max( );
+};
+
+struct BinCoordRegion : BinCoordBase
+{
+    size_t uiCoordStartIdxX = 0, uiCoordStartIdxY = 0;
+    size_t uiNumCoordsX = 0, uiNumCoordsY = 0;
 };
 
 struct Annotation
@@ -556,6 +568,7 @@ class PartialQuarry
     sps::IntersectionType xIntersect;
 
     std::vector<std::array<BinCoord, 2>> vBinCoords;
+    std::vector<std::array<BinCoordRegion, 2>> vBinRegions;
 
     std::array<std::vector<std::pair<std::string, bool>>, 2> vActiveCoverage;
     std::array<std::vector<size_t>, 2> vActiveCoverageTotal;
@@ -645,6 +658,10 @@ class PartialQuarry
     // coords.h
     bool setFilteredCoords( );
 
+    // coords.h
+    template <typename out_t, typename in_t> std::array<out_t, 2> binObjFromCoords( const in_t&, const in_t& );
+    // coords.h
+    std::array<BinCoordRegion, 2> binRegionObjFromCoords( const AxisRegion&, const AxisRegion& );
     // coords.h
     bool setSymmetry( );
     // coords.h
@@ -949,6 +966,12 @@ class PartialQuarry
 
     // coverage.h
     const std::array<double, 2> getMinMaxTracks( bool bAxis );
+
+    size_t getLongestCommonSuffix()
+    {
+        update( NodeNames::LCS );
+        return uiLogestCommonSuffix;
+    }
 
   private:
     size_t stringCompare( std::string sQuery, std::string sRef )

@@ -89,6 +89,43 @@ std::shared_ptr<sps::Index<storage_t<D, O, BIN_SEARCH_SPARSE>>> getIndexHelper( 
     }                                                                                                                  \
     break;
 
+#define GRID_COUNT( D, O )                                                                                             \
+    case COMBINE( D, O ): {                                                                                            \
+        std::array<size_t, D - O> vF##D##O;                                                                            \
+        std::array<size_t, D - O> vS##D##O;                                                                            \
+        std::array<size_t, D - O> vN##D##O;                                                                            \
+        size_t uiI##D##O = 0;                                                                                          \
+                                                                                                                       \
+        for( bool bHasAnno : vHasAnno )                                                                                \
+            if( bHasAnno && false )                                                                                    \
+            {                                                                                                          \
+                vF##D##O[ uiI##D##O ] = vFromAnnoFilter[ uiI##D##O ];                                                  \
+                vS##D##O[ uiI##D##O ] = 1+vToAnnoFilter[ uiI##D##O ] - vFromAnnoFilter[ uiI##D##O ];                     \
+                vN##D##O[ uiI##D##O ] = 1;                                                                             \
+                uiI##D##O++;                                                                                           \
+            }                                                                                                          \
+        vF##D##O[ uiI##D##O ] = vFrom[ 0 ];                                                                            \
+        vS##D##O[ uiI##D##O ] = vSize[ 0 ];                                                                            \
+        vN##D##O[ uiI##D##O ] = vNum[ 0 ];                                                                             \
+        uiI##D##O++;                                                                                                   \
+        if constexpr( b2DPoints )                                                                                      \
+        {                                                                                                              \
+            vF##D##O[ uiI##D##O ] = vFrom[ 1 ];                                                                        \
+            vS##D##O[ uiI##D##O ] = vSize[ 1 ];                                                                        \
+            vN##D##O[ uiI##D##O ] = vNum[ 1 ];                                                                         \
+            uiI##D##O++;                                                                                               \
+        }                                                                                                              \
+        if( bHasMapQ )                                                                                                 \
+        {                                                                                                              \
+            vF##D##O[ uiI##D##O ] = uiMapQMax;                                                                         \
+            vS##D##O[ uiI##D##O ] = 1+uiMapQMin - uiMapQMax;                                                           \
+            vN##D##O[ uiI##D##O ] = 1;                                                                                 \
+        }                                                                                                              \
+        std::cout << "vF##D##O " << vF##D##O << "vS##D##O " << vS##D##O << "vN##D##O " << vN##D##O << std::endl; \
+        xRet = pIndex##D##O->gridCount( iDataSetId, vF##D##O, vS##D##O, vN##D##O, xIntersect, uiVerbosity );       \
+    }                                                                                                                  \
+    break;
+
 #define INSERT_COUNT( D, O )                                                                                           \
     case COMBINE( D, O ):                                                                                              \
         if( vStart.size( ) != D - O )                                                                                  \
@@ -179,6 +216,25 @@ template <bool CACHED> class SpsInterface
         }
     }
 
+    std::vector<unsigned int> gridCount( size_t uiD, size_t uiO, size_t iDataSetId, std::array<size_t, 2> vFrom,
+                                   std::array<size_t, 2> vSize, std::array<size_t, 2> vNum, bool bHasMapQ,
+                                   size_t uiMapQMin, size_t uiMapQMax, std::array<bool, MAX_ANNO_FILTERS> vHasAnno,
+                                   std::array<size_t, MAX_ANNO_FILTERS>& vFromAnnoFilter,
+                                   std::array<size_t, MAX_ANNO_FILTERS>& vToAnnoFilter,
+                                   sps::IntersectionType xIntersect, size_t uiVerbosity = 1 )
+    {
+        constexpr bool b2DPoints = true;
+        std::vector<unsigned int> xRet;
+        switch( combine( uiD, uiO ) )
+        {
+            RELEVANT_COMBINATIONS( GRID_COUNT )
+
+            default:
+                throw std::logic_error( "invalid combination of dimensions and orthotope dimensions" );
+                break;
+        }
+        return xRet;
+    }
 
     size_t count( size_t uiD, size_t uiO, size_t iDataSetId, std::array<size_t, 2> vFrom, std::array<size_t, 2> vTo,
                   bool bHasMapQ, size_t uiMapQMin, size_t uiMapQMax, std::array<bool, MAX_ANNO_FILTERS> vHasAnno,

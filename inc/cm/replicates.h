@@ -113,10 +113,20 @@ bool PartialQuarry::setBinValues( )
         uiMapQMax = 255 - uiMapQMax;
         std::array<bool, MAX_ANNO_FILTERS> vHasAnno;
 
-        for( std::array<BinCoord, 2>& vCoords : vBinCoords )
+
+#if USE_GRID_QUERIES
+        vvBinValues.back( ).resize( vBinCoords.size( ) );
+        for( const std::array<BinCoordRegion, 2>& vCoords : vBinRegions )
+#else
+        for( const std::array<BinCoord, 2>& vCoords : vBinCoords )
+#endif
         {
-            CANCEL_RETURN;
+#if USE_GRID_QUERIES
+            std::array<std::vector<unsigned int>, 2> vVals;
+#else
             std::array<size_t, 2> vVals;
+#endif
+            CANCEL_RETURN;
             for( size_t uiI = 0; uiI < 2; uiI++ )
             {
                 if( vCoords[ uiI ].uiChromosomeX != std::numeric_limits<size_t>::max( ) )
@@ -131,7 +141,8 @@ bool PartialQuarry::setBinValues( )
                     for( size_t uiJ = 0; uiJ < vFilterableAnnotations.size( ); uiJ++ )
                     {
                         if( vContigsHaveAnno[ uiI ][ uiJ ][ vCoords[ uiI ].uiChromosomeX ] &&
-                            vContigsHaveAnno[ uiI ][ uiJ ][ vCoords[ uiI ].uiChromosomeY ] )
+                            vContigsHaveAnno[ uiI ][ uiJ ][ vCoords[ uiI ].uiChromosomeY ] && 
+                            false)
                         {
                             uiNumAnno++;
                             vHasAnno[ uiJ ] = true;
@@ -140,35 +151,64 @@ bool PartialQuarry::setBinValues( )
                             vHasAnno[ uiJ ] = false;
                     }
 
-                    vVals[ uiI ] = xIndices.count( 2 + ( bHasMapQ ? 1 : 0 ) + uiNumAnno + (bHasMultiMap ? 2 : 0),
-                                                   bHasMultiMap ? 2 : 0,
-                                                   iDataSetId,
-                                                   { vCoords[ uiI ].uiIndexY, vCoords[ uiI ].uiIndexX },
-                                                   { vCoords[ uiI ].uiIndexY + vCoords[ uiI ].uiIndexH,
-                                                     vCoords[ uiI ].uiIndexX + vCoords[ uiI ].uiIndexW },
-                                                   bHasMapQ,
-                                                   uiMapQMin,
-                                                   uiMapQMax,
-                                                   vHasAnno,
-                                                   vFromAnnoFilter,
-                                                   vToAnnoFilter,
-                                                   xIntersect,
-                                                   0 );
+                    vVals[ uiI ] = xIndices.
+#if USE_GRID_QUERIES
+                                   gridCount
+#else
+                                   count
+#endif
+                                   ( 2 + ( bHasMapQ ? 1 : 0 ) + uiNumAnno + ( bHasMultiMap ? 2 : 0 ),
+                                     bHasMultiMap ? 2 : 0,
+                                     iDataSetId,
+#if USE_GRID_QUERIES
+                                     { vCoords[ uiI ].uiIndexY, vCoords[ uiI ].uiIndexX },
+                                     { vCoords[ uiI ].uiIndexH, vCoords[ uiI ].uiIndexW },
+                                     { vCoords[ uiI ].uiNumCoordsY, vCoords[ uiI ].uiNumCoordsX },
+#else
+                                     { vCoords[ uiI ].uiIndexY, vCoords[ uiI ].uiIndexX },
+                                     { vCoords[ uiI ].uiIndexY + vCoords[ uiI ].uiIndexH,
+                                       vCoords[ uiI ].uiIndexX + vCoords[ uiI ].uiIndexW },
+#endif
+                                     bHasMapQ,
+                                     uiMapQMin,
+                                     uiMapQMax,
+                                     vHasAnno,
+                                     vFromAnnoFilter,
+                                     vToAnnoFilter,
+                                     xIntersect,
+                                     0 );
                 }
                 else
-                    vVals[ uiI ] = 0;
+                    vVals[ uiI ] = { };
 
-                if( vVals[ uiI ] > uiMinuend )
-                    vVals[ uiI ] -= uiMinuend;
-                else
-                    vVals[ uiI ] = 0;
+#if USE_GRID_QUERIES
+                for( auto& uiX : vVals[ uiI ] )
+                    uiX = uiX > uiMinuend ? uiX - uiMinuend : 0;
+#else
+                vVals[ uiI ] = vVals[ uiI ] > uiMinuend ? vVals[ uiI ] - uiMinuend : 0;
+#endif
             }
+#if USE_GRID_QUERIES
+            const size_t uiHQuery = vCoords[ 0 ].uiNumCoordsX;
+            const size_t uiHScreen = vAxisCords[ 1 ].size();
+            for(size_t uiI = 0; uiI < vVals[0].size(); uiI++)
+            {
+                const size_t uiVal = symmetry( vVals[ 0 ][uiI], vVals[1].size() > 0 ? vVals[ 1 ][uiI] : 0 );
 
+                const size_t uiXIdx = uiI % uiHQuery + vCoords[ 0 ].uiCoordStartIdxX;
+                const size_t uiYIdx = uiI / uiHQuery + vCoords[ 0 ].uiCoordStartIdxY;
+                const size_t uiJ = uiXIdx * uiHScreen + uiYIdx;
+
+                vvBinValues.back( )[uiJ] = uiVal;
+            }
+#else
             vvBinValues.back( ).push_back( symmetry( vVals[ 0 ], vVals[ 1 ] ) );
-
-            size_t uiTot = getValue<size_t>( { "replicates", "by_name", sRep, "total_reads" } );
-            vActiveReplicatesTotal.push_back( symmetry( uiTot, uiTot ) );
+#endif
         }
+
+
+        const size_t uiTot = getValue<size_t>( { "replicates", "by_name", sRep, "total_reads" } );
+        vActiveReplicatesTotal.push_back( symmetry( uiTot, uiTot ) );
     }
     END_RETURN;
 }
@@ -552,19 +592,19 @@ void PartialQuarry::regReplicates( )
 
     registerNode(
         NodeNames::BinValues,
-        ComputeNode{ .sNodeName = "bin_values",
-                     .fFunc = &PartialQuarry::setBinValues,
-                     .vIncomingFunctions = { NodeNames::BinCoords, NodeNames::ActiveReplicates, 
-                                             NodeNames::AnnoFilters },
-                     .vIncomingSession = { },
-                     .vSessionsIncomingInPrevious = { { "settings", "normalization", "min_interactions", "val" },
-                                                      { "replicates", "by_name" },
-                                                      { "annotation", "by_name" },
-                                                      { "settings", "filters", "mapping_q", "val_min" },
-                                                      { "settings", "filters", "mapping_q", "val_max" },
-                                                      { "settings", "filters", "incomplete_alignments" },
-                                                      { "contigs", "column_coordinates" },
-                                                      { "contigs", "row_coordinates" } } } );
+        ComputeNode{
+            .sNodeName = "bin_values",
+            .fFunc = &PartialQuarry::setBinValues,
+            .vIncomingFunctions = { NodeNames::BinCoords, NodeNames::ActiveReplicates, NodeNames::AnnoFilters },
+            .vIncomingSession = { },
+            .vSessionsIncomingInPrevious = { { "settings", "normalization", "min_interactions", "val" },
+                                             { "replicates", "by_name" },
+                                             { "annotation", "by_name" },
+                                             { "settings", "filters", "mapping_q", "val_min" },
+                                             { "settings", "filters", "mapping_q", "val_max" },
+                                             { "settings", "filters", "incomplete_alignments" },
+                                             { "contigs", "column_coordinates" },
+                                             { "contigs", "row_coordinates" } } } );
 
     registerNode(
         NodeNames::DecayValues,

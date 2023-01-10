@@ -3,8 +3,21 @@
     - Tools (Pan, Zoom, Undo, ...) (one line, top)
     - Coordinate Prompt (one line, top)
 
+- File
+    - Presetting
+        - ...
+    - Export
+        - filepath
+        - selection
+        - format
+        - export now button
+    - Info
+        - Version
+        - Log
+        - Error
+
 - Normalize
-    - Approach
+    NO SUBGORUP:
         - Normalize Heatmap
         - Normalize Coverage
     - RADICL-seq
@@ -28,7 +41,29 @@
         - sparse slice filter
         - Disable bin size
 
-- Interface
+- Filter
+    - Replicates
+        - In group combination
+        - Between group combination
+        - 1d replicates picker
+        - 2d replicates picker
+        - symmetry
+        - interactions subtrahend
+        - annotation filter
+    - Mapping
+        - mapping quality bounds
+        - reads with incomplete alignments
+        - ambiguous mapping (when to count multimapping reads)
+    - Coordinates
+        - minimum distance from diagonal
+        - column coordinates
+        - row coordinates
+        - multiple bins in anno
+        - multiple annos in bin
+        - binsize not evenly dividable
+        - active contigs
+
+- View
     - Colors
         - Color Range
         - Color Log Base
@@ -53,38 +88,3 @@
         - Update frequency
         - redraw if zoomed
         - additional draw area
-
-- Filter
-    - Replicates
-        - In group combination
-        - Between group combination
-        - 1d replicates picker
-        - 2d replicates picker
-        - symmetry
-        - interactions subtrahend
-        - minimum distance from diagonal
-        - annotation filter
-    - Mapping
-        - mapping quality bounds
-        - reads with incomplete alignments
-        - ambiguous mapping (when to count multimapping reads)
-    - Coordinates
-        - column coordinates
-        - row coordinates
-        - multiple bins in anno
-        - multiple annos in bin
-        - binsize not evenly dividable
-        - active contigs
-
-- File
-    - Presetting
-        - ...
-    - Export
-        - filepath
-        - selection
-        - format
-        - export now button
-    - Info
-        - Version
-        - Log
-        - Error

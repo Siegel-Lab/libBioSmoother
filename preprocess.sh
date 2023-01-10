@@ -27,7 +27,7 @@ then
     python3 python/main.py indexer init "${INDEX_PREFIX}" "../smoother_in/Lister427_no_uni.sizes" -d 1000
 
 
-    python3 python/main.py indexer anno "${INDEX_PREFIX}" "../smoother_in/HGAP3_Tb427v10_merged_2021_06_21.gff3"
+    #python3 python/main.py indexer anno "${INDEX_PREFIX}" "../smoother_in/HGAP3_Tb427v10_merged_2021_06_21.gff3"
 
     #gdb python3 -ex "run python/main.py indexer repl \"${INDEX_PREFIX}\" \"${BEDS}/NS503_P10_Total_2.${BED_SUF}\" \"P10_Total_Rep2\" -g a"
     python3  python/main.py indexer repl "${INDEX_PREFIX}" "${BEDS}/NS503_P10_Total_2.${BED_SUF}" "P10_Total_Rep2" -g a
@@ -51,7 +51,7 @@ then
     #samtools view ${BAMS}/WT1_RNAseq_NS320.${BAM_SUF} | awk -F '\t' 'BEGIN {OFS="\t";ORS=""} {if ($1 ~ !/^@/ && $3 ~ !/*/) {print $1,$3,$4,$5; for(i=12;i<=NF;i+=1) if ($i ~ /^XA:Z:/) print "",$i; print "\n"}}' | awk -F '\t' 'BEGIN {OFS="\t";ORS=""} {print $1,$2,$3,$4; if(NF<5) print "\tnotag"; else print "",$5; print "\n"}' > ../smoother_in/WT1_RNAseq_NS320.tsv
 
     #python3 python/main.py indexer track "${INDEX_PREFIX}" ../smoother_in/WT1_gDNA_inputATAC.tsv "gDNA_inputATAC" -g col
-    python3 python/main.py indexer track "${INDEX_PREFIX}" ../smoother_in/WT1_RNAseq_NS320.tsv "RNAseq_NS320" -g row
+    #python3 python/main.py indexer track "${INDEX_PREFIX}" ../smoother_in/WT1_RNAseq_NS320.tsv "RNAseq_NS320" -g row
 
 
     # CLAUDIA #

@@ -205,6 +205,7 @@ PYBIND11_MODULE( libContactMapping, m )
         .def( "get_decay", &cm::PartialQuarry::getDecayCDS ) //
         .def( "interpret_name", &cm::PartialQuarry::interpretName ) //
         .def( "get_palette_ticks", &cm::PartialQuarry::getPaletteTicks ) //
+        .def( "get_longest_common_suffix", &cm::PartialQuarry::getLongestCommonSuffix ) //
 
         .def( "print_num_reads_and_overlays", &cm::PartialQuarry::printNumReadsNumOverlays ) //
         .def( "print_sizes", &cm::PartialQuarry::printSizes ) //

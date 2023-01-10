@@ -267,14 +267,15 @@ template <template <typename> typename vec_gen_t> class AnnotationDescIndex
         for( size_t uiDatasetId : vCats )
         {
             bool bFound = false;
-            iterate( uiDatasetId, (size_t)std::round( uiFrom / (double)uiDividend ),
-                        (size_t)std::round( uiTo / (double)uiDividend ),
-                        [ & ]( std::tuple<size_t, size_t, std::string, bool> xTup ) {
-                            if( std::get<0>( xTup ) <= uiTo && std::get<1>( xTup ) > uiFrom )
-                                bFound = true;
-                            return !bFound;
-                        },
-                        bIntervalCoords, bIntervalCount );
+            iterate(
+                uiDatasetId, (size_t)std::round( uiFrom / (double)uiDividend ),
+                (size_t)std::round( uiTo / (double)uiDividend ),
+                [ & ]( std::tuple<size_t, size_t, std::string, bool> xTup ) {
+                    if( std::get<0>( xTup ) <= uiTo && std::get<1>( xTup ) > uiFrom )
+                        bFound = true;
+                    return !bFound;
+                },
+                bIntervalCoords, bIntervalCount );
             vRet.push_back( bFound );
         }
         return vRet;

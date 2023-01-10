@@ -139,7 +139,7 @@ class Indexer:
 
         self.save_session()
 
-    def add_annotation(self, file_name, annotation_order=None, filter_annotations=["gene"]):
+    def add_annotation(self, file_name, annotation_order=None, filter_annotations=[]): # =["gene"]):
         sorted_list = {}
         for name, chrom, start, end, info, on_forw_strnd in parse_annotations(file_name):
             if not chrom in self.session_default["contigs"]["list"]:
@@ -204,7 +204,6 @@ class Indexer:
         only_points=False,
         no_map_q=False,
         no_multi_map=False,
-        no_cat=False,
         shekelyan=False
     ):
         if not self.name_unique(name):
@@ -225,10 +224,6 @@ class Indexer:
             has_map_q = False
         if no_multi_map:
             multi_map = False
-        if no_cat:
-            has_cat = False
-        else:
-            has_cat = len(self.session_default["annotation"]["filterable"]) > 0
 
         self.progress_print(
             "generating replicate",
@@ -401,7 +396,6 @@ class Indexer:
         only_points=False,
         no_map_q=False,
         no_multi_map=False,
-        no_cat=False,
     ):
         if not self.name_unique(name):
             raise RuntimeError(
@@ -422,10 +416,6 @@ class Indexer:
             has_map_q = False
         if no_multi_map:
             multi_map = False
-        if no_cat:
-            has_cat = False
-        else:
-            has_cat = len(self.session_default["annotation"]["filterable"]) > 0
 
         self.progress_print(
             "generating track",
