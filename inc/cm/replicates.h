@@ -97,9 +97,6 @@ bool PartialQuarry::setBinValues( )
         vvBinValues.emplace_back( );
         vvBinValues.back( ).reserve( vBinCoords.size( ) );
 
-        bool bHasMapQ = getValue<bool>( { "replicates", "by_name", sRep, "has_map_q" } );
-        bool bHasMultiMap = getValue<bool>( { "replicates", "by_name", sRep, "has_multimapping" } );
-
         size_t uiMapQMin = getValue<size_t>( { "settings", "filters", "mapping_q", "val_min" } );
         size_t uiMapQMax = getValue<size_t>( { "settings", "filters", "mapping_q", "val_max" } );
 
@@ -111,7 +108,6 @@ bool PartialQuarry::setBinValues( )
 
         uiMapQMin = 255 - uiMapQMin;
         uiMapQMax = 255 - uiMapQMax;
-        std::array<bool, MAX_ANNO_FILTERS> vHasAnno;
 
 
 #if USE_GRID_QUERIES
@@ -137,46 +133,25 @@ bool PartialQuarry::setBinValues( )
                     size_t iDataSetId =
                         getValue<size_t>( { "replicates", "by_name", sRep, "ids", sChromNameX, sChromNameY } );
 
-                    size_t uiNumAnno = 0;
-                    for( size_t uiJ = 0; uiJ < vFilterableAnnotations.size( ); uiJ++ )
-                    {
-                        if( vContigsHaveAnno[ uiI ][ uiJ ][ vCoords[ uiI ].uiChromosomeX ] &&
-                            vContigsHaveAnno[ uiI ][ uiJ ][ vCoords[ uiI ].uiChromosomeY ] && 
-                            false)
-                        {
-                            uiNumAnno++;
-                            vHasAnno[ uiJ ] = true;
-                        }
-                        else
-                            vHasAnno[ uiJ ] = false;
-                    }
-
-                    vVals[ uiI ] = xIndices.
+                    vVals[ uiI ] =
+                        xIndices.
 #if USE_GRID_QUERIES
-                                   gridCount
+                        gridCount
 #else
-                                   count
+                        count
 #endif
-                                   ( 2 + ( bHasMapQ ? 1 : 0 ) + uiNumAnno + ( bHasMultiMap ? 2 : 0 ),
-                                     bHasMultiMap ? 2 : 0,
-                                     iDataSetId,
+                        ( iDataSetId,
 #if USE_GRID_QUERIES
-                                     { vCoords[ uiI ].uiIndexY, vCoords[ uiI ].uiIndexX },
-                                     { vCoords[ uiI ].uiIndexH, vCoords[ uiI ].uiIndexW },
-                                     { vCoords[ uiI ].uiNumCoordsY, vCoords[ uiI ].uiNumCoordsX },
+                          { vCoords[ uiI ].uiIndexY, vCoords[ uiI ].uiIndexX, uiMapQMax, uiFromAnnoFilter },
+                          { vCoords[ uiI ].uiIndexH, vCoords[ uiI ].uiIndexW },
+                          { vCoords[ uiI ].uiNumCoordsY, vCoords[ uiI ].uiNumCoordsX, uiMapQMin, uiToAnnoFilter },
 #else
-                                     { vCoords[ uiI ].uiIndexY, vCoords[ uiI ].uiIndexX },
-                                     { vCoords[ uiI ].uiIndexY + vCoords[ uiI ].uiIndexH,
-                                       vCoords[ uiI ].uiIndexX + vCoords[ uiI ].uiIndexW },
+                          { vCoords[ uiI ].uiIndexY, vCoords[ uiI ].uiIndexX, uiMapQMax, uiFromAnnoFilter },
+                          { vCoords[ uiI ].uiIndexY + vCoords[ uiI ].uiIndexH,
+                            vCoords[ uiI ].uiIndexX + vCoords[ uiI ].uiIndexW, uiMapQMin, uiToAnnoFilter },
 #endif
-                                     bHasMapQ,
-                                     uiMapQMin,
-                                     uiMapQMax,
-                                     vHasAnno,
-                                     vFromAnnoFilter,
-                                     vToAnnoFilter,
-                                     xIntersect,
-                                     0 );
+                          xIntersect,
+                          0 );
                 }
                 else
                     vVals[ uiI ] = { };
@@ -190,16 +165,16 @@ bool PartialQuarry::setBinValues( )
             }
 #if USE_GRID_QUERIES
             const size_t uiHQuery = vCoords[ 0 ].uiNumCoordsX;
-            const size_t uiHScreen = vAxisCords[ 1 ].size();
-            for(size_t uiI = 0; uiI < vVals[0].size(); uiI++)
+            const size_t uiHScreen = vAxisCords[ 1 ].size( );
+            for( size_t uiI = 0; uiI < vVals[ 0 ].size( ); uiI++ )
             {
-                const size_t uiVal = symmetry( vVals[ 0 ][uiI], vVals[1].size() > 0 ? vVals[ 1 ][uiI] : 0 );
+                const size_t uiVal = symmetry( vVals[ 0 ][ uiI ], vVals[ 1 ].size( ) > 0 ? vVals[ 1 ][ uiI ] : 0 );
 
                 const size_t uiXIdx = uiI % uiHQuery + vCoords[ 0 ].uiCoordStartIdxX;
                 const size_t uiYIdx = uiI / uiHQuery + vCoords[ 0 ].uiCoordStartIdxY;
                 const size_t uiJ = uiXIdx * uiHScreen + uiYIdx;
 
-                vvBinValues.back( )[uiJ] = uiVal;
+                vvBinValues.back( )[ uiJ ] = uiVal;
             }
 #else
             vvBinValues.back( ).push_back( symmetry( vVals[ 0 ], vVals[ 1 ] ) );
@@ -228,10 +203,8 @@ bool PartialQuarry::setDecayValues( )
         vvDecayValues.emplace_back( );
         vvDecayValues.back( ).reserve( vDistDepDecCoords.size( ) );
 
-        bool bHasMapQ = getValue<bool>( { "replicates", "by_name", sRep, "has_map_q" } );
-        bool bHasMultiMap = getValue<bool>( { "replicates", "by_name", sRep, "has_multimapping" } );
-
-        size_t uiMapQMin = getValue<size_t>( { "settings", "filters", "mapping_q", "val_min" } );
+        size_t uiMapQMin =
+            getValue<size_t>( { "settings", "filters", "mapping_q", "val_min" } ); // @todo move to individual function
         size_t uiMapQMax = getValue<size_t>( { "settings", "filters", "mapping_q", "val_max" } );
 
         bool bIncomplAlignment = getValue<bool>( { "settings", "filters", "incomplete_alignments" } );
@@ -293,24 +266,11 @@ bool PartialQuarry::setDecayValues( )
                                 assert( uiYe <= (size_t)iChrY );
                                 assert( uiXe <= (size_t)iChrX );
 
-                                if( bHasMapQ && bHasMultiMap )
-                                    vvVals.push_back( xIndices.getIndex<3, 2>( )->count( iDataSetId,
-                                                                                         { uiXs, uiYs, uiMapQMax },
-                                                                                         { uiXe, uiYe, uiMapQMin },
-                                                                                         xIntersect,
-                                                                                         0 ) );
-                                else if( !bHasMapQ && bHasMultiMap )
-                                    vvVals.push_back( xIndices.getIndex<2, 2>( )->count(
-                                        iDataSetId, { uiXs, uiYs }, { uiXe, uiYe }, xIntersect, 0 ) );
-                                else if( bHasMapQ && !bHasMultiMap )
-                                    vvVals.push_back( xIndices.getIndex<3, 0>( )->count( iDataSetId,
-                                                                                         { uiXs, uiYs, uiMapQMax },
-                                                                                         { uiXe, uiYe, uiMapQMin },
-                                                                                         xIntersect,
-                                                                                         0 ) );
-                                else // if(!bHasMapQ && !bHasMultiMap)
-                                    vvVals.push_back( xIndices.getIndex<2, 0>( )->count(
-                                        iDataSetId, { uiXs, uiYs }, { uiXe, uiYe }, xIntersect, 0 ) );
+                                vvVals.push_back( xIndices.count( iDataSetId,
+                                                                  { uiXs, uiYs, uiMapQMax, uiFromAnnoFilter },
+                                                                  { uiXe, uiYe, uiMapQMin, uiToAnnoFilter },
+                                                                  xIntersect,
+                                                                  0 ) );
 
                                 if( vvVals.back( ) > uiMinuend )
                                     vvVals.back( ) -= uiMinuend;

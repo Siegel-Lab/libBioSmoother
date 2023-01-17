@@ -126,16 +126,16 @@ std::map<std::string, std::vector<size_t>> test_cpp_dict( size_t uiA, size_t uiB
 
 template <bool CACHE> void exportSpsInterface( pybind11::module& m )
 {
-
     pybind11::class_<cm::SpsInterface<CACHE>>( m, CACHE ? "CachedSpsInterface" : "DiskSpsInterface" ) //
         .def( pybind11::init<std::string, bool>( ) ) //
         .def( "loaded", &cm::SpsInterface<CACHE>::loaded )
         .def( "clear_points_and_desc", &cm::SpsInterface<CACHE>::clearPointsAndDesc )
-        .def( "insert", &cm::SpsInterface<CACHE>::insert, //
-              pybind11::arg( "d" ), pybind11::arg( "o" ), pybind11::arg( "start" ), pybind11::arg( "end" ) )
+        .def( "insert",
+              static_cast<void ( cm::SpsInterface<CACHE>::* )( std::vector<uint64_t>, std::vector<uint64_t>, int )>(
+                  &cm::SpsInterface<CACHE>::insert ), //
+              pybind11::arg( "start" ), pybind11::arg( "end" ), pybind11::arg( "val" ) )
         .def( "generate", &cm::SpsInterface<CACHE>::generate, //
-              pybind11::arg( "d" ), pybind11::arg( "o" ), pybind11::arg( "fac" ) = -1,
-              pybind11::arg( "verbosity" ) = 1 )
+              pybind11::arg( "fac" ) = -1.0, pybind11::arg( "verbosity" ) = 1 )
         .def_readwrite( "anno", &cm::SpsInterface<CACHE>::vAnno );
 }
 
@@ -196,7 +196,7 @@ PYBIND11_MODULE( libContactMapping, m )
         .def( "get_tick_list_2", &cm::PartialQuarry::getTickList2 ) //
         .def( "get_canvas_size", &cm::PartialQuarry::getCanvasSize ) //
         .def( "get_tracks", &cm::PartialQuarry::getTracks ) //
-        .def( "get_ranked_slices", &cm::PartialQuarry::getRankedSlices ) //
+        //.def( "get_ranked_slices", &cm::PartialQuarry::getRankedSlices ) //
         .def( "get_min_max_tracks", &cm::PartialQuarry::getMinMaxTracks ) //
         .def( "get_bin_size", &cm::PartialQuarry::getBinSize ) //
         .def( "get_annotation_list", &cm::PartialQuarry::getAnnotationList ) //

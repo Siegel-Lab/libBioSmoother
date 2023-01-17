@@ -570,8 +570,7 @@ class PartialQuarry
     std::vector<std::array<BinCoord, 2>> vBinCoords;
     std::vector<std::array<BinCoordRegion, 2>> vBinRegions;
 
-    std::array<std::vector<std::pair<std::string, bool>>, 2> vActiveCoverage;
-    std::array<std::vector<size_t>, 2> vActiveCoverageTotal;
+    std::array<std::vector<std::string>, 2> vActiveCoverage;
 
     size_t uiSymmetry;
     size_t iInGroupSetting, iBetweenGroupSetting;
@@ -589,20 +588,11 @@ class PartialQuarry
 
     std::string sBackgroundColor;
 
-    std::vector<std::string> vFilterableAnnotations;
-    std::array<std::array<std::vector<bool>, MAX_ANNO_FILTERS>, 2> vContigsHaveAnno;
-    std::array<size_t, MAX_ANNO_FILTERS> vFromAnnoFilter;
-    std::array<size_t, MAX_ANNO_FILTERS> vToAnnoFilter;
+    size_t uiFromAnnoFilter;
+    size_t uiToAnnoFilter;
 
     std::array<std::vector<std::vector<size_t>>, 2> vvCoverageValues;
-    std::array<std::array<std::vector<size_t>, 3>, 2> vInGroupCoverage;
-    std::array<std::array<std::vector<size_t>, 2>, 2> vNormCoverage;
-    // outer array: column / row
-    std::array<std::vector<std::array<size_t, 2>>, 2> vvFlatCoverageValues;
-    std::array<std::array<size_t, 2>, 2> vFlatCoverageTotal;
-    std::array<std::vector<std::array<double, 2>>, 2> vvNormalizedCoverageValues;
-    std::array<std::vector<double>, 2> vvCombinedCoverageValues;
-    std::array<std::vector<std::array<size_t, 2>>, 2> vFlatNormValues;
+    std::array<std::vector<size_t>, 2> vNormCoverage;
 
     std::vector<std::string> vColorPalette;
     pybind11::list vRenderedPalette;
@@ -695,29 +685,15 @@ class PartialQuarry
     // coverage.h
     bool setCoverageValues( );
     // coverage.h
-    bool setNormalizeCoverageValues( );
-    // coverage.h
-    bool setCombinedCoverageValues( );
-    // coverage.h
     bool setTracks( );
     // coverage.h
     bool setTrackExport( );
     // coverage.h
-    size_t getCoverageFromRepl( bool,
-                                bool,
-                                bool,
-                                size_t,
-                                size_t,
-                                const AxisCoord&,
-                                const json&,
-                                bool,
-                                size_t,
-                                const std::vector<ChromDesc>&,
-                                bool,
-                                bool );
+    size_t getCoverageFromRepl(
+        size_t, size_t, const AxisCoord&, const json&, size_t, const std::vector<ChromDesc>&, bool, bool );
     // coverage.h
-    std::tuple<size_t, int64_t, size_t, size_t> makeHeapTuple( bool, bool, size_t, size_t, bool, bool, const AxisCoord&,
-                                                               int64_t, size_t, size_t );
+    std::tuple<size_t, int64_t, size_t, size_t> makeHeapTuple( size_t, size_t, bool, bool, const AxisCoord&, int64_t,
+                                                               size_t, size_t );
 
     // coverage.h
     bool setFlatCoverageValues( );
@@ -952,9 +928,6 @@ class PartialQuarry
     // coverage.h
     const pybind11::dict getTracks( bool );
 
-    // coverage.h
-    const pybind11::dict getRankedSlices( bool );
-
     // replicates.h
     const pybind11::dict getDecayCDS( );
 
@@ -967,7 +940,7 @@ class PartialQuarry
     // coverage.h
     const std::array<double, 2> getMinMaxTracks( bool bAxis );
 
-    size_t getLongestCommonSuffix()
+    size_t getLongestCommonSuffix( )
     {
         update( NodeNames::LCS );
         return uiLogestCommonSuffix;
@@ -1113,49 +1086,18 @@ class PartialQuarry
                     std::string sContigB = rJson.get<std::string>( );
                     size_t uiSizeB = this->xSession[ "contigs" ][ "lengths" ][ sContigB ].get<size_t>( );
                     std::cout << sRep << "\t" << sContigA << "\t" << sContigB << "\t";
+                    size_t uiNumAnno = this->xSession[ "annotation" ][ "list" ].size( );
 
                     size_t iDataSetId =
                         this->xSession[ "replicates" ][ "by_name" ][ sRep ][ "ids" ][ sContigA ][ sContigB ]
                             .get<size_t>( );
-                    bool bHasMapQ = getValue<bool>( { "replicates", "by_name", sRep, "has_map_q" } );
-                    bool bHasMultiMap = getValue<bool>( { "replicates", "by_name", sRep, "has_multimapping" } );
 
-                    if( bHasMapQ && bHasMultiMap )
-                    {
-                        std::cout << xIndices.getIndex<3, 2>( )->count( iDataSetId,
-                                                                        { 0, 0, 0 },
-                                                                        { uiSizeA, uiSizeB, 256 },
-                                                                        sps::IntersectionType::overlaps,
-                                                                        0 )
-                                  << "\t" << xIndices.getIndex<3, 2>( )->getNumOverlays( iDataSetId );
-                    }
-                    else if( !bHasMapQ && bHasMultiMap )
-                    {
-                        std::cout << xIndices.getIndex<2, 2>( )->count( iDataSetId,
-                                                                        { 0, 0 },
-                                                                        { uiSizeA, uiSizeB },
-                                                                        sps::IntersectionType::overlaps,
-                                                                        0 )
-                                  << "\t" << xIndices.getIndex<2, 2>( )->getNumOverlays( iDataSetId );
-                    }
-                    else if( bHasMapQ && !bHasMultiMap )
-                    {
-                        std::cout << xIndices.getIndex<3, 0>( )->count( iDataSetId,
-                                                                        { 0, 0, 0 },
-                                                                        { uiSizeA, uiSizeB, 256 },
-                                                                        sps::IntersectionType::overlaps,
-                                                                        0 )
-                                  << "\t" << xIndices.getIndex<3, 0>( )->getNumOverlays( iDataSetId );
-                    }
-                    else // if(!bHasMapQ && !bHasMultiMap)
-                    {
-                        std::cout << xIndices.getIndex<2, 0>( )->count( iDataSetId,
-                                                                        { 0, 0 },
-                                                                        { uiSizeA, uiSizeB },
-                                                                        sps::IntersectionType::overlaps,
-                                                                        0 )
-                                  << "\t" << xIndices.getIndex<2, 0>( )->getNumOverlays( iDataSetId );
-                    }
+                    std::cout << xIndices.count( iDataSetId,
+                                                 { 0, 0, 0, 0 },
+                                                 { uiSizeA, uiSizeB, 256, uiNumAnno * 3 + 2 },
+                                                 sps::IntersectionType::overlaps,
+                                                 0 )
+                              << "\t" << xIndices.getNumOverlays( iDataSetId );
 
                     std::cout << std::endl;
                 }

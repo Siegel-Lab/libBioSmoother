@@ -688,60 +688,30 @@ bool PartialQuarry::setGridSeqCoords( )
     END_RETURN;
 }
 
-bool PartialQuarry::setFilteredCoords( )
-{
-    for( size_t uiI = 0; uiI < 2; uiI++ )
-    {
-        double fFilterMin = getValue<double>(
-            { "settings", "filters", uiI == 0 ? "coverage_bin_filter_column" : "coverage_bin_filter_row", "val_min" } );
-        double fFilterMax = getValue<double>(
-            { "settings", "filters", uiI == 0 ? "coverage_bin_filter_column" : "coverage_bin_filter_row", "val_max" } );
-        for( size_t uiX = 0; uiX < vvCombinedCoverageValues[ uiI ].size( ); uiX++ )
-        {
-            vAxisCords[ uiI ][ uiX ].bFiltered = vvCombinedCoverageValues[ uiI ][ uiX ] < fFilterMin ||
-                                                 vvCombinedCoverageValues[ uiI ][ uiX ] >= fFilterMax;
-            CANCEL_RETURN;
-        }
-    }
-    END_RETURN;
-}
 
 bool PartialQuarry::setAnnoFilters( )
 {
-    const std::array<std::array<size_t, 2>, 2> vvAF{ /*x false*/ std::array<size_t, 2>{ /*y false*/ 0, /*y true*/ 0 },
-                                                     /*x true */ std::array<size_t, 2>{ /*y false*/ 1, /*y true*/ 1 } };
-    const std::array<std::array<size_t, 2>, 2> vvAT{ /*x false*/ std::array<size_t, 2>{ /*y false*/ 4, /*y true*/ 2 },
-                                                     /*x true */ std::array<size_t, 2>{ /*y false*/ 3, /*y true*/ 2 } };
-
-    vFilterableAnnotations.clear( );
-    for( std::string sA : getValue<json>( { "annotation", "filterable" } ) )
-        vFilterableAnnotations.push_back( sA );
-
-    for( size_t uiI = 0; uiI < vFilterableAnnotations.size( ); uiI++ )
+    const json& rList = getValue<json>( { "annotation", "list" } );
+    if( getValue<json>( { "annotation", "filter" } ).is_null( ) )
     {
-        CANCEL_RETURN;
-        const bool bXFiltered =
-            getValue<json>( { "annotation", "row_filter" } ).contains( vFilterableAnnotations[ uiI ] ) ||
-            getValue<std::string>( { "contigs", "row_coordinates" } ) == vFilterableAnnotations[ uiI ];
-        const bool bYFiltered =
-            getValue<json>( { "annotation", "column_filter" } ).contains( vFilterableAnnotations[ uiI ] ) ||
-            getValue<std::string>( { "contigs", "column_coordinates" } ) == vFilterableAnnotations[ uiI ];
-
-        vFromAnnoFilter[ uiI ] = { vvAF[ bXFiltered ][ bYFiltered ] };
-        vToAnnoFilter[ uiI ] = { vvAT[ bXFiltered ][ bYFiltered ] };
+        uiFromAnnoFilter = 0;
+        uiToAnnoFilter = rList.size( ) * 3 + 2;
+    }
+    else
+    {
+        const std::array<std::array<size_t, 2>, 2> vvAF{
+            /*x false*/ std::array<size_t, 2>{ /*y false*/ 0, /*y true*/ 0 },
+            /*x true */ std::array<size_t, 2>{ /*y false*/ 1, /*y true*/ 1 } };
+        const std::array<std::array<size_t, 2>, 2> vvAT{
+            /*x false*/ std::array<size_t, 2>{ /*y false*/ 4, /*y true*/ 2 },
+            /*x true */ std::array<size_t, 2>{ /*y false*/ 3, /*y true*/ 2 } };
+        const size_t uiI = rList.find( getValue<std::string>( { "annotation", "filter" } ) ) - rList.begin( );
+        const bool bFilterRow = getValue<bool>( { "annotation", "filter_row" } );
+        const bool bFilterCol = getValue<bool>( { "annotation", "filter_col" } );
+        uiFromAnnoFilter = uiI * 3 + vvAF[ bFilterRow ][ bFilterCol ];
+        uiToAnnoFilter = uiI * 3 + vvAT[ bFilterRow ][ bFilterCol ];
     }
 
-    for( size_t uiX = 0; uiX < 2; uiX++ )
-        for( size_t uiI = 0; uiI < vFilterableAnnotations.size( ); uiI++ )
-        {
-            CANCEL_RETURN;
-            vContigsHaveAnno[ uiX ][ uiI ].clear( );
-            vContigsHaveAnno[ uiX ][ uiI ].reserve( vActiveChromosomes[ uiX ].size( ) );
-            for( size_t uiJ = 0; uiJ < vActiveChromosomes[ uiX ].size( ); uiJ++ )
-                vContigsHaveAnno[ uiX ][ uiI ].push_back(
-                    getValue<json>( { "annotation", "by_name", vFilterableAnnotations[ uiI ] } )
-                        .contains( vActiveChromosomes[ uiX ][ uiJ ].sName ) );
-        }
     END_RETURN;
 }
 
@@ -1005,18 +975,16 @@ bool PartialQuarry::setBinCoords( )
     vBinCoords.clear( );
     vBinCoords.reserve( vAxisCords[ 0 ].size( ) * vAxisCords[ 1 ].size( ) );
     for( const AxisCoord& xX : vAxisCords[ 0 ] )
-        if( !xX.bFiltered )
-            for( const AxisCoord& xY : vAxisCords[ 1 ] )
-                if( !xY.bFiltered )
-                {
-                    CANCEL_RETURN;
-                    // @todo move filters to after the queries
-                    if( xX.uiChromosome != xY.uiChromosome ||
-                        (size_t)std::abs( (int64_t)xX.uiIndexPos - (int64_t)xY.uiIndexPos ) >= uiManhattenDist )
-                        vBinCoords.push_back( binObjFromCoords<BinCoord, AxisCoord>( xX, xY ) );
-                    else
-                        vBinCoords.push_back( { BinCoord{ }, BinCoord{} } );
-                }
+        for( const AxisCoord& xY : vAxisCords[ 1 ] )
+        {
+            CANCEL_RETURN;
+            // @todo move filters to after the queries
+            if( xX.uiChromosome != xY.uiChromosome ||
+                (size_t)std::abs( (int64_t)xX.uiIndexPos - (int64_t)xY.uiIndexPos ) >= uiManhattenDist )
+                vBinCoords.push_back( binObjFromCoords<BinCoord, AxisCoord>( xX, xY ) );
+            else
+                vBinCoords.push_back( { BinCoord{ }, BinCoord{} } );
+        }
 
     vBinRegions.clear( );
     vBinRegions.reserve( vAxisRegions[ 0 ].size( ) * vAxisRegions[ 1 ].size( ) );
@@ -1148,15 +1116,6 @@ void PartialQuarry::regCoords( )
                                                      { "contigs", "row_coordinates" },
                                                      { "annotation", "by_name" } },
                                .vSessionsIncomingInPrevious = {} } );
-    registerNode( NodeNames::FilteredCoords,
-                  ComputeNode{ .sNodeName = "filtered_coords",
-                               .fFunc = &PartialQuarry::setFilteredCoords,
-                               .vIncomingFunctions = { NodeNames::AnnotationValues, NodeNames::CombinedCoverageValues },
-                               .vIncomingSession = { { "settings", "filters", "coverage_bin_filter_column", "val_min" },
-                                                     { "settings", "filters", "coverage_bin_filter_column", "val_max" },
-                                                     { "settings", "filters", "coverage_bin_filter_row", "val_min" },
-                                                     { "settings", "filters", "coverage_bin_filter_row", "val_max" } },
-                               .vSessionsIncomingInPrevious = {} } );
 
     registerNode( NodeNames::Symmetry, ComputeNode{ .sNodeName = "symmetry_setting",
                                                     .fFunc = &PartialQuarry::setSymmetry,
@@ -1167,7 +1126,8 @@ void PartialQuarry::regCoords( )
     registerNode( NodeNames::BinCoords,
                   ComputeNode{ .sNodeName = "bin_coords",
                                .fFunc = &PartialQuarry::setBinCoords,
-                               .vIncomingFunctions = { NodeNames::FilteredCoords },
+                               .vIncomingFunctions = { NodeNames::AxisCoords, NodeNames::AnnoFilters,
+                                                       NodeNames::IntersectionType, NodeNames::Symmetry },
                                .vIncomingSession = { { "settings", "filters", "min_diag_dist", "val" } },
                                .vSessionsIncomingInPrevious = { { "dividend" } } } );
 
@@ -1176,9 +1136,10 @@ void PartialQuarry::regCoords( )
                                .fFunc = &PartialQuarry::setAnnoFilters,
                                .vIncomingFunctions = { NodeNames::ActiveChrom },
                                .vIncomingSession = { { "annotation", "filterable" },
-                                                     { "annotation", "row_filter" },
+                                                     { "annotation", "filter" },
+                                                     { "annotation", "filter_row" },
+                                                     { "annotation", "filter_col" },
                                                      { "annotation", "by_name" },
-                                                     { "annotation", "column_filter" },
                                                      { "contigs", "row_coordinates" },
                                                      { "contigs", "column_coordinates" } },
                                .vSessionsIncomingInPrevious = {} } );

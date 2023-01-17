@@ -31,10 +31,12 @@ bool PartialQuarry::doNotNormalize( )
 
 bool PartialQuarry::normalizeBinominalTest( )
 {
+#if 0 // @todo reactivate once code for counting total coverage of column has ben written
     size_t uiNumBinsInRowTotal = ( getValue<size_t>( { "contigs", "genome_size" } ) - 1 ) / uiBinWidth + 1;
     vvNormalized =
         normalizeBinominalTestTrampoline( vvFlatValues, vFlatNormValues[ 1 ], uiNumBinsInRowTotal,
                                           getValue<double>( { "settings", "normalization", "p_accept", "val" } ) );
+#endif
     CANCEL_RETURN;
     END_RETURN;
 }
@@ -319,10 +321,14 @@ bool PartialQuarry::setDivided( )
     vDivided.clear( );
     vDivided.reserve( vCombined.size( ) );
 
-    const bool bByCol = getValue<bool>( { "settings", "normalization", "divide_by_column_coverage" } ) &&
-                        vvCombinedCoverageValues[ 0 ].size( ) != 0;
-    const bool bByRow = getValue<bool>( { "settings", "normalization", "divide_by_row_coverage" } ) &&
-                        vvCombinedCoverageValues[ 1 ].size( ) != 0;
+    const json& rJson = getValue<json>( { "coverage", "list" } );
+    const std::string sByCol = getValue<std::string>( { "settings", "normalization", "divide_by_column_coverage" } );
+    const size_t uiByCol =
+        ( sByCol == "dont" ? std::numeric_limits<size_t>::max( ) : ( rJson.find( sByCol ) - rJson.begin( ) ) );
+    const std::string sByRow = getValue<std::string>( { "settings", "normalization", "divide_by_row_coverage" } );
+    const size_t uiByRow =
+        ( sByRow == "dont" ? std::numeric_limits<size_t>::max( ) : ( rJson.find( sByRow ) - rJson.begin( ) ) );
+
 
     for( size_t uiI = 0; uiI < vCombined.size( ); uiI++ )
     {
@@ -330,19 +336,19 @@ bool PartialQuarry::setDivided( )
 
         double fVal = vCombined[ uiI ];
 
-        if( bByCol )
+        if( uiByCol != std::numeric_limits<size_t>::max( ) )
         {
-            if( vvCombinedCoverageValues[ 0 ][ uiI / vAxisCords[ 0 ].size( ) ] == 0 )
+            if( vvCoverageValues[ 0 ][ uiByCol ][ uiI / vAxisCords[ 0 ].size( ) ] == 0 )
                 fVal = std::numeric_limits<double>::quiet_NaN( );
             else
-                fVal /= vvCombinedCoverageValues[ 0 ][ uiI / vAxisCords[ 0 ].size( ) ];
+                fVal /= vvCoverageValues[ 0 ][ uiByCol ][ uiI / vAxisCords[ 0 ].size( ) ];
         }
-        if( bByRow )
+        if( uiByRow != std::numeric_limits<size_t>::max( ) )
         {
-            if( vvCombinedCoverageValues[ 1 ][ uiI % vAxisCords[ 0 ].size( ) ] == 0 || std::isnan( fVal ) )
+            if( vvCoverageValues[ 1 ][ uiByRow ][ uiI % vAxisCords[ 0 ].size( ) ] == 0 || std::isnan( fVal ) )
                 fVal = std::numeric_limits<double>::quiet_NaN( );
             else
-                fVal /= vvCombinedCoverageValues[ 1 ][ uiI % vAxisCords[ 0 ].size( ) ];
+                fVal /= vvCoverageValues[ 1 ][ uiByRow ][ uiI % vAxisCords[ 0 ].size( ) ];
         }
 
         vDivided.push_back( fVal );

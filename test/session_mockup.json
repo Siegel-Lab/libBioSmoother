@@ -135,11 +135,11 @@
         "list": [
             "gene"
         ],
-        "filterable": ["gene"],
         "visible_x": [],
         "visible_y": [],
-        "row_filter": [],
-        "col_filter": [],
+        "filter": null,
+        "filter_row": false,
+        "filter_col": true,
         "by_name":{
             "gene": {
                 "chr1": 0,

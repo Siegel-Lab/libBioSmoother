@@ -228,7 +228,7 @@ class ChrOrderHeatmapIterator:
     def __len__(self):
         x_cnt = len(list(self.itr_x_axis()))
         y_cnt = len(list(self.itr_y_axis()))
-        return x_cnt + y_cnt + x_cnt * y_cnt
+        return x_cnt * y_cnt
 
 
 def chr_order_heatmap(

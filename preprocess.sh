@@ -67,7 +67,7 @@ else
 
     rm -r ${INDEX_PREFIX}.smoother_index
 
-    python3 python/main.py indexer init ${INDEX_PREFIX} ../smoother/Lister427_no_unitig.sizes -d 1000 #--test
+    python3 python/main.py indexer init ${INDEX_PREFIX} ../smoother/Lister427_no_unitig.sizes -d 10000 #--test
 
     python3 python/main.py indexer anno ${INDEX_PREFIX} ../smoother/HGAP3_Tb427v10_merged_2021_06_21.gff3
 
