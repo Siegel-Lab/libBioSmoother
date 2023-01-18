@@ -61,7 +61,7 @@ then
     #python3 python/main.py indexer repl "${INDEX_PREFIX}" "${CR_BEDS}/pre1_N50_2" "N50_Lib2" -g b
 
 else
-    INDEX_PREFIX="../smoother_out/radicl-2"
+    INDEX_PREFIX="../smoother_out/radicl"
 
     echo "working on index ${INDEX_PREFIX}"
 

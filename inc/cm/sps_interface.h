@@ -41,7 +41,7 @@ template <bool CACHED> class SpsInterface
 
     void insert( std::array<uint64_t, D - O> vStart, std::array<uint64_t, D - O> vEnd, int iValue )
     {
-        pIndex->addPoint( vStart, vEnd, static_cast<size_t>(iValue) );
+        pIndex->addPoint( vStart, vEnd, static_cast<size_t>( iValue ) );
     }
 
     void insert( std::vector<uint64_t> vStart, std::vector<uint64_t> vEnd, int iValue )

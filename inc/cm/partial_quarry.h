@@ -108,7 +108,6 @@ class PartialQuarry
         RenderArea,
         ActiveChrom,
         AxisCoords,
-        FilteredCoords,
         Symmetry,
         BinCoords,
         DecayCoords,
@@ -117,9 +116,6 @@ class PartialQuarry
         ActiveReplicates,
         ActiveCoverage,
         CoverageValues,
-        FlatCoverageValues,
-        NormalizeCoverageValues,
-        CombinedCoverageValues,
         BinValues,
         DecayValues,
         FlatValues,
@@ -146,7 +142,6 @@ class PartialQuarry
         Palette,
         AnnoFilters,
         LCS,
-        RankedSlicesCDS,
         CanvasSize,
         GridSeqCoords,
         SIZE
@@ -364,13 +359,19 @@ class PartialQuarry
         std::set<std::string> xNodeNames;
         for( size_t uiNodeName = 0; uiNodeName < NodeNames::SIZE; uiNodeName++ )
         {
-            if( xNodeNames.count( vGraph[ uiNodeName ].sNodeName ) > 0 )
+            if( vGraphData[ uiNodeName ].bRegistered && xNodeNames.count( vGraph[ uiNodeName ].sNodeName ) > 0 )
                 std::cerr << "two nodes have been registered under the same name: " << vGraph[ uiNodeName ].sNodeName
                           << std::endl;
-            xNodeNames.insert( vGraph[ uiNodeName ].sNodeName );
+            if( vGraphData[ uiNodeName ].bRegistered )
+                xNodeNames.insert( vGraph[ uiNodeName ].sNodeName );
 
             if( !vGraphData[ uiNodeName ].bRegistered )
-                std::cerr << "Node has not been registered. id: " << uiNodeName << std::endl;
+            {
+                std::cerr << "Node has not been registered. id: " << uiNodeName;
+                if (uiNodeName > 0)
+                    std::cerr << " (the previous node is " << vGraph[ uiNodeName - 1 ].sNodeName << ")";
+                std::cerr << std::endl;
+            }
             else
             {
                 std::map<NodeNames, std::string> xDependents;
@@ -424,7 +425,7 @@ class PartialQuarry
         {
             bContinue = false;
             for( auto& rNode : { HeatmapCDS, Tracks, AnnotationCDS, ActivateAnnotationCDS, Ticks, Tracks, Palette,
-                                 DecayCDS, RankedSlicesCDS } )
+                                 DecayCDS } )
                 if( !update_no_throw( rNode ) )
                 {
                     bContinue = true;
@@ -645,8 +646,6 @@ class PartialQuarry
     bool setAnnoFilters( );
     // coords.h
     bool setAxisCoords( );
-    // coords.h
-    bool setFilteredCoords( );
 
     // coords.h
     template <typename out_t, typename in_t> std::array<out_t, 2> binObjFromCoords( const in_t&, const in_t& );
@@ -689,15 +688,11 @@ class PartialQuarry
     // coverage.h
     bool setTrackExport( );
     // coverage.h
-    size_t getCoverageFromRepl(
-        size_t, size_t, const AxisCoord&, const json&, size_t, const std::vector<ChromDesc>&, bool, bool );
+    size_t getCoverageFromRepl( size_t, size_t, const AxisCoord&, const json&, size_t, const std::vector<ChromDesc>&,
+                                bool, bool );
     // coverage.h
     std::tuple<size_t, int64_t, size_t, size_t> makeHeapTuple( size_t, size_t, bool, bool, const AxisCoord&, int64_t,
                                                                size_t, size_t );
-
-    // coverage.h
-    bool setFlatCoverageValues( );
-    bool setRankedSlicesCDS( );
 
     // coverage.h
     void regCoverage( );

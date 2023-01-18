@@ -267,7 +267,7 @@ template <template <typename> typename vec_gen_t> class AnnotationDescIndex
         for( int uiDatasetId : vCats )
         {
             bool bFound = false;
-            if(uiDatasetId > 0)
+            if( uiDatasetId > 0 )
                 iterate(
                     uiDatasetId, (size_t)std::round( uiFrom / (double)uiDividend ),
                     (size_t)std::round( uiTo / (double)uiDividend ),

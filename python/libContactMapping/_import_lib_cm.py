@@ -1,4 +1,8 @@
+import os
 
-from .rel.libContactMapping import *
-#from .dbg.libContactMapping import *
-#from .rel_w_dbg.libContactMapping import *
+if os.environ["smoother_import_mode"] == "debug":
+    from .dbg.libContactMapping import *
+elif os.environ["smoother_import_mode"] == "relwdbg":
+    from .rel_w_dbg.libContactMapping import *
+else:
+    from .rel.libContactMapping import *

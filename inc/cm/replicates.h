@@ -550,36 +550,38 @@ void PartialQuarry::regReplicates( )
                                .vIncomingSession = { { "settings", "filters", "ambiguous_mapping" } },
                                .vSessionsIncomingInPrevious = {} } );
 
-    registerNode(
-        NodeNames::BinValues,
-        ComputeNode{
-            .sNodeName = "bin_values",
-            .fFunc = &PartialQuarry::setBinValues,
-            .vIncomingFunctions = { NodeNames::BinCoords, NodeNames::ActiveReplicates, NodeNames::AnnoFilters },
-            .vIncomingSession = { },
-            .vSessionsIncomingInPrevious = { { "settings", "normalization", "min_interactions", "val" },
-                                             { "replicates", "by_name" },
-                                             { "annotation", "by_name" },
-                                             { "settings", "filters", "mapping_q", "val_min" },
-                                             { "settings", "filters", "mapping_q", "val_max" },
-                                             { "settings", "filters", "incomplete_alignments" },
-                                             { "contigs", "column_coordinates" },
-                                             { "contigs", "row_coordinates" } } } );
+    registerNode( NodeNames::BinValues,
+                  ComputeNode{ .sNodeName = "bin_values",
+                               .fFunc = &PartialQuarry::setBinValues,
+                               .vIncomingFunctions = { NodeNames::BinCoords, NodeNames::ActiveReplicates },
+                               .vIncomingSession =
+                                   {
+                                       { "settings", "normalization", "min_interactions", "val" },
+                                       { "replicates", "by_name" },
+                                       { "settings", "filters", "mapping_q", "val_min" },
+                                       { "settings", "filters", "mapping_q", "val_max" },
+                                       { "settings", "filters", "incomplete_alignments" },
+                                   },
+                               .vSessionsIncomingInPrevious = { { "annotation", "by_name" },
+                                                                { "contigs", "column_coordinates" },
+                                                                { "contigs", "row_coordinates" } } } );
 
-    registerNode(
-        NodeNames::DecayValues,
-        ComputeNode{ .sNodeName = "decay_values",
-                     .fFunc = &PartialQuarry::setDecayValues,
-                     .vIncomingFunctions = { NodeNames::DecayCoords, NodeNames::ActiveReplicates },
-                     .vIncomingSession = { { "settings", "normalization", "ddd_samples", "val_min" },
-                                           { "settings", "normalization", "ddd_samples", "val_max" },
-                                           { "settings", "normalization", "ddd_quantile", "val" } },
-                     .vSessionsIncomingInPrevious = { { "settings", "normalization", "min_interactions", "val" },
-                                                      { "replicates", "by_name" },
-                                                      { "settings", "filters", "mapping_q", "val_min" },
-                                                      { "settings", "filters", "mapping_q", "val_max" },
-                                                      { "settings", "filters", "incomplete_alignments" },
-                                                      { "contigs", "lengths" } } } );
+    registerNode( NodeNames::DecayValues,
+                  ComputeNode{ .sNodeName = "decay_values",
+                               .fFunc = &PartialQuarry::setDecayValues,
+                               .vIncomingFunctions = { NodeNames::DecayCoords, NodeNames::ActiveReplicates },
+                               .vIncomingSession =
+                                   {
+                                       { "settings", "normalization", "ddd_samples", "val_min" },
+                                       { "settings", "normalization", "ddd_samples", "val_max" },
+                                       { "settings", "normalization", "ddd_quantile", "val" },
+                                       { "settings", "normalization", "min_interactions", "val" },
+                                       { "replicates", "by_name" },
+                                       { "settings", "filters", "mapping_q", "val_min" },
+                                       { "settings", "filters", "mapping_q", "val_max" },
+                                       { "settings", "filters", "incomplete_alignments" },
+                                   },
+                               .vSessionsIncomingInPrevious = { { "contigs", "lengths" } } } );
 
     registerNode( NodeNames::InGroup,
                   ComputeNode{ .sNodeName = "in_group_setting",
@@ -598,7 +600,7 @@ void PartialQuarry::regReplicates( )
     registerNode( NodeNames::FlatValues,
                   ComputeNode{ .sNodeName = "flat_bins",
                                .fFunc = &PartialQuarry::setFlatValues,
-                               .vIncomingFunctions = { NodeNames::BinValues },
+                               .vIncomingFunctions = { NodeNames::BinValues, NodeNames::InGroup },
                                .vIncomingSession = { },
                                .vSessionsIncomingInPrevious = {} } );
 

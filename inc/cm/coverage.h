@@ -473,13 +473,14 @@ void PartialQuarry::regCoverage( )
                                                      { "settings", "filters", "incomplete_alignments" } },
                                .vSessionsIncomingInPrevious = { { "dividend" } } } );
 
-    registerNode( NodeNames::Tracks,
-                  ComputeNode{ .sNodeName = "coverage_tracks",
-                               .fFunc = &PartialQuarry::setTracks,
-                               .vIncomingFunctions = { NodeNames::LCS, NodeNames::CombinedCoverageValues,
-                                                       NodeNames::AnnotationColors },
-                               .vIncomingSession = { { "settings", "normalization", "display_ice_remainder" } },
-                               .vSessionsIncomingInPrevious = { { "dividend" } } } );
+    registerNode(
+        NodeNames::Tracks,
+        ComputeNode{
+            .sNodeName = "coverage_tracks",
+            .fFunc = &PartialQuarry::setTracks,
+            .vIncomingFunctions = { NodeNames::LCS, NodeNames::AnnotationColors },
+            .vIncomingSession = { { "settings", "normalization", "display_ice_remainder" }, { "dividend" } },
+            .vSessionsIncomingInPrevious = {} } );
 
     registerNode( NodeNames::TrackExport,
                   ComputeNode{ .sNodeName = "track_export",

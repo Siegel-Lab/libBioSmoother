@@ -359,16 +359,15 @@ bool PartialQuarry::setDivided( )
 
 void PartialQuarry::regNormalization( )
 {
-    registerNode(
-        NodeNames::Normalized,
-        ComputeNode{ .sNodeName = "normalized_bins",
-                     .fFunc = &PartialQuarry::setNormalized,
-                     .vIncomingFunctions = { NodeNames::FlatValues },
-                     .vIncomingSession = { { "settings", "normalization", "p_accept", "val" },
-                                           { "settings", "normalization", "ice_sparse_slice_filter", "val" } },
-                     .vSessionsIncomingInPrevious = { { "replicates", "by_name" },
-                                                      { "settings", "normalization", "normalize_by" },
-                                                      { "contigs", "genome_size" } } } );
+    registerNode( NodeNames::Normalized,
+                  ComputeNode{ .sNodeName = "normalized_bins",
+                               .fFunc = &PartialQuarry::setNormalized,
+                               .vIncomingFunctions = { NodeNames::FlatValues },
+                               .vIncomingSession = { { "settings", "normalization", "p_accept", "val" },
+                                                     { "settings", "normalization", "ice_sparse_slice_filter", "val" },
+                                                     { "settings", "normalization", "normalize_by" },
+                                                     { "contigs", "genome_size" } },
+                               .vSessionsIncomingInPrevious = {{ "replicates", "by_name" }} } );
 
     registerNode( NodeNames::DistDepDecayRemoved,
                   ComputeNode{ .sNodeName = "dist_dep_dec_normalized_bins",
@@ -382,7 +381,8 @@ void PartialQuarry::regNormalization( )
                                .fFunc = &PartialQuarry::setDivided,
                                .vIncomingFunctions = { NodeNames::Combined },
                                .vIncomingSession = { { "settings", "normalization", "divide_by_column_coverage" },
-                                                     { "settings", "normalization", "divide_by_row_coverage" } },
+                                                     { "settings", "normalization", "divide_by_row_coverage" },
+                                                     { "coverage", "list" } },
                                .vSessionsIncomingInPrevious = {} } );
 }
 

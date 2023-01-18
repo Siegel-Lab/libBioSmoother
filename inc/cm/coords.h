@@ -233,6 +233,12 @@ annoCoordsHelper( size_t uiBinSize, size_t uiScreenStartPos, size_t uiScreenEndP
                                                 iAnnoInMultipleBins < 2, iAnnoInMultipleBins == 2 );
                 typename anno_t::interval_it_t xBegin, xPick;
 
+                if(xLower >= xUpper)
+                {
+                    uiCurrScreenPos = uiChromosomeEndPos;
+                    break;
+                }
+
                 while( xLower < xUpper )
                 {
                     // uiDescId, uiAnnoStart, uiAnnoEnd
@@ -1141,7 +1147,8 @@ void PartialQuarry::regCoords( )
                                                      { "annotation", "filter_col" },
                                                      { "annotation", "by_name" },
                                                      { "contigs", "row_coordinates" },
-                                                     { "contigs", "column_coordinates" } },
+                                                     { "contigs", "column_coordinates" },
+                                                     {"annotation", "list"} },
                                .vSessionsIncomingInPrevious = {} } );
 
     registerNode( NodeNames::DecayCoords,
