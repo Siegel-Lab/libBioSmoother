@@ -367,7 +367,7 @@ void PartialQuarry::regNormalization( )
                                                      { "settings", "normalization", "ice_sparse_slice_filter", "val" },
                                                      { "settings", "normalization", "normalize_by" },
                                                      { "contigs", "genome_size" } },
-                               .vSessionsIncomingInPrevious = {{ "replicates", "by_name" }} } );
+                               .vSessionsIncomingInPrevious = { { "replicates", "by_name" } } } );
 
     registerNode( NodeNames::DistDepDecayRemoved,
                   ComputeNode{ .sNodeName = "dist_dep_dec_normalized_bins",

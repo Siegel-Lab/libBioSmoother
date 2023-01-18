@@ -131,7 +131,7 @@ class Indexer:
             "y_end": self.session_default["contigs"]["genome_size"] // dividend,
         })
 
-        for o, d in [(1, 0), (2, 1), (2, 0), (3, 1), (4, 2), (3, 0), (5, 2)]:
+        for o, d in [(6, 2)]:
             idx_suff = str(o) + "." + str(d)
             touch(self.prefix + ".smoother_index/" + idx_suff + ".coords")
             touch(self.prefix + ".smoother_index/" + idx_suff + ".datsets")

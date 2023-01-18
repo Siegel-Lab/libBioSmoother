@@ -144,6 +144,7 @@ class PartialQuarry
         LCS,
         CanvasSize,
         GridSeqCoords,
+        MappingQuality,
         SIZE
     };
     struct ComputeNode
@@ -368,7 +369,7 @@ class PartialQuarry
             if( !vGraphData[ uiNodeName ].bRegistered )
             {
                 std::cerr << "Node has not been registered. id: " << uiNodeName;
-                if (uiNodeName > 0)
+                if( uiNodeName > 0 )
                     std::cerr << " (the previous node is " << vGraph[ uiNodeName - 1 ].sNodeName << ")";
                 std::cerr << std::endl;
             }
@@ -424,8 +425,8 @@ class PartialQuarry
         do
         {
             bContinue = false;
-            for( auto& rNode : { HeatmapCDS, Tracks, AnnotationCDS, ActivateAnnotationCDS, Ticks, Tracks, Palette,
-                                 DecayCDS } )
+            for( auto& rNode :
+                 { HeatmapCDS, Tracks, AnnotationCDS, ActivateAnnotationCDS, Ticks, Tracks, Palette, DecayCDS } )
                 if( !update_no_throw( rNode ) )
                 {
                     bContinue = true;
@@ -591,6 +592,8 @@ class PartialQuarry
 
     size_t uiFromAnnoFilter;
     size_t uiToAnnoFilter;
+    size_t uiMapQMin;
+    size_t uiMapQMax;
 
     std::array<std::vector<std::vector<size_t>>, 2> vvCoverageValues;
     std::array<std::vector<size_t>, 2> vNormCoverage;
@@ -654,6 +657,8 @@ class PartialQuarry
     // coords.h
     bool setSymmetry( );
     // coords.h
+    bool setMappingQuality( );
+    // coords.h
     bool setBinCoords( );
     // coords.h
     bool setDecayCoords( );
@@ -688,10 +693,11 @@ class PartialQuarry
     // coverage.h
     bool setTrackExport( );
     // coverage.h
-    size_t getCoverageFromRepl( size_t, size_t, const AxisCoord&, const json&, size_t, const std::vector<ChromDesc>&,
-                                bool, bool );
+    size_t getMaxCoverageFromRepl( const AxisCoord&, const json&, size_t, const std::vector<ChromDesc>&, bool, bool );
     // coverage.h
-    std::tuple<size_t, int64_t, size_t, size_t> makeHeapTuple( size_t, size_t, bool, bool, const AxisCoord&, int64_t,
+    size_t getCoverageFromRepl( const AxisCoord&, const std::string&, bool, bool );
+    // coverage.h
+    std::tuple<size_t, int64_t, size_t, size_t> makeHeapTuple( bool, bool, const AxisCoord&, int64_t,
                                                                size_t, size_t );
 
     // coverage.h

@@ -30,9 +30,7 @@ bool PartialQuarry::setActiveCoverage( )
     END_RETURN;
 }
 
-std::tuple<size_t, int64_t, size_t, size_t> PartialQuarry::makeHeapTuple( size_t uiMapQMin,
-                                                                          size_t uiMapQMax,
-                                                                          bool bCol,
+std::tuple<size_t, int64_t, size_t, size_t> PartialQuarry::makeHeapTuple( bool bCol,
                                                                           bool bSymPart,
                                                                           const AxisCoord& xCoords,
                                                                           int64_t iDataSetId,
@@ -43,27 +41,26 @@ std::tuple<size_t, int64_t, size_t, size_t> PartialQuarry::makeHeapTuple( size_t
     const size_t uiXMax = bCol != bSymPart ? xCoords.uiIndexPos + xCoords.uiIndexSize : uiEnd;
     const size_t uiYMin = bCol != bSymPart ? uiStart : xCoords.uiIndexPos;
     const size_t uiYMax = bCol != bSymPart ? uiEnd : xCoords.uiIndexPos + xCoords.uiIndexSize;
-    const size_t uiCount = xIndices.count( iDataSetId, { uiYMin, uiXMin, uiMapQMax, uiFromAnnoFilter },
-                                           { uiYMax, uiXMax, uiMapQMin, uiToAnnoFilter }, xIntersect, 0 );
+    // @todo adjust for symmetry
+    const size_t uiCount = xIndices.count( iDataSetId, { uiYMin, uiXMin, uiMapQMin, uiFromAnnoFilter },
+                                           { uiYMax, uiXMax, uiMapQMax, uiToAnnoFilter }, xIntersect, 0 );
 
     return std::make_tuple( uiCount, iDataSetId, uiStart, uiEnd );
 }
 
-size_t PartialQuarry::getCoverageFromRepl( size_t uiMapQMin,
-                                           size_t uiMapQMax,
-                                           const AxisCoord& xCoords,
-                                           const json& xRep,
-                                           size_t uiCoverageGetMaxBinSize,
-                                           const std::vector<ChromDesc>& vChroms,
-                                           bool bCol,
-                                           bool bSymPart )
+size_t PartialQuarry::getMaxCoverageFromRepl( const AxisCoord& xCoords,
+                                              const json& xRep,
+                                              size_t uiCoverageGetMaxBinSize,
+                                              const std::vector<ChromDesc>& vChroms,
+                                              bool bCol,
+                                              bool bSymPart )
 {
     std::string sChromName = vChroms[ xCoords.uiChromosome ].sName;
     // score, datasetId, start, end
     std::vector<std::tuple<size_t, int64_t, size_t, size_t>> vHeap;
     for( const ChromDesc& rDesc : vChroms )
         vHeap.push_back( makeHeapTuple(
-            uiMapQMin, uiMapQMax, bCol, bSymPart, xCoords,
+            bCol, bSymPart, xCoords,
             xRep[ "ids" ][ bCol != bSymPart ? sChromName : rDesc.sName ][ bCol != bSymPart ? rDesc.sName : sChromName ]
                 .get<int64_t>( ),
             0, rDesc.uiLength ) );
@@ -77,11 +74,11 @@ size_t PartialQuarry::getCoverageFromRepl( size_t uiMapQMin,
         vHeap.pop_back( );
 
         size_t uiCenter = ( std::get<2>( xFront ) + std::get<3>( xFront ) ) / 2;
-        vHeap.push_back( makeHeapTuple( uiMapQMin, uiMapQMax, bCol, bSymPart, xCoords, std::get<1>( xFront ), uiCenter,
+        vHeap.push_back( makeHeapTuple( bCol, bSymPart, xCoords, std::get<1>( xFront ), uiCenter,
                                         std::get<3>( xFront ) ) );
         std::push_heap( vHeap.begin( ), vHeap.end( ) );
 
-        vHeap.push_back( makeHeapTuple( uiMapQMin, uiMapQMax, bCol, bSymPart, xCoords, std::get<1>( xFront ),
+        vHeap.push_back( makeHeapTuple( bCol, bSymPart, xCoords, std::get<1>( xFront ),
                                         std::get<2>( xFront ), uiCenter ) );
         std::push_heap( vHeap.begin( ), vHeap.end( ) );
 
@@ -94,21 +91,35 @@ size_t PartialQuarry::getCoverageFromRepl( size_t uiMapQMin,
     return 0;
 }
 
+size_t PartialQuarry::getCoverageFromRepl( const AxisCoord& xCoords, const std::string& sRep, bool bCol, bool bSymPart )
+{
+    size_t uiRet = 0;
+    std::string sChromName = vActiveChromosomes[ bCol ? 0 : 1 ][ xCoords.uiChromosome ].sName;
+    // score, datasetId, start, end
+    std::vector<std::tuple<size_t, int64_t, size_t, size_t>> vHeap;
+    for( const ChromDesc& rDesc : vActiveChromosomes[ bCol ? 1 : 0 ] )
+    {
+        const size_t uiDatasetId =
+            getValue<size_t>( { "replicates", "by_name", sRep, bCol != bSymPart ? sChromName : rDesc.sName,
+                                bCol != bSymPart ? rDesc.sName : sChromName } );
+        const size_t uiXMin = bCol != bSymPart ? xCoords.uiIndexPos : 0;
+        const size_t uiXMax = bCol != bSymPart ? xCoords.uiIndexPos + xCoords.uiIndexSize : rDesc.uiLength;
+        const size_t uiYMin = bCol != bSymPart ? 0 : xCoords.uiIndexPos;
+        const size_t uiYMax = bCol != bSymPart ? rDesc.uiLength : xCoords.uiIndexPos + xCoords.uiIndexSize;
+        // @todo adjust for symmetry
+        uiRet += xIndices.count( uiDatasetId, { uiYMin, uiXMin, uiMapQMin, uiFromAnnoFilter },
+                                 { uiYMax, uiXMax, uiMapQMax, uiToAnnoFilter }, xIntersect, 0 );
+    }
+
+
+    return uiRet;
+}
+
 bool PartialQuarry::setCoverageValues( )
 {
 
     size_t uiMinuend = getValue<size_t>( { "settings", "normalization", "min_interactions", "val" } );
 
-    size_t uiMapQMin = getValue<size_t>( { "settings", "filters", "mapping_q", "val_min" } );
-    size_t uiMapQMax = getValue<size_t>( { "settings", "filters", "mapping_q", "val_max" } );
-    bool bIncomplAlignment = getValue<bool>( { "settings", "filters", "incomplete_alignments" } );
-
-    if( !( uiMapQMin == 0 && bIncomplAlignment ) )
-        ++uiMapQMin;
-    ++uiMapQMax;
-
-    uiMapQMin = 255 - uiMapQMin;
-    uiMapQMax = 255 - uiMapQMax;
 
     for( size_t uiJ = 0; uiJ < 2; uiJ++ )
     {
@@ -133,8 +144,8 @@ bool PartialQuarry::setCoverageValues( )
                     if( iDataSetId != -1 )
                         uiVal =
                             xIndices.count( iDataSetId,
-                                            { xCoords.uiIndexPos, 0, uiMapQMax, uiFromAnnoFilter },
-                                            { xCoords.uiIndexPos + xCoords.uiIndexSize, 1, uiMapQMin, uiToAnnoFilter },
+                                            { xCoords.uiIndexPos, 0, uiMapQMin, uiFromAnnoFilter },
+                                            { xCoords.uiIndexPos + xCoords.uiIndexSize, 1, uiMapQMax, uiToAnnoFilter },
                                             xIntersect,
                                             0 );
                 }
@@ -461,13 +472,11 @@ void PartialQuarry::regCoverage( )
                   ComputeNode{ .sNodeName = "coverage_values",
                                .fFunc = &PartialQuarry::setCoverageValues,
                                .vIncomingFunctions = { NodeNames::ActiveCoverage, NodeNames::AxisCoords,
-                                                       NodeNames::IntersectionType, NodeNames::Symmetry },
-                               .vIncomingSession = { { "settings", "filters", "mapping_q", "val_min" },
-                                                     { "settings", "filters", "mapping_q", "val_max" },
-                                                     { "settings", "replicates", "coverage_get_max_col" },
+                                                       NodeNames::IntersectionType, NodeNames::Symmetry,
+                                                       NodeNames::MappingQuality },
+                               .vIncomingSession = { { "settings", "replicates", "coverage_get_max_col" },
                                                      { "settings", "replicates", "coverage_get_max_row" },
                                                      { "settings", "replicates", "coverage_get_max_bin_size", "val" },
-                                                     { "settings", "normalization", "min_interactions", "val" },
                                                      { "coverage", "by_name" },
                                                      { "replicates", "by_name" },
                                                      { "settings", "filters", "incomplete_alignments" } },
@@ -475,12 +484,11 @@ void PartialQuarry::regCoverage( )
 
     registerNode(
         NodeNames::Tracks,
-        ComputeNode{
-            .sNodeName = "coverage_tracks",
-            .fFunc = &PartialQuarry::setTracks,
-            .vIncomingFunctions = { NodeNames::LCS, NodeNames::AnnotationColors },
-            .vIncomingSession = { { "settings", "normalization", "display_ice_remainder" }, { "dividend" } },
-            .vSessionsIncomingInPrevious = {} } );
+        ComputeNode{ .sNodeName = "coverage_tracks",
+                     .fFunc = &PartialQuarry::setTracks,
+                     .vIncomingFunctions = { NodeNames::LCS, NodeNames::AnnotationColors },
+                     .vIncomingSession = { { "settings", "normalization", "display_ice_remainder" }, { "dividend" } },
+                     .vSessionsIncomingInPrevious = {} } );
 
     registerNode( NodeNames::TrackExport,
                   ComputeNode{ .sNodeName = "track_export",

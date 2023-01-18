@@ -97,18 +97,6 @@ bool PartialQuarry::setBinValues( )
         vvBinValues.emplace_back( );
         vvBinValues.back( ).reserve( vBinCoords.size( ) );
 
-        size_t uiMapQMin = getValue<size_t>( { "settings", "filters", "mapping_q", "val_min" } );
-        size_t uiMapQMax = getValue<size_t>( { "settings", "filters", "mapping_q", "val_max" } );
-
-        bool bIncomplAlignment = getValue<bool>( { "settings", "filters", "incomplete_alignments" } );
-
-        if( !( uiMapQMin == 0 && bIncomplAlignment ) )
-            ++uiMapQMin;
-        ++uiMapQMax;
-
-        uiMapQMin = 255 - uiMapQMin;
-        uiMapQMax = 255 - uiMapQMax;
-
 
 #if USE_GRID_QUERIES
         vvBinValues.back( ).resize( vBinCoords.size( ) );
@@ -142,13 +130,13 @@ bool PartialQuarry::setBinValues( )
 #endif
                         ( iDataSetId,
 #if USE_GRID_QUERIES
-                          { vCoords[ uiI ].uiIndexY, vCoords[ uiI ].uiIndexX, uiMapQMax, uiFromAnnoFilter },
+                          { vCoords[ uiI ].uiIndexY, vCoords[ uiI ].uiIndexX, uiMapQMin, uiFromAnnoFilter },
                           { vCoords[ uiI ].uiIndexH, vCoords[ uiI ].uiIndexW },
-                          { vCoords[ uiI ].uiNumCoordsY, vCoords[ uiI ].uiNumCoordsX, uiMapQMin, uiToAnnoFilter },
+                          { vCoords[ uiI ].uiNumCoordsY, vCoords[ uiI ].uiNumCoordsX, uiMapQMax, uiToAnnoFilter },
 #else
-                          { vCoords[ uiI ].uiIndexY, vCoords[ uiI ].uiIndexX, uiMapQMax, uiFromAnnoFilter },
+                          { vCoords[ uiI ].uiIndexY, vCoords[ uiI ].uiIndexX, uiMapQMin, uiFromAnnoFilter },
                           { vCoords[ uiI ].uiIndexY + vCoords[ uiI ].uiIndexH,
-                            vCoords[ uiI ].uiIndexX + vCoords[ uiI ].uiIndexW, uiMapQMin, uiToAnnoFilter },
+                            vCoords[ uiI ].uiIndexX + vCoords[ uiI ].uiIndexW, uiMapQMax, uiToAnnoFilter },
 #endif
                           xIntersect,
                           0 );
@@ -202,19 +190,6 @@ bool PartialQuarry::setDecayValues( )
     {
         vvDecayValues.emplace_back( );
         vvDecayValues.back( ).reserve( vDistDepDecCoords.size( ) );
-
-        size_t uiMapQMin =
-            getValue<size_t>( { "settings", "filters", "mapping_q", "val_min" } ); // @todo move to individual function
-        size_t uiMapQMax = getValue<size_t>( { "settings", "filters", "mapping_q", "val_max" } );
-
-        bool bIncomplAlignment = getValue<bool>( { "settings", "filters", "incomplete_alignments" } );
-
-        if( !( uiMapQMin == 0 && bIncomplAlignment ) )
-            ++uiMapQMin;
-        ++uiMapQMax;
-
-        uiMapQMin = 255 - uiMapQMin;
-        uiMapQMax = 255 - uiMapQMax;
 
         for( std::array<DecayCoord, 2>& vCoords : vDistDepDecCoords )
         {
@@ -553,14 +528,12 @@ void PartialQuarry::regReplicates( )
     registerNode( NodeNames::BinValues,
                   ComputeNode{ .sNodeName = "bin_values",
                                .fFunc = &PartialQuarry::setBinValues,
-                               .vIncomingFunctions = { NodeNames::BinCoords, NodeNames::ActiveReplicates },
+                               .vIncomingFunctions = { NodeNames::BinCoords, NodeNames::ActiveReplicates, 
+                                                      NodeNames::MappingQuality },
                                .vIncomingSession =
                                    {
                                        { "settings", "normalization", "min_interactions", "val" },
-                                       { "replicates", "by_name" },
-                                       { "settings", "filters", "mapping_q", "val_min" },
-                                       { "settings", "filters", "mapping_q", "val_max" },
-                                       { "settings", "filters", "incomplete_alignments" },
+                                       { "replicates", "by_name" }
                                    },
                                .vSessionsIncomingInPrevious = { { "annotation", "by_name" },
                                                                 { "contigs", "column_coordinates" },
@@ -569,17 +542,15 @@ void PartialQuarry::regReplicates( )
     registerNode( NodeNames::DecayValues,
                   ComputeNode{ .sNodeName = "decay_values",
                                .fFunc = &PartialQuarry::setDecayValues,
-                               .vIncomingFunctions = { NodeNames::DecayCoords, NodeNames::ActiveReplicates },
+                               .vIncomingFunctions = { NodeNames::DecayCoords, NodeNames::ActiveReplicates, 
+                                                       NodeNames::MappingQuality },
                                .vIncomingSession =
                                    {
                                        { "settings", "normalization", "ddd_samples", "val_min" },
                                        { "settings", "normalization", "ddd_samples", "val_max" },
                                        { "settings", "normalization", "ddd_quantile", "val" },
                                        { "settings", "normalization", "min_interactions", "val" },
-                                       { "replicates", "by_name" },
-                                       { "settings", "filters", "mapping_q", "val_min" },
-                                       { "settings", "filters", "mapping_q", "val_max" },
-                                       { "settings", "filters", "incomplete_alignments" },
+                                       { "replicates", "by_name" }
                                    },
                                .vSessionsIncomingInPrevious = { { "contigs", "lengths" } } } );
 

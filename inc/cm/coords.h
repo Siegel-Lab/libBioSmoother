@@ -233,7 +233,7 @@ annoCoordsHelper( size_t uiBinSize, size_t uiScreenStartPos, size_t uiScreenEndP
                                                 iAnnoInMultipleBins < 2, iAnnoInMultipleBins == 2 );
                 typename anno_t::interval_it_t xBegin, xPick;
 
-                if(xLower >= xUpper)
+                if( xLower >= xUpper )
                 {
                     uiCurrScreenPos = uiChromosomeEndPos;
                     break;
@@ -739,6 +739,22 @@ bool PartialQuarry::setSymmetry( )
     END_RETURN;
 }
 
+bool PartialQuarry::setMappingQuality( )
+{
+    size_t uiMapQMin = getValue<size_t>( { "settings", "filters", "mapping_q", "val_max" } );
+    size_t uiMapQMax = getValue<size_t>( { "settings", "filters", "mapping_q", "val_min" } );
+
+    bool bIncomplAlignment = getValue<bool>( { "settings", "filters", "incomplete_alignments" } );
+
+    if( !( uiMapQMin == 0 && bIncomplAlignment ) )
+        ++uiMapQMin;
+    ++uiMapQMax;
+
+    uiMapQMin = 255 - uiMapQMin;
+    uiMapQMax = 255 - uiMapQMax;
+    END_RETURN;
+}
+
 template <typename out_t, typename in_t>
 std::array<out_t, 2> PartialQuarry::binObjFromCoords( const in_t& xX, const in_t& xY )
 {
@@ -1129,6 +1145,15 @@ void PartialQuarry::regCoords( )
                                                     .vIncomingSession = { { "settings", "filters", "symmetry" } },
                                                     .vSessionsIncomingInPrevious = {} } );
 
+    registerNode( NodeNames::MappingQuality,
+                  ComputeNode{ .sNodeName = "mapping_quality_setting",
+                               .fFunc = &PartialQuarry::setMappingQuality,
+                               .vIncomingFunctions = { },
+                               .vIncomingSession = { { "settings", "filters", "mapping_q", "val_min" },
+                                                     { "settings", "filters", "mapping_q", "val_max" },
+                                                     { "settings", "filters", "incomplete_alignments" } },
+                               .vSessionsIncomingInPrevious = {} } );
+
     registerNode( NodeNames::BinCoords,
                   ComputeNode{ .sNodeName = "bin_coords",
                                .fFunc = &PartialQuarry::setBinCoords,
@@ -1148,7 +1173,7 @@ void PartialQuarry::regCoords( )
                                                      { "annotation", "by_name" },
                                                      { "contigs", "row_coordinates" },
                                                      { "contigs", "column_coordinates" },
-                                                     {"annotation", "list"} },
+                                                     { "annotation", "list" } },
                                .vSessionsIncomingInPrevious = {} } );
 
     registerNode( NodeNames::DecayCoords,
