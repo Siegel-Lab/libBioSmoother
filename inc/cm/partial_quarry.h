@@ -96,6 +96,59 @@ struct Annotation
 };
 
 
+/*
+* iterates over the indices between uiFrom and uiTo in the following order:
+* every index is assigned a priority:
+*   - 1st: the maximal power of two the index is evenly devidable by
+*   - 2nd: the index intself
+* indices are iterates in the order of their 1st priority (highest to lowest)
+* if two indices have the same 1st priority they are iterated in order of their 2nd priority (lowest to highest)
+*/
+void iterateEvenlyDividableByMaxPowerOfTwo( size_t uiFrom, size_t uiTo, std::function<bool(size_t)>& fDo )
+{
+    if(uiFrom + 1 == uiTo)
+    {
+        fDo(uiFrom);
+        return;
+    }
+
+    size_t uiN = std::log2( uiTo - uiFrom ) + 1;
+    while( uiN >= 0 )
+    {
+        size_t uiX = 1 << uiN;
+        if( uiFrom % uiX == 0 && uiFrom % (uiX * 2) != 0 )
+        {
+            assert( uiFrom + uiX >= uiTo );
+            if(!fDo(uiFrom))
+                return;
+        }
+        size_t uiY = uiX * ( uiFrom / uiX ) + uiX;
+        while( uiY < uiTo )
+        {
+            assert( uiY >= uiFrom );
+            if(uiY % (uiX * 2) != 0)
+            {
+                if(!fDo(uiY))
+                    return;
+                uiY += uiX * 2;
+            }
+            else
+                uiY += uiX;
+        }
+        assert( uiY + uiX >= uiTo );
+        --uiN;
+    }
+    if(uiFrom == 0)
+        fDo(0);
+}
+
+size_t getEvenlyDividableByMaxTwoPowNIn( size_t uiFrom, size_t uiTo )
+{
+    size_t uiN;
+    iterateEvenlyDividableByMaxPowerOfTwo(uiFrom, uiTo, [&](size_t uiX){uiF = uiN;return false;});
+    return uiN;
+}
+
 class PartialQuarry
 {
   public:
@@ -624,6 +677,9 @@ class PartialQuarry
     double fMax, fMin;
     double fDataMax, fDataMin;
     size_t uiLogestCommonSuffix;
+    
+    std::vector<size_t> vPickedAnnosGridSeq;
+    std::vector<size_t> vGridSeqAnnoCoverage;
 
     bool bCancel = false;
     std::mutex xUpdateMutex{ };
@@ -737,6 +793,8 @@ class PartialQuarry
     bool normalizeSize( size_t );
     // normalization.h
     bool normalizeBinominalTest( );
+    // normalization.h
+    bool normalizeGridSeq( );
     // normalization.h
     bool normalizeIC( );
     // normalization.h

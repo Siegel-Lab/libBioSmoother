@@ -163,28 +163,6 @@ size_t smaller_bin_to_num( std::string sVal )
 }
 
 
-size_t getEvenlyDividableByMaxTwoPowNIn( size_t uiFrom, size_t uiTo )
-{
-    size_t uiN = std::log2( uiTo - uiFrom ) + 1;
-    while( uiN > 0 )
-    {
-        size_t uiX = 1 << uiN;
-        if( uiFrom % uiX == 0 )
-        {
-            assert( uiFrom + uiX >= uiTo );
-            return uiFrom;
-        }
-        size_t uiY = uiX * ( uiFrom / uiX ) + uiX;
-        if( uiY < uiTo )
-        {
-            assert( uiY + uiX >= uiTo );
-            assert( uiY >= uiFrom );
-            return uiY;
-        }
-        --uiN;
-    }
-    return std::numeric_limits<size_t>::max( );
-}
 
 template <typename anno_t>
 std::pair<std::vector<AxisCoord>, std::vector<AxisRegion>>

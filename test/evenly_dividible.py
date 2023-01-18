@@ -1,6 +1,24 @@
 import random
 import math
 
+def iterate_evenly_dividable(f, t):
+    if f + 1 == t:
+        yield f
+    n = int(math.log2(t -f) + 1)
+    while n >= 0:
+        x = int(2**n)
+        if f % x == 0 and f % (x*2) != 0:
+            yield f
+        y = (x * (f // x)) + x
+        while y < t:
+            if y % (x * 2) != 0:
+                yield y
+                y += x * 2
+            else:
+                y += x
+        n -= 1
+    if f == 0:
+        yield f
 
 def get_high_score(f, t):
     if f == t:
@@ -52,8 +70,9 @@ def test(f, t):
     if a != b:
         return False
     return True
+print(*iterate_evenly_dividable(12, 13))
 
-test(0, 13)
+#test(0, 13)
 exit()
 
 b = True

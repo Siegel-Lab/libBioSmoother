@@ -160,6 +160,42 @@ void PartialQuarry::iceDivByMargin( IceData& rIceData, bool bCol, double fMean, 
 }
 
 
+bool PartialQuarry::normalizeGridSeq( )
+{
+    const std::string sAnno = getValue<std::string>({"settings", "normalization", "grid_seq_annotation"});
+    const size_t uiGridSeqSamples = getValue<size_t>({"settings", "normalization", "grid_seq_samples", "val"});
+
+    size_t uiTotalAnnos = 0;
+
+    const auto rJson = getValue<json>( { "annotation", "by_name", sAnno } );
+
+    std::vector<std::pair<size_t, size_t>> vChromIdForAnnoIdx;
+    vChromIdForAnnoIdx.reserve(this->vActiveChromosomes[ 0 ].size());
+
+    for(size_t uiI = 0; uiI < this->vActiveChromosomes[ 0 ].size(); uiI++) // @todo which axis to pick here?
+        if(rJson.contains( this->vActiveChromosomes[ 0 ][uiI] ))
+        {
+            vChromIdForAnnoIdx.emplace_back(uiTotalAnnos, uiI);
+            uiTotalAnnos += xIndices.vAnno.numIntervals(rJson[ this->vActiveChromosomes[ 0 ][uiI] ].get<int64_t>( ));
+        }
+
+    vPickedAnnosGridSeq.clear();
+    vPickedAnnosGridSeq.reserve(uiGridSeqSamples);
+
+    iterateEvenlyDividableByMaxPowerOfTwo(0, uiTotalAnnos, [&](size_t uiVal){
+        vPickedAnnosGridSeq.push_back(uiVal);
+        return vPickedAnnosGridSeq.size() < uiGridSeqSamples;
+    });
+
+    vGridSeqAnnoCoverage.clear();
+    // @todo @continue_here
+
+
+    CANCEL_RETURN;
+    END_RETURN;
+}
+
+
 void PartialQuarry::iceApplyBias( IceData& rIceData, bool bA, size_t uiFrom, size_t uiTo )
 {
     const size_t uiH = rIceData.vSliceBias[ 1 ].size( );
@@ -284,18 +320,22 @@ bool PartialQuarry::setNormalized( )
     vvNormalized.clear( );
     vvNormalized.reserve( vvFlatValues.size( ) );
 
-    if( getValue<std::string>( { "settings", "normalization", "normalize_by" } ) == "dont" )
+    const std::string sNorm = getValue<std::string>( { "settings", "normalization", "normalize_by" } );
+
+    if( sNorm == "dont" )
         return doNotNormalize( );
-    else if( getValue<std::string>( { "settings", "normalization", "normalize_by" } ) == "radicl-seq" )
+    else if( sNorm == "radicl-seq" )
         return normalizeBinominalTest( );
-    else if( getValue<std::string>( { "settings", "normalization", "normalize_by" } ) == "rpm" )
+    else if( sNorm == "rpm" )
         return normalizeSize( 1000000 );
-    else if( getValue<std::string>( { "settings", "normalization", "normalize_by" } ) == "rpk" )
+    else if( sNorm == "rpk" )
         return normalizeSize( 1000 );
-    else if( getValue<std::string>( { "settings", "normalization", "normalize_by" } ) == "hi-c" )
+    else if( sNorm == "hi-c" )
         return normalizeIC( );
-    else if( getValue<std::string>( { "settings", "normalization", "normalize_by" } ) == "cool-hi-c" )
+    else if( sNorm == "cool-hi-c" )
         return normalizeCoolIC( );
+    else if( sNorm == "grid-seq" )
+        return normalizeGridSeq( );
     else
         throw std::logic_error( "invalid value for normalize_by" );
 }
