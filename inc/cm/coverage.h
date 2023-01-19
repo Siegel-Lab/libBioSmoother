@@ -54,7 +54,7 @@ size_t PartialQuarry::getMaxCoverageFromRepl( const std::string& sChromName, con
     for( const ChromDesc& rDesc : vActiveChromosomes[ bCol ? 1 : 0 ] )
         vHeap.push_back( makeHeapTuple(
             bCol, bSymPart, uiFrom, uiTo,
-            getValue<size_t>( { "replicates", "by_name", sRep, bCol != bSymPart ? sChromName : rDesc.sName,
+            getValue<size_t>( { "replicates", "by_name", sRep, "ids", bCol != bSymPart ? sChromName : rDesc.sName,
                                 bCol != bSymPart ? rDesc.sName : sChromName } ),
             0, rDesc.uiLength ) );
 
@@ -83,8 +83,8 @@ size_t PartialQuarry::getMaxCoverageFromRepl( const std::string& sChromName, con
 
     return 0;
 }
-size_t PartialQuarry::getMaxCoverageFromRepl(
-    const AxisCoord& xCoords, const std::string& sRep, size_t uiCoverageGetMaxBinSize, bool bCol, bool bSymPart )
+size_t PartialQuarry::getMaxCoverageFromRepl( const AxisCoord& xCoords, const std::string& sRep,
+                                              size_t uiCoverageGetMaxBinSize, bool bCol, bool bSymPart )
 {
 
     std::string sChromName = vActiveChromosomes[ bCol ? 0 : 1 ][ xCoords.uiChromosome ].sName;
@@ -99,7 +99,7 @@ size_t PartialQuarry::getCoverageFromRepl( const std::string& sChromName, const 
     for( const ChromDesc& rDesc : vActiveChromosomes[ bCol ? 1 : 0 ] )
     {
         const size_t uiDatasetId =
-            getValue<size_t>( { "replicates", "by_name", sRep, bCol != bSymPart ? sChromName : rDesc.sName,
+            getValue<size_t>( { "replicates", "by_name", sRep, "ids", bCol != bSymPart ? sChromName : rDesc.sName,
                                 bCol != bSymPart ? rDesc.sName : sChromName } );
         const size_t uiXMin = bCol != bSymPart ? uiFrom : 0;
         const size_t uiXMax = bCol != bSymPart ? uiTo : rDesc.uiLength;
@@ -346,28 +346,29 @@ bool PartialQuarry::setTrackExport( )
     END_RETURN;
 }
 
-#if 0
 bool PartialQuarry::setRankedSlicesCDS( )
 {
+    const std::string sAnno = getValue<std::string>( { "settings", "normalization", "grid_seq_annotation" } );
+    const auto rJson = getValue<json>( { "annotation", "by_name", sAnno } );
     std::array<std::vector<size_t>, 2> vSorted;
 
     for( size_t uiI = 0; uiI < 2; uiI++ )
     {
-        vSorted[ uiI ].reserve( vvCombinedCoverageValues[ uiI ].size( ) );
-        for( size_t uiX = 0; uiX < vvCombinedCoverageValues[ uiI ].size( ); uiX++ )
+        vSorted[ uiI ].reserve( vGridSeqAnnoCoverage.size( ) );
+        for( size_t uiX = 0; uiX < vGridSeqAnnoCoverage.size( ); uiX++ )
             vSorted[ uiI ].push_back( uiX );
         std::sort( vSorted[ uiI ].begin( ), vSorted[ uiI ].end( ), [ & ]( size_t uiA, size_t uiB ) {
-            return vvCombinedCoverageValues[ uiI ][ uiA ] < vvCombinedCoverageValues[ uiI ][ uiB ];
+            return vGridSeqAnnoCoverage[ uiA ][ uiI ] < vGridSeqAnnoCoverage[ uiB ][ uiI ];
         } );
     }
 
     using namespace pybind11::literals;
     pybind11::gil_scoped_acquire acquire;
-    size_t uiDividend = getValue<size_t>( { "dividend" } );
 
     for( size_t uiI = 0; uiI < 2; uiI++ )
     {
         pybind11::list vChrs;
+        pybind11::list vAnnoDesc;
         pybind11::list vIndexStart;
         pybind11::list vIndexEnd;
         pybind11::list vXs;
@@ -376,26 +377,31 @@ bool PartialQuarry::setRankedSlicesCDS( )
         pybind11::list vScoreA;
         pybind11::list vScoreB;
 
-        for( size_t uiX = 0; uiX < vvCombinedCoverageValues[ uiI ].size( ); uiX++ )
+        for( size_t uiX = 0; uiX < vGridSeqAnnoCoverage.size( ); uiX++ )
         {
             CANCEL_RETURN;
-            auto& xCoord = vAxisCords[ uiI ][ vSorted[ uiI ][ uiX ] ];
-            auto uiVal = vvCombinedCoverageValues[ uiI ][ vSorted[ uiI ][ uiX ] ];
-            auto uiA = vvFlatCoverageValues[ uiI ][ vSorted[ uiI ][ uiX ] ][ 0 ];
-            auto uiB = vvFlatCoverageValues[ uiI ][ vSorted[ uiI ][ uiX ] ][ 1 ];
+            auto uiVal = vGridSeqAnnoCoverage[ vSorted[ uiI ][ uiX ] ][ uiI ];
 
-            std::string sChromName = vActiveChromosomes[ uiI ][ xCoord.uiChromosome ].sName;
+            const size_t uiAnnoIdx = vPickedAnnosGridSeq[ vSorted[ uiI ][ uiX ] ];
+            const auto& rIt =
+                std::lower_bound( vChromIdForAnnoIdx.begin( ),
+                                  vChromIdForAnnoIdx.end( ),
+                                  std::make_pair( uiAnnoIdx, this->vActiveChromosomes[ 0 ].size( ) + 1 ) );
+            assert( rIt != vChromIdForAnnoIdx.begin( ) );
+            const std::string& sChromName = this->vActiveChromosomes[ 0 ][ ( rIt - 1 )->second ].sName;
+
+            const auto rIntervalIt = xIndices.vAnno.get( rJson[ sChromName ].get<int64_t>( ), uiAnnoIdx );
+
             vChrs.append( substringChr( sChromName ) );
-            vIndexStart.append( readableBp( xCoord.uiIndexPos * uiDividend ) );
-            vIndexEnd.append( readableBp( ( xCoord.uiIndexPos + xCoord.uiIndexSize ) * uiDividend ) );
+            vAnnoDesc.append( xIndices.vAnno.desc( *rIntervalIt ) );
+            vIndexStart.append( readableBp( rIntervalIt->uiAnnoStart ) );
+            vIndexEnd.append( readableBp( rIntervalIt->uiAnnoEnd ) );
 
             vXs.append( uiX );
             vYs.append( uiVal );
 
-            vColors.append( xCoord.bFiltered ? "grey" : ( uiI == 0 ? "#0072B2" : "#D55E00" ) );
-
-            vScoreA.append( uiA );
-            vScoreB.append( uiB );
+            // @todo apply filters
+            vColors.append( /*xCoord.bFiltered ? "grey" :*/ ( uiI == 0 ? "#0072B2" : "#D55E00" ) );
         }
 
         vRankedSliceCDS[ uiI ] = pybind11::dict( "chrs"_a = vChrs,
@@ -403,18 +409,16 @@ bool PartialQuarry::setRankedSlicesCDS( )
                                                  "index_start"_a = vIndexStart,
                                                  "index_end"_a = vIndexEnd,
 
+                                                 "anno_desc"_a = vAnnoDesc,
+
                                                  "xs"_a = vXs,
                                                  "ys"_a = vYs,
 
-                                                 "colors"_a = vColors,
-
-                                                 "score_a"_a = vScoreA,
-                                                 "score_b"_a = vScoreB );
+                                                 "colors"_a = vColors );
     }
 
     END_RETURN;
 }
-#endif
 
 const decltype( PartialQuarry::vTrackExport[ 0 ] ) PartialQuarry::getTrackExport( bool bXAxis )
 {
@@ -435,13 +439,11 @@ const pybind11::dict PartialQuarry::getTracks( bool bXAxis )
     return xTracksCDS[ bXAxis ? 0 : 1 ];
 }
 
-#if 0
 const pybind11::dict PartialQuarry::getRankedSlices( bool bXAxis )
 {
     update( NodeNames::RankedSlicesCDS );
     return vRankedSliceCDS[ bXAxis ? 0 : 1 ];
 }
-#endif
 
 const std::array<double, 2> PartialQuarry::getMinMaxTracks( bool bXAxis )
 {
@@ -483,9 +485,8 @@ void PartialQuarry::regCoverage( )
                                                      { "settings", "replicates", "coverage_get_max_row" },
                                                      { "settings", "replicates", "coverage_get_max_bin_size", "val" },
                                                      { "coverage", "by_name" },
-                                                     { "replicates", "by_name" },
-                                                     { "settings", "filters", "incomplete_alignments" } },
-                               .vSessionsIncomingInPrevious = { { "dividend" } } } );
+                                                     { "replicates", "by_name" } },
+                               .vSessionsIncomingInPrevious = { { "settings", "filters", "incomplete_alignments" }, { "dividend" } } } );
 
     registerNode(
         NodeNames::Tracks,
@@ -501,6 +502,14 @@ void PartialQuarry::regCoverage( )
                                .vIncomingFunctions = { NodeNames::Tracks },
                                .vIncomingSession = { },
                                .vSessionsIncomingInPrevious = { { "dividend" } } } );
+
+    registerNode( NodeNames::RankedSlicesCDS,
+                  ComputeNode{ .sNodeName = "ranked_slices_cds",
+                               .fFunc = &PartialQuarry::setRankedSlicesCDS,
+                               .vIncomingFunctions = { NodeNames::Normalized },
+                               .vIncomingSession = { },
+                               .vSessionsIncomingInPrevious = { { "settings", "normalization", "grid_seq_annotation" },
+                                                                { "annotation", "by_name" } } } );
 }
 
 

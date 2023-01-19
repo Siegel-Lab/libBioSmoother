@@ -119,7 +119,6 @@ void iterateEvenlyDividableByMaxPowerOfTwo( size_t uiFrom, size_t uiTo, std::fun
         size_t uiX = 1 << uiN;
         if( uiFrom % uiX == 0 && uiFrom % ( uiX * 2 ) != 0 )
         {
-            assert( uiFrom + uiX >= uiTo );
             if( !fDo( uiFrom ) )
                 return;
         }
@@ -201,6 +200,7 @@ class PartialQuarry
         CanvasSize,
         GridSeqCoords,
         MappingQuality,
+        RankedSlicesCDS,
         SIZE
     };
     struct ComputeNode
@@ -683,6 +683,7 @@ class PartialQuarry
 
     std::vector<size_t> vPickedAnnosGridSeq;
     std::vector<std::array<size_t, 2>> vGridSeqAnnoCoverage;
+    std::vector<std::pair<size_t, size_t>> vChromIdForAnnoIdx;
 
     bool bCancel = false;
     std::mutex xUpdateMutex{ };
@@ -750,6 +751,8 @@ class PartialQuarry
     // coverage.h
     bool setTracks( );
     // coverage.h
+    bool setRankedSlicesCDS( );
+    // coverage.h
     bool setTrackExport( );
     // coverage.h
     size_t getMaxCoverageFromRepl( const AxisCoord&, const std::string&, size_t, bool, bool );
@@ -761,7 +764,8 @@ class PartialQuarry
     // coverage.h
     size_t getCoverageFromRepl( const std::string&, const size_t, const size_t, const std::string&, bool, bool );
     // coverage.h
-    std::tuple<size_t, int64_t, size_t, size_t> makeHeapTuple( bool, bool, const size_t, const size_t, int64_t, size_t, size_t );
+    std::tuple<size_t, int64_t, size_t, size_t> makeHeapTuple( bool, bool, const size_t, const size_t, int64_t, size_t,
+                                                               size_t );
 
     // coverage.h
     void regCoverage( );
@@ -1006,7 +1010,10 @@ class PartialQuarry
     const std::vector<std::string> getTrackExportNames( bool );
 
     // coverage.h
-    const std::array<double, 2> getMinMaxTracks( bool bAxis );
+    const std::array<double, 2> getMinMaxTracks( bool );
+
+    // coverage.h
+    const pybind11::dict getRankedSlices( bool );
 
     size_t getLongestCommonSuffix( )
     {

@@ -718,14 +718,14 @@ bool PartialQuarry::setSymmetry( )
 
 bool PartialQuarry::setMappingQuality( )
 {
-    size_t uiMapQMin = getValue<size_t>( { "settings", "filters", "mapping_q", "val_max" } );
-    size_t uiMapQMax = getValue<size_t>( { "settings", "filters", "mapping_q", "val_min" } );
+    uiMapQMin = getValue<size_t>( { "settings", "filters", "mapping_q", "val_max" } );
+    uiMapQMax = getValue<size_t>( { "settings", "filters", "mapping_q", "val_min" } );
 
     bool bIncomplAlignment = getValue<bool>( { "settings", "filters", "incomplete_alignments" } );
 
-    if( !( uiMapQMin == 0 && bIncomplAlignment ) )
-        ++uiMapQMin;
-    ++uiMapQMax;
+    if( !( uiMapQMax == 0 && bIncomplAlignment ) )
+        ++uiMapQMax;
+    ++uiMapQMin;
 
     uiMapQMin = 255 - uiMapQMin;
     uiMapQMax = 255 - uiMapQMax;

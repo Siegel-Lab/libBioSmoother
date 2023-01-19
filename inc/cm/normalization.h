@@ -169,6 +169,7 @@ bool PartialQuarry::hasChr( size_t uiI, const std::string& sName )
 
 bool PartialQuarry::normalizeGridSeq( )
 {
+    // @todo this can all be its own function that only triggers if datsets are changed / grid seq norm is activated...
     const std::string sAnno = getValue<std::string>( { "settings", "normalization", "grid_seq_annotation" } );
     const size_t uiGridSeqSamples = getValue<size_t>( { "settings", "normalization", "grid_seq_samples", "val" } );
     const size_t uiMinuend = getValue<size_t>( { "settings", "normalization", "min_interactions", "val" } );
@@ -176,13 +177,13 @@ bool PartialQuarry::normalizeGridSeq( )
     const bool bFilterIntersection = getValue<bool>( { "settings", "normalization", "grid_seq_filter_intersection" } );
     const uint32_t uiDividend = getValue<uint32_t>( { "dividend" } );
     const size_t uiCoverageMaxBinSize =
-        getValue<size_t>( { "settings", "normalization", "grid_seq_max_bin_size", "value" } );
+        getValue<size_t>( { "settings", "normalization", "grid_seq_max_bin_size", "val" } );
 
     size_t uiTotalAnnos = 0;
 
     const auto rJson = getValue<json>( { "annotation", "by_name", sAnno } );
 
-    std::vector<std::pair<size_t, size_t>> vChromIdForAnnoIdx;
+    vChromIdForAnnoIdx.clear( );
     vChromIdForAnnoIdx.reserve( this->vActiveChromosomes[ 0 ].size( ) );
 
     for( size_t uiI = 0; uiI < this->vActiveChromosomes[ 0 ].size( ); uiI++ )
@@ -210,11 +211,11 @@ bool PartialQuarry::normalizeGridSeq( )
     CANCEL_RETURN;
 
     vGridSeqAnnoCoverage.clear( );
-    vGridSeqAnnoCoverage.reserve( uiGridSeqSamples );
+    vGridSeqAnnoCoverage.reserve( vPickedAnnosGridSeq.size( ) );
 
 
     // collect & combine replicate data
-    for( size_t uiI = 0; uiI < uiGridSeqSamples; uiI++ )
+    for( size_t uiI = 0; uiI < vPickedAnnosGridSeq.size( ); uiI++ )
     {
         if( bFilterIntersection )
             vGridSeqAnnoCoverage.push_back(
@@ -234,6 +235,8 @@ bool PartialQuarry::normalizeGridSeq( )
             assert( rIt != vChromIdForAnnoIdx.begin( ) );
             const std::string& rChr = this->vActiveChromosomes[ 0 ][ ( rIt - 1 )->second ].sName;
             const auto rIntervalIt = xIndices.vAnno.get( rJson[ rChr ].get<int64_t>( ), uiAnnoIdx );
+            const size_t uiAnnoStart = rIntervalIt->uiAnnoStart / uiDividend;
+            const size_t uiAnnoEnd = std::max(uiAnnoStart + 1 , rIntervalIt->uiAnnoEnd / uiDividend);
 
             for( size_t uiK = 0; uiK < 2; uiK++ )
             {
@@ -242,15 +245,15 @@ bool PartialQuarry::normalizeGridSeq( )
                 {
                     if( uiK == 0 )
                         vVals[ uiJ ] = getCoverageFromRepl( rChr,
-                                                            rIntervalIt->uiAnnoStart / uiDividend,
-                                                            rIntervalIt->uiAnnoEnd / uiDividend,
+                                                            uiAnnoStart,
+                                                            uiAnnoEnd,
                                                             sRep,
                                                             bAxisIsCol,
                                                             uiJ != 0 );
                     else
                         vVals[ uiJ ] = getMaxCoverageFromRepl( rChr,
-                                                               rIntervalIt->uiAnnoStart / uiDividend,
-                                                               rIntervalIt->uiAnnoEnd / uiDividend,
+                                                               uiAnnoStart,
+                                                               uiAnnoEnd,
                                                                sRep,
                                                                uiCoverageMaxBinSize,
                                                                !bAxisIsCol,
@@ -269,7 +272,7 @@ bool PartialQuarry::normalizeGridSeq( )
     }
 
     CANCEL_RETURN;
-    END_RETURN;
+    return doNotNormalize( );
 }
 
 
@@ -476,15 +479,24 @@ bool PartialQuarry::setDivided( )
 
 void PartialQuarry::regNormalization( )
 {
-    registerNode( NodeNames::Normalized,
-                  ComputeNode{ .sNodeName = "normalized_bins",
-                               .fFunc = &PartialQuarry::setNormalized,
-                               .vIncomingFunctions = { NodeNames::FlatValues },
-                               .vIncomingSession = { { "settings", "normalization", "p_accept", "val" },
-                                                     { "settings", "normalization", "ice_sparse_slice_filter", "val" },
-                                                     { "settings", "normalization", "normalize_by" },
-                                                     { "contigs", "genome_size" } },
-                               .vSessionsIncomingInPrevious = { { "replicates", "by_name" } } } );
+    registerNode(
+        NodeNames::Normalized,
+        ComputeNode{ .sNodeName = "normalized_bins",
+                     .fFunc = &PartialQuarry::setNormalized,
+                     .vIncomingFunctions = { NodeNames::FlatValues },
+                     .vIncomingSession = { { "settings", "normalization", "p_accept", "val" },
+                                           { "settings", "normalization", "ice_sparse_slice_filter", "val" },
+                                           { "settings", "normalization", "normalize_by" },
+                                           { "contigs", "genome_size" },
+                                           { "settings", "normalization", "grid_seq_annotation" },
+                                           { "settings", "normalization", "grid_seq_samples", "val" },
+                                           { "settings", "normalization", "grid_seq_axis_is_column" },
+                                           { "settings", "normalization", "grid_seq_filter_intersection" },
+                                           { "settings", "normalization", "grid_seq_max_bin_size", "val" } },
+                     .vSessionsIncomingInPrevious = { { "replicates", "by_name" },
+                                                      { "annotation", "by_name" },
+                                                      { "settings", "normalization", "min_interactions", "val" },
+                                                      { "dividend" } } } );
 
     registerNode( NodeNames::DistDepDecayRemoved,
                   ComputeNode{ .sNodeName = "dist_dep_dec_normalized_bins",
