@@ -159,37 +159,114 @@ void PartialQuarry::iceDivByMargin( IceData& rIceData, bool bCol, double fMean, 
     }
 }
 
+bool PartialQuarry::hasChr( size_t uiI, const std::string& sName )
+{
+    for( size_t uiJ = 0; uiJ < this->vActiveChromosomes[ uiI ].size( ); uiJ++ )
+        if( this->vActiveChromosomes[ uiI ][ uiJ ].sName == sName )
+            return true;
+    return false;
+}
 
 bool PartialQuarry::normalizeGridSeq( )
 {
-    const std::string sAnno = getValue<std::string>({"settings", "normalization", "grid_seq_annotation"});
-    const size_t uiGridSeqSamples = getValue<size_t>({"settings", "normalization", "grid_seq_samples", "val"});
+    const std::string sAnno = getValue<std::string>( { "settings", "normalization", "grid_seq_annotation" } );
+    const size_t uiGridSeqSamples = getValue<size_t>( { "settings", "normalization", "grid_seq_samples", "val" } );
+    const size_t uiMinuend = getValue<size_t>( { "settings", "normalization", "min_interactions", "val" } );
+    const bool bAxisIsCol = getValue<bool>( { "settings", "normalization", "grid_seq_axis_is_column" } );
+    const bool bFilterIntersection = getValue<bool>( { "settings", "normalization", "grid_seq_filter_intersection" } );
+    const uint32_t uiDividend = getValue<uint32_t>( { "dividend" } );
+    const size_t uiCoverageMaxBinSize =
+        getValue<size_t>( { "settings", "normalization", "grid_seq_max_bin_size", "value" } );
 
     size_t uiTotalAnnos = 0;
 
     const auto rJson = getValue<json>( { "annotation", "by_name", sAnno } );
 
     std::vector<std::pair<size_t, size_t>> vChromIdForAnnoIdx;
-    vChromIdForAnnoIdx.reserve(this->vActiveChromosomes[ 0 ].size());
+    vChromIdForAnnoIdx.reserve( this->vActiveChromosomes[ 0 ].size( ) );
 
-    for(size_t uiI = 0; uiI < this->vActiveChromosomes[ 0 ].size(); uiI++) // @todo which axis to pick here?
-        if(rJson.contains( this->vActiveChromosomes[ 0 ][uiI] ))
+    for( size_t uiI = 0; uiI < this->vActiveChromosomes[ 0 ].size( ); uiI++ )
+        if( hasChr( 1, this->vActiveChromosomes[ 0 ][ uiI ].sName ) &&
+            rJson.contains( this->vActiveChromosomes[ 0 ][ uiI ].sName ) )
         {
-            vChromIdForAnnoIdx.emplace_back(uiTotalAnnos, uiI);
-            uiTotalAnnos += xIndices.vAnno.numIntervals(rJson[ this->vActiveChromosomes[ 0 ][uiI] ].get<int64_t>( ));
+            CANCEL_RETURN;
+            vChromIdForAnnoIdx.emplace_back( uiTotalAnnos, uiI );
+            uiTotalAnnos +=
+                xIndices.vAnno.numIntervals( rJson[ this->vActiveChromosomes[ 0 ][ uiI ].sName ].get<int64_t>( ) );
         }
 
-    vPickedAnnosGridSeq.clear();
-    vPickedAnnosGridSeq.reserve(uiGridSeqSamples);
+    vPickedAnnosGridSeq.clear( );
+    vPickedAnnosGridSeq.reserve( uiGridSeqSamples );
 
-    iterateEvenlyDividableByMaxPowerOfTwo(0, uiTotalAnnos, [&](size_t uiVal){
-        vPickedAnnosGridSeq.push_back(uiVal);
-        return vPickedAnnosGridSeq.size() < uiGridSeqSamples;
-    });
+    iterateEvenlyDividableByMaxPowerOfTwo( 0, uiTotalAnnos, [ & ]( size_t uiVal ) {
+        // the CANCEL_RETURN works since this also returns false
+        // and the lambda function breaks the loop by returning false
+        CANCEL_RETURN;
 
-    vGridSeqAnnoCoverage.clear();
-    // @todo @continue_here
+        vPickedAnnosGridSeq.push_back( uiVal );
+        return vPickedAnnosGridSeq.size( ) < uiGridSeqSamples;
+    } );
+    // then this cancel_return is necessary to catch the cancelled iterateEvenlyDividableByMaxPowerOfTwo loop
+    CANCEL_RETURN;
 
+    vGridSeqAnnoCoverage.clear( );
+    vGridSeqAnnoCoverage.reserve( uiGridSeqSamples );
+
+
+    // collect & combine replicate data
+    for( size_t uiI = 0; uiI < uiGridSeqSamples; uiI++ )
+    {
+        if( bFilterIntersection )
+            vGridSeqAnnoCoverage.push_back(
+                { std::numeric_limits<size_t>::max( ), std::numeric_limits<size_t>::max( ) } );
+        else
+            vGridSeqAnnoCoverage.push_back( { 0, 0 } );
+
+        for( const std::string& sRep : vActiveReplicates )
+        {
+            CANCEL_RETURN;
+
+            const size_t uiAnnoIdx = vPickedAnnosGridSeq[ uiI ];
+            const auto& rIt =
+                std::lower_bound( vChromIdForAnnoIdx.begin( ),
+                                  vChromIdForAnnoIdx.end( ),
+                                  std::make_pair( uiAnnoIdx, this->vActiveChromosomes[ 0 ].size( ) + 1 ) );
+            assert( rIt != vChromIdForAnnoIdx.begin( ) );
+            const std::string& rChr = this->vActiveChromosomes[ 0 ][ ( rIt - 1 )->second ].sName;
+            const auto rIntervalIt = xIndices.vAnno.get( rJson[ rChr ].get<int64_t>( ), uiAnnoIdx );
+
+            for( size_t uiK = 0; uiK < 2; uiK++ )
+            {
+                std::array<size_t, 2> vVals;
+                for( size_t uiJ = 0; uiJ < 2; uiJ++ )
+                {
+                    if( uiK == 0 )
+                        vVals[ uiJ ] = getCoverageFromRepl( rChr,
+                                                            rIntervalIt->uiAnnoStart / uiDividend,
+                                                            rIntervalIt->uiAnnoEnd / uiDividend,
+                                                            sRep,
+                                                            bAxisIsCol,
+                                                            uiJ != 0 );
+                    else
+                        vVals[ uiJ ] = getMaxCoverageFromRepl( rChr,
+                                                               rIntervalIt->uiAnnoStart / uiDividend,
+                                                               rIntervalIt->uiAnnoEnd / uiDividend,
+                                                               sRep,
+                                                               uiCoverageMaxBinSize,
+                                                               !bAxisIsCol,
+                                                               uiJ != 0 );
+                    vVals[ uiJ ] = vVals[ uiJ ] > uiMinuend ? vVals[ uiJ ] - uiMinuend : 0;
+                }
+
+                const size_t uiVal = symmetry( vVals[ 0 ], vVals[ 1 ] );
+
+                if( bFilterIntersection )
+                    vGridSeqAnnoCoverage.back( )[ uiK ] = std::min( vGridSeqAnnoCoverage.back( )[ uiK ], uiVal );
+                else
+                    vGridSeqAnnoCoverage.back( )[ uiK ] = std::max( vGridSeqAnnoCoverage.back( )[ uiK ], uiVal );
+            }
+        }
+    }
 
     CANCEL_RETURN;
     END_RETURN;

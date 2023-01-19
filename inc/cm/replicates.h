@@ -331,6 +331,12 @@ template <typename v_t> v_t PartialQuarry::getFlatValue( std::vector<v_t> vColle
     if( iInGroupSetting == 0 && vCollected.size( ) > 0 )
         uiVal = std::numeric_limits<v_t>::max( );
 
+    if( iInGroupSetting == 4 )
+    {
+        std::sort( vCollected.begin( ), vCollected.end( ) );
+        return vCollected[ vCollected.size( ) / 2 ];
+    }
+
     for( v_t uiC : vCollected )
         switch( iInGroupSetting )
         {
@@ -346,10 +352,6 @@ template <typename v_t> v_t PartialQuarry::getFlatValue( std::vector<v_t> vColle
                 break;
             case 3:
                 uiVal = std::max( uiVal, uiC );
-                break;
-            case 4:
-                std::sort( vCollected.begin( ), vCollected.end( ) );
-                uiVal = vCollected[ vCollected.size( ) / 2 ];
                 break;
             default:
                 throw std::logic_error( "invalid value for in_group" );
@@ -528,13 +530,10 @@ void PartialQuarry::regReplicates( )
     registerNode( NodeNames::BinValues,
                   ComputeNode{ .sNodeName = "bin_values",
                                .fFunc = &PartialQuarry::setBinValues,
-                               .vIncomingFunctions = { NodeNames::BinCoords, NodeNames::ActiveReplicates, 
-                                                      NodeNames::MappingQuality },
-                               .vIncomingSession =
-                                   {
-                                       { "settings", "normalization", "min_interactions", "val" },
-                                       { "replicates", "by_name" }
-                                   },
+                               .vIncomingFunctions = { NodeNames::BinCoords, NodeNames::ActiveReplicates,
+                                                       NodeNames::MappingQuality },
+                               .vIncomingSession = { { "settings", "normalization", "min_interactions", "val" },
+                                                     { "replicates", "by_name" } },
                                .vSessionsIncomingInPrevious = { { "annotation", "by_name" },
                                                                 { "contigs", "column_coordinates" },
                                                                 { "contigs", "row_coordinates" } } } );
@@ -542,16 +541,13 @@ void PartialQuarry::regReplicates( )
     registerNode( NodeNames::DecayValues,
                   ComputeNode{ .sNodeName = "decay_values",
                                .fFunc = &PartialQuarry::setDecayValues,
-                               .vIncomingFunctions = { NodeNames::DecayCoords, NodeNames::ActiveReplicates, 
+                               .vIncomingFunctions = { NodeNames::DecayCoords, NodeNames::ActiveReplicates,
                                                        NodeNames::MappingQuality },
-                               .vIncomingSession =
-                                   {
-                                       { "settings", "normalization", "ddd_samples", "val_min" },
-                                       { "settings", "normalization", "ddd_samples", "val_max" },
-                                       { "settings", "normalization", "ddd_quantile", "val" },
-                                       { "settings", "normalization", "min_interactions", "val" },
-                                       { "replicates", "by_name" }
-                                   },
+                               .vIncomingSession = { { "settings", "normalization", "ddd_samples", "val_min" },
+                                                     { "settings", "normalization", "ddd_samples", "val_max" },
+                                                     { "settings", "normalization", "ddd_quantile", "val" },
+                                                     { "settings", "normalization", "min_interactions", "val" },
+                                                     { "replicates", "by_name" } },
                                .vSessionsIncomingInPrevious = { { "contigs", "lengths" } } } );
 
     registerNode( NodeNames::InGroup,

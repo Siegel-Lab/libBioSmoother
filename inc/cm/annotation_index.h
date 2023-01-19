@@ -259,6 +259,11 @@ template <template <typename> typename vec_gen_t> class AnnotationDescIndex
         return xRange[ 1 ] - xRange[ 0 ];
     }
 
+    interval_it_t get( size_t uiDatasetId, size_t uiIntervalIdx )
+    {
+        return lowerBound( uiDatasetId, uiIntervalIdx, false, true );
+    }
+
     std::vector<bool> getCategories( size_t uiFrom, size_t uiTo, size_t uiDividend, std::vector<int> vCats,
                                      bool bIntervalCoords = false, bool bIntervalCount = false )
     {

@@ -97,38 +97,39 @@ struct Annotation
 
 
 /*
-* iterates over the indices between uiFrom and uiTo in the following order:
-* every index is assigned a priority:
-*   - 1st: the maximal power of two the index is evenly devidable by
-*   - 2nd: the index intself
-* indices are iterates in the order of their 1st priority (highest to lowest)
-* if two indices have the same 1st priority they are iterated in order of their 2nd priority (lowest to highest)
-*/
-void iterateEvenlyDividableByMaxPowerOfTwo( size_t uiFrom, size_t uiTo, std::function<bool(size_t)>& fDo )
+ * iterates over the indices between uiFrom and uiTo in the following order:
+ * every index is assigned a priority:
+ *   - 1st: the maximal power of two the index is evenly devidable by
+ *   - 2nd: the index intself
+ * indices are iterates in the order of their 1st priority (highest to lowest)
+ * if two indices have the same 1st priority they are iterated in order of their 2nd priority (lowest to highest)
+ */
+void iterateEvenlyDividableByMaxPowerOfTwo( size_t uiFrom, size_t uiTo, std::function<bool( size_t )> fDo )
 {
-    if(uiFrom + 1 == uiTo)
+    if( uiFrom + 1 == uiTo )
     {
-        fDo(uiFrom);
+        fDo( uiFrom );
         return;
     }
 
-    size_t uiN = std::log2( uiTo - uiFrom ) + 1;
-    while( uiN >= 0 )
+    size_t uiN = std::log2( uiTo - uiFrom ) + 2;
+    while( uiN > 0 )
     {
+        --uiN;
         size_t uiX = 1 << uiN;
-        if( uiFrom % uiX == 0 && uiFrom % (uiX * 2) != 0 )
+        if( uiFrom % uiX == 0 && uiFrom % ( uiX * 2 ) != 0 )
         {
             assert( uiFrom + uiX >= uiTo );
-            if(!fDo(uiFrom))
+            if( !fDo( uiFrom ) )
                 return;
         }
         size_t uiY = uiX * ( uiFrom / uiX ) + uiX;
         while( uiY < uiTo )
         {
             assert( uiY >= uiFrom );
-            if(uiY % (uiX * 2) != 0)
+            if( uiY % ( uiX * 2 ) != 0 )
             {
-                if(!fDo(uiY))
+                if( !fDo( uiY ) )
                     return;
                 uiY += uiX * 2;
             }
@@ -136,16 +137,18 @@ void iterateEvenlyDividableByMaxPowerOfTwo( size_t uiFrom, size_t uiTo, std::fun
                 uiY += uiX;
         }
         assert( uiY + uiX >= uiTo );
-        --uiN;
     }
-    if(uiFrom == 0)
-        fDo(0);
+    if( uiFrom == 0 )
+        fDo( 0 );
 }
 
 size_t getEvenlyDividableByMaxTwoPowNIn( size_t uiFrom, size_t uiTo )
 {
     size_t uiN;
-    iterateEvenlyDividableByMaxPowerOfTwo(uiFrom, uiTo, [&](size_t uiX){uiF = uiN;return false;});
+    iterateEvenlyDividableByMaxPowerOfTwo( uiFrom, uiTo, [ & ]( size_t uiX ) {
+        uiN = uiX;
+        return false;
+    } );
     return uiN;
 }
 
@@ -677,9 +680,9 @@ class PartialQuarry
     double fMax, fMin;
     double fDataMax, fDataMin;
     size_t uiLogestCommonSuffix;
-    
+
     std::vector<size_t> vPickedAnnosGridSeq;
-    std::vector<size_t> vGridSeqAnnoCoverage;
+    std::vector<std::array<size_t, 2>> vGridSeqAnnoCoverage;
 
     bool bCancel = false;
     std::mutex xUpdateMutex{ };
@@ -749,16 +752,22 @@ class PartialQuarry
     // coverage.h
     bool setTrackExport( );
     // coverage.h
-    size_t getMaxCoverageFromRepl( const AxisCoord&, const json&, size_t, const std::vector<ChromDesc>&, bool, bool );
+    size_t getMaxCoverageFromRepl( const AxisCoord&, const std::string&, size_t, bool, bool );
+    // coverage.h
+    size_t getMaxCoverageFromRepl( const std::string&, const size_t, const size_t, const std::string&, size_t, bool,
+                                   bool );
     // coverage.h
     size_t getCoverageFromRepl( const AxisCoord&, const std::string&, bool, bool );
     // coverage.h
-    std::tuple<size_t, int64_t, size_t, size_t> makeHeapTuple( bool, bool, const AxisCoord&, int64_t,
-                                                               size_t, size_t );
+    size_t getCoverageFromRepl( const std::string&, const size_t, const size_t, const std::string&, bool, bool );
+    // coverage.h
+    std::tuple<size_t, int64_t, size_t, size_t> makeHeapTuple( bool, bool, const size_t, const size_t, int64_t, size_t, size_t );
 
     // coverage.h
     void regCoverage( );
 
+    // replicates.h
+    bool hasChr( size_t, const std::string& );
     // replicates.h
     template <typename v_t> v_t symmetry( v_t, v_t );
 

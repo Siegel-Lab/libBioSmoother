@@ -30,17 +30,14 @@ bool PartialQuarry::setActiveCoverage( )
     END_RETURN;
 }
 
-std::tuple<size_t, int64_t, size_t, size_t> PartialQuarry::makeHeapTuple( bool bCol,
-                                                                          bool bSymPart,
-                                                                          const AxisCoord& xCoords,
-                                                                          int64_t iDataSetId,
-                                                                          size_t uiStart,
-                                                                          size_t uiEnd )
+std::tuple<size_t, int64_t, size_t, size_t> PartialQuarry::makeHeapTuple( bool bCol, bool bSymPart, const size_t uiFrom,
+                                                                          const size_t uiTo, int64_t iDataSetId,
+                                                                          size_t uiStart, size_t uiEnd )
 {
-    const size_t uiXMin = bCol != bSymPart ? xCoords.uiIndexPos : uiStart;
-    const size_t uiXMax = bCol != bSymPart ? xCoords.uiIndexPos + xCoords.uiIndexSize : uiEnd;
-    const size_t uiYMin = bCol != bSymPart ? uiStart : xCoords.uiIndexPos;
-    const size_t uiYMax = bCol != bSymPart ? uiEnd : xCoords.uiIndexPos + xCoords.uiIndexSize;
+    const size_t uiXMin = bCol != bSymPart ? uiFrom : uiStart;
+    const size_t uiXMax = bCol != bSymPart ? uiTo : uiEnd;
+    const size_t uiYMin = bCol != bSymPart ? uiStart : uiFrom;
+    const size_t uiYMax = bCol != bSymPart ? uiEnd : uiTo;
     // @todo adjust for symmetry
     const size_t uiCount = xIndices.count( iDataSetId, { uiYMin, uiXMin, uiMapQMin, uiFromAnnoFilter },
                                            { uiYMax, uiXMax, uiMapQMax, uiToAnnoFilter }, xIntersect, 0 );
@@ -48,21 +45,17 @@ std::tuple<size_t, int64_t, size_t, size_t> PartialQuarry::makeHeapTuple( bool b
     return std::make_tuple( uiCount, iDataSetId, uiStart, uiEnd );
 }
 
-size_t PartialQuarry::getMaxCoverageFromRepl( const AxisCoord& xCoords,
-                                              const json& xRep,
-                                              size_t uiCoverageGetMaxBinSize,
-                                              const std::vector<ChromDesc>& vChroms,
-                                              bool bCol,
+size_t PartialQuarry::getMaxCoverageFromRepl( const std::string& sChromName, const size_t uiFrom, const size_t uiTo,
+                                              const std::string& sRep, size_t uiCoverageGetMaxBinSize, bool bCol,
                                               bool bSymPart )
 {
-    std::string sChromName = vChroms[ xCoords.uiChromosome ].sName;
     // score, datasetId, start, end
     std::vector<std::tuple<size_t, int64_t, size_t, size_t>> vHeap;
-    for( const ChromDesc& rDesc : vChroms )
+    for( const ChromDesc& rDesc : vActiveChromosomes[ bCol ? 1 : 0 ] )
         vHeap.push_back( makeHeapTuple(
-            bCol, bSymPart, xCoords,
-            xRep[ "ids" ][ bCol != bSymPart ? sChromName : rDesc.sName ][ bCol != bSymPart ? rDesc.sName : sChromName ]
-                .get<int64_t>( ),
+            bCol, bSymPart, uiFrom, uiTo,
+            getValue<size_t>( { "replicates", "by_name", sRep, bCol != bSymPart ? sChromName : rDesc.sName,
+                                bCol != bSymPart ? rDesc.sName : sChromName } ),
             0, rDesc.uiLength ) );
 
     std::make_heap( vHeap.begin( ), vHeap.end( ) );
@@ -74,12 +67,12 @@ size_t PartialQuarry::getMaxCoverageFromRepl( const AxisCoord& xCoords,
         vHeap.pop_back( );
 
         size_t uiCenter = ( std::get<2>( xFront ) + std::get<3>( xFront ) ) / 2;
-        vHeap.push_back( makeHeapTuple( bCol, bSymPart, xCoords, std::get<1>( xFront ), uiCenter,
-                                        std::get<3>( xFront ) ) );
+        vHeap.push_back(
+            makeHeapTuple( bCol, bSymPart, uiFrom, uiTo, std::get<1>( xFront ), uiCenter, std::get<3>( xFront ) ) );
         std::push_heap( vHeap.begin( ), vHeap.end( ) );
 
-        vHeap.push_back( makeHeapTuple( bCol, bSymPart, xCoords, std::get<1>( xFront ),
-                                        std::get<2>( xFront ), uiCenter ) );
+        vHeap.push_back(
+            makeHeapTuple( bCol, bSymPart, uiFrom, uiTo, std::get<1>( xFront ), std::get<2>( xFront ), uiCenter ) );
         std::push_heap( vHeap.begin( ), vHeap.end( ) );
 
 
@@ -90,22 +83,28 @@ size_t PartialQuarry::getMaxCoverageFromRepl( const AxisCoord& xCoords,
 
     return 0;
 }
+size_t PartialQuarry::getMaxCoverageFromRepl(
+    const AxisCoord& xCoords, const std::string& sRep, size_t uiCoverageGetMaxBinSize, bool bCol, bool bSymPart )
+{
 
-size_t PartialQuarry::getCoverageFromRepl( const AxisCoord& xCoords, const std::string& sRep, bool bCol, bool bSymPart )
+    std::string sChromName = vActiveChromosomes[ bCol ? 0 : 1 ][ xCoords.uiChromosome ].sName;
+    return getMaxCoverageFromRepl( sChromName, xCoords.uiIndexPos, xCoords.uiIndexPos + xCoords.uiIndexSize, sRep,
+                                   uiCoverageGetMaxBinSize, bCol, bSymPart );
+}
+
+size_t PartialQuarry::getCoverageFromRepl( const std::string& sChromName, const size_t uiFrom, const size_t uiTo,
+                                           const std::string& sRep, bool bCol, bool bSymPart )
 {
     size_t uiRet = 0;
-    std::string sChromName = vActiveChromosomes[ bCol ? 0 : 1 ][ xCoords.uiChromosome ].sName;
-    // score, datasetId, start, end
-    std::vector<std::tuple<size_t, int64_t, size_t, size_t>> vHeap;
     for( const ChromDesc& rDesc : vActiveChromosomes[ bCol ? 1 : 0 ] )
     {
         const size_t uiDatasetId =
             getValue<size_t>( { "replicates", "by_name", sRep, bCol != bSymPart ? sChromName : rDesc.sName,
                                 bCol != bSymPart ? rDesc.sName : sChromName } );
-        const size_t uiXMin = bCol != bSymPart ? xCoords.uiIndexPos : 0;
-        const size_t uiXMax = bCol != bSymPart ? xCoords.uiIndexPos + xCoords.uiIndexSize : rDesc.uiLength;
-        const size_t uiYMin = bCol != bSymPart ? 0 : xCoords.uiIndexPos;
-        const size_t uiYMax = bCol != bSymPart ? rDesc.uiLength : xCoords.uiIndexPos + xCoords.uiIndexSize;
+        const size_t uiXMin = bCol != bSymPart ? uiFrom : 0;
+        const size_t uiXMax = bCol != bSymPart ? uiTo : rDesc.uiLength;
+        const size_t uiYMin = bCol != bSymPart ? 0 : uiFrom;
+        const size_t uiYMax = bCol != bSymPart ? rDesc.uiLength : uiTo;
         // @todo adjust for symmetry
         uiRet += xIndices.count( uiDatasetId, { uiYMin, uiXMin, uiMapQMin, uiFromAnnoFilter },
                                  { uiYMax, uiXMax, uiMapQMax, uiToAnnoFilter }, xIntersect, 0 );
@@ -113,6 +112,12 @@ size_t PartialQuarry::getCoverageFromRepl( const AxisCoord& xCoords, const std::
 
 
     return uiRet;
+}
+size_t PartialQuarry::getCoverageFromRepl( const AxisCoord& xCoords, const std::string& sRep, bool bCol, bool bSymPart )
+{
+    std::string sChromName = vActiveChromosomes[ bCol ? 0 : 1 ][ xCoords.uiChromosome ].sName;
+    return getCoverageFromRepl( sChromName, xCoords.uiIndexPos, xCoords.uiIndexPos + xCoords.uiIndexSize, sRep, bCol,
+                                bSymPart );
 }
 
 bool PartialQuarry::setCoverageValues( )

@@ -163,7 +163,6 @@ size_t smaller_bin_to_num( std::string sVal )
 }
 
 
-
 template <typename anno_t>
 std::pair<std::vector<AxisCoord>, std::vector<AxisRegion>>
 annoCoordsHelper( size_t uiBinSize, size_t uiScreenStartPos, size_t uiScreenEndPos, size_t /*iSmallerBins*/,
