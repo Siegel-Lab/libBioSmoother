@@ -401,7 +401,8 @@ bool PartialQuarry::setRankedSlicesCDS( )
             vYs.append( uiVal );
 
             // @todo apply filters
-            vColors.append( /*xCoord.bFiltered ? "grey" :*/ ( uiI == 0 ? "#0072B2" : "#D55E00" ) );
+            vColors.append( vGridSeqFiltered[ vSorted[ uiI ][ uiX ] ][ uiI ] ? ( uiI == 0 ? "#0072B2" : "#D55E00" )
+                                                                             : "grey" );
         }
 
         vRankedSliceCDS[ uiI ] = pybind11::dict( "chrs"_a = vChrs,
@@ -475,18 +476,19 @@ void PartialQuarry::regCoverage( )
                                                      { "replicates", "list" } },
                                .vSessionsIncomingInPrevious = {} } );
 
-    registerNode( NodeNames::CoverageValues,
-                  ComputeNode{ .sNodeName = "coverage_values",
-                               .fFunc = &PartialQuarry::setCoverageValues,
-                               .vIncomingFunctions = { NodeNames::ActiveCoverage, NodeNames::AxisCoords,
-                                                       NodeNames::IntersectionType, NodeNames::Symmetry,
-                                                       NodeNames::MappingQuality },
-                               .vIncomingSession = { { "settings", "replicates", "coverage_get_max_col" },
-                                                     { "settings", "replicates", "coverage_get_max_row" },
-                                                     { "settings", "replicates", "coverage_get_max_bin_size", "val" },
-                                                     { "coverage", "by_name" },
-                                                     { "replicates", "by_name" } },
-                               .vSessionsIncomingInPrevious = { { "settings", "filters", "incomplete_alignments" }, { "dividend" } } } );
+    registerNode(
+        NodeNames::CoverageValues,
+        ComputeNode{
+            .sNodeName = "coverage_values",
+            .fFunc = &PartialQuarry::setCoverageValues,
+            .vIncomingFunctions = { NodeNames::ActiveCoverage, NodeNames::AxisCoords, NodeNames::IntersectionType,
+                                    NodeNames::Symmetry, NodeNames::MappingQuality },
+            .vIncomingSession = { { "settings", "replicates", "coverage_get_max_col" },
+                                  { "settings", "replicates", "coverage_get_max_row" },
+                                  { "settings", "replicates", "coverage_get_max_bin_size", "val" },
+                                  { "coverage", "by_name" },
+                                  { "replicates", "by_name" } },
+            .vSessionsIncomingInPrevious = { { "settings", "filters", "incomplete_alignments" }, { "dividend" } } } );
 
     registerNode(
         NodeNames::Tracks,
@@ -503,13 +505,13 @@ void PartialQuarry::regCoverage( )
                                .vIncomingSession = { },
                                .vSessionsIncomingInPrevious = { { "dividend" } } } );
 
-    registerNode( NodeNames::RankedSlicesCDS,
-                  ComputeNode{ .sNodeName = "ranked_slices_cds",
-                               .fFunc = &PartialQuarry::setRankedSlicesCDS,
-                               .vIncomingFunctions = { NodeNames::Normalized },
-                               .vIncomingSession = { },
-                               .vSessionsIncomingInPrevious = { { "settings", "normalization", "grid_seq_annotation" },
-                                                                { "annotation", "by_name" } } } );
+    registerNode(
+        NodeNames::RankedSlicesCDS,
+        ComputeNode{ .sNodeName = "ranked_slices_cds",
+                     .fFunc = &PartialQuarry::setRankedSlicesCDS,
+                     .vIncomingFunctions = { NodeNames::RnaAssociatedGenesFilter },
+                     .vIncomingSession = { },
+                     .vSessionsIncomingInPrevious = { { "annotation", "by_name" }, { "settings", "normalization", "grid_seq_annotation" } } } );
 }
 
 

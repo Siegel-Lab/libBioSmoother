@@ -201,6 +201,8 @@ class PartialQuarry
         GridSeqCoords,
         MappingQuality,
         RankedSlicesCDS,
+        RnaAssociatedGenes,
+        RnaAssociatedGenesFilter,
         SIZE
     };
     struct ComputeNode
@@ -482,7 +484,7 @@ class PartialQuarry
         {
             bContinue = false;
             for( auto& rNode :
-                 { HeatmapCDS, Tracks, AnnotationCDS, ActivateAnnotationCDS, Ticks, Tracks, Palette, DecayCDS } )
+                 { HeatmapCDS, Tracks, AnnotationCDS, ActivateAnnotationCDS, Ticks, Tracks, Palette, DecayCDS, RankedSlicesCDS } )
                 if( !update_no_throw( rNode ) )
                 {
                     bContinue = true;
@@ -683,6 +685,7 @@ class PartialQuarry
 
     std::vector<size_t> vPickedAnnosGridSeq;
     std::vector<std::array<size_t, 2>> vGridSeqAnnoCoverage;
+    std::vector<std::array<bool, 2>> vGridSeqFiltered;
     std::vector<std::pair<size_t, size_t>> vChromIdForAnnoIdx;
 
     bool bCancel = false;
@@ -798,6 +801,12 @@ class PartialQuarry
     // replicates.h
     bool setBetweenGroup( );
 
+    // normalization.h
+    bool setRnaAssociatedGenes( );
+    // normalization.h
+    bool setRnaAssociatedGenesFilter( );
+    // normalization.h
+    bool setRnaAssociatedBackground( );
     // normalization.h
     bool doNotNormalize( );
     // normalization.h
