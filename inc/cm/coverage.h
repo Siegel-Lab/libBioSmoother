@@ -210,6 +210,13 @@ bool PartialQuarry::setTracks( )
                 vvMinMaxTracks[ uiI ][ 0 ] = std::min( vvMinMaxTracks[ uiI ][ 0 ], uiVal );
                 vvMinMaxTracks[ uiI ][ 1 ] = std::max( vvMinMaxTracks[ uiI ][ 1 ], uiVal );
             }
+            if( getValue<bool>( { "settings", "normalization", "grid_seq_display_background" } ) &&
+                ( getValue<bool>( { "settings", "normalization", "grid_seq_axis_is_column" } ) == ( uiI == 0 ) ) )
+            {
+                auto uiVal = (double)vBackgroundGridSeq[ uiX ];
+                vvMinMaxTracks[ uiI ][ 0 ] = std::min( vvMinMaxTracks[ uiI ][ 0 ], uiVal );
+                vvMinMaxTracks[ uiI ][ 1 ] = std::max( vvMinMaxTracks[ uiI ][ 1 ], uiVal );
+            }
         }
         pybind11::list vChrs;
         pybind11::list vScreenPoss;
@@ -220,6 +227,87 @@ bool PartialQuarry::setTracks( )
         pybind11::list vNames;
 
         size_t uiCnt = 0;
+
+        if( getValue<bool>( { "settings", "normalization", "grid_seq_display_background" } ) &&
+            ( getValue<bool>( { "settings", "normalization", "grid_seq_axis_is_column" } ) == ( uiI == 0 ) ) )
+        {
+            pybind11::list vScreenPos;
+            pybind11::list vIndexStart;
+            pybind11::list vIndexEnd;
+            pybind11::list vValue;
+            std::string sChr = "";
+
+
+            for( size_t uiX = 0; uiX < vAxisCords[ uiI ].size( ); uiX++ )
+            {
+                CANCEL_RETURN;
+                auto& xCoord = vAxisCords[ uiI ][ uiX ];
+                std::string sChromName = vActiveChromosomes[ uiI ][ xCoord.uiChromosome ].sName;
+                if( sChr != "" && sChr != sChromName )
+                {
+                    vChrs.append( substringChr( sChr ) );
+
+                    vScreenPoss.append( vScreenPos );
+                    vScreenPos = pybind11::list( );
+
+                    vIndexStarts.append( vIndexStart );
+                    vIndexStart = pybind11::list( );
+
+                    vIndexEnds.append( vIndexEnd );
+                    vIndexEnd = pybind11::list( );
+
+                    vValues.append( vValue );
+                    vValue = pybind11::list( );
+
+                    vColors.append( vColorPaletteAnnotation[ uiCnt % vColorPaletteAnnotation.size( ) ] );
+
+                    vNames.append( "background RNA associated elements" );
+                }
+
+                if( uiX == 0 )
+                {
+                    // zero position at start
+                    vIndexStart.append( readableBp( xCoord.uiIndexPos * uiDividend ) );
+                    vIndexEnd.append( readableBp( xCoord.uiIndexPos * uiDividend ) );
+                    vScreenPos.append( xCoord.uiScreenPos );
+                    vValue.append( vvMinMaxTracks[ uiI ][ 0 ] );
+                }
+
+                sChr = sChromName;
+                auto uiVal = vBackgroundGridSeq[ uiX ];
+
+                // front corner
+                vIndexStart.append( readableBp( xCoord.uiIndexPos * uiDividend ) );
+                vIndexEnd.append( readableBp( ( xCoord.uiIndexPos + xCoord.uiIndexSize ) * uiDividend ) );
+                vScreenPos.append( xCoord.uiScreenPos );
+                vValue.append( uiVal );
+
+                // rear corner
+                vIndexStart.append( readableBp( xCoord.uiIndexPos * uiDividend ) );
+                vIndexEnd.append( readableBp( ( xCoord.uiIndexPos + xCoord.uiIndexSize ) * uiDividend ) );
+                vScreenPos.append( xCoord.uiScreenPos + xCoord.uiScreenSize );
+                vValue.append( uiVal );
+
+                if( uiX + 1 == vAxisCords[ uiI ].size( ) )
+                {
+                    // zero position at end
+                    vIndexStart.append( readableBp( ( xCoord.uiIndexPos + xCoord.uiIndexSize ) * uiDividend ) );
+                    vIndexEnd.append( readableBp( ( xCoord.uiIndexPos + xCoord.uiIndexSize ) * uiDividend ) );
+                    vScreenPos.append( xCoord.uiScreenPos + xCoord.uiScreenSize );
+                    vValue.append( vvMinMaxTracks[ uiI ][ 0 ] );
+                }
+            }
+
+            vChrs.append( substringChr( sChr ) );
+            vScreenPoss.append( vScreenPos );
+            vIndexStarts.append( vIndexStart );
+            vIndexEnds.append( vIndexEnd );
+            vValues.append( vValue );
+            vColors.append( vColorPaletteAnnotation[ uiCnt % vColorPaletteAnnotation.size( ) ] );
+            vNames.append( "background RNA associated elements" );
+
+            ++uiCnt;
+        }
 
         for( size_t uiId = 0; uiId < vvCoverageValues[ uiI ].size( ); uiI++ )
         {
@@ -383,12 +471,7 @@ bool PartialQuarry::setRankedSlicesCDS( )
             auto uiVal = vGridSeqAnnoCoverage[ vSorted[ uiI ][ uiX ] ][ uiI ];
 
             const size_t uiAnnoIdx = vPickedAnnosGridSeq[ vSorted[ uiI ][ uiX ] ];
-            const auto& rIt =
-                std::lower_bound( vChromIdForAnnoIdx.begin( ),
-                                  vChromIdForAnnoIdx.end( ),
-                                  std::make_pair( uiAnnoIdx, this->vActiveChromosomes[ 0 ].size( ) + 1 ) );
-            assert( rIt != vChromIdForAnnoIdx.begin( ) );
-            const std::string& sChromName = this->vActiveChromosomes[ 0 ][ ( rIt - 1 )->second ].sName;
+            const std::string& sChromName = this->vActiveChromosomes[ 0 ][ getChromIdxForAnnoIdx( uiAnnoIdx ) ].sName;
 
             const auto rIntervalIt = xIndices.vAnno.get( rJson[ sChromName ].get<int64_t>( ), uiAnnoIdx );
 
@@ -490,13 +573,16 @@ void PartialQuarry::regCoverage( )
                                   { "replicates", "by_name" } },
             .vSessionsIncomingInPrevious = { { "settings", "filters", "incomplete_alignments" }, { "dividend" } } } );
 
-    registerNode(
-        NodeNames::Tracks,
-        ComputeNode{ .sNodeName = "coverage_tracks",
-                     .fFunc = &PartialQuarry::setTracks,
-                     .vIncomingFunctions = { NodeNames::LCS, NodeNames::AnnotationColors },
-                     .vIncomingSession = { { "settings", "normalization", "display_ice_remainder" }, { "dividend" } },
-                     .vSessionsIncomingInPrevious = {} } );
+    registerNode( NodeNames::Tracks,
+                  ComputeNode{ .sNodeName = "coverage_tracks",
+                               .fFunc = &PartialQuarry::setTracks,
+                               .vIncomingFunctions = { NodeNames::LCS, NodeNames::AnnotationColors,
+                                                       NodeNames::RnaAssociatedBackground },
+                               .vIncomingSession = { { "settings", "normalization", "display_ice_remainder" },
+
+                                                     { "settings", "normalization", "grid_seq_display_background" } },
+                               .vSessionsIncomingInPrevious = {
+                                   { "dividend" }, { "settings", "normalization", "grid_seq_axis_is_column" } } } );
 
     registerNode( NodeNames::TrackExport,
                   ComputeNode{ .sNodeName = "track_export",
@@ -511,7 +597,8 @@ void PartialQuarry::regCoverage( )
                      .fFunc = &PartialQuarry::setRankedSlicesCDS,
                      .vIncomingFunctions = { NodeNames::RnaAssociatedGenesFilter },
                      .vIncomingSession = { },
-                     .vSessionsIncomingInPrevious = { { "annotation", "by_name" }, { "settings", "normalization", "grid_seq_annotation" } } } );
+                     .vSessionsIncomingInPrevious = { { "annotation", "by_name" },
+                                                      { "settings", "normalization", "grid_seq_annotation" } } } );
 }
 
 
