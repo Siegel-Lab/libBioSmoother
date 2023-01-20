@@ -194,6 +194,10 @@ bool PartialQuarry::setTracks( )
 {
     using namespace pybind11::literals;
     pybind11::gil_scoped_acquire acquire;
+    const bool bGridSeqNormDisp =
+        getValue<std::string>( { "settings", "normalization", "normalize_by" } ) == "grid-seq" &&
+        getValue<bool>( { "settings", "normalization", "grid_seq_display_background" } );
+    const bool bIsCol = getValue<bool>( { "settings", "normalization", "grid_seq_axis_is_column" } );
 
     size_t uiDividend = getValue<size_t>( { "dividend" } );
     for( size_t uiI = 0; uiI < 2; uiI++ )
@@ -210,8 +214,7 @@ bool PartialQuarry::setTracks( )
                 vvMinMaxTracks[ uiI ][ 0 ] = std::min( vvMinMaxTracks[ uiI ][ 0 ], uiVal );
                 vvMinMaxTracks[ uiI ][ 1 ] = std::max( vvMinMaxTracks[ uiI ][ 1 ], uiVal );
             }
-            if( getValue<bool>( { "settings", "normalization", "grid_seq_display_background" } ) &&
-                ( getValue<bool>( { "settings", "normalization", "grid_seq_axis_is_column" } ) == ( uiI == 0 ) ) )
+            if( bGridSeqNormDisp && ( bIsCol == ( uiI == 0 ) ) )
             {
                 auto uiVal = (double)vBackgroundGridSeq[ uiX ];
                 vvMinMaxTracks[ uiI ][ 0 ] = std::min( vvMinMaxTracks[ uiI ][ 0 ], uiVal );
@@ -228,8 +231,7 @@ bool PartialQuarry::setTracks( )
 
         size_t uiCnt = 0;
 
-        if( getValue<bool>( { "settings", "normalization", "grid_seq_display_background" } ) &&
-            ( getValue<bool>( { "settings", "normalization", "grid_seq_axis_is_column" } ) == ( uiI == 0 ) ) )
+        if( bGridSeqNormDisp && ( bIsCol == ( uiI == 0 ) ) )
         {
             pybind11::list vScreenPos;
             pybind11::list vIndexStart;
@@ -457,6 +459,8 @@ bool PartialQuarry::setRankedSlicesCDS( )
     {
         pybind11::list vChrs;
         pybind11::list vAnnoDesc;
+        pybind11::list vSampleId;
+        pybind11::list vAnnoIdx;
         pybind11::list vIndexStart;
         pybind11::list vIndexEnd;
         pybind11::list vXs;
@@ -477,13 +481,14 @@ bool PartialQuarry::setRankedSlicesCDS( )
 
             vChrs.append( substringChr( sChromName ) );
             vAnnoDesc.append( xIndices.vAnno.desc( *rIntervalIt ) );
+            vSampleId.append( vSorted[ uiI ][ uiX ] );
+            vAnnoIdx.append( uiAnnoIdx );
             vIndexStart.append( readableBp( rIntervalIt->uiAnnoStart ) );
             vIndexEnd.append( readableBp( rIntervalIt->uiAnnoEnd ) );
 
             vXs.append( uiX );
             vYs.append( uiVal );
 
-            // @todo apply filters
             vColors.append( vGridSeqFiltered[ vSorted[ uiI ][ uiX ] ][ uiI ] ? ( uiI == 0 ? "#0072B2" : "#D55E00" )
                                                                              : "grey" );
         }
@@ -494,6 +499,8 @@ bool PartialQuarry::setRankedSlicesCDS( )
                                                  "index_end"_a = vIndexEnd,
 
                                                  "anno_desc"_a = vAnnoDesc,
+                                                 "sample_id"_a = vSampleId,
+                                                 "anno_idx"_a = vAnnoIdx,
 
                                                  "xs"_a = vXs,
                                                  "ys"_a = vYs,
@@ -579,10 +586,9 @@ void PartialQuarry::regCoverage( )
                                .vIncomingFunctions = { NodeNames::LCS, NodeNames::AnnotationColors,
                                                        NodeNames::RnaAssociatedBackground },
                                .vIncomingSession = { { "settings", "normalization", "display_ice_remainder" },
-
                                                      { "settings", "normalization", "grid_seq_display_background" } },
                                .vSessionsIncomingInPrevious = {
-                                   { "dividend" }, { "settings", "normalization", "grid_seq_axis_is_column" } } } );
+                                   { "dividend" }, { "settings", "normalization", "grid_seq_axis_is_column" }, { "settings", "normalization", "normalize_by" } } } );
 
     registerNode( NodeNames::TrackExport,
                   ComputeNode{ .sNodeName = "track_export",
