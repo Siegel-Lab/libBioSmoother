@@ -564,6 +564,7 @@ bool PartialQuarry::setTicks( )
         }
         assert( uiRunningStart == vCanvasSize[ uiI ] );
         vFullList.append( uiRunningStart );
+        vStartPos.append( uiRunningStart );
 
         xTicksCDS[ uiI ] = pybind11::dict( "contig_starts"_a = vStartPos,
                                            "genome_end"_a = vCanvasSize[ uiI ],
