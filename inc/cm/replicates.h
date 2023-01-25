@@ -184,7 +184,7 @@ bool PartialQuarry::setDecayValues( )
     size_t uiMinuend = getValue<size_t>( { "settings", "normalization", "min_interactions", "val" } );
     size_t uiSamplesMin = getValue<size_t>( { "settings", "normalization", "ddd_samples", "val_min" } );
     size_t uiSamplesMax = getValue<size_t>( { "settings", "normalization", "ddd_samples", "val_max" } );
-    double fQuantExcl = getValue<double>( { "settings", "normalization", "ddd_quantile", "val" } );
+    double fQuantExcl = (1.0 - getValue<double>( { "settings", "normalization", "ddd_quantile", "val" } ) / 100.0) / 2.0;
 
     for( std::string& sRep : vActiveReplicates )
     {

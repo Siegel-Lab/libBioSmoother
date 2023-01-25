@@ -65,7 +65,7 @@ void PartialQuarry::iceFilter( IceData& /*rIceData*/, size_t /*uiFrom*/, size_t 
 void PartialQuarry::icePreFilter( IceData& rIceData, bool bCol, size_t uiFrom, size_t uiTo, bool bA )
 {
     // filter out rows and columns that have less than 1/4 of their cells filled
-    double fFilter = getValue<double>( { "settings", "normalization", "ice_sparse_slice_filter", "val" } );
+    double fFilter = getValue<double>( { "settings", "normalization", "ice_sparse_slice_filter", "val" } ) / 100.0;
     if( fFilter > 0 )
     {
         const size_t uiWSlice = rIceData.vSliceBias[ bCol ? 1 : 0 ].size( );
