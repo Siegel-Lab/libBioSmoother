@@ -226,8 +226,12 @@ bool PartialQuarry::setTracks( )
                 if( bGridSeqNormDisp )
                     uiVal = (double)vBackgroundGridSeq[ uiX ];
                 else if( bRadiclNormDisp )
-                    uiVal = (double)vRadiclSeqCoverage[ uiX ][ uiI ];
+                    uiVal = std::min( (double)vRadiclSeqCoverage[ uiX ][ uiI ],
+                                      (double)vRadiclSeqNumNonEmptyBins[ uiX ][uiI] );
                 vvMinMaxTracks[ uiI ][ 0 ] = std::min( vvMinMaxTracks[ uiI ][ 0 ], uiVal );
+                if( bRadiclNormDisp )
+                    uiVal = std::max( (double)vRadiclSeqCoverage[ uiX ][ uiI ],
+                                      (double)vRadiclSeqNumNonEmptyBins[ uiX ][uiI] );
                 vvMinMaxTracks[ uiI ][ 1 ] = std::max( vvMinMaxTracks[ uiI ][ 1 ], uiVal );
             }
         }
@@ -241,6 +245,7 @@ bool PartialQuarry::setTracks( )
 
         size_t uiCnt = 0;
 
+        // @todo code duplication
         if( ( bRadiclNormDisp || bGridSeqNormDisp ) && ( bIsCol == ( uiI == 0 ) ) )
         {
             pybind11::list vScreenPos;
@@ -327,6 +332,85 @@ bool PartialQuarry::setTracks( )
                 vNames.append( "background RNA associated elements" );
             else if( bRadiclNormDisp )
                 vNames.append( "datapool coverage" );
+
+            ++uiCnt;
+        }
+        if( bRadiclNormDisp && ( bIsCol == ( uiI == 0 ) ) )
+        {
+            pybind11::list vScreenPos;
+            pybind11::list vIndexStart;
+            pybind11::list vIndexEnd;
+            pybind11::list vValue;
+            std::string sChr = "";
+
+
+            for( size_t uiX = 0; uiX < vAxisCords[ uiI ].size( ); uiX++ )
+            {
+                CANCEL_RETURN;
+                auto& xCoord = vAxisCords[ uiI ][ uiX ];
+                std::string sChromName = vActiveChromosomes[ uiI ][ xCoord.uiChromosome ].sName;
+                if( sChr != "" && sChr != sChromName )
+                {
+                    vChrs.append( substringChr( sChr ) );
+
+                    vScreenPoss.append( vScreenPos );
+                    vScreenPos = pybind11::list( );
+
+                    vIndexStarts.append( vIndexStart );
+                    vIndexStart = pybind11::list( );
+
+                    vIndexEnds.append( vIndexEnd );
+                    vIndexEnd = pybind11::list( );
+
+                    vValues.append( vValue );
+                    vValue = pybind11::list( );
+
+                    vColors.append( vColorPaletteAnnotation[ uiCnt % vColorPaletteAnnotation.size( ) ] );
+
+                    vNames.append( "num non-empty bins" );
+                }
+
+                if( uiX == 0 )
+                {
+                    // zero position at start
+                    vIndexStart.append( readableBp( xCoord.uiIndexPos * uiDividend ) );
+                    vIndexEnd.append( readableBp( xCoord.uiIndexPos * uiDividend ) );
+                    vScreenPos.append( xCoord.uiScreenPos );
+                    vValue.append( vvMinMaxTracks[ uiI ][ 0 ] );
+                }
+
+                sChr = sChromName;
+                const double uiVal = (double)vRadiclSeqNumNonEmptyBins[ uiX ][ uiI ];
+
+                // front corner
+                vIndexStart.append( readableBp( xCoord.uiIndexPos * uiDividend ) );
+                vIndexEnd.append( readableBp( ( xCoord.uiIndexPos + xCoord.uiIndexSize ) * uiDividend ) );
+                vScreenPos.append( xCoord.uiScreenPos );
+                vValue.append( uiVal );
+
+                // rear corner
+                vIndexStart.append( readableBp( xCoord.uiIndexPos * uiDividend ) );
+                vIndexEnd.append( readableBp( ( xCoord.uiIndexPos + xCoord.uiIndexSize ) * uiDividend ) );
+                vScreenPos.append( xCoord.uiScreenPos + xCoord.uiScreenSize );
+                vValue.append( uiVal );
+
+                if( uiX + 1 == vAxisCords[ uiI ].size( ) )
+                {
+                    // zero position at end
+                    vIndexStart.append( readableBp( ( xCoord.uiIndexPos + xCoord.uiIndexSize ) * uiDividend ) );
+                    vIndexEnd.append( readableBp( ( xCoord.uiIndexPos + xCoord.uiIndexSize ) * uiDividend ) );
+                    vScreenPos.append( xCoord.uiScreenPos + xCoord.uiScreenSize );
+                    vValue.append( vvMinMaxTracks[ uiI ][ 0 ] );
+                }
+            }
+
+            vChrs.append( substringChr( sChr ) );
+            vScreenPoss.append( vScreenPos );
+            vIndexStarts.append( vIndexStart );
+            vIndexEnds.append( vIndexEnd );
+            vValues.append( vValue );
+            vColors.append( vColorPaletteAnnotation[ uiCnt % vColorPaletteAnnotation.size( ) ] );
+            vNames.append( "num non-empty bins" );
 
             ++uiCnt;
         }
@@ -603,17 +687,17 @@ void PartialQuarry::regCoverage( )
 
     registerNode(
         NodeNames::Tracks,
-        ComputeNode{
-            .sNodeName = "coverage_tracks",
-            .fFunc = &PartialQuarry::setTracks,
-            .vIncomingFunctions = { NodeNames::LCS, NodeNames::AnnotationColors, NodeNames::RnaAssociatedBackground },
-            .vIncomingSession = { { "settings", "normalization", "display_ice_remainder" },
-                                  { "settings", "normalization", "grid_seq_display_background" },
-                                  { "settings", "normalization", "radicl_seq_display_coverage" } },
-            .vSessionsIncomingInPrevious = { { "dividend" },
-                                             { "settings", "normalization", "grid_seq_axis_is_column" },
-                                             { "settings", "normalization", "radicl_seq_axis_is_column" },
-                                             { "settings", "normalization", "normalize_by" } } } );
+        ComputeNode{ .sNodeName = "coverage_tracks",
+                     .fFunc = &PartialQuarry::setTracks,
+                     .vIncomingFunctions = { NodeNames::LCS, NodeNames::AnnotationColors,
+                                             NodeNames::RnaAssociatedBackground, NodeNames::RadiclSeqCoverage },
+                     .vIncomingSession = { { "settings", "normalization", "display_ice_remainder" },
+                                           { "settings", "normalization", "grid_seq_display_background" },
+                                           { "settings", "normalization", "radicl_seq_display_coverage" } },
+                     .vSessionsIncomingInPrevious = { { "dividend" },
+                                                      { "settings", "normalization", "grid_seq_axis_is_column" },
+                                                      { "settings", "normalization", "radicl_seq_axis_is_column" },
+                                                      { "settings", "normalization", "normalize_by" } } } );
 
     registerNode( NodeNames::TrackExport,
                   ComputeNode{ .sNodeName = "track_export",

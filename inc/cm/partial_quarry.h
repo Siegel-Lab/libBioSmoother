@@ -214,6 +214,7 @@ class PartialQuarry
         RnaAssociatedGenesFilter,
         RnaAssociatedBackground,
         GridSeqSamples,
+        RadiclSeqSamples,
         SIZE
     };
     struct ComputeNode
@@ -700,7 +701,9 @@ class PartialQuarry
     std::vector<size_t> vBackgroundGridSeq;
 
     std::vector<AnnoCoord> vGridSeqSamples;
+    std::vector<AnnoCoord> vRadiclSeqSamples;
     std::vector<std::array<size_t, 2>> vRadiclSeqCoverage;
+    std::vector<std::array<size_t, 2>> vRadiclSeqNumNonEmptyBins;
 
     bool bCancel = false;
     std::mutex xUpdateMutex{ };
@@ -827,6 +830,8 @@ class PartialQuarry
     // normalization.h
     size_t getChromIdxForAnnoIdx( size_t );
     // normalization.h
+    bool setRadiclSeqSamples( );
+    // normalization.h
     bool setGridSeqSamples( );
     // normalization.h
     bool setGridSeqCoverage( );
@@ -941,7 +946,8 @@ class PartialQuarry
   protected:
     virtual std::vector<std::array<double, 2>>
     normalizeBinominalTestTrampoline( const std::vector<std::array<size_t, 2>>&,
-                                      const std::vector<std::array<size_t, 2>>&, size_t, double, bool, size_t )
+                                      const std::vector<std::array<size_t, 2>>&,
+                                      const std::vector<std::array<size_t, 2>>&, size_t, size_t, double, bool, size_t )
     {
         throw std::logic_error( "Function not implemented" );
     }

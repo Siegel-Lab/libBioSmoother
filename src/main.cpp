@@ -22,7 +22,9 @@ class PyPartialQuarry : public PartialQuarry
     /* Trampoline (need one for each virtual function) */
     ret_t normalizeBinominalTestTrampoline( const std::vector<std::array<size_t, 2>>& vFlatValues,
                                             const std::vector<std::array<size_t, 2>>& vNumInteractionsTotal,
-                                            size_t uiNumBinsInRowTotal,
+                                            const std::vector<std::array<size_t, 2>>& vNumBinsInteractingWith,
+                                            size_t uiSamples,
+                                            size_t uiMaxNumInteractingWith,
                                             double fPAccept,
                                             bool bIsCol,
                                             size_t uiGridHeight ) override
@@ -33,7 +35,9 @@ class PyPartialQuarry : public PartialQuarry
                            normalizeBinominalTestTrampoline, /* Name of function in C++ (must match Python name) */
                            vFlatValues, /* Argument(s) */
                            vNumInteractionsTotal, /* Argument(s) */
-                           uiNumBinsInRowTotal, /* Argument(s) */
+                           vNumBinsInteractingWith, /* Argument(s) */
+                           uiSamples, /* Argument(s) */
+                           uiMaxNumInteractingWith, /* Argument(s) */
                            fPAccept, /* Argument(s) */
                            bIsCol, /* Argument(s) */
                            uiGridHeight );
