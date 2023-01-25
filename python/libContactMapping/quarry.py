@@ -30,14 +30,15 @@ class Quarry(PartialQuarry):
         self.print_callback = lambda s: print(s)
 
     def normalizeBinominalTestTrampoline(
-        self, bin_values, num_interactions_total, num_bins, p_accept, is_col, grid_height
+        self, bin_values, num_interactions_total, num_bins_interacting_with, p_accept, is_col, grid_height
     ):
         def bin_test(jdx):
             ret = []
             for idx, val in enumerate(bin_values):
                 n = num_interactions_total[(idx // grid_height if is_col else idx % grid_height)][jdx]
+                p = 1 / num_bins_interacting_with[(idx // grid_height if is_col else idx % grid_height)][jdx]
                 x = val[jdx]
-                ret.append(binom_test(x, n, 1 / num_bins, alternative="greater"))
+                ret.append(binom_test(x, n, p, alternative="greater"))
             return ret
         psx = bin_test(0)
         psy = bin_test(1)

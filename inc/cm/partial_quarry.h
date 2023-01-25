@@ -33,6 +33,11 @@ struct IndexCoord
     size_t uiIndexSize;
 };
 
+struct AnnoCoord : IndexCoord
+{
+    size_t uiAnnoId;
+};
+
 struct AxisCoord : IndexCoord
 {
     size_t uiScreenPos;
@@ -694,7 +699,7 @@ class PartialQuarry
     std::vector<std::pair<size_t, size_t>> vChromIdForAnnoIdx;
     std::vector<size_t> vBackgroundGridSeq;
 
-    std::vector<IndexCoord> vGridSeqSamples;
+    std::vector<AnnoCoord> vGridSeqSamples;
     std::vector<std::array<size_t, 2>> vRadiclSeqCoverage;
 
     bool bCancel = false;
@@ -810,6 +815,15 @@ class PartialQuarry
     // replicates.h
     bool setBetweenGroup( );
 
+    // normalization.h
+    enum GetSamplesMode
+    {
+        OneAnnotation,
+        Bins,
+        BinnedAnno
+    };
+    bool getSamples( const GetSamplesMode&, const size_t, const std::string&, const size_t, const bool, const bool,
+                     std::vector<AnnoCoord>& );
     // normalization.h
     size_t getChromIdxForAnnoIdx( size_t );
     // normalization.h

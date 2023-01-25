@@ -36,8 +36,7 @@ class PyPartialQuarry : public PartialQuarry
                            uiNumBinsInRowTotal, /* Argument(s) */
                            fPAccept, /* Argument(s) */
                            bIsCol, /* Argument(s) */
-                           uiGridHeight
-        );
+                           uiGridHeight );
     }
 
     /* Trampoline (need one for each virtual function) */

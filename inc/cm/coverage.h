@@ -226,7 +226,7 @@ bool PartialQuarry::setTracks( )
                 if( bGridSeqNormDisp )
                     uiVal = (double)vBackgroundGridSeq[ uiX ];
                 else if( bRadiclNormDisp )
-                    uiVal = (double)vRadiclSeqCoverage[ uiX ][uiI];
+                    uiVal = (double)vRadiclSeqCoverage[ uiX ][ uiI ];
                 vvMinMaxTracks[ uiI ][ 0 ] = std::min( vvMinMaxTracks[ uiI ][ 0 ], uiVal );
                 vvMinMaxTracks[ uiI ][ 1 ] = std::max( vvMinMaxTracks[ uiI ][ 1 ], uiVal );
             }
@@ -293,7 +293,7 @@ bool PartialQuarry::setTracks( )
                 if( bGridSeqNormDisp )
                     uiVal = (double)vBackgroundGridSeq[ uiX ];
                 else if( bRadiclNormDisp )
-                    uiVal = (double)vRadiclSeqCoverage[ uiX ][uiI];
+                    uiVal = (double)vRadiclSeqCoverage[ uiX ][ uiI ];
 
                 // front corner
                 vIndexStart.append( readableBp( xCoord.uiIndexPos * uiDividend ) );
@@ -495,15 +495,15 @@ bool PartialQuarry::setRankedSlicesCDS( )
             CANCEL_RETURN;
             auto uiVal = vGridSeqAnnoCoverage[ vSorted[ uiI ][ uiX ] ][ uiI ];
 
-            const IndexCoord& rSample = vGridSeqSamples[ vSorted[ uiI ][ uiX ] ];
+            const AnnoCoord& rSample = vGridSeqSamples[ vSorted[ uiI ][ uiX ] ];
             const std::string& sChromName = this->vActiveChromosomes[ 0 ][ rSample.uiChromosome ].sName;
 
-            // const auto rIntervalIt = xIndices.vAnno.get( rJson[ sChromName ].get<int64_t>( ), uiAnnoIdx );
+            const auto rIntervalIt = xIndices.vAnno.get( rJson[ sChromName ].get<int64_t>( ), rSample.uiAnnoId );
 
             vChrs.append( substringChr( sChromName ) );
-            vAnnoDesc.append( /*xIndices.vAnno.desc( *rIntervalIt )*/ "" );
+            vAnnoDesc.append( xIndices.vAnno.desc( *rIntervalIt ) );
             vSampleId.append( vSorted[ uiI ][ uiX ] );
-            vAnnoIdx.append( /*uiAnnoIdx*/ 0 );
+            vAnnoIdx.append( rSample.uiAnnoId );
             vIndexStart.append( readableBp( rSample.uiIndexPos * uiDividend ) );
             vIndexEnd.append( readableBp( ( rSample.uiIndexPos + rSample.uiIndexSize ) * uiDividend ) );
 
@@ -622,14 +622,14 @@ void PartialQuarry::regCoverage( )
                                .vIncomingSession = { },
                                .vSessionsIncomingInPrevious = { { "dividend" } } } );
 
-    registerNode(
-        NodeNames::RankedSlicesCDS,
-        ComputeNode{ .sNodeName = "ranked_slices_cds",
-                     .fFunc = &PartialQuarry::setRankedSlicesCDS,
-                     .vIncomingFunctions = { NodeNames::RnaAssociatedGenesFilter },
-                     .vIncomingSession = { },
-                     .vSessionsIncomingInPrevious = { { "annotation", "by_name" },
-                                                      { "settings", "normalization", "grid_seq_annotation" }, { "dividend" } } } );
+    registerNode( NodeNames::RankedSlicesCDS,
+                  ComputeNode{ .sNodeName = "ranked_slices_cds",
+                               .fFunc = &PartialQuarry::setRankedSlicesCDS,
+                               .vIncomingFunctions = { NodeNames::RnaAssociatedGenesFilter },
+                               .vIncomingSession = { },
+                               .vSessionsIncomingInPrevious = { { "annotation", "by_name" },
+                                                                { "settings", "normalization", "grid_seq_annotation" },
+                                                                { "dividend" } } } );
 }
 
 
