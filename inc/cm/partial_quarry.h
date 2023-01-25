@@ -26,15 +26,18 @@ struct ChromDesc
     size_t uiLength;
 };
 
-struct AxisCoord
+struct IndexCoord
 {
     size_t uiChromosome;
-    size_t uiScreenPos;
     size_t uiIndexPos;
-    size_t uiScreenSize;
     size_t uiIndexSize;
+};
+
+struct AxisCoord : IndexCoord
+{
+    size_t uiScreenPos;
+    size_t uiScreenSize;
     size_t uiRegionIdx;
-    bool bFiltered = false;
 };
 
 struct DecayCoord
@@ -106,7 +109,7 @@ struct Annotation
  */
 void iterateEvenlyDividableByMaxPowerOfTwo( size_t uiFrom, size_t uiTo, std::function<bool( size_t )> fDo )
 {
-    if( uiFrom + 1 == uiTo )
+    if( uiFrom + 1 >= uiTo )
     {
         fDo( uiFrom );
         return;
@@ -201,9 +204,11 @@ class PartialQuarry
         GridSeqCoords,
         MappingQuality,
         RankedSlicesCDS,
-        RnaAssociatedGenes,
+        GridSeqCoverage,
+        RadiclSeqCoverage,
         RnaAssociatedGenesFilter,
         RnaAssociatedBackground,
+        GridSeqSamples,
         SIZE
     };
     struct ComputeNode
@@ -684,11 +689,13 @@ class PartialQuarry
     double fDataMax, fDataMin;
     size_t uiLogestCommonSuffix;
 
-    std::vector<size_t> vPickedAnnosGridSeq;
     std::vector<std::array<size_t, 2>> vGridSeqAnnoCoverage;
     std::vector<std::array<bool, 2>> vGridSeqFiltered;
     std::vector<std::pair<size_t, size_t>> vChromIdForAnnoIdx;
     std::vector<size_t> vBackgroundGridSeq;
+
+    std::vector<IndexCoord> vGridSeqSamples;
+    std::vector<std::array<size_t, 2>> vRadiclSeqCoverage;
 
     bool bCancel = false;
     std::mutex xUpdateMutex{ };
@@ -806,7 +813,9 @@ class PartialQuarry
     // normalization.h
     size_t getChromIdxForAnnoIdx( size_t );
     // normalization.h
-    bool setRnaAssociatedGenes( );
+    bool setGridSeqSamples( );
+    // normalization.h
+    bool setGridSeqCoverage( );
     // normalization.h
     bool setRnaAssociatedGenesFilter( );
     // normalization.h
@@ -819,6 +828,8 @@ class PartialQuarry
     bool normalizeSize( size_t );
     // normalization.h
     bool normalizeBinominalTest( );
+    // normalization.h
+    bool setRadiclSeqCoverage( );
     // normalization.h
     bool normalizeGridSeq( );
     // normalization.h
@@ -914,14 +925,14 @@ class PartialQuarry
     }
 
   protected:
-    virtual std::vector<std::array<double, 2>> normalizeBinominalTestTrampoline( std::vector<std::array<size_t, 2>>&,
-                                                                                 std::vector<std::array<size_t, 2>>&,
-                                                                                 size_t, double )
+    virtual std::vector<std::array<double, 2>>
+    normalizeBinominalTestTrampoline( const std::vector<std::array<size_t, 2>>&,
+                                      const std::vector<std::array<size_t, 2>>&, size_t, double, bool, size_t )
     {
         throw std::logic_error( "Function not implemented" );
     }
 
-    virtual std::vector<double> normalizeCoolerTrampoline( std::vector<size_t>&, size_t )
+    virtual std::vector<double> normalizeCoolerTrampoline( const std::vector<size_t>&, size_t )
     {
         throw std::logic_error( "Function not implemented" );
     }

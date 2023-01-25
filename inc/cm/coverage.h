@@ -194,10 +194,16 @@ bool PartialQuarry::setTracks( )
 {
     using namespace pybind11::literals;
     pybind11::gil_scoped_acquire acquire;
+    const std::string sNorm = getValue<std::string>( { "settings", "normalization", "normalize_by" } );
     const bool bGridSeqNormDisp =
-        getValue<std::string>( { "settings", "normalization", "normalize_by" } ) == "grid-seq" &&
-        getValue<bool>( { "settings", "normalization", "grid_seq_display_background" } );
-    const bool bIsCol = getValue<bool>( { "settings", "normalization", "grid_seq_axis_is_column" } );
+        sNorm == "grid-seq" && getValue<bool>( { "settings", "normalization", "grid_seq_display_background" } );
+    const bool bRadiclNormDisp =
+        sNorm == "radicl-seq" && getValue<bool>( { "settings", "normalization", "radicl_seq_display_coverage" } );
+    bool bIsCol;
+    if( bGridSeqNormDisp )
+        bIsCol = getValue<bool>( { "settings", "normalization", "grid_seq_axis_is_column" } );
+    else if( bRadiclNormDisp )
+        bIsCol = getValue<bool>( { "settings", "normalization", "radicl_seq_axis_is_column" } );
 
     size_t uiDividend = getValue<size_t>( { "dividend" } );
     for( size_t uiI = 0; uiI < 2; uiI++ )
@@ -214,9 +220,13 @@ bool PartialQuarry::setTracks( )
                 vvMinMaxTracks[ uiI ][ 0 ] = std::min( vvMinMaxTracks[ uiI ][ 0 ], uiVal );
                 vvMinMaxTracks[ uiI ][ 1 ] = std::max( vvMinMaxTracks[ uiI ][ 1 ], uiVal );
             }
-            if( bGridSeqNormDisp && ( bIsCol == ( uiI == 0 ) ) )
+            if( ( bRadiclNormDisp || bGridSeqNormDisp ) && ( bIsCol == ( uiI == 0 ) ) )
             {
-                auto uiVal = (double)vBackgroundGridSeq[ uiX ];
+                double uiVal;
+                if( bGridSeqNormDisp )
+                    uiVal = (double)vBackgroundGridSeq[ uiX ];
+                else if( bRadiclNormDisp )
+                    uiVal = (double)vRadiclSeqCoverage[ uiX ][uiI];
                 vvMinMaxTracks[ uiI ][ 0 ] = std::min( vvMinMaxTracks[ uiI ][ 0 ], uiVal );
                 vvMinMaxTracks[ uiI ][ 1 ] = std::max( vvMinMaxTracks[ uiI ][ 1 ], uiVal );
             }
@@ -231,7 +241,7 @@ bool PartialQuarry::setTracks( )
 
         size_t uiCnt = 0;
 
-        if( bGridSeqNormDisp && ( bIsCol == ( uiI == 0 ) ) )
+        if( ( bRadiclNormDisp || bGridSeqNormDisp ) && ( bIsCol == ( uiI == 0 ) ) )
         {
             pybind11::list vScreenPos;
             pybind11::list vIndexStart;
@@ -263,7 +273,10 @@ bool PartialQuarry::setTracks( )
 
                     vColors.append( vColorPaletteAnnotation[ uiCnt % vColorPaletteAnnotation.size( ) ] );
 
-                    vNames.append( "background RNA associated elements" );
+                    if( bGridSeqNormDisp )
+                        vNames.append( "background RNA associated elements" );
+                    else if( bRadiclNormDisp )
+                        vNames.append( "datapool coverage" );
                 }
 
                 if( uiX == 0 )
@@ -276,7 +289,11 @@ bool PartialQuarry::setTracks( )
                 }
 
                 sChr = sChromName;
-                auto uiVal = vBackgroundGridSeq[ uiX ];
+                double uiVal;
+                if( bGridSeqNormDisp )
+                    uiVal = (double)vBackgroundGridSeq[ uiX ];
+                else if( bRadiclNormDisp )
+                    uiVal = (double)vRadiclSeqCoverage[ uiX ][uiI];
 
                 // front corner
                 vIndexStart.append( readableBp( xCoord.uiIndexPos * uiDividend ) );
@@ -306,7 +323,10 @@ bool PartialQuarry::setTracks( )
             vIndexEnds.append( vIndexEnd );
             vValues.append( vValue );
             vColors.append( vColorPaletteAnnotation[ uiCnt % vColorPaletteAnnotation.size( ) ] );
-            vNames.append( "background RNA associated elements" );
+            if( bGridSeqNormDisp )
+                vNames.append( "background RNA associated elements" );
+            else if( bRadiclNormDisp )
+                vNames.append( "datapool coverage" );
 
             ++uiCnt;
         }
@@ -440,6 +460,7 @@ bool PartialQuarry::setRankedSlicesCDS( )
 {
     const std::string sAnno = getValue<std::string>( { "settings", "normalization", "grid_seq_annotation" } );
     const auto rJson = getValue<json>( { "annotation", "by_name", sAnno } );
+    const uint32_t uiDividend = getValue<uint32_t>( { "dividend" } );
     std::array<std::vector<size_t>, 2> vSorted;
 
     for( size_t uiI = 0; uiI < 2; uiI++ )
@@ -474,17 +495,17 @@ bool PartialQuarry::setRankedSlicesCDS( )
             CANCEL_RETURN;
             auto uiVal = vGridSeqAnnoCoverage[ vSorted[ uiI ][ uiX ] ][ uiI ];
 
-            const size_t uiAnnoIdx = vPickedAnnosGridSeq[ vSorted[ uiI ][ uiX ] ];
-            const std::string& sChromName = this->vActiveChromosomes[ 0 ][ getChromIdxForAnnoIdx( uiAnnoIdx ) ].sName;
+            const IndexCoord& rSample = vGridSeqSamples[ vSorted[ uiI ][ uiX ] ];
+            const std::string& sChromName = this->vActiveChromosomes[ 0 ][ rSample.uiChromosome ].sName;
 
-            const auto rIntervalIt = xIndices.vAnno.get( rJson[ sChromName ].get<int64_t>( ), uiAnnoIdx );
+            // const auto rIntervalIt = xIndices.vAnno.get( rJson[ sChromName ].get<int64_t>( ), uiAnnoIdx );
 
             vChrs.append( substringChr( sChromName ) );
-            vAnnoDesc.append( xIndices.vAnno.desc( *rIntervalIt ) );
+            vAnnoDesc.append( /*xIndices.vAnno.desc( *rIntervalIt )*/ "" );
             vSampleId.append( vSorted[ uiI ][ uiX ] );
-            vAnnoIdx.append( uiAnnoIdx );
-            vIndexStart.append( readableBp( rIntervalIt->uiAnnoStart ) );
-            vIndexEnd.append( readableBp( rIntervalIt->uiAnnoEnd ) );
+            vAnnoIdx.append( /*uiAnnoIdx*/ 0 );
+            vIndexStart.append( readableBp( rSample.uiIndexPos * uiDividend ) );
+            vIndexEnd.append( readableBp( ( rSample.uiIndexPos + rSample.uiIndexSize ) * uiDividend ) );
 
             vXs.append( uiX );
             vYs.append( uiVal );
@@ -580,15 +601,19 @@ void PartialQuarry::regCoverage( )
                                   { "replicates", "by_name" } },
             .vSessionsIncomingInPrevious = { { "settings", "filters", "incomplete_alignments" }, { "dividend" } } } );
 
-    registerNode( NodeNames::Tracks,
-                  ComputeNode{ .sNodeName = "coverage_tracks",
-                               .fFunc = &PartialQuarry::setTracks,
-                               .vIncomingFunctions = { NodeNames::LCS, NodeNames::AnnotationColors,
-                                                       NodeNames::RnaAssociatedBackground },
-                               .vIncomingSession = { { "settings", "normalization", "display_ice_remainder" },
-                                                     { "settings", "normalization", "grid_seq_display_background" } },
-                               .vSessionsIncomingInPrevious = {
-                                   { "dividend" }, { "settings", "normalization", "grid_seq_axis_is_column" }, { "settings", "normalization", "normalize_by" } } } );
+    registerNode(
+        NodeNames::Tracks,
+        ComputeNode{
+            .sNodeName = "coverage_tracks",
+            .fFunc = &PartialQuarry::setTracks,
+            .vIncomingFunctions = { NodeNames::LCS, NodeNames::AnnotationColors, NodeNames::RnaAssociatedBackground },
+            .vIncomingSession = { { "settings", "normalization", "display_ice_remainder" },
+                                  { "settings", "normalization", "grid_seq_display_background" },
+                                  { "settings", "normalization", "radicl_seq_display_coverage" } },
+            .vSessionsIncomingInPrevious = { { "dividend" },
+                                             { "settings", "normalization", "grid_seq_axis_is_column" },
+                                             { "settings", "normalization", "radicl_seq_axis_is_column" },
+                                             { "settings", "normalization", "normalize_by" } } } );
 
     registerNode( NodeNames::TrackExport,
                   ComputeNode{ .sNodeName = "track_export",
@@ -604,7 +629,7 @@ void PartialQuarry::regCoverage( )
                      .vIncomingFunctions = { NodeNames::RnaAssociatedGenesFilter },
                      .vIncomingSession = { },
                      .vSessionsIncomingInPrevious = { { "annotation", "by_name" },
-                                                      { "settings", "normalization", "grid_seq_annotation" } } } );
+                                                      { "settings", "normalization", "grid_seq_annotation" }, { "dividend" } } } );
 }
 
 

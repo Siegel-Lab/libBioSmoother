@@ -91,11 +91,13 @@ std::pair<std::vector<AxisCoord>, std::vector<AxisRegion>> axisCoordsHelper( siz
             }
             if( bAddBin )
                 vRet.push_back( AxisCoord{
-                    .uiChromosome = uiI, //
+                    {
+                        .uiChromosome = uiI, //
+                        .uiIndexPos = uiIndexPos, //
+                        .uiIndexSize = uiCurrBinSize, //
+                    },
                     .uiScreenPos = uiCurrScreenPos, //
-                    .uiIndexPos = uiIndexPos, //
                     .uiScreenSize = uiCurrBinSize, //
-                    .uiIndexSize = uiCurrBinSize, //
                     .uiRegionIdx = uiChr //
                 } );
             bool bIncScreenPos;
@@ -124,11 +126,13 @@ std::pair<std::vector<AxisCoord>, std::vector<AxisRegion>> axisCoordsHelper( siz
             assert( uiItrEndPos >= uiStartChromPos );
             vRet2.push_back( AxisRegion{
                 {
-                    .uiChromosome = uiI, //
+                    {
+                        .uiChromosome = uiI, //
+                        .uiIndexPos = uiStartChromPos, //
+                        .uiIndexSize = uiItrEndPos - uiStartChromPos //
+                    },
                     .uiScreenPos = uiStartScreenPos, //
-                    .uiIndexPos = uiStartChromPos, //
                     .uiScreenSize = uiCurrScreenPos - uiStartScreenPos, //
-                    .uiIndexSize = uiItrEndPos - uiStartChromPos, //
                     .uiRegionIdx = uiChr //
                 },
                 .uiCoordStartIdx = uiStartIdx, //
@@ -320,11 +324,13 @@ annoCoordsHelper( size_t uiBinSize, size_t uiScreenStartPos, size_t uiScreenEndP
                     }
 
                     vRet.push_back( AxisCoord{
-                        .uiChromosome = uiI, //
+                        {
+                            .uiChromosome = uiI, //
+                            .uiIndexPos = uiIndexPos, //
+                            .uiIndexSize = uiCurrIndexSize //
+                        },
                         .uiScreenPos = uiCurrScreenPos, //
-                        .uiIndexPos = uiIndexPos, //
                         .uiScreenSize = uiCurrScreenSize, //
-                        .uiIndexSize = uiCurrIndexSize, //
                         .uiRegionIdx = uiChr //
                     } );
                     if( iAnnoInMultipleBins != 2 && vRet2.size( ) > 0 && vRet2.back( ).uiChromosome == uiI &&
@@ -338,11 +344,13 @@ annoCoordsHelper( size_t uiBinSize, size_t uiScreenStartPos, size_t uiScreenEndP
                     {
                         vRet2.push_back( AxisRegion{
                             {
-                                .uiChromosome = uiI, //
+                                {
+                                    .uiChromosome = uiI, //
+                                    .uiIndexPos = uiIndexPos, //
+                                    .uiIndexSize = uiCurrIndexSize //
+                                },
                                 .uiScreenPos = uiCurrScreenPos, //
-                                .uiIndexPos = uiIndexPos, //
                                 .uiScreenSize = uiCurrScreenSize, //
-                                .uiIndexSize = uiCurrIndexSize, //
                                 .uiRegionIdx = uiChr //
                             },
                             .uiCoordStartIdx = vRet.size( ) - 1, //
