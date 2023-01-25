@@ -221,7 +221,7 @@ bool PartialQuarry::setDecayValues( )
                         int64_t iChrTopRightCornerPos = iChrX - iChrY;
                         int64_t iTop = iChrX + iChrY - std::abs( iChrTopRightCornerPos - iCornerPos );
 
-                        int64_t iMyH = vCoords[ uiI ].iTo - vCoords[ uiI ].iFrom;
+                        int64_t iMyH = std::max( (int64_t)1, vCoords[ uiI ].iTo - vCoords[ uiI ].iFrom);
                         int64_t iH = std::max( (int64_t)1, ( ( iTop - iMyH ) - iBot ) / (int64_t)uiSamplesMax );
 
                         if( ( iTop - iMyH ) - iBot >= (int64_t)( uiSamplesMin - 1 ) * iMyH )
@@ -238,12 +238,12 @@ bool PartialQuarry::setDecayValues( )
                                 assert( iMyTop >= iCornerPos );
                                 size_t uiYe = std::max( uiYs + 1, (size_t)( iMyTop + iCornerPos ) / 2 );
                                 size_t uiXe = std::max( uiXs + 1, (size_t)( iMyTop - iCornerPos ) / 2 );
-                                assert( uiYe <= (size_t)iChrY );
-                                assert( uiXe <= (size_t)iChrX );
+                                assert( uiYe <= (size_t)iChrX );
+                                assert( uiXe <= (size_t)iChrY );
 
                                 vvVals.push_back( xIndices.count( iDataSetId,
-                                                                  { uiXs, uiYs, uiMapQMax, uiFromAnnoFilter },
-                                                                  { uiXe, uiYe, uiMapQMin, uiToAnnoFilter },
+                                                                  { uiXs, uiYs, uiMapQMin, uiFromAnnoFilter },
+                                                                  { uiXe, uiYe, uiMapQMax, uiToAnnoFilter },
                                                                   xIntersect,
                                                                   0 ) );
 
@@ -483,8 +483,8 @@ bool PartialQuarry::setDecayCDS( )
             vX.append( iT );
             vY.append( fVal );
 
-            std::string sChromNameX = vActiveChromosomes[ uiI ][ vDistDepDecCoords[ uiI ][ uiJ ].uiChromosomeX ].sName;
-            std::string sChromNameY = vActiveChromosomes[ uiI ][ vDistDepDecCoords[ uiI ][ uiJ ].uiChromosomeY ].sName;
+            std::string sChromNameX = vActiveChromosomes[ uiJ ][ vDistDepDecCoords[ uiI ][ uiJ ].uiChromosomeX ].sName;
+            std::string sChromNameY = vActiveChromosomes[ uiJ ][ vDistDepDecCoords[ uiI ][ uiJ ].uiChromosomeY ].sName;
             vChrs.append( substringChr( sChromNameX ) + " - " + substringChr( sChromNameY ) +
                           ( uiJ == 0 ? ", Group A" : ", Group B" ) );
             vXs.append( vX );

@@ -800,7 +800,7 @@ void PartialQuarry::regNormalization( )
                   ComputeNode{ .sNodeName = "normalized_bins",
                                .fFunc = &PartialQuarry::setNormalized,
                                .vIncomingFunctions = { NodeNames::FlatValues, NodeNames::RnaAssociatedBackground,
-                                                       NodeNames::RadiclSeqCoverage, NodeNames::GridSeqCoverage },
+                                                       NodeNames::RadiclSeqCoverage },
                                .vIncomingSession = { { "settings", "normalization", "p_accept", "val" },
                                                      { "settings", "normalization", "ice_sparse_slice_filter", "val" },
                                                      { "contigs", "genome_size" } },

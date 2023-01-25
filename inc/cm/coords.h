@@ -1021,16 +1021,24 @@ bool PartialQuarry::setDecayCoords( )
             std::array<DecayCoord, 2> vKey;
             for( size_t uiI = 0; uiI < 2; uiI++ )
             {
-                int64_t iA =
-                    (int64_t)( vCoords[ uiI ].uiIndexX + vCoords[ uiI ].uiIndexW ) - (int64_t)vCoords[ uiI ].uiIndexY;
+                if(vCoords[ uiI ].uiChromosomeX != std::numeric_limits<size_t>::max())
+                {
+                    assert(vCoords[ uiI ].uiChromosomeX < vActiveChromosomes[0].size());
+                    assert(vCoords[ uiI ].uiChromosomeY < vActiveChromosomes[1].size());
 
-                int64_t iB =
-                    (int64_t)vCoords[ uiI ].uiIndexX - (int64_t)( vCoords[ uiI ].uiIndexY + vCoords[ uiI ].uiIndexH );
+                    int64_t iA =
+                        (int64_t)( vCoords[ uiI ].uiIndexX + vCoords[ uiI ].uiIndexW ) - (int64_t)vCoords[ uiI ].uiIndexY;
 
-                int64_t iS = std::min( iA, iB );
-                int64_t iE = std::max( std::max( iA, iB ), iS + 1 );
+                    int64_t iB =
+                        (int64_t)vCoords[ uiI ].uiIndexX - (int64_t)( vCoords[ uiI ].uiIndexY + vCoords[ uiI ].uiIndexH );
 
-                vKey[ uiI ] = DecayCoord{ vCoords[ uiI ].uiChromosomeX, vCoords[ uiI ].uiChromosomeY, iS, iE };
+                    int64_t iS = std::min( iA, iB );
+                    int64_t iE = std::max( std::max( iA, iB ), iS + 1 );
+
+                    vKey[ uiI ] = DecayCoord{ vCoords[ uiI ].uiChromosomeX, vCoords[ uiI ].uiChromosomeY, iS, iE };
+                }
+                else
+                    vKey[ uiI ] = {};
             }
 
             if( vPtr.count( vKey ) == 0 )
