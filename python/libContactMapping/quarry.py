@@ -61,7 +61,7 @@ class Quarry(PartialQuarry):
     def __combine_hex_values(self, d):
         ## taken from: https://stackoverflow.com/questions/61488790/how-can-i-proportionally-mix-colors-in-python
         d_items = sorted(d.items())
-        tot_weight = sum(d.values())
+        tot_weight = max(1, sum(d.values()))
         red = int(sum([int(k[:2], 16) * v for k, v in d_items]) / tot_weight)
         green = int(sum([int(k[2:4], 16) * v for k, v in d_items]) / tot_weight)
         blue = int(sum([int(k[4:6], 16) * v for k, v in d_items]) / tot_weight)
