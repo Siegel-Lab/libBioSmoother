@@ -2,26 +2,23 @@ from setuptools import setup
 
 setup(
     name='libSmoother',
-    version='0.1.0',    
+    version='0.1.0',
     description='A example Python package',
-    url='https://github.com/shuds13/pyexample',
-    author='Stephen Hudson',
-    author_email='shudson@anl.gov',
-    license='BSD 2-clause',
-    packages=['pyexample'],
-    install_requires=['mpi4py>=2.0',
-                      'numpy',                     
-                      ],
+    url='https://github.com/MarkusRainerSchmidt/libSmoother',
+    author='Markus Schmidt',
+    author_email='markus.rainer.schmidt@gmail.com',
+    license='MIT',
+    packages=['libSmoother'],
+    install_requires=[ 
+        # @todo currently done via conda environment
+    ],
 
     classifiers=[
-        'Development Status :: 1 - Planning',
+        'Development Status :: 3 - Alpha',
         'Intended Audience :: Science/Research',
-        'License :: OSI Approved :: BSD License',  
+        'License :: MIT License',  
         'Operating System :: POSIX :: Linux',        
-        'Programming Language :: Python :: 2',
-        'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.4',
-        'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6',
     ],
 )

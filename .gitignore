@@ -25,3 +25,4 @@ settings.json
 *.pyc
 perf.data
 perf.data.old
+*.egg-info
