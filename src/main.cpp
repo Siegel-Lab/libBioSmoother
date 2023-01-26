@@ -147,7 +147,7 @@ template <bool CACHE> void exportSpsInterface( pybind11::module& m )
 }
 
 
-PYBIND11_MODULE( libContactMapping, m )
+PYBIND11_MODULE( libSmoother, m )
 {
     // prevent creation of stxxl log files
     if( getenv( (char*)"STXXLLOGFILE" ) == nullptr )

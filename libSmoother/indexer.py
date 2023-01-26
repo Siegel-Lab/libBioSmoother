@@ -1,4 +1,4 @@
-from ._import_lib_cm import CachedSpsInterface, DiskSpsInterface
+from ._import_lib_smoother import CachedSpsInterface, DiskSpsInterface
 from ._parse_and_group_reads import *
 import json
 import os

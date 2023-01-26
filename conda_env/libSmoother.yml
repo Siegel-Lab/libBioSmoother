@@ -1,4 +1,4 @@
-name: libContactMapping
+name: libSmoother
 channels:
   - conda-forge 
 dependencies:

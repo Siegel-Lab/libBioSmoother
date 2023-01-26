@@ -1,6 +1,6 @@
 from threading import Thread
 from time import sleep
-from libContactMapping import test
+from libSmoother import test
 
 def print_stuff():
     for _ in range(3):

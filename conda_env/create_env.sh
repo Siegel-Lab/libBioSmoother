@@ -1,2 +1,2 @@
 #!/bin/bash
-conda env create --force -f libContactMapping.yml
+conda env create --force -f libSmoother.yml

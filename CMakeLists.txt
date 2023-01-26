@@ -1,11 +1,7 @@
 cmake_minimum_required (VERSION 3.9)
 
 # only adjust major and minor version - patch is taken from git commit number
-project("libContactMapping" VERSION 0.1.0)
-
-# set building python library as default
-option(WITH_PYTHON "Build python library." ON)
-option(WITH_PYTHON "Build python library." ON)
+project("libSmoother" VERSION 0.1.0)
 
 # disallow in-source builds
 if("${PROJECT_SOURCE_DIR}" STREQUAL "${PROJECT_BINARY_DIR}")
@@ -59,14 +55,11 @@ find_package(pybind11 REQUIRED)
 find_package(nlohmann_json REQUIRED)
 find_package(pybind11_json REQUIRED)
 
-# create python module if python has been found
-if(WITH_PYTHON)
-    pybind11_add_module( libContactMapping src/main.cpp )
-    target_include_directories( libContactMapping PUBLIC inc )
-    target_link_libraries( libContactMapping PRIVATE Sps nlohmann_json::nlohmann_json )
-    target_compile_definitions( libContactMapping PRIVATE WITH_PYTHON )
-    add_dependencies( libContactMapping cm_config_version cm_config_build_time )
-endif()
+pybind11_add_module( libSmoother src/main.cpp )
+target_include_directories( libSmoother PUBLIC inc )
+target_link_libraries( libSmoother PRIVATE Sps nlohmann_json::nlohmann_json )
+target_compile_definitions( libSmoother PRIVATE WITH_PYTHON )
+add_dependencies( libSmoother cm_config_version cm_config_build_time )
 
 
 
