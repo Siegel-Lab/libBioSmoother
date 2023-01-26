@@ -1,4 +1,4 @@
-from libContactMapping import make_main_parser
+from .index_parser import make_main_parser
 
 if __name__ == "__main__":
     parser = make_main_parser()

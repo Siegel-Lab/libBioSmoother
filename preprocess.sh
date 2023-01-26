@@ -24,13 +24,13 @@ then
 
     # Anna #
     #python3 python/main.py indexer init "${INDEX_PREFIX}" "../smoother_in/Lister427.sizes" -d 1000
-    python3 python/main.py indexer init "${INDEX_PREFIX}" "../smoother_in/Lister427_no_uni.sizes" -d 1000
+    python3 libContactMapping/cli.py indexer init "${INDEX_PREFIX}" "../smoother_in/Lister427_no_uni.sizes" -d 1000
 
 
     #python3 python/main.py indexer anno "${INDEX_PREFIX}" "../smoother_in/HGAP3_Tb427v10_merged_2021_06_21.gff3"
 
     #gdb python3 -ex "run python/main.py indexer repl \"${INDEX_PREFIX}\" \"${BEDS}/NS503_P10_Total_2.${BED_SUF}\" \"P10_Total_Rep2\" -g a"
-    python3  python/main.py indexer repl "${INDEX_PREFIX}" "${BEDS}/NS503_P10_Total_2.${BED_SUF}" "P10_Total_Rep2" -g a
+    python3  libContactMapping/cli.py indexer repl "${INDEX_PREFIX}" "${BEDS}/NS503_P10_Total_2.${BED_SUF}" "P10_Total_Rep2" -g a
 
     #python3  python/main.py indexer repl "${INDEX_PREFIX}" "${BEDS}/NS617_P10_Total_1.${BED_SUF}" "P10_Total_Rep1" -g a
     #python3  python/main.py indexer repl "${INDEX_PREFIX}" "${BEDS}/NS504_P10_Total_3.${BED_SUF}" "P10_Total_Rep3" -g a
@@ -67,11 +67,11 @@ else
 
     rm -r ${INDEX_PREFIX}.smoother_index
 
-    python3 python/main.py indexer init ${INDEX_PREFIX} ../smoother/Lister427_no_unitig.sizes -d 10000 #--test
+    python3 libContactMapping/cli.py indexer init ${INDEX_PREFIX} ../smoother/Lister427_no_unitig.sizes -d 10000 #--test
 
-    python3 python/main.py indexer anno ${INDEX_PREFIX} ../smoother/HGAP3_Tb427v10_merged_2021_06_21.gff3
+    python3 libContactMapping/cli.py indexer anno ${INDEX_PREFIX} ../smoother/HGAP3_Tb427v10_merged_2021_06_21.gff3
 
-    python3 python/main.py indexer repl ${INDEX_PREFIX} ../smoother_in/anna.sort.test.PRE2 P10_Total
+    python3 libContactMapping/cli.py indexer repl ${INDEX_PREFIX} ../smoother_in/anna.sort.test.PRE2 P10_Total
     #python3 python/main.py indexer repl --shekelyan ${INDEX_PREFIX} ../smoother_in/anna.sort.test.PRE2 P10_Total
     #gdb python3 -ex "run python/main.py indexer repl ${INDEX_PREFIX} ../smoother_in/anna.sort.test.PRE2 P10_Total"
     #gdb python3 -ex "run python/main.py indexer repl ${INDEX_PREFIX} ../smoother_in/claudia.pre1 P10_R1"
