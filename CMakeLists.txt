@@ -1,7 +1,7 @@
 cmake_minimum_required (VERSION 3.9)
 
 # only adjust major and minor version - patch is taken from git commit number
-project("libSmoother" VERSION 0.1.0)
+project("libSmootherCpp" VERSION 0.1.0)
 
 # disallow in-source builds
 if("${PROJECT_SOURCE_DIR}" STREQUAL "${PROJECT_BINARY_DIR}")
@@ -55,11 +55,11 @@ find_package(pybind11 REQUIRED)
 find_package(nlohmann_json REQUIRED)
 find_package(pybind11_json REQUIRED)
 
-pybind11_add_module( libSmoother src/main.cpp )
-target_include_directories( libSmoother PUBLIC inc )
-target_link_libraries( libSmoother PRIVATE Sps nlohmann_json::nlohmann_json )
-target_compile_definitions( libSmoother PRIVATE WITH_PYTHON )
-add_dependencies( libSmoother cm_config_version cm_config_build_time )
+pybind11_add_module( libSmootherCpp src/main.cpp )
+target_include_directories( libSmootherCpp PUBLIC inc )
+target_link_libraries( libSmootherCpp PRIVATE Sps nlohmann_json::nlohmann_json )
+target_compile_definitions( libSmootherCpp PRIVATE WITH_PYTHON )
+add_dependencies( libSmootherCpp cm_config_version cm_config_build_time )
 
 
 

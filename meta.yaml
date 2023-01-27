@@ -1,0 +1,39 @@
+{% set version = "0.1.0" %}
+{% set sha256 = "69e1f48063cd948ff2eb35c4998701a05e52f6bdf15c84a1141931c086875014" %}
+
+package:
+  name: libSmoother
+  version: '{{version}}'
+
+source:
+  url: "https://github.com/MarkusRainerSchmidt/libSmoother/archive/{{version}}.tar.gz"
+  sha256: "{{sha256}}"
+
+build:
+  number: 0
+  skip: true # [py2k or osx]
+
+requirements:
+  build:
+    - make
+    - gcc=9.4.0
+    - gxx=9.4.0
+    - cmake=3.19
+    - make=4.3
+    - git=2.23.0
+  host:
+    - python>=3.6
+    - pybind11=2.8.0
+    - nlohmann_json=3.11.2
+    - pybind11_json=0.2.11
+  run:
+    - python=3.6
+
+test:
+  commands:
+    - maCMD -h
+
+about:
+  home: https://github.com/MarkusRainerSchmidt/libSmoother
+  license: MIT
+  summary: On-the-fly processing and visualization of contact mapping data
