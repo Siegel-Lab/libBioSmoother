@@ -21,7 +21,7 @@ except ImportError:
     # Error handling
     HAS_STATS = False
     pass
-from libSmootherCpp import PartialQuarry, SPS_VERSION, CM_VERSION
+from ._import_lib_smoother_cpp import PartialQuarry, SPS_VERSION, CM_VERSION
 
 
 class Quarry(PartialQuarry):

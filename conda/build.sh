@@ -11,8 +11,10 @@ cmake -DCMAKE_BUILD_TYPE=RELEASE ..
 make VERBOSE=1 -j 8
 
 # move libary into python package
-cp libSmoother.*.so ../libSmoother/
-cd ..
+mkdir -p $PREFIX/lib
+cp libsmoothercpp*.so $PREFIX/lib
+ln -s $PREFIX/lib/libsmoothercpp*.so $PREFIX/lib/libsmoothercpp.so
 
 # install python package
-python setup.py install
+cd ..
+$PYTHON conda/setup.py install

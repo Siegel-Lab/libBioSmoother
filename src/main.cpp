@@ -147,7 +147,7 @@ template <bool CACHE> void exportSpsInterface( pybind11::module& m )
 }
 
 
-PYBIND11_MODULE( libSmootherCpp, m )
+PYBIND11_MODULE( libsmoothercpp, m )
 {
     // prevent creation of stxxl log files
     if( getenv( (char*)"STXXLLOGFILE" ) == nullptr )

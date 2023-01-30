@@ -1,4 +1,4 @@
-from libSmootherCpp import CachedSpsInterface, DiskSpsInterface
+from ._import_lib_smoother_cpp import CachedSpsInterface, DiskSpsInterface
 from ._parse_and_group_reads import *
 import json
 import os

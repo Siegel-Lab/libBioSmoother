@@ -3,6 +3,8 @@ build_rel_w_dbg/*
 build_dbg/*
 build_test/*
 build_benchmark/*
+build_tmp/*
+build_install/*
 build/*
 *.bin
 test/*.coords

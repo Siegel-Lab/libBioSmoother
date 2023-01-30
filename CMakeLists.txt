@@ -49,17 +49,19 @@ add_custom_target(
         "${CMAKE_BINARY_DIR}/generated/inc/cm/build_time.h"
     VERBATIM)
 
-add_subdirectory(../libSps ${CMAKE_BINARY_DIR}/libSps EXCLUDE_FROM_ALL)
+find_package(libsps REQUIRED)
 set(JSON_BuildTests OFF CACHE INTERNAL "")
 find_package(pybind11 REQUIRED)
 find_package(nlohmann_json REQUIRED)
 find_package(pybind11_json REQUIRED)
 
-pybind11_add_module( libSmootherCpp src/main.cpp )
-target_include_directories( libSmootherCpp PUBLIC inc )
-target_link_libraries( libSmootherCpp PRIVATE Sps nlohmann_json::nlohmann_json )
-target_compile_definitions( libSmootherCpp PRIVATE WITH_PYTHON )
-add_dependencies( libSmootherCpp cm_config_version cm_config_build_time )
+pybind11_add_module( libsmoothercpp src/main.cpp )
+target_include_directories( libsmoothercpp PUBLIC inc )
+target_include_directories( libsmoothercpp PUBLIC ${CMAKE_BINARY_DIR}/generated/inc/ )
+target_include_directories( libsmoothercpp SYSTEM PRIVATE ${STXXL_INCLUDE_DIRS} )
+target_link_libraries( libsmoothercpp PRIVATE libsps nlohmann_json::nlohmann_json )
+target_compile_definitions( libsmoothercpp PRIVATE WITH_PYTHON )
+add_dependencies( libsmoothercpp cm_config_version cm_config_build_time )
 
 
 
