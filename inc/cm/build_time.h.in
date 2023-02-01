@@ -1,4 +1,4 @@
 #pragma once
 
 
-#define CM_BUILD_TIME "@BUILD_TIME@"
+#define LIB_SMOOTHER_CPP_BUILD_TIME "@BUILD_TIME@"

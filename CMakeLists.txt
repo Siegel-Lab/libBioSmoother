@@ -1,4 +1,4 @@
-cmake_minimum_required (VERSION 3.9)
+cmake_minimum_required (VERSION 3.17)
 
 # only adjust major and minor version - patch is taken from git commit number
 project("libSmootherCpp" VERSION 0.1.0)
@@ -49,17 +49,17 @@ add_custom_target(
         "${CMAKE_BINARY_DIR}/generated/inc/cm/build_time.h"
     VERBATIM)
 
-find_package(libsps REQUIRED)
-set(JSON_BuildTests OFF CACHE INTERNAL "")
-find_package(pybind11 REQUIRED)
-find_package(nlohmann_json REQUIRED)
-find_package(pybind11_json REQUIRED)
+find_package (Python QUIET COMPONENTS Interpreter Development)
+
+find_package(libsps REQUIRED PATHS ${Python_SITEARCH})
+find_package(pybind11 REQUIRED PATHS ${Python_SITEARCH})
 
 pybind11_add_module( libsmoothercpp src/main.cpp )
 target_include_directories( libsmoothercpp PUBLIC inc )
+target_include_directories( libsmoothercpp PUBLIC contrib/inc )
 target_include_directories( libsmoothercpp PUBLIC ${CMAKE_BINARY_DIR}/generated/inc/ )
 target_include_directories( libsmoothercpp SYSTEM PRIVATE ${STXXL_INCLUDE_DIRS} )
-target_link_libraries( libsmoothercpp PRIVATE libsps nlohmann_json::nlohmann_json )
+target_link_libraries( libsmoothercpp PRIVATE libsps )
 target_compile_definitions( libsmoothercpp PRIVATE WITH_PYTHON )
 add_dependencies( libsmoothercpp cm_config_version cm_config_build_time )
 

@@ -21,7 +21,7 @@ except ImportError:
     # Error handling
     HAS_STATS = False
     pass
-from ._import_lib_smoother_cpp import PartialQuarry, SPS_VERSION, CM_VERSION
+from ._import_lib_smoother_cpp import PartialQuarry, SPS_VERSION, LIB_SMOOTHER_CPP_VERSION
 
 
 class Quarry(PartialQuarry):
@@ -109,8 +109,8 @@ class Quarry(PartialQuarry):
         return SPS_VERSION
 
     @staticmethod
-    def get_libCm_version():
-        return CM_VERSION
+    def get_libSmoother_version():
+        return LIB_SMOOTHER_CPP_VERSION
 
     @staticmethod
     def has_cooler_icing():

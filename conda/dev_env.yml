@@ -10,8 +10,6 @@ dependencies:
   - git=2.23.0
   - make=4.3
   - pybind11=2.8.0
-  - nlohmann_json=3.11.2
-  - pybind11_json=0.2.11
   - gdb
   - sphinx
   - sphinx_rtd_theme

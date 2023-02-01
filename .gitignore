@@ -28,3 +28,4 @@ settings.json
 perf.data
 perf.data.old
 *.egg-info
+libsmoothercpp*.so

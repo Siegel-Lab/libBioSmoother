@@ -155,8 +155,8 @@ PYBIND11_MODULE( libsmoothercpp, m )
     if( getenv( (char*)"STXXLERRLOGFILE" ) == nullptr )
         putenv( (char*)"STXXLERRLOGFILE=/dev/null" );
 
-    m.attr( "CM_VERSION" ) = CM_VERSION;
-    m.attr( "CM_BUILD_TIME" ) = CM_BUILD_TIME;
+    m.attr( "LIB_SMOOTHER_CPP_VERSION" ) = LIB_SMOOTHER_CPP_VERSION;
+    m.attr( "LIB_SMOOTHER_CPP_BUILD_TIME" ) = LIB_SMOOTHER_CPP_BUILD_TIME;
     m.attr( "SPS_VERSION" ) = SPS_VERSION;
     m.attr( "SPS_BUILD_TIME" ) = SPS_BUILD_TIME;
 
