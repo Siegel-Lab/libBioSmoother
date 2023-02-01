@@ -1,6 +1,6 @@
 from threading import Thread
 from time import sleep
-from libSmoother import test
+from libsmoother import test
 
 def print_stuff():
     for _ in range(3):

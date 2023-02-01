@@ -21,6 +21,7 @@ except ImportError:
     # Error handling
     HAS_STATS = False
     pass
+
 from ._import_lib_smoother_cpp import PartialQuarry, SPS_VERSION, LIB_SMOOTHER_CPP_VERSION
 
 

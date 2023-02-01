@@ -196,6 +196,7 @@ PYBIND11_MODULE( libsmoothercpp, m )
         .def( "get_displayed_annos", &cm::PartialQuarry::getDisplayedAnnos ) //
         .def( "get_heatmap", &cm::PartialQuarry::getHeatmap ) //
         .def( "get_heatmap_export", &cm::PartialQuarry::getHeatmapExport ) //
+        .def( "get_divided", &cm::PartialQuarry::getDivided ) //
         .def( "get_dot", &cm::PartialQuarry::getDOT ) //
         .def( "get_background_color", &cm::PartialQuarry::getBackgroundColor ) //
         .def( "get_ticks", &cm::PartialQuarry::getTicks ) //

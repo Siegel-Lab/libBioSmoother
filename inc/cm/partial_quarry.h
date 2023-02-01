@@ -1032,6 +1032,9 @@ class PartialQuarry
     // colors.h
     const decltype( vHeatmapExport ) getHeatmapExport( );
 
+    // normalization.h
+    const decltype( vDivided ) getDivided( );
+
     // bin_size.h
     const std::array<int64_t, 4> getDrawingArea( );
 

@@ -30,7 +30,16 @@ bool PartialQuarry::setBinSize( )
                   (size_t)std::ceil( ( 1 + uiT % 9 ) * std::pow( 10, uiT / 9 ) ) / getValue<size_t>( { "dividend" } ) );
     size_t uiMaxNumBins = getValue<size_t>( { "settings", "interface", "max_num_bins", "val" } ) *
                           getValue<size_t>( { "settings", "interface", "max_num_bins_factor" } );
-    if( !getValue<bool>( { "settings", "interface", "squared_bins" } ) )
+    if( getValue<bool>( { "settings", "interface", "fixed_number_of_bins" } ) )
+    {
+        size_t uiNumX = getValue<size_t>( { "settings", "interface", "fixed_num_bins_x", "val" } );
+        size_t uiNumY = getValue<size_t>( { "settings", "interface", "fixed_num_bins_y", "val" } );
+        uiBinHeight = ( getValue<double>( { "area", "y_end" } ) - getValue<double>( { "area", "y_start" } ) ) / 
+                    static_cast<double>(uiNumY);
+        uiBinWidth = ( getValue<double>( { "area", "x_end" } ) - getValue<double>( { "area", "x_start" } ) ) / 
+                    static_cast<double>(uiNumX);
+    }
+    else if( !getValue<bool>( { "settings", "interface", "squared_bins" } ) )
     {
         uiBinHeight =
             nextEvenNumber( ( getValue<double>( { "area", "y_end" } ) - getValue<double>( { "area", "y_start" } ) ) /
@@ -149,6 +158,9 @@ void PartialQuarry::regBinSize( )
                                                      { "settings", "interface", "max_num_bins", "val" },
                                                      { "settings", "interface", "max_num_bins_factor" },
                                                      { "settings", "interface", "squared_bins" },
+                                                     { "settings", "interface", "fixed_number_of_bins" },
+                                                     { "settings", "interface", "fixed_num_bins_x", "val" },
+                                                     { "settings", "interface", "fixed_num_bins_y", "val" },
                                                      { "dividend" },
                                                      { "area" } },
                                .vSessionsIncomingInPrevious = {} } );

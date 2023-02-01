@@ -794,6 +794,12 @@ bool PartialQuarry::setDivided( )
     END_RETURN;
 }
 
+const decltype( PartialQuarry::vDivided ) PartialQuarry::getDivided( )
+{
+    update( NodeNames::Divided );
+    return vDivided;
+}
+
 void PartialQuarry::regNormalization( )
 {
     registerNode( NodeNames::Normalized,
