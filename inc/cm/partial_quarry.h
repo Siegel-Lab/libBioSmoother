@@ -13,8 +13,8 @@ using json = nlohmann::json;
 #define CANCEL_RETURN                                                                                                  \
     if( this->bCancel )                                                                                                \
         return false;                                                                                                  \
-    //if( PyErr_CheckSignals( ) != 0 ) /* allow Ctrl-C cancel */                                                         \
-    //    throw pybind11::error_already_set( )
+    if( this->bAllowCtrlCCancel && PyErr_CheckSignals( ) != 0 ) /* allow Ctrl-C cancel */                                                         \
+        throw pybind11::error_already_set( )
 #define END_RETURN return true
 
 namespace cm
@@ -163,6 +163,7 @@ class PartialQuarry
 {
   public:
     size_t uiVerbosity = 1;
+    bool bAllowCtrlCCancel = false;
 
   private:
     enum NodeNames

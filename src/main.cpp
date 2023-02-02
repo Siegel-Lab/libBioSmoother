@@ -170,6 +170,7 @@ PYBIND11_MODULE( libsmoothercpp, m )
     pybind11::class_<cm::PartialQuarry, cm::PyPartialQuarry>( m, "PartialQuarry" ) //
         .def( pybind11::init<std::string>( ) ) //
         .def( pybind11::init<>( ) ) //
+        .def_readwrite("allow_ctrl_c_cancel", &cm::PartialQuarry::bAllowCtrlCCancel) //
         .def( "set_session", &cm::PartialQuarry::setSession ) //
         .def( "get_session", &cm::PartialQuarry::getSession ) //
         .def( "get_value", &cm::PartialQuarry::getValue<pybind11::object> ) //

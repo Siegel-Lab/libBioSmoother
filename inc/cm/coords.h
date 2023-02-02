@@ -66,6 +66,7 @@ std::pair<std::vector<AxisCoord>, std::vector<AxisRegion>> axisCoordsHelper( siz
                 case 3:
                 case 4:
                 case 5:
+                case 6:
                     uiCurrBinSize = uiBinSize;
                     break;
                 default:
@@ -77,6 +78,7 @@ std::pair<std::vector<AxisCoord>, std::vector<AxisRegion>> axisCoordsHelper( siz
                 case 0:
                 case 2:
                 case 5:
+                case 6:
                     bAddBin = true;
                     break;
                 case 1:
@@ -108,6 +110,7 @@ std::pair<std::vector<AxisCoord>, std::vector<AxisRegion>> axisCoordsHelper( siz
                 case 2:
                 case 3:
                 case 5:
+                case 6:
                     bIncScreenPos = true;
                     break;
                 case 4:
@@ -163,6 +166,8 @@ size_t smaller_bin_to_num( std::string sVal )
         return 4;
     if( sVal == "fit_chrom_larger" )
         return 5;
+    if( sVal == "cover_multiple" )
+        return 6;
     throw std::logic_error( "unknown iSmallerBins value" );
 }
 
