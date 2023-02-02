@@ -621,6 +621,7 @@ bool PartialQuarry::setAxisCoords( )
 {
     for( bool bX : { true, false } )
     {
+        CANCEL_RETURN;
         std::pair<std::vector<AxisCoord>, std::vector<AxisRegion>> xRet;
         if( getValue<std::string>( { "contigs", bX ? "column_coordinates" : "row_coordinates" } ) == "full_genome" )
             xRet = axisCoordsHelper(
@@ -1078,6 +1079,12 @@ const std::vector<AxisCoord>& PartialQuarry::getAxisCoords( bool bXAxis )
 {
     update( NodeNames::AxisCoords );
     return vAxisCords[ bXAxis ? 0 : 1 ];
+}
+
+size_t PartialQuarry::getAxisSize( bool bXAxis )
+{
+    update( NodeNames::AxisCoords );
+    return vAxisCords[ bXAxis ? 0 : 1 ].size();
 }
 
 

@@ -13,8 +13,8 @@ using json = nlohmann::json;
 #define CANCEL_RETURN                                                                                                  \
     if( this->bCancel )                                                                                                \
         return false;                                                                                                  \
-    if( PyErr_CheckSignals( ) != 0 ) /* allow Ctrl-C cancel */                                                         \
-    throw pybind11::error_already_set( )
+    //if( PyErr_CheckSignals( ) != 0 ) /* allow Ctrl-C cancel */                                                         \
+    //    throw pybind11::error_already_set( )
 #define END_RETURN return true
 
 namespace cm
@@ -1016,6 +1016,9 @@ class PartialQuarry
 
     // coords.h
     const std::vector<AxisCoord>& getAxisCoords( bool );
+
+    // coords.h
+    size_t getAxisSize( bool );
 
     // annotation.h
     const pybind11::dict getAnnotation( bool );

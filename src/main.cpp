@@ -191,6 +191,7 @@ PYBIND11_MODULE( libsmoothercpp, m )
         .def( "get_palette", &cm::PartialQuarry::getPalette ) //
         .def( "get_bin_coords", &cm::PartialQuarry::getBinCoords ) //
         .def( "get_axis_coords", &cm::PartialQuarry::getAxisCoords ) //
+        .def( "get_axis_size", &cm::PartialQuarry::getAxisSize ) //
         .def( "get_annotation", &cm::PartialQuarry::getAnnotation ) //
         .def( "get_drawing_area", &cm::PartialQuarry::getDrawingArea ) //
         .def( "get_displayed_annos", &cm::PartialQuarry::getDisplayedAnnos ) //
