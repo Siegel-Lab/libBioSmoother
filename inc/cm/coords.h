@@ -143,6 +143,10 @@ std::pair<std::vector<AxisCoord>, std::vector<AxisRegion>> axisCoordsHelper( siz
             } );
         }
 
+        // when making contig ends larger don't skip the beginning of the next contig because of it
+        if(iSmallerBins == 5 && uiCurrScreenPos >= uiChromosomeStartPos && uiCurrScreenPos > uiChromosomeEndPos)
+            uiCurrScreenPos = uiChromosomeEndPos;
+
         uiChromosomeStartPos = uiChromosomeEndPos;
 
         if( uiScreenEndPos <= uiChromosomeStartPos )
@@ -455,6 +459,7 @@ bool PartialQuarry::setLCS( )
 
 bool PartialQuarry::setCanvasSize( )
 {
+    // @todo consider smaller_bin_to_num
     for( size_t uiI = 0; uiI < 2; uiI++ )
     {
 
