@@ -151,6 +151,6 @@ setup(
         'pybind11>=2.8.0',
         'cmake>=3.17',
         'make',
-        'libsps', # @todo turn into git+https://github.com/bla/bla/bla
+        'libsps @ git+https://github.com/Siegel-Lab/libSps',
     ]
 )
