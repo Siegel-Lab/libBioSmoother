@@ -152,5 +152,10 @@ setup(
         'cmake>=3.17',
         'make',
         'libsps @ git+https://github.com/Siegel-Lab/libSps',
-    ]
+    ],
+    entry_points={
+        'console_scripts': [
+            'libsmoother = libsmoother.cli:main',
+        ],
+    },
 )

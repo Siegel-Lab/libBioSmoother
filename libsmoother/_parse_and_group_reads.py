@@ -54,8 +54,8 @@ def parse_tsv(in_filename, test, chr_filter, line_format, progress_print=print):
                 if cont:
                     continue
                 mapqs = [0 if mapq in ["", "nomapq", "255", "*"] else mapq for mapq in mapqs]
-                poss = [int(x)-1 for x in poss]
-                mapqs = [int(x) for x in mapqs]
+                poss = [max(0, int(x)) for x in poss]
+                mapqs = [max(0, int(x)) for x in mapqs]
 
                 #if cnt > TEST_FAC and test:
                 #    break
@@ -176,7 +176,8 @@ def group_reads(in_filename, file_size, chr_filter, progress_print=print, parse_
             group[idx].append((chr_, pos, mapq))
             for chr_1, pos_1 in read_xa_tag(tag):
                 group[idx].append((chr_1, int(pos_1), 0))
-    yield from deal_with_group()
+    if len(group) > 0 and len(group[0]) > 0:
+        yield from deal_with_group()
 
 
 class ChrOrderHeatmapIterator:

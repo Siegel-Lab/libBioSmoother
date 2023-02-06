@@ -1,8 +1,11 @@
-from .index_parser import make_main_parser
+from .indexer_parser import make_main_parser
 
-if __name__ == "__main__":
+def main():
     parser = make_main_parser()
 
     args = parser.parse_args()
 
     args.func(args)
+
+if __name__ == "__main__":
+    main()

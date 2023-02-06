@@ -333,6 +333,8 @@ class Indexer:
                                                           verbosity=GENERATE_VERBOSITY))
 
         self.set_session(["replicates", "by_name", name, "total_reads"], total_reads)
+        if total_reads == 0:
+            print("WARNING: the total number of reads that were added to the index is zero! Something seems off...")
 
         read_iterator.cleanup()
 
@@ -454,6 +456,9 @@ class Indexer:
                                 self.indices.generate(d + len(anno_ids), o, verbosity=GENERATE_VERBOSITY))
 
         self.set_session(["coverage", "by_name", name, "total_reads"], total_reads)
+
+        if total_reads == 0:
+            print("WARNING: the total number of reads that were added to the index is zero! Something seems off...")
 
         read_iterator.cleanup()
 

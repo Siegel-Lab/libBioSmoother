@@ -39,7 +39,7 @@ def norm(args):
 
 def add_parsers(main_parser):
     parser = main_parser.add_parser(
-        "indexer", help="Create and extend indices for the smoother Hi-C data viewer."
+        "index", help="Create and extend indices for the smoother Hi-C data viewer."
     )
 
     sub_parsers = parser.add_subparsers(
