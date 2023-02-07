@@ -152,8 +152,8 @@ setup(
         'cmake>=3.17',
         'make',
         'libsps @ git+https://github.com/Siegel-Lab/libSps',
-        'scipy>=1.10.0',
-        'scikit-learn>=0.24.2',
+        'scipy',
+        'scikit-learn',
     ],
     entry_points={
         'console_scripts': [

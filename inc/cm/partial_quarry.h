@@ -216,6 +216,7 @@ class PartialQuarry
         RnaAssociatedBackground,
         GridSeqSamples,
         RadiclSeqSamples,
+        //ICESamples,
         SIZE
     };
     struct ComputeNode
@@ -703,6 +704,7 @@ class PartialQuarry
 
     std::vector<AnnoCoord> vGridSeqSamples;
     std::vector<AnnoCoord> vRadiclSeqSamples;
+    std::array<std::vector<AnnoCoord>, 2> vICESamples;
     std::vector<std::array<size_t, 2>> vRadiclSeqCoverage;
     std::vector<std::array<size_t, 2>> vRadiclSeqNumNonEmptyBins;
 
@@ -832,6 +834,8 @@ class PartialQuarry
     size_t getChromIdxForAnnoIdx( size_t );
     // normalization.h
     bool setRadiclSeqSamples( );
+    // normalization.h
+    bool setICESamples( );
     // normalization.h
     bool setGridSeqSamples( );
     // normalization.h
@@ -1038,6 +1042,9 @@ class PartialQuarry
 
     // normalization.h
     const decltype( vDivided ) getDivided( );
+
+    // normalization.h
+    const decltype( vScaled ) getScaled( );
 
     // bin_size.h
     const std::array<int64_t, 4> getDrawingArea( );

@@ -318,6 +318,26 @@ bool PartialQuarry::setRadiclSeqSamples( )
     END_RETURN;
 }
 
+bool PartialQuarry::setICESamples( )
+{
+    const std::string sNorm = getValue<std::string>( { "settings", "normalization", "normalize_by" } );
+    if( sNorm != "hi-c" )
+        END_RETURN;
+
+
+    const size_t uiICESamples = getValue<size_t>( { "settings", "normalization", "hi_c_samples", "val" } );
+
+    for(size_t uiI = 0; uiI < 2; uiI++)
+    {
+        getSamples( GetSamplesMode::Bins, uiICESamples, "", uiI == 0 ? uiBinHeight : uiBinWidth, uiI == 0, false,
+                    vICESamples[uiI] );
+        // then this cancel_return is necessary to catch the cancelled getSamples
+        CANCEL_RETURN;
+    }
+
+    END_RETURN;
+}
+
 bool PartialQuarry::setRadiclSeqCoverage( )
 {
     const bool bAxisIsCol = getValue<bool>( { "settings", "normalization", "radicl_seq_axis_is_column" } );
@@ -800,6 +820,12 @@ const decltype( PartialQuarry::vDivided ) PartialQuarry::getDivided( )
     return vDivided;
 }
 
+const decltype( PartialQuarry::vScaled ) PartialQuarry::getScaled( )
+{
+    update( NodeNames::Scaled );
+    return vScaled;
+}
+
 void PartialQuarry::regNormalization( )
 {
     registerNode( NodeNames::Normalized,
@@ -838,6 +864,14 @@ void PartialQuarry::regNormalization( )
                                                      { "settings", "normalization", "radicl_seq_samples", "val" },
                                                      { "settings", "normalization", "radicl_seq_axis_is_column" } },
                                .vSessionsIncomingInPrevious = {} } );
+    //registerNode( NodeNames::ICESamples,
+    //              ComputeNode{ .sNodeName = "ice_samples",
+    //                           .fFunc = &PartialQuarry::setICESamples,
+    //                           .vIncomingFunctions = { NodeNames::ActiveChrom },
+    //                           .vIncomingSession = { { "dividend" },
+    //                                                 { "settings", "normalization", "normalize_by" },
+    //                                                 { "settings", "normalization", "hi_c_samples", "val" } },
+    //                           .vSessionsIncomingInPrevious = {} } );
 
     registerNode(
         NodeNames::GridSeqCoverage,
