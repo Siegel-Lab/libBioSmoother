@@ -20,6 +20,7 @@ def repl(args):
         args.only_points,
         args.no_map_q,
         args.no_multi_map,
+        args.no_cat,
         args.shekelyan,
     )
 
@@ -110,6 +111,12 @@ def add_parsers(main_parser):
         "--no_multi_map",
         action="store_true",
         help="Do not multi mapping information (reads that map to multiple loci). This will make the index faster and smaller. (default: off)",
+    )
+    repl_parser.add_argument(
+        "-c",
+        "--no_cat",
+        action="store_true",
+        help="Do not store category information. (default: off)",
     )
     repl_parser.set_defaults(func=repl)
     repl_parser.add_argument(
