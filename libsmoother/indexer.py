@@ -234,7 +234,8 @@ class Indexer:
         no_map_q=False,
         no_multi_map=False,
         no_category=False,
-        shekelyan=False
+        shekelyan=False,
+        force_upper_triangle=False,
     ):
         if not self.name_unique(name):
             raise RuntimeError(
@@ -265,6 +266,7 @@ class Indexer:
             self.session_default["contigs"]["list"],
             no_groups,
             "test" in self.session_default,
+            force_upper_triangle,
             lambda *x: self.progress_print("loading", *x)
         )
         total_reads = 0

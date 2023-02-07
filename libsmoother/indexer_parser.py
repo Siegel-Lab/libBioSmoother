@@ -22,6 +22,7 @@ def repl(args):
         args.no_multi_map,
         args.no_cat,
         args.shekelyan,
+        args.force_upper_triangle,
     )
 
 
@@ -117,6 +118,12 @@ def add_parsers(main_parser):
         "--no_cat",
         action="store_true",
         help="Do not store category information. (default: off)",
+    )
+    repl_parser.add_argument(
+        "-u",
+        "--force_upper_triangle",
+        action="store_true",
+        help="Mirror all interactions to the upper triangle. (default: off)",
     )
     repl_parser.set_defaults(func=repl)
     repl_parser.add_argument(

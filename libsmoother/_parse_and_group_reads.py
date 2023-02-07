@@ -9,10 +9,10 @@ MAX_READS_IM_MEM = 1000000
 
 def simplified_filepath(path):
     if "/" in path:
-        x = path[path.rindex("/") + 1 :]
+        path = path[path.rindex("/") + 1 :]
     if "." in path:
-        return x[: x.index(".")]
-    return x
+        return path[: path.index(".")]
+    return path
 
 
 def read_xa_tag(tags):
@@ -85,6 +85,23 @@ def parse_heatmap(in_filename, test, chr_filter, progress_print=print):
         13: lambda read_name, _1, chr_1, pos_1, _2, _3, chr_2, pos_2, _4, mapq_1, mapq_2, tag_a, tag_b: 
                 (read_name, [chr_1, chr_2], [pos_1, pos_2], [mapq_1, mapq_2], [tag_a, tag_b]),
     }, progress_print)
+
+def force_upper_triangle(in_filename, test, chr_filter, progress_print=print, parse_func=parse_heatmap):
+    for line, read_name, chrs, poss, mapqs, tags in parse_func(in_filename, test, chr_filter, progress_print):
+        
+        order = [(chr_filter.index(chrs[idx]), poss[idx], idx) for idx in range(len(chrs))]
+
+        chrs_out = []
+        poss_out = []
+        mapqs_out = []
+        tags_out = []
+        for _, _, idx in sorted(order):
+            chrs_out.append(chrs[idx])
+            poss_out.append(poss[idx])
+            mapqs_out.append(mapqs[idx])
+            tags_out.append(tags[idx])
+
+        yield line, read_name, chrs_out, poss_out, mapqs_out, tags_out
 
 def parse_track(in_filename, test, chr_filter, progress_print=print):
     yield from parse_tsv(in_filename, test, chr_filter, {
@@ -240,17 +257,22 @@ def chr_order_heatmap(
     chr_filter,
     no_groups=False,
     test=False,
+    do_force_upper_triangle=False,
     progress_print=print,
 ):
     prefix = index_prefix + "/.tmp." + dataset_name
     chrs = {}
+    if do_force_upper_triangle:
+        parse_func = force_upper_triangle
+    else:
+        parse_func = parse_heatmap
     for (
         read_name,
         chrs_,
         pos_s,
         pos_e,
         map_q,
-    ) in group_reads(in_filename, file_size, chr_filter, progress_print, parse_heatmap, no_groups, test):
+    ) in group_reads(in_filename, file_size, chr_filter, progress_print, parse_func, no_groups, test):
         chr_1, chr_2 = chrs_
         if chr_1 not in chrs:
             chrs[chr_1] = {}
