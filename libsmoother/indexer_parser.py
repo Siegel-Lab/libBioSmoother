@@ -40,16 +40,7 @@ def norm(args):
 
 
 def add_parsers(main_parser):
-    parser = main_parser.add_parser(
-        "index", help="Create and extend indices for the smoother Hi-C data viewer."
-    )
-
-    sub_parsers = parser.add_subparsers(
-        help="Sub-command that shall be executed.", dest="cmd"
-    )
-    sub_parsers.required = True
-
-    init_parser = sub_parsers.add_parser("init", help="Create a new index.")
+    init_parser = main_parser.add_parser("init", help="Create a new index.")
     init_parser.add_argument(
         "index_prefix",
         help="Path where the index shall be saved. Note: a folder with multiple files will be created.",
@@ -68,7 +59,7 @@ def add_parsers(main_parser):
     init_parser.set_defaults(func=init)
     init_parser.add_argument("--test", help=argparse.SUPPRESS, action="store_true")
 
-    anno_parser = sub_parsers.add_parser(
+    anno_parser = main_parser.add_parser(
         "anno", help="Add an annotation file to the index."
     )
     anno_parser.add_argument(
@@ -83,7 +74,7 @@ def add_parsers(main_parser):
     )
     anno_parser.set_defaults(func=anno)
 
-    repl_parser = sub_parsers.add_parser(
+    repl_parser = main_parser.add_parser(
         "repl", help="Add a replicate to a given index."
     )
     repl_parser.add_argument(
@@ -135,10 +126,10 @@ def add_parsers(main_parser):
     repl_parser.add_argument(
         "--shekelyan", help=argparse.SUPPRESS, action="store_true"
     )
-    parser.add_argument("--no_groups", help=argparse.SUPPRESS, action="store_true")
+    repl_parser.add_argument("--no_groups", help=argparse.SUPPRESS, action="store_true")
 
 
-    norm_parser = sub_parsers.add_parser("track", help="Add a normalization track to an index, using external sequencing data.")
+    norm_parser = main_parser.add_parser("track", help="Add a normalization track to an index, using external sequencing data.")
     norm_parser.add_argument('index_prefix', 
         help="Prefix that was used to create the index (see the init subcommand).")
     norm_parser.add_argument('path', 
