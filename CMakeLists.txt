@@ -3,7 +3,7 @@ cmake_minimum_required (VERSION 3.17)
 set(CMAKE_TRY_COMPILE_TARGET_TYPE "STATIC_LIBRARY")
 
 # only adjust major and minor version - patch is taken from git commit number
-project("libSmootherCpp" VERSION 0.1.0)
+project("libSmootherCpp" VERSION ${LIB_SMOOTHER_VERSION})
 
 # disallow in-source builds
 if("${PROJECT_SOURCE_DIR}" STREQUAL "${PROJECT_BINARY_DIR}")
