@@ -12,9 +12,12 @@ using json = nlohmann::json;
 
 #define CANCEL_RETURN                                                                                                  \
     if( this->bCancel )                                                                                                \
-        return false;                                                                                                  \
+        return false;                                                                                                  
+#if 0 // this causes segmentation faults :(
     if( this->bAllowCtrlCCancel && PyErr_CheckSignals( ) != 0 ) /* allow Ctrl-C cancel */                                                         \
         throw pybind11::error_already_set( )
+#endif
+
 #define END_RETURN return true
 
 namespace cm
