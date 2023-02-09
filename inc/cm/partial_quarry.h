@@ -162,6 +162,16 @@ size_t getEvenlyDividableByMaxTwoPowNIn( size_t uiFrom, size_t uiTo )
     return uiN;
 }
 
+
+/* @todo 
+ * - create session class
+ * - create settings class
+ * - settings class should have a fallback option -> e.g. shared pointer to another settings class
+ * - partial query has fallback settings
+ * - each session has their own settings
+ * - and all the buffers from here
+ *
+ */
 class PartialQuarry
 {
   public:
