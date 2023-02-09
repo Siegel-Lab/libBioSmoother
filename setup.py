@@ -154,7 +154,7 @@ setup(
         'pybind11>=2.8.0',
         'cmake>=3.17',
         'make',
-        'libsps @ git+https://github.com/Siegel-Lab/libSps',
+        'libsps @ git+https://github.com/Siegel-Lab/libSps@stable-latest',
         'scipy',
         'scikit-learn',
     ],
