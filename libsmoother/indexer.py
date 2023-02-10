@@ -15,20 +15,29 @@ GENERATE_VERBOSITY = 0
 PROGRESS_PRINT_TIME = 3
 
 class Indexer:
-    def __init__(self, prefix):
+    def __init__(self, prefix, strict=False):
         self.last_prog_print = None
-        self.prefix = prefix
-        if os.path.exists(prefix + ".smoother_index/default_session.json"):
-            # self.indices = CachedSpsInterface(prefix + ".smoother_index")
-            self.indices = DiskSpsInterface(prefix + ".smoother_index", True)
-            with open(prefix + ".smoother_index/default_session.json", "r") as f:
-                self.session_default = json.load(f)
-            with open(prefix + ".smoother_index/session.json", "r") as f:
-                self.session = json.load(f)
+        if strict:
+            self.prefix = prefix + ".smoother_index"
         else:
-            self.indices = None
-            self.session_default = {}
-            self.session = {}
+            self.prefix = None
+            for possible in [prefix, prefix + ".smoother_index"]:
+                if os.path.exists(possible) and os.path.isdir(possible):
+                    self.prefix = possible
+                    break
+        self.indices = None
+        self.session_default = {}
+        self.session = {}
+        self.try_load_index()
+
+    def try_load_index(self):
+        if os.path.exists(self.prefix + ".smoother_index/default_session.json"):
+            # self.indices = CachedSpsInterface(prefix + ".smoother_index")
+            self.indices = DiskSpsInterface(self.prefix + ".smoother_index", True)
+            with open(self.prefix + ".smoother_index/default_session.json", "r") as f:
+                self.session_default = json.load(f)
+            with open(self.prefix + ".smoother_index/session.json", "r") as f:
+                self.session = json.load(f)
 
     def progress_print(self, *text, force_print=False):
         t = time.time()
@@ -65,7 +74,10 @@ class Indexer:
         curr[keys[-1]].append(copy.deepcopy(val))
         curr_def[keys[-1]].append(copy.deepcopy(val))
 
-    def create_session(self, chr_len_file_name, dividend, test=False):
+    def create_session(self, chr_len_file_name, dividend, anno_path, annotation_order=None, test=False):
+        if os.path.exists(self.prefix + ".smoother_index"):
+            print("ERROR: The given index already exists.")
+            exit()
         os.makedirs(self.prefix + ".smoother_index")
         self.set_session(["dividend"], dividend)
         self.set_session(["previous"], None)
@@ -139,10 +151,10 @@ class Indexer:
             touch(self.prefix + ".smoother_index/" + idx_suff + ".prefix_sums")
 
         self.save_session()
+        self.try_load_index()
 
-    def add_annotation(self, file_name, annotation_order=None):
         sorted_list = {}
-        for name, chrom, start, end, info, on_forw_strnd in parse_annotations(file_name):
+        for name, chrom, start, end, info, on_forw_strnd in parse_annotations(anno_path):
             if not chrom in self.session_default["contigs"]["list"]:
                 continue
             if name not in sorted_list:
@@ -177,7 +189,6 @@ class Indexer:
                                                                      verbosity=GENERATE_VERBOSITY))
             else:
                 raise RuntimeError("annotation with this name already exists")
-
 
         self.save_session()
 

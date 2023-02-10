@@ -3,11 +3,13 @@ import argparse
 
 
 def init(args):
-    Indexer(args.index_prefix).create_session(args.chr_len, args.dividend, args.test)
-
-
-def anno(args):
-    Indexer(args.index_prefix).add_annotation(args.file_path, args.order_path)
+    Indexer(args.index_prefix, strict=True).create_session(
+        args.chr_len, 
+        args.dividend, 
+        args.anno_path, 
+        args.order_path, 
+        args.test
+    )
 
 
 def repl(args):
@@ -50,6 +52,12 @@ def add_parsers(main_parser):
         help="Path to a file that contains the length (in nucleotides) of all chromosomes. The file shall contain 2 tab seperated columns columns: The chromosome names and their size in nucleotides. The order of chromosomes in this files will be used as the display order in the viewer.",
     )
     init_parser.add_argument(
+        "anno_path", help="Path to a file that contains the annotations.", default=None
+    )
+    init_parser.add_argument(
+        "--order_path", help="Path to a file that contains the order of annotations, default: gene first, then alphabetic for others."
+    )
+    init_parser.add_argument(
         "-d",
         "--dividend",
         type=int,
@@ -58,21 +66,6 @@ def add_parsers(main_parser):
     )
     init_parser.set_defaults(func=init)
     init_parser.add_argument("--test", help=argparse.SUPPRESS, action="store_true")
-
-    anno_parser = main_parser.add_parser(
-        "anno", help="Add an annotation file to the index."
-    )
-    anno_parser.add_argument(
-        "index_prefix",
-        help="Path where the index shall be saved. Note: a folder with multiple files will be created.",
-    )
-    anno_parser.add_argument(
-        "file_path", help="Path to a file that contains the annotations.", default=None
-    )
-    anno_parser.add_argument(
-        "--order_path", help="Path to a file that contains the order of annotations, default: gene first, then alphabetic for others."
-    )
-    anno_parser.set_defaults(func=anno)
 
     repl_parser = main_parser.add_parser(
         "repl", help="Add a replicate to a given index."

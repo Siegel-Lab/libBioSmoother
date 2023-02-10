@@ -133,7 +133,7 @@ setup(
     author='Markus Schmidt',
     author_email='markus.rainer.schmidt@gmail.com',
     license='MIT',
-    url='https://github.com/MarkusRainerSchmidt/libSmoother',
+    url='https://github.com/Siegel-Lab/libSmoother',
     description="On-the-fly processing and visualization of contact mapping data",
     long_description="",
     packages=["libsmoother"],

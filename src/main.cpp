@@ -159,6 +159,11 @@ PYBIND11_MODULE( libsmoothercpp, m )
     m.attr( "LIB_SMOOTHER_CPP_BUILD_TIME" ) = LIB_SMOOTHER_CPP_BUILD_TIME;
     m.attr( "SPS_VERSION" ) = SPS_VERSION;
     m.attr( "SPS_BUILD_TIME" ) = SPS_BUILD_TIME;
+#ifdef NDEBUG
+    m.attr( "DEBUG" ) = false;
+#else
+    m.attr( "DEBUG" ) = true;
+#endif
 
     m.def( "test", &cm::testFunc );
 
