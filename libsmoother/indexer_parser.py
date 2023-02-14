@@ -61,7 +61,7 @@ def add_parsers(main_parser):
         "-d",
         "--dividend",
         type=int,
-        default=1,
+        default=10000,
         help="Divide all coordinates by this number. Larger numbers will reduce the index size and preprocessing time. However, bins with a size below this given number cannot be displayed.",
     )
     init_parser.set_defaults(func=init)

@@ -31,12 +31,12 @@ class Indexer:
         self.try_load_index()
 
     def try_load_index(self):
-        if os.path.exists(self.prefix + ".smoother_index/default_session.json"):
+        if os.path.exists(self.prefix + "/default_session.json"):
             # self.indices = CachedSpsInterface(prefix + ".smoother_index")
-            self.indices = DiskSpsInterface(self.prefix + ".smoother_index", True)
-            with open(self.prefix + ".smoother_index/default_session.json", "r") as f:
+            self.indices = DiskSpsInterface(self.prefix, True)
+            with open(self.prefix + "/default_session.json", "r") as f:
                 self.session_default = json.load(f)
-            with open(self.prefix + ".smoother_index/session.json", "r") as f:
+            with open(self.prefix + "/session.json", "r") as f:
                 self.session = json.load(f)
 
     def progress_print(self, *text, force_print=False):
@@ -46,9 +46,9 @@ class Indexer:
             self.last_prog_print = t
 
     def save_session(self):
-        with open(self.prefix + ".smoother_index/default_session.json", "w") as f:
+        with open(self.prefix + "/default_session.json", "w") as f:
             json.dump(self.session_default, f)
-        with open(self.prefix + ".smoother_index/session.json", "w") as f:
+        with open(self.prefix + "/session.json", "w") as f:
             json.dump(self.session, f)
         del self.indices
 
@@ -75,10 +75,10 @@ class Indexer:
         curr_def[keys[-1]].append(copy.deepcopy(val))
 
     def create_session(self, chr_len_file_name, dividend, anno_path, annotation_order=None, test=False):
-        if os.path.exists(self.prefix + ".smoother_index"):
+        if os.path.exists(self.prefix):
             print("ERROR: The given index already exists.")
             exit()
-        os.makedirs(self.prefix + ".smoother_index")
+        os.makedirs(self.prefix)
         self.set_session(["dividend"], dividend)
         self.set_session(["previous"], None)
         self.set_session(["next"], None)
@@ -145,10 +145,10 @@ class Indexer:
 
         for o, d in [(6, 2)]:
             idx_suff = str(o) + "." + str(d)
-            touch(self.prefix + ".smoother_index/" + idx_suff + ".coords")
-            touch(self.prefix + ".smoother_index/" + idx_suff + ".datsets")
-            touch(self.prefix + ".smoother_index/" + idx_suff + ".overlays")
-            touch(self.prefix + ".smoother_index/" + idx_suff + ".prefix_sums")
+            touch(self.prefix + "/" + idx_suff + ".coords")
+            touch(self.prefix + "/" + idx_suff + ".datsets")
+            touch(self.prefix + "/" + idx_suff + ".overlays")
+            touch(self.prefix + "/" + idx_suff + ".prefix_sums")
 
         self.save_session()
         self.try_load_index()
@@ -227,10 +227,10 @@ class Indexer:
                 idx_list.append((cat_to_idx[cx][cy]+idx*3, 1))
                 doubles += 1
         if no_anno:
-            return [(len(cat_x)*3, 1)]
+            return [(max(len(cat_x), len(cat_y))*3, 1)]
         if doubles > 0:
             for _ in range(0, doubles):
-                idx_list.append((len(cat_x)*3 + 1, -1))
+                idx_list.append((max(len(cat_x), len(cat_y))*3 + 1, -1))
         return idx_list
 
 
@@ -270,7 +270,7 @@ class Indexer:
             self.append_session(["replicates", "in_group_b"], name)
 
         read_iterator = chr_order_heatmap(
-            self.prefix + ".smoother_index",
+            self.prefix,
             name,
             path,
             get_filesize(path),
@@ -309,22 +309,22 @@ class Indexer:
                     total_reads += 1
                     if no_category:
                         cat_x = [False] * len(self.session_default["annotation"]["list"])
-                        cat_y = [False] * len(self.session_default["annotation"]["list"])
+                        cat_y = cat_x
                     else:
                         cat_x = self.indices.anno.get_categories(pos_1_s, pos_1_e,
                                                                 self.session_default["dividend"], anno_ids_x)
                         cat_y = self.indices.anno.get_categories(pos_2_s, pos_2_e,
                                                                 self.session_default["dividend"], anno_ids_y)
                     act_pos_1_s = int(pos_2_s) // self.session_default["dividend"]
-                    act_pos_1_e = int(pos_2_e) // self.session_default["dividend"]
+                    act_pos_2_s = int(pos_1_s) // self.session_default["dividend"]
                     if no_multi_map:
-                        act_pos_2_s = act_pos_1_s
-                        act_pos_2_e = act_pos_1_e
+                        act_pos_1_e = act_pos_1_s
+                        act_pos_2_e = act_pos_2_s
                     else:
-                        act_pos_2_s = int(pos_1_s) // self.session_default["dividend"]
+                        act_pos_1_e = int(pos_2_e) // self.session_default["dividend"]
                         act_pos_2_e = int(pos_1_e) // self.session_default["dividend"]
                     if no_map_q:
-                        map_q = 0
+                        map_q = 1
 
                     for cat_idx, val in self.__get_cat_indices_2d(cat_x, cat_y):
                         start = [act_pos_1_s, act_pos_2_s, MAP_Q_MAX - int(map_q) - 1, cat_idx]
