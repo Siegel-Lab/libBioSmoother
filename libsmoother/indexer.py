@@ -1,4 +1,4 @@
-from ._import_lib_smoother_cpp import CachedSpsInterface, DiskSpsInterface
+from ._import_lib_smoother_cpp import Index
 from ._parse_and_group_reads import *
 import json
 import os
@@ -33,7 +33,7 @@ class Indexer:
     def try_load_index(self):
         if os.path.exists(self.prefix + "/default_session.json"):
             # self.indices = CachedSpsInterface(prefix + ".smoother_index")
-            self.indices = DiskSpsInterface(self.prefix, True)
+            self.indices = Index(self.prefix, True)
             with open(self.prefix + "/default_session.json", "r") as f:
                 self.session_default = json.load(f)
             with open(self.prefix + "/session.json", "r") as f:

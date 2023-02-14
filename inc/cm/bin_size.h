@@ -103,16 +103,16 @@ bool PartialQuarry::setRenderArea( )
     END_RETURN;
 }
 
-const std::array<int64_t, 4> PartialQuarry::getDrawingArea( )
+const std::array<int64_t, 4> PartialQuarry::getDrawingArea( const std::function<void(const std::string&)>& fPyPrint )
 {
-    update( NodeNames::RenderArea );
+    update( NodeNames::RenderArea, fPyPrint );
     return std::array<int64_t, 4>{ { iStartX, iStartY, iEndX, iEndY } };
 }
 
 
-const std::array<size_t, 2> PartialQuarry::getBinSize( )
+const std::array<size_t, 2> PartialQuarry::getBinSize( const std::function<void(const std::string&)>& fPyPrint )
 {
-    update( NodeNames::BinSize );
+    update( NodeNames::BinSize, fPyPrint );
     size_t uiD = getValue<size_t>( { "dividend" } );
     return std::array<size_t, 2>{ uiBinWidth * uiD, uiBinHeight * uiD };
 }

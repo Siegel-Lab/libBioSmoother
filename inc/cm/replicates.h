@@ -122,7 +122,7 @@ bool PartialQuarry::setBinValues( )
                         getValue<size_t>( { "replicates", "by_name", sRep, "ids", sChromNameX, sChromNameY } );
 
                     vVals[ uiI ] =
-                        xIndices.
+                        pIndices->
 #if USE_GRID_QUERIES
                         gridCount
 #else
@@ -241,7 +241,7 @@ bool PartialQuarry::setDecayValues( )
                                 assert( uiYe <= (size_t)iChrX );
                                 assert( uiXe <= (size_t)iChrY );
 
-                                vvVals.push_back( xIndices.count( iDataSetId,
+                                vvVals.push_back( pIndices->count( iDataSetId,
                                                                   { uiXs, uiYs, uiMapQMin, uiFromAnnoFilter },
                                                                   { uiXe, uiYe, uiMapQMax, uiToAnnoFilter },
                                                                   xIntersect,
@@ -503,9 +503,9 @@ bool PartialQuarry::setDecayCDS( )
 }
 
 
-const pybind11::dict PartialQuarry::getDecayCDS( )
+const pybind11::dict PartialQuarry::getDecayCDS( const std::function<void(const std::string&)>& fPyPrint )
 {
-    update( NodeNames::DecayCDS );
+    update( NodeNames::DecayCDS, fPyPrint );
     return xDistDepDecCDS;
 }
 

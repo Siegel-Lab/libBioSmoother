@@ -493,10 +493,10 @@ bool PartialQuarry::setCanvasSize( )
                     {
                         case 0: // separate
                         case 1: // stretch
-                            uiRunningStart += xIndices.vAnno.totalIntervalSize( iDataSetId );
+                            uiRunningStart += pIndices->vAnno.totalIntervalSize( iDataSetId );
                             break;
                         case 2: // squeeze
-                            uiRunningStart += xIndices.vAnno.numIntervals( iDataSetId );
+                            uiRunningStart += pIndices->vAnno.numIntervals( iDataSetId );
                     }
                 }
             }
@@ -544,10 +544,10 @@ bool PartialQuarry::setTicks( )
                 if( rJson.contains( sChromName ) )
                 {
                     int64_t iDataSetId = rJson[ sChromName ].get<int64_t>( );
-                    auto xFirst = xIndices.vAnno.lowerBound( iDataSetId, xRegion.uiIndexPos, !bSqueeze, bSqueeze );
+                    auto xFirst = pIndices->vAnno.lowerBound( iDataSetId, xRegion.uiIndexPos, !bSqueeze, bSqueeze );
 
                     std::vector<std::string> vSplit =
-                        splitString<std::vector<std::string>>( xIndices.vAnno.desc( *xFirst ), '\n' );
+                        splitString<std::vector<std::string>>( pIndices->vAnno.desc( *xFirst ), '\n' );
                     std::string sId = "n/a";
                     const std::string csID = "ID=";
                     for( std::string sX : vSplit )
@@ -574,9 +574,9 @@ bool PartialQuarry::setTicks( )
                     vFullList.append( uiRunningStart );
 
                     if( bSqueeze )
-                        uiRunningStart += xIndices.vAnno.numIntervals( iDataSetId );
+                        uiRunningStart += pIndices->vAnno.numIntervals( iDataSetId );
                     else
-                        uiRunningStart += xIndices.vAnno.totalIntervalSize( iDataSetId );
+                        uiRunningStart += pIndices->vAnno.totalIntervalSize( iDataSetId );
                 }
             }
         }
@@ -594,27 +594,27 @@ bool PartialQuarry::setTicks( )
     END_RETURN;
 }
 
-const pybind11::dict PartialQuarry::getTicks( bool bXAxis )
+const pybind11::dict PartialQuarry::getTicks( bool bXAxis, const std::function<void(const std::string&)>& fPyPrint )
 {
-    update( NodeNames::Ticks );
+    update( NodeNames::Ticks, fPyPrint );
     return xTicksCDS[ bXAxis ? 0 : 1 ];
 }
 
-const pybind11::list PartialQuarry::getTickList( bool bXAxis )
+const pybind11::list PartialQuarry::getTickList( bool bXAxis, const std::function<void(const std::string&)>& fPyPrint )
 {
-    update( NodeNames::Ticks );
+    update( NodeNames::Ticks, fPyPrint );
     return vTickLists[ bXAxis ? 0 : 1 ];
 }
 
-const pybind11::list PartialQuarry::getTickList2( bool bXAxis )
+const pybind11::list PartialQuarry::getTickList2( bool bXAxis, const std::function<void(const std::string&)>& fPyPrint )
 {
-    update( NodeNames::Ticks );
+    update( NodeNames::Ticks, fPyPrint );
     return vTickLists2[ bXAxis ? 0 : 1 ];
 }
 
-const std::array<size_t, 2> PartialQuarry::getCanvasSize( )
+const std::array<size_t, 2> PartialQuarry::getCanvasSize( const std::function<void(const std::string&)>& fPyPrint )
 {
-    update( NodeNames::CanvasSize );
+    update( NodeNames::CanvasSize, fPyPrint );
     return vCanvasSize;
 }
 
@@ -653,7 +653,7 @@ bool PartialQuarry::setAxisCoords( )
                 getValue<json>(
                     { "annotation", "by_name",
                       getValue<std::string>( { "contigs", bX ? "column_coordinates" : "row_coordinates" } ) } ),
-                xIndices.vAnno );
+                pIndices->vAnno );
         this->vAxisCords[ bX ? 0 : 1 ] = xRet.first;
         this->vAxisRegions[ bX ? 0 : 1 ] = xRet.second;
     }
@@ -678,7 +678,7 @@ bool PartialQuarry::setGridSeqCoords( )
             1 /* stretch bin over entire annotation*/, this->vActiveChromosomes[ 0 ], this->bCancel,
             getValue<json>( { "annotation", "by_name",
                               getValue<std::string>( { "settings", "normalization", "grid_seq_anno_type" } ) } ),
-            xIndices.vAnno );
+            pIndices->vAnno );
         vGridSeqCoords = xRet.first;
         vGridSeqRegions = xRet.second;
     }
@@ -1066,15 +1066,15 @@ bool PartialQuarry::setDecayCoords( )
     END_RETURN;
 }
 
-const std::vector<std::array<BinCoord, 2>>& PartialQuarry::getBinCoords( )
+const std::vector<std::array<BinCoord, 2>>& PartialQuarry::getBinCoords( const std::function<void(const std::string&)>& fPyPrint )
 {
-    update( NodeNames::BinCoords );
+    update( NodeNames::BinCoords, fPyPrint );
     return vBinCoords;
 }
 
-const pybind11::list PartialQuarry::getAnnotationList( bool bXAxis )
+const pybind11::list PartialQuarry::getAnnotationList( bool bXAxis, const std::function<void(const std::string&)>& fPyPrint )
 {
-    update( NodeNames::ActiveChrom );
+    update( NodeNames::ActiveChrom, fPyPrint );
 
     pybind11::gil_scoped_acquire acquire;
     pybind11::list vRet;
@@ -1085,15 +1085,15 @@ const pybind11::list PartialQuarry::getAnnotationList( bool bXAxis )
 }
 
 
-const std::vector<AxisCoord>& PartialQuarry::getAxisCoords( bool bXAxis )
+const std::vector<AxisCoord>& PartialQuarry::getAxisCoords( bool bXAxis, const std::function<void(const std::string&)>& fPyPrint )
 {
-    update( NodeNames::AxisCoords );
+    update( NodeNames::AxisCoords, fPyPrint );
     return vAxisCords[ bXAxis ? 0 : 1 ];
 }
 
-size_t PartialQuarry::getAxisSize( bool bXAxis )
+size_t PartialQuarry::getAxisSize( bool bXAxis, const std::function<void(const std::string&)>& fPyPrint )
 {
-    update( NodeNames::AxisCoords );
+    update( NodeNames::AxisCoords, fPyPrint );
     return vAxisCords[ bXAxis ? 0 : 1 ].size();
 }
 

@@ -8,6 +8,7 @@
 
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
+#include <pybind11/functional.h>
 
 namespace cm
 {
@@ -67,16 +68,6 @@ class PyPartialQuarry : public PartialQuarry
                            sColorHigh /* Argument(s) */
         );
     }
-
-    void print( std::string sText ) override
-    {
-        pybind11::gil_scoped_acquire acquire;
-        PYBIND11_OVERRIDE( void, /* Return type */
-                           PartialQuarry, /* Parent class */
-                           print, /* Name of function in C++ (must match Python name) */
-                           sText /* Argument(s) */
-        );
-    }
 };
 
 class ContectMappingPublicist : public PartialQuarry
@@ -85,7 +76,6 @@ class ContectMappingPublicist : public PartialQuarry
     using PartialQuarry::colorPalette;
     using PartialQuarry::normalizeBinominalTestTrampoline;
     using PartialQuarry::normalizeCoolerTrampoline;
-    using PartialQuarry::print;
 };
 
 
@@ -133,8 +123,10 @@ std::map<std::string, std::vector<size_t>> test_cpp_dict( size_t uiA, size_t uiB
 
 template <bool CACHE> void exportSpsInterface( pybind11::module& m )
 {
-    pybind11::class_<cm::SpsInterface<CACHE>>( m, CACHE ? "CachedSpsInterface" : "DiskSpsInterface" ) //
+    pybind11::class_<cm::SpsInterface<CACHE>, std::shared_ptr<cm::SpsInterface<CACHE>>>(
+                 m, CACHE ? "CachedIndex" : "Index" ) //
         .def( pybind11::init<std::string, bool>( ) ) //
+        .def( pybind11::init<std::string>( ) ) //
         .def( "loaded", &cm::SpsInterface<CACHE>::loaded )
         .def( "clear_points_and_desc", &cm::SpsInterface<CACHE>::clearPointsAndDesc )
         .def( "insert",
@@ -143,7 +135,20 @@ template <bool CACHE> void exportSpsInterface( pybind11::module& m )
               pybind11::arg( "start" ), pybind11::arg( "end" ), pybind11::arg( "val" ) )
         .def( "generate", &cm::SpsInterface<CACHE>::generate, //
               pybind11::arg( "fac" ) = -1.0, pybind11::arg( "verbosity" ) = 1 )
-        .def_readwrite( "anno", &cm::SpsInterface<CACHE>::vAnno );
+        .def_readwrite( "anno", &cm::SpsInterface<CACHE>::vAnno )
+        .def( "get_value", &cm::HasSession::getSessionValue<pybind11::object> ) //
+
+        // @note order is relevant here -> the functions are tried in order
+        //      if e.g. json would be first everything would ose the json overload
+        //      also int, double, string and bool can sometimes convert into one another
+        .def( "set_value", &cm::HasSession::setSessionValue<bool> ) //
+        .def( "set_value", &cm::HasSession::setSessionValue<int> ) //
+        .def( "set_value", &cm::HasSession::setSessionValue<double> ) //
+        .def( "set_value", &cm::HasSession::setSessionValue<std::vector<std::string>> ) //
+        .def( "set_value", &cm::HasSession::setSessionValue<std::string> ) //
+        .def( "set_value", &cm::HasSession::setSessionValue<json> ) //
+        .def( "save_session", &cm::HasSession::saveSession ) //
+        ;
 }
 
 
@@ -171,11 +176,12 @@ PYBIND11_MODULE( libsmoothercpp, m )
     m.def( "test_py_dict", &cm::test_py_dict );
     m.def( "test_cpp_dict", &cm::test_cpp_dict );
 
-
     pybind11::class_<cm::PartialQuarry, cm::PyPartialQuarry>( m, "PartialQuarry" ) //
         .def( pybind11::init<std::string>( ) ) //
+        .def( pybind11::init<std::shared_ptr<cm::SpsInterface<false>>>( ) ) //
         .def( pybind11::init<>( ) ) //
         .def_readwrite("allow_ctrl_c_cancel", &cm::PartialQuarry::bAllowCtrlCCancel) //
+        .def_readwrite("index", &cm::PartialQuarry::pIndices) //
         .def( "set_session", &cm::PartialQuarry::setSession ) //
         .def( "get_session", &cm::PartialQuarry::getSession ) //
         .def( "get_value", &cm::PartialQuarry::getValue<pybind11::object> ) //
@@ -233,7 +239,6 @@ PYBIND11_MODULE( libsmoothercpp, m )
         .def( "normalizeBinominalTestTrampoline", &cm::ContectMappingPublicist::normalizeBinominalTestTrampoline ) //
         .def( "normalizeCoolerTrampoline", &cm::ContectMappingPublicist::normalizeCoolerTrampoline ) //
         .def( "colorPalette", &cm::ContectMappingPublicist::colorPalette ) //
-        .def( "print", &cm::ContectMappingPublicist::print ) //
         ;
 
     pybind11::class_<cm::AnnotationDescIndex<DiskVecGenerator>>( m, ( "AnnoIndex" ) ) //

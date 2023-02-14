@@ -1,12 +1,10 @@
 #include "cm/sps_interface.h"
 #include <cctype>
 #include <mutex>
-#include <nlohmann/json.hpp>
-#include <pybind11_json/pybind11_json.hpp>
+#include <memory>
 
 #pragma once
 
-using json = nlohmann::json;
 
 #define USE_GRID_QUERIES 0
 
@@ -172,7 +170,7 @@ size_t getEvenlyDividableByMaxTwoPowNIn( size_t uiFrom, size_t uiTo )
  * - and all the buffers from here
  *
  */
-class PartialQuarry
+class PartialQuarry: public HasSession
 {
   public:
     size_t uiVerbosity = 1;
@@ -249,28 +247,13 @@ class PartialQuarry
         bool bTerminal = true;
     };
 
-    std::string sPrefix;
     size_t uiCurrTime;
     std::vector<ComputeNode> vGraph;
     std::vector<ComputeNodeData> vGraphData;
     NodeNames xCurrNodeName = NodeNames::SIZE;
 
-    json xSession;
     std::map<std::vector<std::string>, size_t> xSessionTime;
 
-    std::string toString( std::vector<std::string>& vKeys )
-    {
-        std::string sPtr = "";
-        for( std::string sKey : vKeys )
-            sPtr += "/" + sKey;
-        return sPtr;
-    }
-
-
-    nlohmann::json::json_pointer toPointer( std::vector<std::string>& vKeys )
-    {
-        return nlohmann::json::json_pointer( toString( vKeys ) );
-    }
 
     bool updateSettings( const json& xNewSettings, std::vector<std::string> vPrefix = { } )
     {
@@ -328,7 +311,7 @@ class PartialQuarry
         vGraphData[ xCurrNodeName ].sError = sError;
     }
 
-    size_t update_helper( NodeNames xNodeName )
+    size_t update_helper( NodeNames xNodeName, const std::function<void(const std::string&)>& fPyPrint )
     {
         ComputeNode& xNode = vGraph[ xNodeName ];
         ComputeNodeData& xNodeData = vGraphData[ xNodeName ];
@@ -338,7 +321,7 @@ class PartialQuarry
             auto p1 = std::chrono::high_resolution_clock::now( );
             for( NodeNames xPred : xNode.vIncomingFunctions )
             {
-                size_t uiUpdateTime = update_helper( xPred );
+                size_t uiUpdateTime = update_helper( xPred, fPyPrint );
                 if( uiUpdateTime == 0 )
                 {
                     if( uiVerbosity >= 1 )
@@ -386,7 +369,7 @@ class PartialQuarry
 
                 auto ms_int = std::chrono::duration_cast<std::chrono::milliseconds>( t2 - t1 );
                 if( uiVerbosity >= 1 )
-                    print( std::to_string( ms_int.count( ) ) + " ms (" + xNode.sNodeName + ")" );
+                    fPyPrint( std::to_string( ms_int.count( ) ) + " ms (" + xNode.sNodeName + ")" );
                 if( uiVerbosity >= 2 )
                     std::cout << pms_int.count( ) << " ms (predecessors)" << std::endl << std::endl;
 
@@ -406,7 +389,7 @@ class PartialQuarry
     }
 
 
-    bool update_no_throw( NodeNames xNodeName )
+    bool update_no_throw( NodeNames xNodeName, const std::function<void(const std::string&)>& fPyPrint )
     {
         // allow python multithreading during this call
         pybind11::gil_scoped_release release;
@@ -415,14 +398,14 @@ class PartialQuarry
         std::lock_guard<std::mutex> xGuard( xUpdateMutex );
 
         bCancel = false;
-        size_t uiUpdateTime = update_helper( xNodeName );
+        size_t uiUpdateTime = update_helper( xNodeName, fPyPrint );
 
         return uiUpdateTime != 0;
     }
 
-    void update( NodeNames xNodeName )
+    void update( NodeNames xNodeName, const std::function<void(const std::string&)>& fPyPrint )
     {
-        if( !update_no_throw( xNodeName ) )
+        if( !update_no_throw( xNodeName, fPyPrint ) )
             throw std::runtime_error( "update was cancelled" );
     }
 
@@ -504,7 +487,7 @@ class PartialQuarry
         bCancel = true;
     }
 
-    void updateCDS( )
+    void updateCDS( const std::function<void(const std::string&)>& fPyPrint )
     {
         bool bContinue;
         do
@@ -512,7 +495,7 @@ class PartialQuarry
             bContinue = false;
             for( auto& rNode : { HeatmapCDS, Tracks, AnnotationCDS, ActivateAnnotationCDS, Ticks, Tracks, Palette,
                                  DecayCDS, RankedSlicesCDS } )
-                if( !update_no_throw( rNode ) )
+                if( !update_no_throw( rNode, fPyPrint ) )
                 {
                     bContinue = true;
                     break;
@@ -634,9 +617,9 @@ class PartialQuarry
             setSession( this->xSession[ "next" ] );
     }
 
-  private:
-    SpsInterface<false> xIndices;
+    std::shared_ptr<SpsInterface<false>> pIndices;
 
+  private:
     size_t uiBinWidth, uiBinHeight;
     int64_t iStartX, iStartY, iEndX, iEndY;
 
@@ -980,115 +963,111 @@ class PartialQuarry
         throw std::logic_error( "Function not implemented" );
     }
 
-    virtual void print( std::string )
-    {
-        throw std::logic_error( "Function not implemented" );
-    }
-
   public:
     PartialQuarry( )
-        : sPrefix( "" ),
+        : HasSession(),
+          uiCurrTime( 1 ),
+          vGraph( NodeNames::SIZE ),
+          vGraphData( NodeNames::SIZE )
+    {
+        registerAll( );
+        ++uiCurrTime;
+    }
+
+    PartialQuarry( std::shared_ptr<SpsInterface<false>> pIndex )
+        : HasSession( *pIndex ),
           uiCurrTime( 1 ),
           vGraph( NodeNames::SIZE ),
           vGraphData( NodeNames::SIZE ),
-          xSession( ),
-          xIndices( )
+          pIndices( pIndex )
     {
         registerAll( );
         ++uiCurrTime;
     }
 
     PartialQuarry( std::string sPrefix )
-        : sPrefix( sPrefix ),
-          uiCurrTime( 1 ),
-          vGraph( NodeNames::SIZE ),
-          vGraphData( NodeNames::SIZE ),
-          xSession( json::parse( std::ifstream( sPrefix + "/session.json" ) ) ),
-          xIndices( sPrefix, false )
-    {
-        registerAll( );
-        ++uiCurrTime;
-    }
+        : PartialQuarry( std::make_shared<SpsInterface<false>>( sPrefix ) )
+    {}
 
     virtual ~PartialQuarry( )
     {}
 
     // colors.h
-    const pybind11::list getPalette( );
+    const pybind11::list getPalette( const std::function<void(const std::string&)>& );
 
     // colors.h
-    const std::string& getBackgroundColor( );
+    const std::string& getBackgroundColor( const std::function<void(const std::string&)>& );
 
     // coords.h
-    const std::vector<std::array<BinCoord, 2>>& getBinCoords( );
+    const std::vector<std::array<BinCoord, 2>>& getBinCoords( const std::function<void(const std::string&)>& );
 
     // coords.h
-    const pybind11::list getAnnotationList( bool );
+    const pybind11::list getAnnotationList( bool, const std::function<void(const std::string&)>& );
 
     // colors.h
-    const pybind11::dict getTicks( bool );
+    const pybind11::dict getTicks( bool, const std::function<void(const std::string&)>& );
 
     // colors.h
-    const pybind11::list getTickList( bool );
-    const pybind11::list getTickList2( bool );
+    const pybind11::list getTickList( bool, const std::function<void(const std::string&)>& );
+    const pybind11::list getTickList2( bool, const std::function<void(const std::string&)>& );
 
     // coords.h
-    const std::vector<AxisCoord>& getAxisCoords( bool );
+    const std::vector<AxisCoord>& getAxisCoords( bool, const std::function<void(const std::string&)>& );
 
     // coords.h
-    size_t getAxisSize( bool );
+    size_t getAxisSize( bool, const std::function<void(const std::string&)>& );
 
     // annotation.h
-    const pybind11::dict getAnnotation( bool );
+    const pybind11::dict getAnnotation( bool, const std::function<void(const std::string&)>& );
 
     // annotation.h
-    const pybind11::list getDisplayedAnnos( bool );
+    const pybind11::list getDisplayedAnnos( bool, const std::function<void(const std::string&)>& );
 
     // colors.h
-    const pybind11::dict getHeatmap( );
+    const pybind11::dict getHeatmap( const std::function<void(const std::string&)>& );
 
     // colors.h
-    const std::array<double, 4> getPaletteTicks( );
+    const std::array<double, 4> getPaletteTicks( const std::function<void(const std::string&)>& );
 
     // colors.h
-    const decltype( vHeatmapExport ) getHeatmapExport( );
+    const decltype( vHeatmapExport ) getHeatmapExport( const std::function<void(const std::string&)>& );
 
     // normalization.h
-    const decltype( vDivided ) getDivided( );
+    const decltype( vDivided ) getDivided( const std::function<void(const std::string&)>& );
 
     // normalization.h
-    const decltype( vScaled ) getScaled( );
+    const decltype( vScaled ) getScaled( const std::function<void(const std::string&)>& );
 
     // bin_size.h
-    const std::array<int64_t, 4> getDrawingArea( );
+    const std::array<int64_t, 4> getDrawingArea( const std::function<void(const std::string&)>& );
 
     // bin_size.h
-    const std::array<size_t, 2> getBinSize( );
+    const std::array<size_t, 2> getBinSize( const std::function<void(const std::string&)>& );
 
     // coords.h
-    const std::array<size_t, 2> getCanvasSize( );
+    const std::array<size_t, 2> getCanvasSize( const std::function<void(const std::string&)>& );
 
     // coverage.h
-    const pybind11::dict getTracks( bool );
+    const pybind11::dict getTracks( bool, const std::function<void(const std::string&)>& );
 
     // replicates.h
-    const pybind11::dict getDecayCDS( );
+    const pybind11::dict getDecayCDS( const std::function<void(const std::string&)>& );
 
     // coverage.h
-    const decltype( vTrackExport[ 0 ] ) getTrackExport( bool );
+    const decltype( vTrackExport[ 0 ] ) getTrackExport( bool, const std::function<void(const std::string&)>& );
 
     // coverage.h
-    const std::vector<std::string> getTrackExportNames( bool );
+    const std::vector<std::string> getTrackExportNames( bool , const std::function<void(const std::string&)>&);
 
     // coverage.h
-    const std::array<double, 2> getMinMaxTracks( bool );
+    const std::array<double, 2> getMinMaxTracks( bool , const std::function<void(const std::string&)>&);
 
     // coverage.h
-    const pybind11::dict getRankedSlices( bool );
+    const pybind11::dict getRankedSlices( bool, const std::function<void(const std::string&)>& );
 
-    size_t getLongestCommonSuffix( )
+    size_t getLongestCommonSuffix( const std::function<void(const std::string&)>& fPyPrint )
     {
-        update( NodeNames::LCS );
+        update( NodeNames::LCS, fPyPrint );
         return uiLogestCommonSuffix;
     }
 
@@ -1153,9 +1132,9 @@ class PartialQuarry
                     int64_t iDataSetId =
                         this->xSession[ "annotation" ][ "by_name" ][ sCoords ][ xChr.sName ].get<int64_t>( );
                     if( bSqueeze )
-                        uiLen = xIndices.vAnno.numIntervals( iDataSetId );
+                        uiLen = pIndices->vAnno.numIntervals( iDataSetId );
                     else
-                        uiLen = xIndices.vAnno.totalIntervalSize( iDataSetId );
+                        uiLen = pIndices->vAnno.totalIntervalSize( iDataSetId );
                 }
                 if( uiLen > 0 &&
                     ( uiEq > uiMaxEquality || ( uiEq == uiMaxEquality && xChr.sName.size( ) < uiMinRefSize ) ) )
@@ -1182,7 +1161,7 @@ class PartialQuarry
                     if( rJson.contains( xChr.sName ) )
                     {
                         int64_t iDataSetId = rJson[ xChr.sName ].get<int64_t>( );
-                        xIndices.vAnno.iterate(
+                        pIndices->vAnno.iterate(
                             iDataSetId,
                             [ & ]( std::tuple<size_t, size_t, std::string, bool> xTup ) {
                                 std::string sSearch = sAnno + "=" + std::get<2>( xTup );
@@ -1238,12 +1217,12 @@ class PartialQuarry
                         this->xSession[ "replicates" ][ "by_name" ][ sRep ][ "ids" ][ sContigA ][ sContigB ]
                             .get<size_t>( );
 
-                    std::cout << xIndices.count( iDataSetId,
+                    std::cout << pIndices->count( iDataSetId,
                                                  { 0, 0, 0, 0 },
                                                  { uiSizeA, uiSizeB, 256, uiNumAnno * 3 + 2 },
                                                  sps::IntersectionType::overlaps,
                                                  0 )
-                              << "\t" << xIndices.getNumOverlays( iDataSetId );
+                              << "\t" << pIndices->getNumOverlays( iDataSetId );
 
                     std::cout << std::endl;
                 }
@@ -1282,11 +1261,6 @@ class PartialQuarry
         return sRet + "}";
     }
 
-    void saveSession( )
-    {
-        std::ofstream o( sPrefix + +"/session.json" );
-        o << this->getSession( ) << std::endl;
-    }
 };
 
 template <> pybind11::object PartialQuarry::getValue( std::vector<std::string> vKeys )

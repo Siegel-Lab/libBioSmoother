@@ -2,14 +2,67 @@
 #include "sps/default.h"
 #include "sps/index.h"
 #include <type_traits>
+#include <nlohmann/json.hpp>
+#include <pybind11_json/pybind11_json.hpp>
 
 #pragma once
+
+using json = nlohmann::json;
 
 namespace cm
 {
 
+class HasSession{
+protected:
+    const std::string sFilePrefix;
+    json xSession;
+    
+    std::string toString( std::vector<std::string>& vKeys )
+    {
+        std::string sPtr = "";
+        for( std::string sKey : vKeys )
+            sPtr += "/" + sKey;
+        return sPtr;
+    }
 
-template <bool CACHED> class SpsInterface
+    nlohmann::json::json_pointer toPointer( std::vector<std::string>& vKeys )
+    {
+        return nlohmann::json::json_pointer( toString( vKeys ) );
+    }
+
+public:
+    HasSession() {}
+
+    HasSession(const std::string sFilePrefix) : 
+        sFilePrefix(sFilePrefix), 
+        xSession(json::parse( std::ifstream( sFilePrefix + "/session.json" ) )) 
+    {}
+
+    HasSession(const HasSession& rOther) : sFilePrefix(rOther.sFilePrefix), xSession(rOther.copySession()) {}
+
+    template <typename T> T getSessionValue( std::vector<std::string> vKeys )
+    {
+        return this->xSession[ toPointer( vKeys ) ].get<T>( );
+    }
+
+    template <typename T> void setSessionValue( std::vector<std::string> vKeys, T xVal )
+    {
+        this->xSession[ toPointer( vKeys ) ] = xVal;
+    }
+
+    json copySession() const
+    {
+        return json::parse( this->xSession.dump( ) );
+    }
+
+    void saveSession( )
+    {
+        std::ofstream o( sFilePrefix + +"/session.json" );
+        o << xSession << std::endl;
+    }
+};
+
+template <bool CACHED> class SpsInterface: public HasSession
 {
   public:
     using anno_t = AnnotationDescIndex<DiskVecGenerator>;
@@ -26,12 +79,14 @@ template <bool CACHED> class SpsInterface
 
   public:
     SpsInterface( std::string sFilePrefix, bool bWrite )
-        : vAnno( sFilePrefix + "/anno", bWrite ), //
+        : HasSession( sFilePrefix ), //
+          vAnno( sFilePrefix + "/anno", bWrite ), //
           pIndex(
               std::make_shared<index_t>( sFilePrefix + "/" + std::to_string( D ) + "." + std::to_string( O ), bWrite ) )
     {}
 
-    SpsInterface( )
+    SpsInterface( std::string sFilePrefix ) :
+        SpsInterface( sFilePrefix, false )
     {}
 
     bool loaded( )

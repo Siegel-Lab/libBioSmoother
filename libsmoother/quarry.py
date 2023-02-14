@@ -28,7 +28,6 @@ from ._import_lib_smoother_cpp import PartialQuarry, SPS_VERSION, LIB_SMOOTHER_C
 class Quarry(PartialQuarry):
     def __init__(self, *args):
         PartialQuarry.__init__(self, *args)
-        self.print_callback = lambda s: print(s)
 
     def normalizeBinominalTestTrampoline(
         self, bin_values, num_interactions_total, num_bins_interacting_with, samples, max_num_interacting_with, p_accept, is_col, grid_height
@@ -101,9 +100,6 @@ class Quarry(PartialQuarry):
                     )
                     for x in range(256)
                 ]
-
-    def print(self, s):
-        self.print_callback(s)
 
     @staticmethod
     def get_libSps_version():

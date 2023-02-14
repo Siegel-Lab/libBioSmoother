@@ -206,16 +206,16 @@ bool PartialQuarry::setPalette( )
     END_RETURN;
 }
 
-const pybind11::list PartialQuarry::getPalette( )
+const pybind11::list PartialQuarry::getPalette( const std::function<void(const std::string&)>& fPyPrint )
 {
-    update( NodeNames::Palette );
+    update( NodeNames::Palette, fPyPrint );
     return vRenderedPalette;
 }
 
 // min_data max_data min_range max_range
-const std::array<double, 4> PartialQuarry::getPaletteTicks( )
+const std::array<double, 4> PartialQuarry::getPaletteTicks( const std::function<void(const std::string&)>& fPyPrint )
 {
-    update( NodeNames::Palette );
+    update( NodeNames::Palette, fPyPrint );
     double fMinR = getValue<double>( { "settings", "normalization", "color_range", "val_min" } );
     double fMaxR = getValue<double>( { "settings", "normalization", "color_range", "val_max" } );
 
@@ -362,21 +362,21 @@ bool PartialQuarry::setHeatmapExport( )
     END_RETURN;
 }
 
-const pybind11::dict PartialQuarry::getHeatmap( )
+const pybind11::dict PartialQuarry::getHeatmap( const std::function<void(const std::string&)>& fPyPrint )
 {
-    update( NodeNames::HeatmapCDS );
+    update( NodeNames::HeatmapCDS, fPyPrint );
     return xHeatmapCDS;
 }
 
-const decltype( PartialQuarry::vHeatmapExport ) PartialQuarry::getHeatmapExport( )
+const decltype( PartialQuarry::vHeatmapExport ) PartialQuarry::getHeatmapExport( const std::function<void(const std::string&)>& fPyPrint )
 {
-    update( NodeNames::HeatmapExport );
+    update( NodeNames::HeatmapExport, fPyPrint );
     return vHeatmapExport;
 }
 
-const std::string& PartialQuarry::getBackgroundColor( )
+const std::string& PartialQuarry::getBackgroundColor( const std::function<void(const std::string&)>& fPyPrint )
 {
-    update( NodeNames::Colors );
+    update( NodeNames::Colors, fPyPrint );
     return sBackgroundColor;
 }
 

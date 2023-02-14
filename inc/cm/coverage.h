@@ -39,7 +39,7 @@ std::tuple<size_t, int64_t, size_t, size_t> PartialQuarry::makeHeapTuple( bool b
     const size_t uiYMin = bCol != bSymPart ? uiStart : uiFrom;
     const size_t uiYMax = bCol != bSymPart ? uiEnd : uiTo;
     // @todo adjust for symmetry
-    const size_t uiCount = xIndices.count( iDataSetId, { uiYMin, uiXMin, uiMapQMin, uiFromAnnoFilter },
+    const size_t uiCount = pIndices->count( iDataSetId, { uiYMin, uiXMin, uiMapQMin, uiFromAnnoFilter },
                                            { uiYMax, uiXMax, uiMapQMax, uiToAnnoFilter }, xIntersect, 0 );
 
     return std::make_tuple( uiCount, iDataSetId, uiStart, uiEnd );
@@ -106,7 +106,7 @@ size_t PartialQuarry::getCoverageFromRepl( const std::string& sChromName, const 
         const size_t uiYMin = bCol != bSymPart ? 0 : uiFrom;
         const size_t uiYMax = bCol != bSymPart ? rDesc.uiLength : uiTo;
         // @todo adjust for symmetry
-        uiRet += xIndices.count( uiDatasetId, { uiYMin, uiXMin, uiMapQMin, uiFromAnnoFilter },
+        uiRet += pIndices->count( uiDatasetId, { uiYMin, uiXMin, uiMapQMin, uiFromAnnoFilter },
                                  { uiYMax, uiXMax, uiMapQMax, uiToAnnoFilter }, xIntersect, 0 );
     }
 
@@ -148,7 +148,7 @@ bool PartialQuarry::setCoverageValues( )
                     int64_t iDataSetId = xRep[ "ids" ][ sChromName ].get<int64_t>( );
                     if( iDataSetId != -1 )
                         uiVal =
-                            xIndices.count( iDataSetId,
+                            pIndices->count( iDataSetId,
                                             { xCoords.uiIndexPos, 0, uiMapQMin, uiFromAnnoFilter },
                                             { xCoords.uiIndexPos + xCoords.uiIndexSize, 1, uiMapQMax, uiToAnnoFilter },
                                             xIntersect,
@@ -582,10 +582,10 @@ bool PartialQuarry::setRankedSlicesCDS( )
             const AnnoCoord& rSample = vGridSeqSamples[ vSorted[ uiI ][ uiX ] ];
             const std::string& sChromName = this->vActiveChromosomes[ 0 ][ rSample.uiChromosome ].sName;
 
-            const auto rIntervalIt = xIndices.vAnno.get( rJson[ sChromName ].get<int64_t>( ), rSample.uiAnnoId );
+            const auto rIntervalIt = pIndices->vAnno.get( rJson[ sChromName ].get<int64_t>( ), rSample.uiAnnoId );
 
             vChrs.append( substringChr( sChromName ) );
-            vAnnoDesc.append( xIndices.vAnno.desc( *rIntervalIt ) );
+            vAnnoDesc.append( pIndices->vAnno.desc( *rIntervalIt ) );
             vSampleId.append( vSorted[ uiI ][ uiX ] );
             vAnnoIdx.append( rSample.uiAnnoId );
             vIndexStart.append( readableBp( rSample.uiIndexPos * uiDividend ) );
@@ -616,34 +616,34 @@ bool PartialQuarry::setRankedSlicesCDS( )
     END_RETURN;
 }
 
-const decltype( PartialQuarry::vTrackExport[ 0 ] ) PartialQuarry::getTrackExport( bool bXAxis )
+const decltype( PartialQuarry::vTrackExport[ 0 ] ) PartialQuarry::getTrackExport( bool bXAxis, const std::function<void(const std::string&)>& fPyPrint )
 {
-    update( NodeNames::TrackExport );
+    update( NodeNames::TrackExport, fPyPrint );
     return vTrackExport[ bXAxis ? 0 : 1 ];
 }
 
-const std::vector<std::string> PartialQuarry::getTrackExportNames( bool bXAxis )
+const std::vector<std::string> PartialQuarry::getTrackExportNames( bool bXAxis, const std::function<void(const std::string&)>& fPyPrint )
 {
-    update( NodeNames::TrackExport );
+    update( NodeNames::TrackExport, fPyPrint );
     return vTrackExportNames[ bXAxis ? 0 : 1 ];
 }
 
 
-const pybind11::dict PartialQuarry::getTracks( bool bXAxis )
+const pybind11::dict PartialQuarry::getTracks( bool bXAxis, const std::function<void(const std::string&)>& fPyPrint )
 {
-    update( NodeNames::Tracks );
+    update( NodeNames::Tracks, fPyPrint );
     return xTracksCDS[ bXAxis ? 0 : 1 ];
 }
 
-const pybind11::dict PartialQuarry::getRankedSlices( bool bXAxis )
+const pybind11::dict PartialQuarry::getRankedSlices( bool bXAxis, const std::function<void(const std::string&)>& fPyPrint )
 {
-    update( NodeNames::RankedSlicesCDS );
+    update( NodeNames::RankedSlicesCDS, fPyPrint );
     return vRankedSliceCDS[ bXAxis ? 0 : 1 ];
 }
 
-const std::array<double, 2> PartialQuarry::getMinMaxTracks( bool bXAxis )
+const std::array<double, 2> PartialQuarry::getMinMaxTracks( bool bXAxis, const std::function<void(const std::string&)>& fPyPrint )
 {
-    update( NodeNames::Tracks );
+    update( NodeNames::Tracks, fPyPrint );
     return vvMinMaxTracks[ bXAxis ? 0 : 1 ];
 }
 

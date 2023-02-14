@@ -204,7 +204,7 @@ bool PartialQuarry::getSamples( const GetSamplesMode& rMode, const size_t uiNumS
             {
                 case GetSamplesMode::OneAnnotation:
                     vChromIdForSampleIdx.emplace_back( uiMaxSamples, uiI );
-                    uiMaxSamples += xIndices.vAnno.numIntervals( rAnnoJson[ rActiveChrom.sName ].get<int64_t>( ) );
+                    uiMaxSamples += pIndices->vAnno.numIntervals( rAnnoJson[ rActiveChrom.sName ].get<int64_t>( ) );
                     break;
                 case GetSamplesMode::Bins:
                     vChromIdForSampleIdx.emplace_back( uiMaxSamples, uiI );
@@ -213,7 +213,7 @@ bool PartialQuarry::getSamples( const GetSamplesMode& rMode, const size_t uiNumS
                 case GetSamplesMode::BinnedAnno:
                     vChromIdForSampleIdx.emplace_back( uiMaxSamples, uiI );
                     uiMaxSamples +=
-                        xIndices.vAnno.totalIntervalSize( rAnnoJson[ rActiveChrom.sName ].get<int64_t>( ) ) / uiBinSize;
+                        pIndices->vAnno.totalIntervalSize( rAnnoJson[ rActiveChrom.sName ].get<int64_t>( ) ) / uiBinSize;
                     break;
 
                 default:
@@ -242,7 +242,7 @@ bool PartialQuarry::getSamples( const GetSamplesMode& rMode, const size_t uiNumS
         switch( rMode )
         {
             case GetSamplesMode::OneAnnotation: {
-                const auto rIntervalIt = xIndices.vAnno.get( rAnnoJson[ rChr ].get<int64_t>( ), uiVal );
+                const auto rIntervalIt = pIndices->vAnno.get( rAnnoJson[ rChr ].get<int64_t>( ), uiVal );
                 const size_t uiDescId = rIntervalIt->uiDescId;
                 if( vSeenDescIds.count( uiDescId ) == 0 )
                 {
@@ -416,7 +416,7 @@ bool PartialQuarry::setRadiclSeqCoverage( )
                     const size_t uiYMax = bAxisIsCol != bSymPart ? rSample.uiIndexPos + rSample.uiIndexSize
                                                                  : rAxis.uiIndexPos + rAxis.uiIndexSize;
                     // @todo adjust for symmetry
-                    vVals[ uiJ ] = xIndices.count( uiDatasetId, { uiYMin, uiXMin, uiMapQMin, uiFromAnnoFilter },
+                    vVals[ uiJ ] = pIndices->count( uiDatasetId, { uiYMin, uiXMin, uiMapQMin, uiFromAnnoFilter },
                                                    { uiYMax, uiXMax, uiMapQMax, uiToAnnoFilter }, xIntersect, 0 );
                     vVals[ uiJ ] = vVals[ uiJ ] > uiMinuend ? vVals[ uiJ ] - uiMinuend : 0;
                 }
@@ -582,7 +582,7 @@ bool PartialQuarry::setRnaAssociatedBackground( )
                         size_t iDataSetId = getValue<size_t>( { "replicates", "by_name", sRep, "ids", sChrX, sChrY } );
 
                         vBackgroundGridSeq.back( ) +=
-                            xIndices.count( iDataSetId,
+                            pIndices->count( iDataSetId,
                                             { uiStartY, uiStartX, uiMapQMin, uiFromAnnoFilter },
                                             { uiEndY, uiEndX, uiMapQMax, uiToAnnoFilter },
                                             xIntersect,
@@ -814,15 +814,15 @@ bool PartialQuarry::setDivided( )
     END_RETURN;
 }
 
-const decltype( PartialQuarry::vDivided ) PartialQuarry::getDivided( )
+const decltype( PartialQuarry::vDivided ) PartialQuarry::getDivided( const std::function<void(const std::string&)>& fPyPrint )
 {
-    update( NodeNames::Divided );
+    update( NodeNames::Divided, fPyPrint );
     return vDivided;
 }
 
-const decltype( PartialQuarry::vScaled ) PartialQuarry::getScaled( )
+const decltype( PartialQuarry::vScaled ) PartialQuarry::getScaled( const std::function<void(const std::string&)>& fPyPrint )
 {
-    update( NodeNames::Scaled );
+    update( NodeNames::Scaled, fPyPrint );
     return vScaled;
 }
 
