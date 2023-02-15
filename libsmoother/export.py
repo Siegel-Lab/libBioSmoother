@@ -16,15 +16,14 @@ def __conf_session(session):
 
 def export_tsv(session, print_callback=lambda s: None):
     session = __conf_session(session)
-    if "Heatmap" in session.get_value(["settings", "export", "selection"]):
-        with open(session.get_value(["settings", "export", "prefix"]) + ".heatmap.tsv", "w") as out_file:
-            __write_header(out_file)
-            out_file.write("#chr_x\tstart_x\tend_x\tchr_y\tstart_y\tend_y\tscore\n")
-            for tup in session.get_heatmap_export(print_callback):
-                out_file.write("\t".join([str(x) for x in tup]) + "\n")
+    with open(session.get_value(["settings", "export", "prefix"]) + ".heatmap.tsv", "w") as out_file:
+        __write_header(out_file)
+        out_file.write("#chr_x\tstart_x\tend_x\tchr_y\tstart_y\tend_y\tscore\n")
+        for tup in session.get_heatmap_export(print_callback):
+            out_file.write("\t".join([str(x) for x in tup]) + "\n")
 
-    for x_axis, key, suff in [(True, "Column Coverage", "x"), (False, "Row Coverage", "y")]:
-        if key in session.get_value(["settings", "export", "selection"]):
+    if session.get_value(["settings", "interface", "show_hide", "raw"]):
+        for x_axis, suff in [(True, "x"), (False, "y")]:
             with open(session.get_value(["settings", "export", "prefix"]) + ".track." + suff + ".tsv", "w") as out_file:
                 __write_header(out_file)
                 out_file.write("#chr_x\tstart_x\tend_x")
@@ -36,19 +35,20 @@ def export_tsv(session, print_callback=lambda s: None):
                     out_file.write("\t".join(["\t".join([str(y) for y in x]) if isinstance(x, list) else str(x) for x in tup]) + "\n")
 
 
-def __conv_coords(p, is_bottom, w_cds, o_cds, w_plane, o_plane):
+def __conv_coords(p, is_bottom, idx, cds, w_cds, o_cds, w_plane, o_plane):
     return max(min(w_plane * (p - o_cds) / w_cds + o_plane, o_plane + w_plane), o_plane)
 
-def __cat_coords(cp, is_bottom, w_plane, o_plane, categories):
+def __cat_coords(cp, is_bottom, idx, cds, w_plane, o_plane, categories):
     c, p = cp
-    return max(min(w_plane * (categories[::-1].index(c) + p + (0 if is_bottom else 1)) / len(categories) + o_plane, 
+    return max(min(w_plane * 
+            (categories[::-1].index(c) + p + (-1 if is_bottom else 1)*cds["size"][idx]/2 + 0.5 ) / len(categories) + o_plane, 
                     o_plane + w_plane), o_plane) 
 
 
 def __draw_rectangles(d, cds, x_transform, y_transform, left="l", right="r", bottom="b", top="t", color="c",
                       conv_coords_x=__conv_coords, conv_coords_y=__conv_coords):
-    for l, r, b, t, c, in zip(cds[left], cds[right], cds[bottom], cds[top], cds[color]):
-        l, r, b, t = [conv_coords(p, is_bottom, *transform) for p, is_bottom, transform, conv_coords in [
+    for idx, (l, r, b, t, c) in enumerate(zip(cds[left], cds[right], cds[bottom], cds[top], cds[color])):
+        l, r, b, t = [conv_coords(p, is_bottom, idx, cds, *transform) for p, is_bottom, transform, conv_coords in [
                                                 (l, True, x_transform, conv_coords_x),
                                                 (r, False, x_transform, conv_coords_x),
                                                 (b, True, y_transform, conv_coords_y),
@@ -186,44 +186,7 @@ def __draw(session):
     return d
 
 def export_png(session):
-    __draw(session).savePng(session.get_value(["settings", "export", "prefix"]) + ".heatmap.png")
+    __draw(session).savePng(session.get_value(["settings", "export", "prefix"]) + ".png")
 
 def export_svg(session):
-    __draw(session).saveSvg(session.get_value(["settings", "export", "prefix"]) + ".heatmap.svg")
-
-
-if False:
-    """
-    if not self.do_export is None and False:
-        if "Data" in self.export_type:
-            if "Heatmap" in self.settings["export"]["selection"]:
-                with open(self.settings["export"]["prefix"] + ".heatmap.bed", "w") as out_file:
-                    out_file.write("##Smoother Version:" + self.smoother_version +"\n##LibSps Version: " + bin.libSps.VERSION + "\n")
-                    out_file.write("##Bin width:" + str(h_bin* self.meta.dividend) + " Bin height:" +
-                                                    str(w_bin* self.meta.dividend) + "\n")
-                    out_file.write("#chr_x\tpos_x\tchr_y\tpos_y\tscore\tannotation_x\tannotation_y\n")
-                    for c, (x, y, w, h), (x_chr_, x_2_, y_chr_, y_2_) in zip(
-                                self.color_bins_a(sym), bin_coords, bin_coords_2):
-                        out_file.write("\t".join([x_chr_, str(int(x_2_) * self.meta.dividend), 
-                                                y_chr_, str(int(y_2_) * self.meta.dividend), 
-                                                str(c), 
-                                                self.make_anno_str(x, x+w), 
-                                                self.make_anno_str(y, y+h)]) + "\n")
-            if "Column Sum" in self.settings["export"]["selection"]:
-                with open(self.settings["export"]["prefix"] + ".columns.bed", "w") as out_file:
-                    for c, x_chr_, x_2_, x_ in zip(raw_y_ratio, y_chr, y_pos1, y_pos):
-                        if not x_ is float('NaN'):
-                            out_file.write("\t".join([x_chr_, str(int(x_2_) * self.meta.dividend), str(c)]) + "\n")
-            if "Row Sum" in self.settings["export"]["selection"]:
-                with open(self.settings["export"]["prefix"] + ".rows.bed", "w") as out_file:
-                    for c, x_chr_, x_2_, x_ in zip(raw_x_ratio, x_chr, x_pos1, x_pos):
-                        if not x_ is float('NaN'):
-                            out_file.write("\t".join([x_chr_, str(int(x_2_) * self.meta.dividend), str(c)]) + "\n")
-        if "Png" in self.export_type:
-            export_png(self.heatmap, filename=self.settings["export"]["prefix"] + ".heatmap.png")
-        if "Svg" in self.export_type:
-            bckup = self.heatmap.output_backend
-            self.heatmap.output_backend = "svg"
-            export_svg(self.heatmap, filename=self.settings["export"]["prefix"] + ".heatmap.svg")
-            self.heatmap.output_backend = bckup
-    """
+    __draw(session).saveSvg(session.get_value(["settings", "export", "prefix"]) + ".svg")
