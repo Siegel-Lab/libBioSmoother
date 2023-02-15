@@ -1,2 +1,2 @@
 #!/bin/bash
-conda env create --force -f libSmoother.yml
+conda env create -f dev_env.yml

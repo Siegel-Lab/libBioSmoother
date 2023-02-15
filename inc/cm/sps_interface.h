@@ -14,7 +14,7 @@ namespace cm
 
 class HasSession{
 protected:
-    const std::string sFilePrefix;
+    std::string sFilePrefix;
     json xSession;
     
     std::string toString( std::vector<std::string>& vKeys )
@@ -59,6 +59,13 @@ public:
     {
         std::ofstream o( sFilePrefix + +"/session.json" );
         o << xSession << std::endl;
+    }
+
+    HasSession& operator=(const HasSession& rOther)
+    {
+        sFilePrefix = rOther.sFilePrefix;
+        xSession = rOther.copySession();
+        return *this;
     }
 };
 

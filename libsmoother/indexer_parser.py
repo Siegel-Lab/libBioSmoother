@@ -1,4 +1,6 @@
 from .indexer import *
+from .quarry import Quarry
+from .export import export_tsv, export_png, export_svg
 import argparse
 
 
@@ -39,6 +41,30 @@ def norm(args):
         args.no_map_q,
         args.no_multi_map,
     )
+
+def export_smoother(args):
+    session = Quarry(args.index_prefix)
+    if args.export_prefix is not None:
+        session.set_value(["settings", "export", "prefix"], args.export_prefix)
+    if args.export_selection is not None:
+        session.set_value(["settings", "export", "selection"], args.export_selection)
+    if args.export_size is not None:
+        session.set_value(["settings", "export", "size", "val"], args.export_size)
+
+    if args.export_format is not None:
+        if "tsv" in args.export_format:
+            export_tsv(session)
+        if "svg" in args.export_format:
+            export_svg(session)
+        if "png" in args.export_format:
+            export_png(session)
+    else:
+        if session.get_value(["settings", "export", "export_format"]) == "tsv":
+            export_tsv(session)
+        if session.get_value(["settings", "export", "export_format"]) == "svg":
+            export_svg(session)
+        if session.get_value(["settings", "export", "export_format"]) == "png":
+            export_png(session)
 
 
 def add_parsers(main_parser):
@@ -151,6 +177,37 @@ def add_parsers(main_parser):
         action="store_true",
         help="Do not multi mapping information (reads that map to multiple loci). This will make the index faster and smaller. (default: off)",
     )
+
+    export_parser = main_parser.add_parser("export", help="Export the current index session to a file.")
+    export_parser.add_argument(
+        "index_prefix",
+        help="Prefix that was used to create the index (see the init subcommand).",
+    )
+    export_parser.add_argument(
+        "-p",
+        "--export_prefix",
+        help="Path where the exported file shall be saved",
+    )
+    export_parser.add_argument(
+        "-f",
+        "--export_format",
+        choices=["tsv", "svg", "png"],
+        nargs="*",
+        help="The format which to export to.",
+    )
+    export_parser.add_argument(
+        "-S",
+        "--export_selection",
+        choices=["heatmap", "col_sec_data", "row_sec_data"],
+        nargs="*",
+        help="Which regions shall be exported",
+    )
+    export_parser.add_argument(
+        "-s",
+        "--export_size",
+        help="The size of the heatmap to be exported",
+    )
+    export_parser.set_defaults(func=export_smoother)
 
 
 def make_main_parser():

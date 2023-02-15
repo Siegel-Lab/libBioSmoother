@@ -395,7 +395,7 @@ class PartialQuarry: public HasSession
         pybind11::gil_scoped_release release;
 
         // make sure that no two threads can enter here (basically allow multithreading other than this)
-        std::lock_guard<std::mutex> xGuard( xUpdateMutex );
+        std::lock_guard<std::mutex> xGuard( xUpdateMutex.xX );
 
         bCancel = false;
         size_t uiUpdateTime = update_helper( xNodeName, fPyPrint );
@@ -705,7 +705,20 @@ class PartialQuarry: public HasSession
     std::vector<std::array<size_t, 2>> vRadiclSeqNumNonEmptyBins;
 
     bool bCancel = false;
-    std::mutex xUpdateMutex{ };
+
+    template<typename T>
+    class NoCopy{
+        public: 
+            T xX;
+
+            NoCopy& operator=(const NoCopy&)
+            {
+                // do not copy xX!!!!
+                return *this;
+            }
+    };
+
+    NoCopy<std::mutex> xUpdateMutex{ };
 
 
     // bin_size.h
@@ -988,6 +1001,11 @@ class PartialQuarry: public HasSession
     PartialQuarry( std::string sPrefix )
         : PartialQuarry( std::make_shared<SpsInterface<false>>( sPrefix ) )
     {}
+
+    void copyFrom( const PartialQuarry& rOther )
+    {
+        *this = rOther;
+    }
 
     virtual ~PartialQuarry( )
     {}

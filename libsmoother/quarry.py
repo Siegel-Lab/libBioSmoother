@@ -101,6 +101,10 @@ class Quarry(PartialQuarry):
                     for x in range(256)
                 ]
 
+    def copy(self):
+        # trigger the cpp copy constructor
+        return Quarry(super(PartialQuarry, self))
+
     @staticmethod
     def get_libSps_version():
         return SPS_VERSION

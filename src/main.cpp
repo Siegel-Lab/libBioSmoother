@@ -196,6 +196,7 @@ PYBIND11_MODULE( libsmoothercpp, m )
         .def( "set_value", &cm::PartialQuarry::setValue<std::string> ) //
         .def( "set_value", &cm::PartialQuarry::setValue<json> ) //
 
+        .def( "copy_from", &cm::PartialQuarry::copyFrom ) //
         .def( "has_undo", &cm::PartialQuarry::hasUndo ) //
         .def( "undo", &cm::PartialQuarry::undo ) //
         .def( "has_redo", &cm::PartialQuarry::hasRedo ) //
