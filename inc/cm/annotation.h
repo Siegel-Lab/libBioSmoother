@@ -83,7 +83,7 @@ bool PartialQuarry::setAnnotationValues( )
                     int64_t iDataSetId = rJson[ sChromName ].get<int64_t>( );
 
                     uiTotalCount += pIndices->vAnno.count( iDataSetId, xRegion.uiIndexPos,
-                                                          ( xRegion.uiIndexPos + xRegion.uiIndexSize ), false, false );
+                                                           ( xRegion.uiIndexPos + xRegion.uiIndexSize ), false, false );
                 }
             }
         }
@@ -103,7 +103,7 @@ bool PartialQuarry::setAnnotationValues( )
                         int64_t iDataSetId = rJson[ sChromName ].get<int64_t>( );
                         for( auto& xAnno :
                              pIndices->vAnno.query( iDataSetId, xRegion.uiIndexPos,
-                                                   xRegion.uiIndexPos + xRegion.uiIndexSize, false, false ) )
+                                                    xRegion.uiIndexPos + xRegion.uiIndexSize, false, false ) )
                         {
                             double uiStartPos;
                             double uiEndPos;
@@ -163,7 +163,7 @@ bool PartialQuarry::setAnnotationValues( )
                         int64_t iDataSetId = rJson[ sChromName ].get<int64_t>( );
                         vAnnotationValues[ uiX ].back( ).first.push_back(
                             pIndices->vAnno.count( iDataSetId, xCoords.uiIndexPos,
-                                                  ( xCoords.uiIndexPos + xCoords.uiIndexSize ), false, false ) );
+                                                   ( xCoords.uiIndexPos + xCoords.uiIndexSize ), false, false ) );
                     }
                     else
                         vAnnotationValues[ uiX ].back( ).first.push_back( 0 );
@@ -297,13 +297,15 @@ bool PartialQuarry::setAnnotationCDS( )
     END_RETURN;
 }
 
-const pybind11::dict PartialQuarry::getAnnotation( bool bXAxis, const std::function<void(const std::string&)>& fPyPrint )
+const pybind11::dict PartialQuarry::getAnnotation( bool bXAxis,
+                                                   const std::function<void( const std::string& )>& fPyPrint )
 {
     update( NodeNames::AnnotationCDS, fPyPrint );
     return vAnnotationCDS[ bXAxis ? 0 : 1 ];
 }
 
-const pybind11::list PartialQuarry::getDisplayedAnnos( bool bXAxis, const std::function<void(const std::string&)>& fPyPrint )
+const pybind11::list PartialQuarry::getDisplayedAnnos( bool bXAxis,
+                                                       const std::function<void( const std::string& )>& fPyPrint )
 {
     update( NodeNames::ActivateAnnotationCDS, fPyPrint );
     return vActiveAnnotationCDS[ bXAxis ? 0 : 1 ];

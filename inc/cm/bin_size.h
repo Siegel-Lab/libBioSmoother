@@ -34,10 +34,10 @@ bool PartialQuarry::setBinSize( )
     {
         size_t uiNumX = getValue<size_t>( { "settings", "interface", "fixed_num_bins_x", "val" } );
         size_t uiNumY = getValue<size_t>( { "settings", "interface", "fixed_num_bins_y", "val" } );
-        uiBinHeight = ( getValue<double>( { "area", "y_end" } ) - getValue<double>( { "area", "y_start" } ) ) / 
-                    static_cast<double>(uiNumY);
-        uiBinWidth = ( getValue<double>( { "area", "x_end" } ) - getValue<double>( { "area", "x_start" } ) ) / 
-                    static_cast<double>(uiNumX);
+        uiBinHeight = ( getValue<double>( { "area", "y_end" } ) - getValue<double>( { "area", "y_start" } ) ) /
+                      static_cast<double>( uiNumY );
+        uiBinWidth = ( getValue<double>( { "area", "x_end" } ) - getValue<double>( { "area", "x_start" } ) ) /
+                     static_cast<double>( uiNumX );
     }
     else if( !getValue<bool>( { "settings", "interface", "squared_bins" } ) )
     {
@@ -103,14 +103,14 @@ bool PartialQuarry::setRenderArea( )
     END_RETURN;
 }
 
-const std::array<int64_t, 4> PartialQuarry::getDrawingArea( const std::function<void(const std::string&)>& fPyPrint )
+const std::array<int64_t, 4> PartialQuarry::getDrawingArea( const std::function<void( const std::string& )>& fPyPrint )
 {
     update( NodeNames::RenderArea, fPyPrint );
     return std::array<int64_t, 4>{ { iStartX, iStartY, iEndX, iEndY } };
 }
 
 
-const std::array<size_t, 2> PartialQuarry::getBinSize( const std::function<void(const std::string&)>& fPyPrint )
+const std::array<size_t, 2> PartialQuarry::getBinSize( const std::function<void( const std::string& )>& fPyPrint )
 {
     update( NodeNames::BinSize, fPyPrint );
     size_t uiD = getValue<size_t>( { "dividend" } );

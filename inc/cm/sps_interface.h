@@ -1,9 +1,9 @@
 #include "cm/annotation_index.h"
 #include "sps/default.h"
 #include "sps/index.h"
-#include <type_traits>
 #include <nlohmann/json.hpp>
 #include <pybind11_json/pybind11_json.hpp>
+#include <type_traits>
 
 #pragma once
 
@@ -12,11 +12,12 @@ using json = nlohmann::json;
 namespace cm
 {
 
-class HasSession{
-protected:
+class HasSession
+{
+  protected:
     std::string sFilePrefix;
     json xSession;
-    
+
     std::string toString( std::vector<std::string>& vKeys )
     {
         std::string sPtr = "";
@@ -30,19 +31,27 @@ protected:
         return nlohmann::json::json_pointer( toString( vKeys ) );
     }
 
-public:
-    HasSession() {}
-
-    HasSession(const std::string sFilePrefix) : 
-        sFilePrefix(sFilePrefix), 
-        xSession(json::parse( std::ifstream( sFilePrefix + "/session.json" ) )) 
+  public:
+    HasSession( )
     {}
 
-    HasSession(const HasSession& rOther) : sFilePrefix(rOther.sFilePrefix), xSession(rOther.copySession()) {}
+    HasSession( const std::string sFilePrefix )
+        : sFilePrefix( sFilePrefix ), xSession( json::parse( std::ifstream( sFilePrefix + "/session.json" ) ) )
+    {}
+
+    HasSession( const HasSession& rOther ) : sFilePrefix( rOther.sFilePrefix ), xSession( rOther.copySession( ) )
+    {}
 
     template <typename T> T getSessionValue( std::vector<std::string> vKeys )
     {
-        return this->xSession[ toPointer( vKeys ) ].get<T>( );
+        try
+        {
+            return this->xSession[ toPointer( vKeys ) ].get<T>( );
+        }
+        catch( ... )
+        {
+            throw std::runtime_error( std::string( "error querying session value: " ) + toString( vKeys ) );
+        }
     }
 
     template <typename T> void setSessionValue( std::vector<std::string> vKeys, T xVal )
@@ -50,7 +59,7 @@ public:
         this->xSession[ toPointer( vKeys ) ] = xVal;
     }
 
-    json copySession() const
+    json copySession( ) const
     {
         return json::parse( this->xSession.dump( ) );
     }
@@ -61,15 +70,15 @@ public:
         o << xSession << std::endl;
     }
 
-    HasSession& operator=(const HasSession& rOther)
+    HasSession& operator=( const HasSession& rOther )
     {
         sFilePrefix = rOther.sFilePrefix;
-        xSession = rOther.copySession();
+        xSession = rOther.copySession( );
         return *this;
     }
 };
 
-template <bool CACHED> class SpsInterface: public HasSession
+template <bool CACHED> class SpsInterface : public HasSession
 {
   public:
     using anno_t = AnnotationDescIndex<DiskVecGenerator>;
@@ -77,7 +86,7 @@ template <bool CACHED> class SpsInterface: public HasSession
 
   private:
     static const bool BIN_SEARCH_SPARSE = false;
-    static const size_t D = 6;
+    static const size_t D = 8;
     static const size_t O = 2;
 
     using index_t = sps::Index<typename std::conditional<CACHED, CachedTypeDef<D, O, BIN_SEARCH_SPARSE>,
@@ -88,12 +97,10 @@ template <bool CACHED> class SpsInterface: public HasSession
     SpsInterface( std::string sFilePrefix, bool bWrite )
         : HasSession( sFilePrefix ), //
           vAnno( sFilePrefix + "/anno", bWrite ), //
-          pIndex(
-              std::make_shared<index_t>( sFilePrefix + "/" + std::to_string( D ) + "." + std::to_string( O ), bWrite ) )
+          pIndex( std::make_shared<index_t>( sFilePrefix + "/sps", bWrite ) )
     {}
 
-    SpsInterface( std::string sFilePrefix ) :
-        SpsInterface( sFilePrefix, false )
+    SpsInterface( std::string sFilePrefix ) : SpsInterface( sFilePrefix, false )
     {}
 
     bool loaded( )

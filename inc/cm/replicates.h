@@ -118,28 +118,37 @@ bool PartialQuarry::setBinValues( )
 
                     std::string sChromNameX = vActiveChromosomes[ uiI ][ vCoords[ uiI ].uiChromosomeX ].sName;
                     std::string sChromNameY = vActiveChromosomes[ uiI ][ vCoords[ uiI ].uiChromosomeY ].sName;
-                    size_t iDataSetId =
-                        getValue<size_t>( { "replicates", "by_name", sRep, "ids", sChromNameX, sChromNameY } );
+                    if( hasValue( { "replicates", "by_name", sRep, "ids", sChromNameX } ) &&
+                        hasValue( { "replicates", "by_name", sRep, "ids", sChromNameX, sChromNameY } ) )
+                    {
+                        size_t iDataSetId =
+                            getValue<size_t>( { "replicates", "by_name", sRep, "ids", sChromNameX, sChromNameY } );
 
-                    vVals[ uiI ] =
-                        pIndices->
+                        vVals[ uiI ] = pIndices->
 #if USE_GRID_QUERIES
-                        gridCount
+                                       gridCount
 #else
-                        count
+                                       count
 #endif
-                        ( iDataSetId,
+                                       ( iDataSetId,
 #if USE_GRID_QUERIES
-                          { vCoords[ uiI ].uiIndexY, vCoords[ uiI ].uiIndexX, uiMapQMin, uiFromAnnoFilter },
-                          { vCoords[ uiI ].uiIndexH, vCoords[ uiI ].uiIndexW },
-                          { vCoords[ uiI ].uiNumCoordsY, vCoords[ uiI ].uiNumCoordsX, uiMapQMax, uiToAnnoFilter },
+                                         { vCoords[ uiI ].uiIndexY, vCoords[ uiI ].uiIndexX, uiMapQMin,
+                                           uiFromAnnoFilter, uiFromSameStrandFilter, uiFromYStrandFilter },
+                                         { vCoords[ uiI ].uiIndexH, vCoords[ uiI ].uiIndexW },
+                                         { vCoords[ uiI ].uiNumCoordsY, vCoords[ uiI ].uiNumCoordsX, uiMapQMax,
+                                           uiToAnnoFilter, uiToSameStrandFilter, uiToYStrandFilter },
 #else
-                          { vCoords[ uiI ].uiIndexY, vCoords[ uiI ].uiIndexX, uiMapQMin, uiFromAnnoFilter },
-                          { vCoords[ uiI ].uiIndexY + vCoords[ uiI ].uiIndexH,
-                            vCoords[ uiI ].uiIndexX + vCoords[ uiI ].uiIndexW, uiMapQMax, uiToAnnoFilter },
+                                         { vCoords[ uiI ].uiIndexY, vCoords[ uiI ].uiIndexX, uiMapQMin,
+                                           uiFromAnnoFilter, uiFromSameStrandFilter, uiFromYStrandFilter },
+                                         { vCoords[ uiI ].uiIndexY + vCoords[ uiI ].uiIndexH,
+                                           vCoords[ uiI ].uiIndexX + vCoords[ uiI ].uiIndexW, uiMapQMax, uiToAnnoFilter,
+                                           uiToSameStrandFilter, uiToYStrandFilter },
 #endif
-                          xIntersect,
-                          0 );
+                                         xIntersect,
+                                         0 );
+                    }
+                    else
+                        vVals[ uiI ] = { };
                 }
                 else
                     vVals[ uiI ] = { };
@@ -184,7 +193,8 @@ bool PartialQuarry::setDecayValues( )
     size_t uiMinuend = getValue<size_t>( { "settings", "normalization", "min_interactions", "val" } );
     size_t uiSamplesMin = getValue<size_t>( { "settings", "normalization", "ddd_samples", "val_min" } );
     size_t uiSamplesMax = getValue<size_t>( { "settings", "normalization", "ddd_samples", "val_max" } );
-    double fQuantExcl = (1.0 - getValue<double>( { "settings", "normalization", "ddd_quantile", "val" } ) / 100.0) / 2.0;
+    double fQuantExcl =
+        ( 1.0 - getValue<double>( { "settings", "normalization", "ddd_quantile", "val" } ) / 100.0 ) / 2.0;
 
     for( std::string& sRep : vActiveReplicates )
     {
@@ -202,69 +212,78 @@ bool PartialQuarry::setDecayValues( )
                 {
                     std::string sChromNameX = vActiveChromosomes[ uiI ][ vCoords[ uiI ].uiChromosomeX ].sName;
                     std::string sChromNameY = vActiveChromosomes[ uiI ][ vCoords[ uiI ].uiChromosomeY ].sName;
-                    size_t iDataSetId =
-                        getValue<size_t>( { "replicates", "by_name", sRep, "ids", sChromNameX, sChromNameY } );
-                    int64_t iChrX = getValue<int64_t>( { "contigs", "lengths", sChromNameX } );
-                    int64_t iChrY = getValue<int64_t>( { "contigs", "lengths", sChromNameY } );
 
-                    /* The two contigs span a rectange of size cW x cH.
-                     * The bin has a bottom left corner with a distance of c form the diagonal (positive = to right, neg
-                     * = to left)
-                     *
-                     */
-
-                    int64_t iCornerPos = ( vCoords[ uiI ].iFrom + vCoords[ uiI ].iTo ) / 2;
-                    // corner pos within contig rectangle
-                    if( iCornerPos >= -iChrY && iCornerPos <= iChrX )
+                    if( hasValue( { "replicates", "by_name", sRep, "ids", sChromNameX } ) &&
+                        hasValue( { "replicates", "by_name", sRep, "ids", sChromNameX, sChromNameY } ) )
                     {
-                        int64_t iBot = std::abs( iCornerPos );
-                        int64_t iChrTopRightCornerPos = iChrX - iChrY;
-                        int64_t iTop = iChrX + iChrY - std::abs( iChrTopRightCornerPos - iCornerPos );
+                        size_t iDataSetId =
+                            getValue<size_t>( { "replicates", "by_name", sRep, "ids", sChromNameX, sChromNameY } );
+                        int64_t iChrX = getValue<int64_t>( { "contigs", "lengths", sChromNameX } );
+                        int64_t iChrY = getValue<int64_t>( { "contigs", "lengths", sChromNameY } );
 
-                        int64_t iMyH = std::max( (int64_t)1, vCoords[ uiI ].iTo - vCoords[ uiI ].iFrom);
-                        int64_t iH = std::max( (int64_t)1, ( ( iTop - iMyH ) - iBot ) / (int64_t)uiSamplesMax );
+                        /* The two contigs span a rectange of size cW x cH.
+                         * The bin has a bottom left corner with a distance of c form the diagonal (positive = to right,
+                         * neg = to left)
+                         *
+                         */
 
-                        if( ( iTop - iMyH ) - iBot >= (int64_t)( uiSamplesMin - 1 ) * iMyH )
+                        int64_t iCornerPos = ( vCoords[ uiI ].iFrom + vCoords[ uiI ].iTo ) / 2;
+                        // corner pos within contig rectangle
+                        if( iCornerPos >= -iChrY && iCornerPos <= iChrX )
                         {
-                            std::vector<size_t> vvVals;
-                            vvVals.reserve( uiSamplesMax );
-                            for( int64_t iMyBot = iBot; iMyBot <= iTop - iMyH; iMyBot += iH )
+                            int64_t iBot = std::abs( iCornerPos );
+                            int64_t iChrTopRightCornerPos = iChrX - iChrY;
+                            int64_t iTop = iChrX + iChrY - std::abs( iChrTopRightCornerPos - iCornerPos );
+
+                            int64_t iMyH = std::max( (int64_t)1, vCoords[ uiI ].iTo - vCoords[ uiI ].iFrom );
+                            int64_t iH = std::max( (int64_t)1, ( ( iTop - iMyH ) - iBot ) / (int64_t)uiSamplesMax );
+
+                            if( ( iTop - iMyH ) - iBot >= (int64_t)( uiSamplesMin - 1 ) * iMyH )
                             {
-                                int64_t iMyTop = iMyBot + iMyH;
+                                std::vector<size_t> vvVals;
+                                vvVals.reserve( uiSamplesMax );
+                                for( int64_t iMyBot = iBot; iMyBot <= iTop - iMyH; iMyBot += iH )
+                                {
+                                    int64_t iMyTop = iMyBot + iMyH;
 
-                                assert( iMyBot >= iCornerPos );
-                                size_t uiYs = (size_t)( iMyBot + iCornerPos ) / 2;
-                                size_t uiXs = (size_t)( iMyBot - iCornerPos ) / 2;
-                                assert( iMyTop >= iCornerPos );
-                                size_t uiYe = std::max( uiYs + 1, (size_t)( iMyTop + iCornerPos ) / 2 );
-                                size_t uiXe = std::max( uiXs + 1, (size_t)( iMyTop - iCornerPos ) / 2 );
-                                assert( uiYe <= (size_t)iChrX );
-                                assert( uiXe <= (size_t)iChrY );
+                                    assert( iMyBot >= iCornerPos );
+                                    size_t uiYs = (size_t)( iMyBot + iCornerPos ) / 2;
+                                    size_t uiXs = (size_t)( iMyBot - iCornerPos ) / 2;
+                                    assert( iMyTop >= iCornerPos );
+                                    size_t uiYe = std::max( uiYs + 1, (size_t)( iMyTop + iCornerPos ) / 2 );
+                                    size_t uiXe = std::max( uiXs + 1, (size_t)( iMyTop - iCornerPos ) / 2 );
+                                    assert( uiYe <= (size_t)iChrX );
+                                    assert( uiXe <= (size_t)iChrY );
 
-                                vvVals.push_back( pIndices->count( iDataSetId,
-                                                                  { uiXs, uiYs, uiMapQMin, uiFromAnnoFilter },
-                                                                  { uiXe, uiYe, uiMapQMax, uiToAnnoFilter },
-                                                                  xIntersect,
-                                                                  0 ) );
+                                    vvVals.push_back( pIndices->count( iDataSetId,
+                                                                       { uiXs, uiYs, uiMapQMin, uiFromAnnoFilter,
+                                                                         uiFromSameStrandFilter, uiFromYStrandFilter },
+                                                                       { uiXe, uiYe, uiMapQMax, uiToAnnoFilter,
+                                                                         uiToSameStrandFilter, uiToYStrandFilter },
+                                                                       xIntersect,
+                                                                       0 ) );
 
-                                if( vvVals.back( ) > uiMinuend )
-                                    vvVals.back( ) -= uiMinuend;
+                                    if( vvVals.back( ) > uiMinuend )
+                                        vvVals.back( ) -= uiMinuend;
+                                    else
+                                        vvVals.back( ) = 0;
+                                }
+
+                                std::sort( vvVals.begin( ), vvVals.end( ) );
+                                if( fQuantExcl >= 0.5 )
+                                    vVals[ uiI ] = (double)vvVals[ vvVals.size( ) / 2 ];
                                 else
-                                    vvVals.back( ) = 0;
+                                {
+                                    vVals[ uiI ] = 0;
+                                    for( size_t uiJ = vvVals.size( ) * fQuantExcl;
+                                         uiJ < vvVals.size( ) * ( 1 - fQuantExcl );
+                                         uiJ++ )
+                                        vVals[ uiI ] += (double)vvVals[ uiJ ];
+                                    vVals[ uiI ] /= (size_t)( (double)vvVals.size( ) * ( 1.0 - 2.0 * fQuantExcl ) );
+                                }
                             }
-
-                            std::sort( vvVals.begin( ), vvVals.end( ) );
-                            if( fQuantExcl >= 0.5 )
-                                vVals[ uiI ] = (double)vvVals[ vvVals.size( ) / 2 ];
                             else
-                            {
                                 vVals[ uiI ] = 0;
-                                for( size_t uiJ = vvVals.size( ) * fQuantExcl;
-                                     uiJ < vvVals.size( ) * ( 1 - fQuantExcl );
-                                     uiJ++ )
-                                    vVals[ uiI ] += (double)vvVals[ uiJ ];
-                                vVals[ uiI ] /= (size_t)( (double)vvVals.size( ) * ( 1.0 - 2.0 * fQuantExcl ) );
-                            }
                         }
                         else
                             vVals[ uiI ] = 0;
@@ -503,7 +522,7 @@ bool PartialQuarry::setDecayCDS( )
 }
 
 
-const pybind11::dict PartialQuarry::getDecayCDS( const std::function<void(const std::string&)>& fPyPrint )
+const pybind11::dict PartialQuarry::getDecayCDS( const std::function<void( const std::string& )>& fPyPrint )
 {
     update( NodeNames::DecayCDS, fPyPrint );
     return xDistDepDecCDS;
@@ -531,7 +550,7 @@ void PartialQuarry::regReplicates( )
                   ComputeNode{ .sNodeName = "bin_values",
                                .fFunc = &PartialQuarry::setBinValues,
                                .vIncomingFunctions = { NodeNames::BinCoords, NodeNames::ActiveReplicates,
-                                                       NodeNames::MappingQuality },
+                                                       NodeNames::MappingQuality, NodeNames::Directionality },
                                .vIncomingSession = { { "settings", "normalization", "min_interactions", "val" },
                                                      { "replicates", "by_name" } },
                                .vSessionsIncomingInPrevious = { { "annotation", "by_name" },
@@ -542,7 +561,7 @@ void PartialQuarry::regReplicates( )
                   ComputeNode{ .sNodeName = "decay_values",
                                .fFunc = &PartialQuarry::setDecayValues,
                                .vIncomingFunctions = { NodeNames::DecayCoords, NodeNames::ActiveReplicates,
-                                                       NodeNames::MappingQuality },
+                                                       NodeNames::MappingQuality, NodeNames::Directionality },
                                .vIncomingSession = { { "settings", "normalization", "ddd_samples", "val_min" },
                                                      { "settings", "normalization", "ddd_samples", "val_max" },
                                                      { "settings", "normalization", "ddd_quantile", "val" },

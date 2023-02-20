@@ -144,7 +144,7 @@ std::pair<std::vector<AxisCoord>, std::vector<AxisRegion>> axisCoordsHelper( siz
         }
 
         // when making contig ends larger don't skip the beginning of the next contig because of it
-        if(iSmallerBins == 5 && uiCurrScreenPos >= uiChromosomeStartPos && uiCurrScreenPos > uiChromosomeEndPos)
+        if( iSmallerBins == 5 && uiCurrScreenPos >= uiChromosomeStartPos && uiCurrScreenPos > uiChromosomeEndPos )
             uiCurrScreenPos = uiChromosomeEndPos;
 
         uiChromosomeStartPos = uiChromosomeEndPos;
@@ -594,25 +594,27 @@ bool PartialQuarry::setTicks( )
     END_RETURN;
 }
 
-const pybind11::dict PartialQuarry::getTicks( bool bXAxis, const std::function<void(const std::string&)>& fPyPrint )
+const pybind11::dict PartialQuarry::getTicks( bool bXAxis, const std::function<void( const std::string& )>& fPyPrint )
 {
     update( NodeNames::Ticks, fPyPrint );
     return xTicksCDS[ bXAxis ? 0 : 1 ];
 }
 
-const pybind11::list PartialQuarry::getTickList( bool bXAxis, const std::function<void(const std::string&)>& fPyPrint )
+const pybind11::list PartialQuarry::getTickList( bool bXAxis,
+                                                 const std::function<void( const std::string& )>& fPyPrint )
 {
     update( NodeNames::Ticks, fPyPrint );
     return vTickLists[ bXAxis ? 0 : 1 ];
 }
 
-const pybind11::list PartialQuarry::getTickList2( bool bXAxis, const std::function<void(const std::string&)>& fPyPrint )
+const pybind11::list PartialQuarry::getTickList2( bool bXAxis,
+                                                  const std::function<void( const std::string& )>& fPyPrint )
 {
     update( NodeNames::Ticks, fPyPrint );
     return vTickLists2[ bXAxis ? 0 : 1 ];
 }
 
-const std::array<size_t, 2> PartialQuarry::getCanvasSize( const std::function<void(const std::string&)>& fPyPrint )
+const std::array<size_t, 2> PartialQuarry::getCanvasSize( const std::function<void( const std::string& )>& fPyPrint )
 {
     update( NodeNames::CanvasSize, fPyPrint );
     return vCanvasSize;
@@ -749,6 +751,54 @@ bool PartialQuarry::setMappingQuality( )
 
     uiMapQMin = 255 - uiMapQMin;
     uiMapQMax = 255 - uiMapQMax;
+    END_RETURN;
+}
+
+bool PartialQuarry::setDirectionality( )
+{
+    const std::string sDir = getValue<std::string>( { "settings", "filters", "directionality" } );
+    if(sDir == "all")
+    {
+        uiFromSameStrandFilter = 0;
+        uiToSameStrandFilter = 2;
+        
+        uiFromYStrandFilter = 0;
+        uiToYStrandFilter = 2;
+    }
+    else if(sDir == "same")
+    {
+        uiFromSameStrandFilter = 0;
+        uiToSameStrandFilter = 1;
+
+        uiFromYStrandFilter = 0;
+        uiToYStrandFilter = 2;
+    }
+    else if(sDir == "oppo")
+    {
+        uiFromSameStrandFilter = 1;
+        uiToSameStrandFilter = 2;
+
+        uiFromYStrandFilter = 0;
+        uiToYStrandFilter = 2;
+    }
+    else if(sDir == "forw")
+    {
+        uiFromSameStrandFilter = 0;
+        uiToSameStrandFilter = 1;
+
+        uiFromYStrandFilter = 0;
+        uiToYStrandFilter = 1;
+    }
+    else if(sDir == "rev")
+    {
+        uiFromSameStrandFilter = 0;
+        uiToSameStrandFilter = 1;
+
+        uiFromYStrandFilter = 1;
+        uiToYStrandFilter = 2;
+    }
+    else
+        throw std::logic_error( "unknown directionality setting" );
     END_RETURN;
 }
 
@@ -1032,16 +1082,16 @@ bool PartialQuarry::setDecayCoords( )
             std::array<DecayCoord, 2> vKey;
             for( size_t uiI = 0; uiI < 2; uiI++ )
             {
-                if(vCoords[ uiI ].uiChromosomeX != std::numeric_limits<size_t>::max())
+                if( vCoords[ uiI ].uiChromosomeX != std::numeric_limits<size_t>::max( ) )
                 {
-                    assert(vCoords[ uiI ].uiChromosomeX < vActiveChromosomes[0].size());
-                    assert(vCoords[ uiI ].uiChromosomeY < vActiveChromosomes[1].size());
+                    assert( vCoords[ uiI ].uiChromosomeX < vActiveChromosomes[ 0 ].size( ) );
+                    assert( vCoords[ uiI ].uiChromosomeY < vActiveChromosomes[ 1 ].size( ) );
 
-                    int64_t iA =
-                        (int64_t)( vCoords[ uiI ].uiIndexX + vCoords[ uiI ].uiIndexW ) - (int64_t)vCoords[ uiI ].uiIndexY;
+                    int64_t iA = (int64_t)( vCoords[ uiI ].uiIndexX + vCoords[ uiI ].uiIndexW ) -
+                                 (int64_t)vCoords[ uiI ].uiIndexY;
 
-                    int64_t iB =
-                        (int64_t)vCoords[ uiI ].uiIndexX - (int64_t)( vCoords[ uiI ].uiIndexY + vCoords[ uiI ].uiIndexH );
+                    int64_t iB = (int64_t)vCoords[ uiI ].uiIndexX -
+                                 (int64_t)( vCoords[ uiI ].uiIndexY + vCoords[ uiI ].uiIndexH );
 
                     int64_t iS = std::min( iA, iB );
                     int64_t iE = std::max( std::max( iA, iB ), iS + 1 );
@@ -1049,7 +1099,7 @@ bool PartialQuarry::setDecayCoords( )
                     vKey[ uiI ] = DecayCoord{ vCoords[ uiI ].uiChromosomeX, vCoords[ uiI ].uiChromosomeY, iS, iE };
                 }
                 else
-                    vKey[ uiI ] = {};
+                    vKey[ uiI ] = { };
             }
 
             if( vPtr.count( vKey ) == 0 )
@@ -1066,13 +1116,15 @@ bool PartialQuarry::setDecayCoords( )
     END_RETURN;
 }
 
-const std::vector<std::array<BinCoord, 2>>& PartialQuarry::getBinCoords( const std::function<void(const std::string&)>& fPyPrint )
+const std::vector<std::array<BinCoord, 2>>&
+PartialQuarry::getBinCoords( const std::function<void( const std::string& )>& fPyPrint )
 {
     update( NodeNames::BinCoords, fPyPrint );
     return vBinCoords;
 }
 
-const pybind11::list PartialQuarry::getAnnotationList( bool bXAxis, const std::function<void(const std::string&)>& fPyPrint )
+const pybind11::list PartialQuarry::getAnnotationList( bool bXAxis,
+                                                       const std::function<void( const std::string& )>& fPyPrint )
 {
     update( NodeNames::ActiveChrom, fPyPrint );
 
@@ -1085,16 +1137,17 @@ const pybind11::list PartialQuarry::getAnnotationList( bool bXAxis, const std::f
 }
 
 
-const std::vector<AxisCoord>& PartialQuarry::getAxisCoords( bool bXAxis, const std::function<void(const std::string&)>& fPyPrint )
+const std::vector<AxisCoord>& PartialQuarry::getAxisCoords( bool bXAxis,
+                                                            const std::function<void( const std::string& )>& fPyPrint )
 {
     update( NodeNames::AxisCoords, fPyPrint );
     return vAxisCords[ bXAxis ? 0 : 1 ];
 }
 
-size_t PartialQuarry::getAxisSize( bool bXAxis, const std::function<void(const std::string&)>& fPyPrint )
+size_t PartialQuarry::getAxisSize( bool bXAxis, const std::function<void( const std::string& )>& fPyPrint )
 {
     update( NodeNames::AxisCoords, fPyPrint );
-    return vAxisCords[ bXAxis ? 0 : 1 ].size();
+    return vAxisCords[ bXAxis ? 0 : 1 ].size( );
 }
 
 
@@ -1163,6 +1216,13 @@ void PartialQuarry::regCoords( )
                                .vIncomingSession = { { "settings", "filters", "mapping_q", "val_min" },
                                                      { "settings", "filters", "mapping_q", "val_max" },
                                                      { "settings", "filters", "incomplete_alignments" } },
+                               .vSessionsIncomingInPrevious = {} } );
+
+    registerNode( NodeNames::Directionality,
+                  ComputeNode{ .sNodeName = "directionality_setting",
+                               .fFunc = &PartialQuarry::setDirectionality,
+                               .vIncomingFunctions = { },
+                               .vIncomingSession = { { "settings", "filters", "directionality" } },
                                .vSessionsIncomingInPrevious = {} } );
 
     registerNode( NodeNames::BinCoords,

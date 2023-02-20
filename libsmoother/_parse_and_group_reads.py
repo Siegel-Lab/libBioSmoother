@@ -23,9 +23,9 @@ def read_xa_tag(tags):
         split = tag.split(",")
         if len(split) == 5:
             chrom, str_pos, _CIGAR, _NM = split
-            # strand = str_pos[0]
+            strand = str_pos[0]
             pos = int(str_pos[1:])
-            l.append([chrom, pos])
+            l.append([chrom, pos, strand])
     return l
 
 
@@ -45,7 +45,9 @@ def parse_tsv(in_filename, test, chr_filter, line_format, progress_print=print):
             # parse file columns
             num_cols = len(line.split())
             if num_cols in line_format:
-                read_name, chrs, poss, mapqs, tags = line_format[num_cols](*line.split())
+                read_name, chrs, poss, mapqs, tags, strand = line_format[num_cols](
+                    *line.split()
+                )
 
                 cont = False
                 for chr_ in chrs:
@@ -53,15 +55,18 @@ def parse_tsv(in_filename, test, chr_filter, line_format, progress_print=print):
                         cont = True
                 if cont:
                     continue
-                mapqs = [0 if mapq in ["", "nomapq", "255", "*"] else mapq for mapq in mapqs]
+                mapqs = [
+                    0 if mapq in ["", "nomapq", "255", "*"] else mapq for mapq in mapqs
+                ]
                 poss = [max(0, int(x)) for x in poss]
                 mapqs = [max(0, int(x)) for x in mapqs]
+                strand = [s == "+" for s in strand]
 
-                #if cnt > TEST_FAC and test:
+                # if cnt > TEST_FAC and test:
                 #    break
                 cnt += 1
 
-                yield line, read_name, chrs, poss, mapqs, tags
+                yield line, read_name, chrs, poss, mapqs, tags, strand
             else:
                 raise ValueError(
                     'line "'
@@ -75,74 +80,125 @@ def parse_tsv(in_filename, test, chr_filter, line_format, progress_print=print):
 
 
 def parse_heatmap(in_filename, test, chr_filter, progress_print=print):
-    yield from parse_tsv(in_filename, test, chr_filter, {
-        7: lambda read_name, chr_1, pos_1, chr_2, pos_2, mapq_1, mapq_2: 
-                (read_name, [chr_1, chr_2], [pos_1, pos_2], [mapq_1, mapq_2], ["?", "?"]),
-        9: lambda read_name, chr_1, pos_1, chr_2, pos_2, mapq_1, mapq_2, tag_a, tag_b: 
-                (read_name, [chr_1, chr_2], [pos_1, pos_2], [mapq_1, mapq_2], [tag_a, tag_b]),
-        11: lambda read_name, _1, chr_1, pos_1, _2, _3, chr_2, pos_2, _4, mapq_1, mapq_2: 
-                (read_name, [chr_1, chr_2], [pos_1, pos_2], [mapq_1, mapq_2], ["?", "?"]),
-        13: lambda read_name, _1, chr_1, pos_1, _2, _3, chr_2, pos_2, _4, mapq_1, mapq_2, tag_a, tag_b: 
-                (read_name, [chr_1, chr_2], [pos_1, pos_2], [mapq_1, mapq_2], [tag_a, tag_b]),
-    }, progress_print)
+    yield from parse_tsv(
+        in_filename,
+        test,
+        chr_filter,
+        {
+            7: lambda read_name, chr_1, pos_1, chr_2, pos_2, mapq_1, mapq_2: (
+                read_name,
+                [chr_1, chr_2],
+                [pos_1, pos_2],
+                [mapq_1, mapq_2],
+                ["?", "?"],
+                ["+", "+"],
+            ),
+            9: lambda read_name, chr_1, pos_1, chr_2, pos_2, mapq_1, mapq_2, tag_a, tag_b: (
+                read_name,
+                [chr_1, chr_2],
+                [pos_1, pos_2],
+                [mapq_1, mapq_2],
+                [tag_a, tag_b],
+                ["+", "+"],
+            ),
+            11: lambda read_name, str1, chr_1, pos_1, _2, str2, chr_2, pos_2, _4, mapq_1, mapq_2: (
+                read_name,
+                [chr_1, chr_2],
+                [pos_1, pos_2],
+                [mapq_1, mapq_2],
+                ["?", "?"],
+                [str1, str2],
+            ),
+            13: lambda read_name, str1, chr_1, pos_1, _2, str2, chr_2, pos_2, _4, mapq_1, mapq_2, tag_a, tag_b: (
+                read_name,
+                [chr_1, chr_2],
+                [pos_1, pos_2],
+                [mapq_1, mapq_2],
+                [tag_a, tag_b],
+                [str1, str2],
+            ),
+        },
+        progress_print,
+    )
 
-def force_upper_triangle(in_filename, test, chr_filter, progress_print=print, parse_func=parse_heatmap):
-    for line, read_name, chrs, poss, mapqs, tags in parse_func(in_filename, test, chr_filter, progress_print):
-        
-        order = [(chr_filter.index(chrs[idx]), poss[idx], idx) for idx in range(len(chrs))]
+
+def force_upper_triangle(
+    in_filename, test, chr_filter, progress_print=print, parse_func=parse_heatmap
+):
+    for line, read_name, chrs, poss, mapqs, tags, strand in parse_func(
+        in_filename, test, chr_filter, progress_print
+    ):
+        order = [
+            (chr_filter.index(chrs[idx]), poss[idx], idx) for idx in range(len(chrs))
+        ]
 
         chrs_out = []
         poss_out = []
         mapqs_out = []
         tags_out = []
+        strand_out = []
         for _, _, idx in sorted(order):
             chrs_out.append(chrs[idx])
             poss_out.append(poss[idx])
             mapqs_out.append(mapqs[idx])
             tags_out.append(tags[idx])
+            strand_out.append(strand[idx])
 
-        yield line, read_name, chrs_out, poss_out, mapqs_out, tags_out
+        yield line, read_name, chrs_out, poss_out, mapqs_out, tags_out, strand_out
+
 
 def parse_track(in_filename, test, chr_filter, progress_print=print):
-    yield from parse_tsv(in_filename, test, chr_filter, {
-        4: lambda read_name, chr_1, pos_1, mapq_1: 
-                (read_name, [chr_1], [pos_1], [mapq_1], ["?"]),
-        5: lambda read_name, chr_1, pos_1, mapq_1, tag_a: 
-                (read_name, [chr_1], [pos_1], [mapq_1], [tag_a]),
-        6: lambda read_name, _1, chr_1, pos_1, _2, mapq_1: 
-                (read_name, [chr_1], [pos_1], [mapq_1], ["?"]),
-        7: lambda read_name, _1, chr_1, pos_1, _2, mapq_1, tag_a: 
-                (read_name, [chr_1], [pos_1], [mapq_1], [tag_a]),
-    }, progress_print)
+    yield from parse_tsv(
+        in_filename,
+        test,
+        chr_filter,
+        {
+            4: lambda read_name, chr_1, pos_1, mapq_1: (
+                read_name,
+                [chr_1],
+                [pos_1],
+                [mapq_1],
+                ["?"],
+                ["+"],
+            ),
+            5: lambda read_name, chr_1, pos_1, mapq_1, tag_a: (
+                read_name,
+                [chr_1],
+                [pos_1],
+                [mapq_1],
+                [tag_a],
+                ["+"],
+            ),
+            6: lambda read_name, str1, chr_1, pos_1, _2, mapq_1: (
+                read_name,
+                [chr_1],
+                [pos_1],
+                [mapq_1],
+                ["?"],
+                [str1],
+            ),
+            7: lambda read_name, str1, chr_1, pos_1, _2, mapq_1, tag_a: (
+                read_name,
+                [chr_1],
+                [pos_1],
+                [mapq_1],
+                [tag_a],
+                [str1],
+            ),
+        },
+        progress_print,
+    )
 
 
-def has_map_q_and_multi_map(in_filename, test, chr_filter, progress_print=print, parse_func=parse_heatmap):
-    map_q = False
-    multi_map = False
-    last_map_q = None
-    last_read_name = None
-    for _, read_name, _, _, mapqs, tags in parse_func(in_filename, test, chr_filter, progress_print):
-        if last_read_name is None:
-            last_read_name = read_name
-        elif last_read_name == read_name:
-            multi_map = True
-        for tag in tags:
-            if len(tag) >= 5 and tag != "notag":
-                multi_map = True
-
-        if last_map_q is None:
-            last_map_q = mapqs[0]
-        for mapq in mapqs:
-            if mapq != last_map_q:
-                map_q = True
-
-        if map_q and multi_map:
-            break
-    return map_q, multi_map
-
-
-def group_reads(in_filename, file_size, chr_filter, progress_print=print, parse_func=parse_heatmap, 
-                no_groups=False, test=False):
+def group_reads(
+    in_filename,
+    file_size,
+    chr_filter,
+    progress_print=print,
+    parse_func=parse_heatmap,
+    no_groups=False,
+    test=False,
+):
     file_name = simplified_filepath(in_filename)
     curr_read_name = None
     group = []
@@ -153,24 +209,26 @@ def group_reads(in_filename, file_size, chr_filter, progress_print=print, parse_
         chrs = []
         for g in group:
             chr_1_cmp = g[0][0]
-            for chr_, _1, _2 in g:
+            for chr_, _1, _2, _3 in g:
                 if chr_1_cmp != chr_:
-                    do_cont = False # no reads that come from different chromosomes
+                    do_cont = False  # no reads that come from different chromosomes
             chrs.append(chr_1_cmp)
         if do_cont:
             pos_s = []
             pos_e = []
+            strands = []
             for g in group:
+                strands.append(g[0][3])
                 if no_groups:
                     pos_s.append(g[0][1])
                     pos_e.append(g[0][1])
                 else:
-                    pos_s.append(min([p for _1, p, _2 in g]))
-                    pos_e.append(max([p for _1, p, _2 in g]))
-            map_q = min( [max(x for _1, _2, x in g ) for g in group] )
+                    pos_s.append(min([p for _1, p, _2, _3 in g]))
+                    pos_e.append(max([p for _1, p, _2, _3 in g]))
+            map_q = min([max(x for _1, _2, x, _3 in g) for g in group])
             if min(len(g) for g in group) > 1:
                 map_q += 1
-            yield curr_read_name, chrs, pos_s, pos_e, map_q
+            yield curr_read_name, chrs, pos_s, pos_e, map_q, strands
         group = []
 
     for idx_2, (
@@ -180,19 +238,19 @@ def group_reads(in_filename, file_size, chr_filter, progress_print=print, parse_
         poss,
         mapqs,
         tags,
+        strands,
     ) in enumerate(parse_func(in_filename, test, chr_filter, progress_print)):
         if read_name != curr_read_name and len(group) > 0 and len(group[0]) > 0:
             yield from deal_with_group()
         curr_read_name = read_name
-        for tag in tags:
-            if tag == "notag":
-                have_no_tag_1 = True
-        for idx, (chr_, pos, mapq, tag) in enumerate(zip(chrs, poss, mapqs, tags)):
+        for idx, (chr_, pos, mapq, tag, strand) in enumerate(
+            zip(chrs, poss, mapqs, tags, strands)
+        ):
             if idx >= len(group):
                 group.append([])
-            group[idx].append((chr_, pos, mapq))
-            for chr_1, pos_1 in read_xa_tag(tag):
-                group[idx].append((chr_1, int(pos_1), 0))
+            group[idx].append((chr_, pos, mapq, strand))
+            for chr_1, pos_1, str_1 in read_xa_tag(tag):
+                group[idx].append((chr_1, int(pos_1), 0, str_1))
     if len(group) > 0 and len(group[0]) > 0:
         yield from deal_with_group()
 
@@ -272,7 +330,10 @@ def chr_order_heatmap(
         pos_s,
         pos_e,
         map_q,
-    ) in group_reads(in_filename, file_size, chr_filter, progress_print, parse_func, no_groups, test):
+        strands,
+    ) in group_reads(
+        in_filename, file_size, chr_filter, progress_print, parse_func, no_groups, test
+    ):
         chr_1, chr_2 = chrs_
         if chr_1 not in chrs:
             chrs[chr_1] = {}
@@ -288,20 +349,32 @@ def chr_order_heatmap(
                             str(pos_e[0]),
                             str(pos_s[1]),
                             str(pos_e[1]),
+                            str(strands[0]),
+                            str(strands[1]),
                             str(map_q),
                         ]
                     )
                     + "\n"
                 )
         else:
-            chrs[chr_1][chr_2].append((read_name, pos_s[0], pos_e[0], pos_s[1], pos_e[1], map_q))
+            chrs[chr_1][chr_2].append(
+                (
+                    read_name,
+                    pos_s[0],
+                    pos_e[0],
+                    pos_s[1],
+                    pos_e[1],
+                    strands[0],
+                    strands[1],
+                    map_q,
+                )
+            )
 
             if len(chrs[chr_1][chr_2]) >= MAX_READS_IM_MEM and False:
                 with open(prefix + "." + chr_1 + "." + chr_2, "w") as out_file:
                     for tup in chrs[chr_1][chr_2]:
                         out_file.write("\t".join([str(x) for x in tup]) + "\n")
                 chrs[chr_1][chr_2] = None
-
 
     return ChrOrderHeatmapIterator(chrs, prefix)
 
@@ -352,7 +425,10 @@ def chr_order_coverage(
         pos_s,
         pos_e,
         map_q,
-    ) in group_reads(in_filename, file_size, chr_filter, progress_print, parse_track, no_groups, test):
+        strands,
+    ) in group_reads(
+        in_filename, file_size, chr_filter, progress_print, parse_track, no_groups, test
+    ):
         if chrs_[0] not in chrs:
             chrs[chrs_[0]] = []
         if chrs[chrs_[0]] is None:
@@ -363,6 +439,8 @@ def chr_order_coverage(
                             read_name,
                             str(pos_s[0]),
                             str(pos_e[0]),
+                            str(strands[1]),
+                            str(strands[1]),
                             str(map_q),
                         ]
                     )
@@ -377,7 +455,6 @@ def chr_order_coverage(
                         out_file.write("\t".join([str(x) for x in tup]) + "\n")
                 chrs[chrs_[0]] = None
 
-
     return ChrOrderCoverageIterator(chrs, prefix)
 
 
@@ -385,11 +462,11 @@ def get_filesize(path):
     if not os.path.exists(path):
         raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), path)
     return os.path.getsize(path)
-    #return int(
+    # return int(
     #    subprocess.run(["wc", "-l", path], stdout=subprocess.PIPE)
     #    .stdout.decode("utf-8")
     #    .split(" ")[0]
-    #)
+    # )
 
 
 def parse_annotations(annotation_file):
@@ -412,4 +489,4 @@ def parse_annotations(annotation_file):
             ) = line.split("\t")
             yield annotation_type, chrom, int(from_pos), int(to_pos), extras.replace(
                 ";", "\n"
-            ).replace("%2C", ","), strand == '+'
+            ).replace("%2C", ","), strand == "+"

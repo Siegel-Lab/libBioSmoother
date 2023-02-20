@@ -2,17 +2,21 @@ from .indexer import *
 from .quarry import Quarry
 from .export import export_tsv, export_png, export_svg
 import argparse
-
+import os
+import shutil
 
 def init(args):
     Indexer(args.index_prefix, strict=True).create_session(
-        args.chr_len, 
-        args.dividend, 
-        args.anno_path, 
-        args.order_path, 
-        args.test
+        args.chr_len, args.dividend, args.anno_path, args.order_path, args.test
     )
 
+def reset(args):
+    for possible in [args.index_prefix, args.index_prefix + ".smoother_index"]:
+        if os.path.exists(possible) and os.path.isdir(possible):
+            os.remove(possible + "/session.json")
+            shutil.copy(possible + "/default_session.json", possible + "/session.json")
+            return
+    raise RuntimeError("the given index", args.index_prefix, "does not exist.")
 
 def repl(args):
     Indexer(args.index_prefix).add_replicate(
@@ -25,6 +29,7 @@ def repl(args):
         args.no_map_q,
         args.no_multi_map,
         args.no_cat,
+        args.no_strand,
         args.shekelyan,
         args.force_upper_triangle,
     )
@@ -41,6 +46,7 @@ def norm(args):
         args.no_map_q,
         args.no_multi_map,
     )
+
 
 def export_smoother(args):
     session = Quarry(args.index_prefix)
@@ -81,7 +87,8 @@ def add_parsers(main_parser):
         "anno_path", help="Path to a file that contains the annotations.", default=None
     )
     init_parser.add_argument(
-        "--order_path", help="Path to a file that contains the order of annotations, default: gene first, then alphabetic for others."
+        "--order_path",
+        help="Path to a file that contains the order of annotations, default: gene first, then alphabetic for others.",
     )
     init_parser.add_argument(
         "-d",
@@ -92,6 +99,13 @@ def add_parsers(main_parser):
     )
     init_parser.set_defaults(func=init)
     init_parser.add_argument("--test", help=argparse.SUPPRESS, action="store_true")
+
+    reset_parser = main_parser.add_parser("reset", help="Reset session of an index.")
+    reset_parser.add_argument(
+        "index_prefix",
+        help="Prefix that was used to create the index (see the init subcommand).",
+    )
+    reset_parser.set_defaults(func=reset)
 
     repl_parser = main_parser.add_parser(
         "repl", help="Add a replicate to a given index."
@@ -130,6 +144,12 @@ def add_parsers(main_parser):
         help="Do not store category information. (default: off)",
     )
     repl_parser.add_argument(
+        "-s",
+        "--no_strand",
+        action="store_true",
+        help="Do not store strand information. (default: off)",
+    )
+    repl_parser.add_argument(
         "-u",
         "--force_upper_triangle",
         action="store_true",
@@ -142,22 +162,28 @@ def add_parsers(main_parser):
     repl_parser.add_argument(
         "--only_points", help=argparse.SUPPRESS, action="store_true"
     )
-    repl_parser.add_argument(
-        "--shekelyan", help=argparse.SUPPRESS, action="store_true"
-    )
+    repl_parser.add_argument("--shekelyan", help=argparse.SUPPRESS, action="store_true")
     repl_parser.add_argument("--no_groups", help=argparse.SUPPRESS, action="store_true")
 
-
-    norm_parser = main_parser.add_parser("track", help="Add a normalization track to an index, using external sequencing data.")
-    norm_parser.add_argument('index_prefix', 
-        help="Prefix that was used to create the index (see the init subcommand).")
-    norm_parser.add_argument('path', 
-        help="Path to the file that contains the aligned reads.")
-    norm_parser.add_argument('name', 
-        help="Name for the new normalization track.")
-    norm_parser.add_argument('-g', '--group', default="neither", 
-                             choices=["row", "col", "both", "neither"], 
-        help="Where to to place the new normalization track when opening the interface. (default: %(default)s)")
+    norm_parser = main_parser.add_parser(
+        "track",
+        help="Add a normalization track to an index, using external sequencing data.",
+    )
+    norm_parser.add_argument(
+        "index_prefix",
+        help="Prefix that was used to create the index (see the init subcommand).",
+    )
+    norm_parser.add_argument(
+        "path", help="Path to the file that contains the aligned reads."
+    )
+    norm_parser.add_argument("name", help="Name for the new normalization track.")
+    norm_parser.add_argument(
+        "-g",
+        "--group",
+        default="neither",
+        choices=["row", "col", "both", "neither"],
+        help="Where to to place the new normalization track when opening the interface. (default: %(default)s)",
+    )
     norm_parser.set_defaults(func=norm)
     norm_parser.add_argument(
         "--keep_points", help=argparse.SUPPRESS, action="store_true"
@@ -178,7 +204,9 @@ def add_parsers(main_parser):
         help="Do not multi mapping information (reads that map to multiple loci). This will make the index faster and smaller. (default: off)",
     )
 
-    export_parser = main_parser.add_parser("export", help="Export the current index session to a file.")
+    export_parser = main_parser.add_parser(
+        "export", help="Export the current index session to a file."
+    )
     export_parser.add_argument(
         "index_prefix",
         help="Prefix that was used to create the index (see the init subcommand).",
@@ -218,4 +246,3 @@ def make_main_parser():
     sub_parsers.required = True
     add_parsers(sub_parsers)
     return parser
-

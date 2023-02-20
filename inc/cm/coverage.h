@@ -39,8 +39,9 @@ std::tuple<size_t, int64_t, size_t, size_t> PartialQuarry::makeHeapTuple( bool b
     const size_t uiYMin = bCol != bSymPart ? uiStart : uiFrom;
     const size_t uiYMax = bCol != bSymPart ? uiEnd : uiTo;
     // @todo adjust for symmetry
-    const size_t uiCount = pIndices->count( iDataSetId, { uiYMin, uiXMin, uiMapQMin, uiFromAnnoFilter },
-                                           { uiYMax, uiXMax, uiMapQMax, uiToAnnoFilter }, xIntersect, 0 );
+    const size_t uiCount = pIndices->count(
+        iDataSetId, { uiYMin, uiXMin, uiMapQMin, uiFromAnnoFilter, uiFromSameStrandFilter, uiFromYStrandFilter },
+        { uiYMax, uiXMax, uiMapQMax, uiToAnnoFilter, uiToSameStrandFilter, uiToYStrandFilter }, xIntersect, 0 );
 
     return std::make_tuple( uiCount, iDataSetId, uiStart, uiEnd );
 }
@@ -52,11 +53,14 @@ size_t PartialQuarry::getMaxCoverageFromRepl( const std::string& sChromName, con
     // score, datasetId, start, end
     std::vector<std::tuple<size_t, int64_t, size_t, size_t>> vHeap;
     for( const ChromDesc& rDesc : vActiveChromosomes[ bCol ? 1 : 0 ] )
-        vHeap.push_back( makeHeapTuple(
-            bCol, bSymPart, uiFrom, uiTo,
-            getValue<size_t>( { "replicates", "by_name", sRep, "ids", bCol != bSymPart ? sChromName : rDesc.sName,
-                                bCol != bSymPart ? rDesc.sName : sChromName } ),
-            0, rDesc.uiLength ) );
+        if( hasValue( { "replicates", "by_name", sRep, "ids", bCol != bSymPart ? sChromName : rDesc.sName } ) &&
+            hasValue( { "replicates", "by_name", sRep, "ids", bCol != bSymPart ? sChromName : rDesc.sName,
+                        bCol != bSymPart ? rDesc.sName : sChromName } ) )
+            vHeap.push_back( makeHeapTuple(
+                bCol, bSymPart, uiFrom, uiTo,
+                getValue<size_t>( { "replicates", "by_name", sRep, "ids", bCol != bSymPart ? sChromName : rDesc.sName,
+                                    bCol != bSymPart ? rDesc.sName : sChromName } ),
+                0, rDesc.uiLength ) );
 
     std::make_heap( vHeap.begin( ), vHeap.end( ) );
 
@@ -98,16 +102,21 @@ size_t PartialQuarry::getCoverageFromRepl( const std::string& sChromName, const 
     size_t uiRet = 0;
     for( const ChromDesc& rDesc : vActiveChromosomes[ bCol ? 1 : 0 ] )
     {
-        const size_t uiDatasetId =
-            getValue<size_t>( { "replicates", "by_name", sRep, "ids", bCol != bSymPart ? sChromName : rDesc.sName,
-                                bCol != bSymPart ? rDesc.sName : sChromName } );
-        const size_t uiXMin = bCol != bSymPart ? uiFrom : 0;
-        const size_t uiXMax = bCol != bSymPart ? uiTo : rDesc.uiLength;
-        const size_t uiYMin = bCol != bSymPart ? 0 : uiFrom;
-        const size_t uiYMax = bCol != bSymPart ? rDesc.uiLength : uiTo;
-        // @todo adjust for symmetry
-        uiRet += pIndices->count( uiDatasetId, { uiYMin, uiXMin, uiMapQMin, uiFromAnnoFilter },
-                                 { uiYMax, uiXMax, uiMapQMax, uiToAnnoFilter }, xIntersect, 0 );
+        if( hasValue( { "replicates", "by_name", sRep, "ids", bCol != bSymPart ? sChromName : rDesc.sName } ) &&
+            hasValue( { "replicates", "by_name", sRep, "ids", bCol != bSymPart ? sChromName : rDesc.sName,
+                        bCol != bSymPart ? rDesc.sName : sChromName } ) )
+        {
+            const size_t uiDatasetId =
+                getValue<size_t>( { "replicates", "by_name", sRep, "ids", bCol != bSymPart ? sChromName : rDesc.sName,
+                                    bCol != bSymPart ? rDesc.sName : sChromName } );
+            const size_t uiXMin = bCol != bSymPart ? uiFrom : 0;
+            const size_t uiXMax = bCol != bSymPart ? uiTo : rDesc.uiLength;
+            const size_t uiYMin = bCol != bSymPart ? 0 : uiFrom;
+            const size_t uiYMax = bCol != bSymPart ? rDesc.uiLength : uiTo;
+            // @todo adjust for symmetry
+            uiRet += pIndices->count( uiDatasetId, { uiYMin, uiXMin, uiMapQMin, uiFromAnnoFilter },
+                                      { uiYMax, uiXMax, uiMapQMax, uiToAnnoFilter }, xIntersect, 0 );
+        }
     }
 
 
@@ -149,10 +158,10 @@ bool PartialQuarry::setCoverageValues( )
                     if( iDataSetId != -1 )
                         uiVal =
                             pIndices->count( iDataSetId,
-                                            { xCoords.uiIndexPos, 0, uiMapQMin, uiFromAnnoFilter },
-                                            { xCoords.uiIndexPos + xCoords.uiIndexSize, 1, uiMapQMax, uiToAnnoFilter },
-                                            xIntersect,
-                                            0 );
+                                             { xCoords.uiIndexPos, 0, uiMapQMin, uiFromAnnoFilter },
+                                             { xCoords.uiIndexPos + xCoords.uiIndexSize, 1, uiMapQMax, uiToAnnoFilter },
+                                             xIntersect,
+                                             0 );
                 }
                 else
                     uiVal = 0;
@@ -227,11 +236,11 @@ bool PartialQuarry::setTracks( )
                     uiVal = (double)vBackgroundGridSeq[ uiX ];
                 else if( bRadiclNormDisp )
                     uiVal = std::min( (double)vRadiclSeqCoverage[ uiX ][ uiI ],
-                                      (double)vRadiclSeqNumNonEmptyBins[ uiX ][uiI] );
+                                      (double)vRadiclSeqNumNonEmptyBins[ uiX ][ uiI ] );
                 vvMinMaxTracks[ uiI ][ 0 ] = std::min( vvMinMaxTracks[ uiI ][ 0 ], uiVal );
                 if( bRadiclNormDisp )
                     uiVal = std::max( (double)vRadiclSeqCoverage[ uiX ][ uiI ],
-                                      (double)vRadiclSeqNumNonEmptyBins[ uiX ][uiI] );
+                                      (double)vRadiclSeqNumNonEmptyBins[ uiX ][ uiI ] );
                 vvMinMaxTracks[ uiI ][ 1 ] = std::max( vvMinMaxTracks[ uiI ][ 1 ], uiVal );
             }
         }
@@ -616,32 +625,36 @@ bool PartialQuarry::setRankedSlicesCDS( )
     END_RETURN;
 }
 
-const decltype( PartialQuarry::vTrackExport[ 0 ] ) PartialQuarry::getTrackExport( bool bXAxis, const std::function<void(const std::string&)>& fPyPrint )
+const decltype( PartialQuarry::vTrackExport[ 0 ] )
+PartialQuarry::getTrackExport( bool bXAxis, const std::function<void( const std::string& )>& fPyPrint )
 {
     update( NodeNames::TrackExport, fPyPrint );
     return vTrackExport[ bXAxis ? 0 : 1 ];
 }
 
-const std::vector<std::string> PartialQuarry::getTrackExportNames( bool bXAxis, const std::function<void(const std::string&)>& fPyPrint )
+const std::vector<std::string>
+PartialQuarry::getTrackExportNames( bool bXAxis, const std::function<void( const std::string& )>& fPyPrint )
 {
     update( NodeNames::TrackExport, fPyPrint );
     return vTrackExportNames[ bXAxis ? 0 : 1 ];
 }
 
 
-const pybind11::dict PartialQuarry::getTracks( bool bXAxis, const std::function<void(const std::string&)>& fPyPrint )
+const pybind11::dict PartialQuarry::getTracks( bool bXAxis, const std::function<void( const std::string& )>& fPyPrint )
 {
     update( NodeNames::Tracks, fPyPrint );
     return xTracksCDS[ bXAxis ? 0 : 1 ];
 }
 
-const pybind11::dict PartialQuarry::getRankedSlices( bool bXAxis, const std::function<void(const std::string&)>& fPyPrint )
+const pybind11::dict PartialQuarry::getRankedSlices( bool bXAxis,
+                                                     const std::function<void( const std::string& )>& fPyPrint )
 {
     update( NodeNames::RankedSlicesCDS, fPyPrint );
     return vRankedSliceCDS[ bXAxis ? 0 : 1 ];
 }
 
-const std::array<double, 2> PartialQuarry::getMinMaxTracks( bool bXAxis, const std::function<void(const std::string&)>& fPyPrint )
+const std::array<double, 2> PartialQuarry::getMinMaxTracks( bool bXAxis,
+                                                            const std::function<void( const std::string& )>& fPyPrint )
 {
     update( NodeNames::Tracks, fPyPrint );
     return vvMinMaxTracks[ bXAxis ? 0 : 1 ];
@@ -677,7 +690,7 @@ void PartialQuarry::regCoverage( )
             .sNodeName = "coverage_values",
             .fFunc = &PartialQuarry::setCoverageValues,
             .vIncomingFunctions = { NodeNames::ActiveCoverage, NodeNames::AxisCoords, NodeNames::IntersectionType,
-                                    NodeNames::Symmetry, NodeNames::MappingQuality },
+                                    NodeNames::Symmetry, NodeNames::MappingQuality, NodeNames::Directionality },
             .vIncomingSession = { { "settings", "replicates", "coverage_get_max_col" },
                                   { "settings", "replicates", "coverage_get_max_row" },
                                   { "settings", "replicates", "coverage_get_max_bin_size", "val" },

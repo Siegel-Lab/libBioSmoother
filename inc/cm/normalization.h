@@ -33,7 +33,8 @@ bool PartialQuarry::doNotNormalize( )
 bool PartialQuarry::normalizeBinominalTest( )
 {
     const bool bIsCol = getValue<bool>( { "settings", "normalization", "radicl_seq_axis_is_column" } );
-    const size_t uiNumBinsInRowTotal = ( vCanvasSize[ bIsCol ? 1 : 0 ] - 1 ) / ( bIsCol ? uiBinHeight : uiBinWidth ) + 1;
+    const size_t uiNumBinsInRowTotal =
+        ( vCanvasSize[ bIsCol ? 1 : 0 ] - 1 ) / ( bIsCol ? uiBinHeight : uiBinWidth ) + 1;
     const size_t uiNumSaples = getValue<size_t>( { "settings", "normalization", "radicl_seq_samples", "val" } );
     vvNormalized = normalizeBinominalTestTrampoline(
         vvFlatValues, vRadiclSeqCoverage, vRadiclSeqNumNonEmptyBins, uiNumSaples, uiNumBinsInRowTotal,
@@ -213,7 +214,8 @@ bool PartialQuarry::getSamples( const GetSamplesMode& rMode, const size_t uiNumS
                 case GetSamplesMode::BinnedAnno:
                     vChromIdForSampleIdx.emplace_back( uiMaxSamples, uiI );
                     uiMaxSamples +=
-                        pIndices->vAnno.totalIntervalSize( rAnnoJson[ rActiveChrom.sName ].get<int64_t>( ) ) / uiBinSize;
+                        pIndices->vAnno.totalIntervalSize( rAnnoJson[ rActiveChrom.sName ].get<int64_t>( ) ) /
+                        uiBinSize;
                     break;
 
                 default:
@@ -327,10 +329,10 @@ bool PartialQuarry::setICESamples( )
 
     const size_t uiICESamples = getValue<size_t>( { "settings", "normalization", "hi_c_samples", "val" } );
 
-    for(size_t uiI = 0; uiI < 2; uiI++)
+    for( size_t uiI = 0; uiI < 2; uiI++ )
     {
         getSamples( GetSamplesMode::Bins, uiICESamples, "", uiI == 0 ? uiBinHeight : uiBinWidth, uiI == 0, false,
-                    vICESamples[uiI] );
+                    vICESamples[ uiI ] );
         // then this cancel_return is necessary to catch the cancelled getSamples
         CANCEL_RETURN;
     }
@@ -340,6 +342,10 @@ bool PartialQuarry::setICESamples( )
 
 bool PartialQuarry::setRadiclSeqCoverage( )
 {
+    const std::string sNorm = getValue<std::string>( { "settings", "normalization", "normalize_by" } );
+    if( sNorm != "radicl-seq" )
+        END_RETURN;
+
     const bool bAxisIsCol = getValue<bool>( { "settings", "normalization", "radicl_seq_axis_is_column" } );
     const size_t uiMinuend = getValue<size_t>( { "settings", "normalization", "min_interactions", "val" } );
     std::vector<size_t> vRawCoverage;
@@ -405,20 +411,32 @@ bool PartialQuarry::setRadiclSeqCoverage( )
                 {
                     CANCEL_RETURN;
                     const bool bSymPart = uiJ != 0;
-                    const size_t uiDatasetId =
-                        getValue<size_t>( { "replicates", "by_name", sRep, "ids",
-                                            bAxisIsCol != bSymPart ? sChromNameAxis : sChromNameSample,
-                                            bAxisIsCol != bSymPart ? sChromNameSample : sChromNameAxis } );
-                    const size_t uiXMin = bAxisIsCol != bSymPart ? rAxis.uiIndexPos : rSample.uiIndexPos;
-                    const size_t uiXMax = bAxisIsCol != bSymPart ? rAxis.uiIndexPos + rAxis.uiIndexSize
-                                                                 : rSample.uiIndexPos + rSample.uiIndexSize;
-                    const size_t uiYMin = bAxisIsCol != bSymPart ? rSample.uiIndexPos : rAxis.uiIndexPos;
-                    const size_t uiYMax = bAxisIsCol != bSymPart ? rSample.uiIndexPos + rSample.uiIndexSize
-                                                                 : rAxis.uiIndexPos + rAxis.uiIndexSize;
-                    // @todo adjust for symmetry
-                    vVals[ uiJ ] = pIndices->count( uiDatasetId, { uiYMin, uiXMin, uiMapQMin, uiFromAnnoFilter },
-                                                   { uiYMax, uiXMax, uiMapQMax, uiToAnnoFilter }, xIntersect, 0 );
-                    vVals[ uiJ ] = vVals[ uiJ ] > uiMinuend ? vVals[ uiJ ] - uiMinuend : 0;
+
+                    const std::string& sChrX = bAxisIsCol != bSymPart ? sChromNameAxis : sChromNameSample;
+                    const std::string& sChrY = bAxisIsCol != bSymPart ? sChromNameSample : sChromNameAxis;
+
+                    if( hasValue( { "replicates", "by_name", sRep, "ids", sChrX } ) &&
+                        hasValue( { "replicates", "by_name", sRep, "ids", sChrX, sChrY } ) )
+                    {
+                        const size_t uiDatasetId =
+                            getValue<size_t>( { "replicates", "by_name", sRep, "ids", sChrX, sChrY } );
+                        const size_t uiXMin = bAxisIsCol != bSymPart ? rAxis.uiIndexPos : rSample.uiIndexPos;
+                        const size_t uiXMax = bAxisIsCol != bSymPart ? rAxis.uiIndexPos + rAxis.uiIndexSize
+                                                                     : rSample.uiIndexPos + rSample.uiIndexSize;
+                        const size_t uiYMin = bAxisIsCol != bSymPart ? rSample.uiIndexPos : rAxis.uiIndexPos;
+                        const size_t uiYMax = bAxisIsCol != bSymPart ? rSample.uiIndexPos + rSample.uiIndexSize
+                                                                     : rAxis.uiIndexPos + rAxis.uiIndexSize;
+                        // @todo adjust for symmetry
+                        vVals[ uiJ ] = pIndices->count(
+                            uiDatasetId,
+                            { uiYMin, uiXMin, uiMapQMin, uiFromAnnoFilter, uiFromSameStrandFilter,
+                              uiFromYStrandFilter },
+                            { uiYMax, uiXMax, uiMapQMax, uiToAnnoFilter, uiToSameStrandFilter, uiToYStrandFilter },
+                            xIntersect, 0 );
+                        vVals[ uiJ ] = vVals[ uiJ ] > uiMinuend ? vVals[ uiJ ] - uiMinuend : 0;
+                    }
+                    else
+                        vVals[ uiJ ] = 0;
                 }
 
                 vRawCoverage.push_back( symmetry( vVals[ 0 ], vVals[ 1 ] ) );
@@ -579,14 +597,20 @@ bool PartialQuarry::setRnaAssociatedBackground( )
                             sChrY = vActiveChromosomes[ 1 ][ rAxis.uiChromosome ].sName;
                         }
 
-                        size_t iDataSetId = getValue<size_t>( { "replicates", "by_name", sRep, "ids", sChrX, sChrY } );
+                        if( hasValue( { "replicates", "by_name", sRep, "ids", sChrX } ) &&
+                            hasValue( { "replicates", "by_name", sRep, "ids", sChrX, sChrY } ) )
+                        {
 
-                        vBackgroundGridSeq.back( ) +=
-                            pIndices->count( iDataSetId,
-                                            { uiStartY, uiStartX, uiMapQMin, uiFromAnnoFilter },
-                                            { uiEndY, uiEndX, uiMapQMax, uiToAnnoFilter },
-                                            xIntersect,
-                                            0 );
+                            size_t iDataSetId =
+                                getValue<size_t>( { "replicates", "by_name", sRep, "ids", sChrX, sChrY } );
+
+                            vBackgroundGridSeq.back( ) +=
+                                pIndices->count( iDataSetId,
+                                                 { uiStartY, uiStartX, uiMapQMin, uiFromAnnoFilter },
+                                                 { uiEndY, uiEndX, uiMapQMax, uiToAnnoFilter },
+                                                 xIntersect,
+                                                 0 );
+                        }
                     }
                 }
             }
@@ -814,13 +838,15 @@ bool PartialQuarry::setDivided( )
     END_RETURN;
 }
 
-const decltype( PartialQuarry::vDivided ) PartialQuarry::getDivided( const std::function<void(const std::string&)>& fPyPrint )
+const decltype( PartialQuarry::vDivided )
+PartialQuarry::getDivided( const std::function<void( const std::string& )>& fPyPrint )
 {
     update( NodeNames::Divided, fPyPrint );
     return vDivided;
 }
 
-const decltype( PartialQuarry::vScaled ) PartialQuarry::getScaled( const std::function<void(const std::string&)>& fPyPrint )
+const decltype( PartialQuarry::vScaled )
+PartialQuarry::getScaled( const std::function<void( const std::string& )>& fPyPrint )
 {
     update( NodeNames::Scaled, fPyPrint );
     return vScaled;
@@ -864,20 +890,21 @@ void PartialQuarry::regNormalization( )
                                                      { "settings", "normalization", "radicl_seq_samples", "val" },
                                                      { "settings", "normalization", "radicl_seq_axis_is_column" } },
                                .vSessionsIncomingInPrevious = {} } );
-    //registerNode( NodeNames::ICESamples,
-    //              ComputeNode{ .sNodeName = "ice_samples",
-    //                           .fFunc = &PartialQuarry::setICESamples,
-    //                           .vIncomingFunctions = { NodeNames::ActiveChrom },
-    //                           .vIncomingSession = { { "dividend" },
-    //                                                 { "settings", "normalization", "normalize_by" },
-    //                                                 { "settings", "normalization", "hi_c_samples", "val" } },
-    //                           .vSessionsIncomingInPrevious = {} } );
+    // registerNode( NodeNames::ICESamples,
+    //               ComputeNode{ .sNodeName = "ice_samples",
+    //                            .fFunc = &PartialQuarry::setICESamples,
+    //                            .vIncomingFunctions = { NodeNames::ActiveChrom },
+    //                            .vIncomingSession = { { "dividend" },
+    //                                                  { "settings", "normalization", "normalize_by" },
+    //                                                  { "settings", "normalization", "hi_c_samples", "val" } },
+    //                            .vSessionsIncomingInPrevious = {} } );
 
     registerNode(
         NodeNames::GridSeqCoverage,
         ComputeNode{ .sNodeName = "grid_seq_coverage",
                      .fFunc = &PartialQuarry::setGridSeqCoverage,
-                     .vIncomingFunctions = { NodeNames::ActiveReplicates, NodeNames::MappingQuality,
+                     .vIncomingFunctions = { NodeNames::ActiveReplicates, NodeNames::MappingQuality, 
+                                             NodeNames::Directionality,
                                              NodeNames::GridSeqSamples, NodeNames::AxisCoords },
                      .vIncomingSession = { { "settings", "normalization", "grid_seq_filter_intersection" },
                                            { "settings", "normalization", "grid_seq_max_bin_size", "val" },
@@ -889,15 +916,16 @@ void PartialQuarry::regNormalization( )
                                                       { "settings", "normalization", "grid_seq_samples", "val" },
                                                       { "annotation", "by_name" },
                                                       { "dividend" } } } );
-    registerNode( NodeNames::RadiclSeqCoverage,
-                  ComputeNode{ .sNodeName = "radicl_coverage",
-                               .fFunc = &PartialQuarry::setRadiclSeqCoverage,
-                               .vIncomingFunctions = { NodeNames::ActiveReplicates, NodeNames::MappingQuality,
-                                                       NodeNames::AxisCoords, NodeNames::RadiclSeqSamples, NodeNames::IntersectionType },
-                               .vIncomingSession = { { "replicates", "by_name" },
-                                                     { "settings", "normalization", "min_interactions", "val" } },
-                               .vSessionsIncomingInPrevious = {
-                                   { "settings", "normalization", "radicl_seq_axis_is_column" } } } );
+    registerNode(
+        NodeNames::RadiclSeqCoverage,
+        ComputeNode{
+            .sNodeName = "radicl_coverage",
+            .fFunc = &PartialQuarry::setRadiclSeqCoverage,
+            .vIncomingFunctions = { NodeNames::ActiveReplicates, NodeNames::MappingQuality, NodeNames::AxisCoords,
+                                    NodeNames::RadiclSeqSamples, NodeNames::IntersectionType, NodeNames::Directionality },
+            .vIncomingSession = { { "replicates", "by_name" },
+                                  { "settings", "normalization", "min_interactions", "val" } },
+            .vSessionsIncomingInPrevious = { { "settings", "normalization", "radicl_seq_axis_is_column" } } } );
 
     registerNode(
         NodeNames::RnaAssociatedGenesFilter,

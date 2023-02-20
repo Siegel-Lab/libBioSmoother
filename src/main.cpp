@@ -6,9 +6,9 @@
 #include "sps/build_time.h"
 #include "sps/version.h"
 
+#include <pybind11/functional.h>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
-#include <pybind11/functional.h>
 
 namespace cm
 {
@@ -123,8 +123,8 @@ std::map<std::string, std::vector<size_t>> test_cpp_dict( size_t uiA, size_t uiB
 
 template <bool CACHE> void exportSpsInterface( pybind11::module& m )
 {
-    pybind11::class_<cm::SpsInterface<CACHE>, std::shared_ptr<cm::SpsInterface<CACHE>>>(
-                 m, CACHE ? "CachedIndex" : "Index" ) //
+    pybind11::class_<cm::SpsInterface<CACHE>, std::shared_ptr<cm::SpsInterface<CACHE>>>( m, CACHE ? "CachedIndex"
+                                                                                                  : "Index" ) //
         .def( pybind11::init<std::string, bool>( ) ) //
         .def( pybind11::init<std::string>( ) ) //
         .def( "loaded", &cm::SpsInterface<CACHE>::loaded )
@@ -180,10 +180,11 @@ PYBIND11_MODULE( libsmoothercpp, m )
         .def( pybind11::init<std::string>( ) ) //
         .def( pybind11::init<std::shared_ptr<cm::SpsInterface<false>>>( ) ) //
         .def( pybind11::init<>( ) ) //
-        .def_readwrite("allow_ctrl_c_cancel", &cm::PartialQuarry::bAllowCtrlCCancel) //
-        .def_readwrite("index", &cm::PartialQuarry::pIndices) //
+        .def_readwrite( "allow_ctrl_c_cancel", &cm::PartialQuarry::bAllowCtrlCCancel ) //
+        .def_readwrite( "index", &cm::PartialQuarry::pIndices ) //
         .def( "set_session", &cm::PartialQuarry::setSession ) //
         .def( "get_session", &cm::PartialQuarry::getSession ) //
+        .def( "has_value", &cm::PartialQuarry::hasValue ) //
         .def( "get_value", &cm::PartialQuarry::getValue<pybind11::object> ) //
 
         // @note order is relevant here -> the functions are tried in order

@@ -1,5 +1,6 @@
 try:
     from .cooler_interface import icing
+
     HAS_COOLER_ICING = True
 except ImportError:
     # Error handling
@@ -7,6 +8,7 @@ except ImportError:
     pass
 try:
     from bokeh.palettes import Viridis256, Colorblind, Plasma256, Turbo256
+
     HAS_PALETTES = True
 except ImportError:
     # Error handling
@@ -16,28 +18,69 @@ except ImportError:
 try:
     from statsmodels.stats.multitest import multipletests
     from scipy.stats import binom_test
+
     HAS_STATS = True
 except ImportError:
     # Error handling
     HAS_STATS = False
     pass
 
-from ._import_lib_smoother_cpp import PartialQuarry, SPS_VERSION, LIB_SMOOTHER_CPP_VERSION
+from ._import_lib_smoother_cpp import (
+    PartialQuarry,
+    SPS_VERSION,
+    LIB_SMOOTHER_CPP_VERSION,
+)
 
 
 class Quarry(PartialQuarry):
     def __init__(self, *args):
         PartialQuarry.__init__(self, *args)
 
+        sps_in_index = self.get_value(["version", "lib_sps_version"])
+        if sps_in_index != SPS_VERSION:
+            print(
+                "WARNING: the version of libSps that was used to create this index is different from the current version.",
+                "This may lead to undefined behavior. Version in index:",
+                sps_in_index,
+                "current version:",
+                SPS_VERSION,
+            )
+
+        lib_smoother_in_index = self.get_value(["version", "lib_smoother_version"])
+        if lib_smoother_in_index != LIB_SMOOTHER_CPP_VERSION:
+            print(
+                "WARNING: the version of libSmoother that was used to create this index is different from the current version.",
+                "This may lead to undefined behavior. Version in index:",
+                lib_smoother_in_index,
+                "current version:",
+                LIB_SMOOTHER_CPP_VERSION,
+            )
+
     def normalizeBinominalTestTrampoline(
-        self, bin_values, num_interactions_total, num_bins_interacting_with, samples, max_num_interacting_with, p_accept, is_col, grid_height
+        self,
+        bin_values,
+        num_interactions_total,
+        num_bins_interacting_with,
+        samples,
+        max_num_interacting_with,
+        p_accept,
+        is_col,
+        grid_height,
     ):
         fac = max_num_interacting_with / samples
+
         def bin_test(jdx):
             ret = []
             for idx, val in enumerate(bin_values):
-                n = num_interactions_total[(idx // grid_height if is_col else idx % grid_height)][jdx]
-                i = num_bins_interacting_with[(idx // grid_height if is_col else idx % grid_height)][jdx] * fac
+                n = num_interactions_total[
+                    (idx // grid_height if is_col else idx % grid_height)
+                ][jdx]
+                i = (
+                    num_bins_interacting_with[
+                        (idx // grid_height if is_col else idx % grid_height)
+                    ][jdx]
+                    * fac
+                )
                 if i > 0:
                     p = 1 / i
                     x = val[jdx]
@@ -45,17 +88,18 @@ class Quarry(PartialQuarry):
                 else:
                     ret.append(1)
             return ret
+
         psx = bin_test(0)
         psy = bin_test(1)
         return [
             (1 if x < p_accept else 0, 1 if y < p_accept else 0)
-            for x, y in zip(multipletests(psx, alpha=float("NaN"), method="fdr_bh")[1],
-                            multipletests(psy, alpha=float("NaN"), method="fdr_bh")[1])
+            for x, y in zip(
+                multipletests(psx, alpha=float("NaN"), method="fdr_bh")[1],
+                multipletests(psy, alpha=float("NaN"), method="fdr_bh")[1],
+            )
         ]
 
-    def normalizeCoolerTrampoline(
-        self, bin_values, axis_size
-    ):
+    def normalizeCoolerTrampoline(self, bin_values, axis_size):
         return icing(bin_values, axis_size)
 
     def __combine_hex_values(self, d):

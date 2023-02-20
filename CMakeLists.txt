@@ -68,5 +68,5 @@ target_link_libraries( libsmoothercpp PRIVATE libsps )
 target_compile_definitions( libsmoothercpp PRIVATE WITH_PYTHON )
 add_dependencies( libsmoothercpp cm_config_version cm_config_build_time )
 
-
+add_custom_target(format COMMAND cmake/format.sh WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} VERBATIM)
 
