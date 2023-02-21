@@ -2,6 +2,7 @@
 #include <cctype>
 #include <memory>
 #include <mutex>
+#include <regex>
 
 #pragma once
 
@@ -1102,25 +1103,16 @@ class PartialQuarry : public HasSession
         if( sQuery.size( ) < 3 )
             return sQuery == sRef ? sQuery.size( ) : 0;
 
-        size_t uiRet = 0;
         size_t uiPos = 0;
 
-        for( char c : sQuery )
-        {
-            size_t uiCurr = uiPos;
-            while( uiCurr < sRef.size( ) && std::tolower( c ) != std::tolower( sRef[ uiCurr ] ) )
-                ++uiCurr;
-            if( uiCurr < sRef.size( ) )
-            {
-                uiPos = uiCurr;
-                ++uiRet;
-            }
-        }
+        for( char c : sRef )
+            if( uiPos < sQuery.size( ) && std::tolower( c ) == std::tolower( sQuery[ uiPos ] ) )
+                ++uiPos;
 
-        if( uiRet < sQuery.size( ) / 3 )
+        if( uiPos < sQuery.size( ) / 3 )
             return 0;
 
-        return uiRet;
+        return uiPos;
     }
 
     std::string substringChr( std::string sChr )
@@ -1131,11 +1123,23 @@ class PartialQuarry : public HasSession
             return sChr;
     }
 
+    std::string to_lower(std::string s) const
+    {
+        std::string ret;
+        for(const char c : s)
+            ret += std::tolower(c);
+        return ret;
+    }
+
   public:
     const pybind11::int_ interpretName( std::string sName, std::vector<bool> vbXAxis, bool bBottom )
     {
-        size_t uiMaxEquality = 0;
-        size_t uiMinRefSize = 0;
+        if( ( bBottom && sName == "*" ) || sName.size( ) == 0 || to_lower(sName) == "start" )
+            return pybind11::int_( 0 );
+        if( ( !bBottom && sName == "*" ) || sName.size( ) == 0 || to_lower(sName) == "end" )
+            return pybind11::int_( vCanvasSize[vbXAxis[0] ? 0 : 1] );
+
+        std::regex xName(to_lower(sName));
         size_t uiMaxPos = 0;
         const bool bSqueeze =
             this->xSession[ "settings" ][ "filters" ][ "anno_in_multiple_bins" ].get<std::string>( ) == "squeeze";
@@ -1147,8 +1151,7 @@ class PartialQuarry : public HasSession
             size_t uiRunningPos = 0;
             for( auto xChr : vActiveChromosomes[ bX ? 0 : 1 ] )
             {
-                std::string sSearch = "chromosome=" + xChr.sName;
-                size_t uiEq = stringCompare( sName, sSearch );
+                bool bMatch = std::regex_search(to_lower(xChr.sName), xName);
                 size_t uiLen = 0;
                 if( bFullGenome )
                     uiLen = xChr.uiLength;
@@ -1161,52 +1164,48 @@ class PartialQuarry : public HasSession
                     else
                         uiLen = pIndices->vAnno.totalIntervalSize( iDataSetId );
                 }
-                if( uiLen > 0 &&
-                    ( uiEq > uiMaxEquality || ( uiEq == uiMaxEquality && xChr.sName.size( ) < uiMinRefSize ) ) )
+                if( bMatch )
                 {
-                    uiMaxEquality = uiEq;
                     if( bBottom )
+                    {
                         uiMaxPos = uiRunningPos;
+                        break;
+                    }
                     else
                         uiMaxPos = uiRunningPos + uiLen;
-                    uiMinRefSize = xChr.sName.size( );
                 }
                 uiRunningPos += uiLen;
             }
 
-            if( ( bBottom && sName == "*" ) || sName.size( ) == 0 || sName == "start" )
-                return pybind11::int_( 0 );
-            if( ( !bBottom && sName == "*" ) || sName.size( ) == 0 || sName == "end" )
-                return pybind11::int_( uiRunningPos );
 
-            for( std::string sAnno : vActiveAnnotation[ bX ? 0 : 1 ] )
-            {
-                auto& rJson = this->xSession[ "annotation" ][ "by_name" ][ sAnno ];
-                for( auto xChr : vActiveChromosomes[ bX ? 0 : 1 ] )
-                    if( rJson.contains( xChr.sName ) )
-                    {
-                        int64_t iDataSetId = rJson[ xChr.sName ].get<int64_t>( );
-                        pIndices->vAnno.iterate(
-                            iDataSetId,
-                            [ & ]( std::tuple<size_t, size_t, std::string, bool> xTup ) {
-                                std::string sSearch = sAnno + "=" + std::get<2>( xTup );
-                                size_t uiEq = stringCompare( sName, sSearch );
-                                if( uiEq > uiMaxEquality ||
-                                    ( uiEq == uiMaxEquality && std::get<2>( xTup ).size( ) < uiMinRefSize ) )
-                                {
-                                    uiMaxEquality = uiEq;
-                                    uiMinRefSize = std::get<2>( xTup ).size( );
-                                    if( bBottom )
-                                        uiMaxPos = std::get<0>( xTup );
-                                    else
-                                        uiMaxPos = std::get<1>( xTup );
-                                }
+            // for( std::string sAnno : vActiveAnnotation[ bX ? 0 : 1 ] )
+            // {
+            //     auto& rJson = this->xSession[ "annotation" ][ "by_name" ][ sAnno ];
+            //     for( auto xChr : vActiveChromosomes[ bX ? 0 : 1 ] )
+            //         if( rJson.contains( xChr.sName ) )
+            //         {
+            //             int64_t iDataSetId = rJson[ xChr.sName ].get<int64_t>( );
+            //             pIndices->vAnno.iterate(
+            //                 iDataSetId,
+            //                 [ & ]( std::tuple<size_t, size_t, std::string, bool> xTup ) {
+            //                     std::string sSearch = sAnno + "=" + std::get<2>( xTup );
+            //                     size_t uiEq = stringCompare( sName, sSearch );
+            //                     if( uiEq > uiMaxEquality ||
+            //                         ( uiEq == uiMaxEquality && std::get<2>( xTup ).size( ) < uiMinRefSize ) )
+            //                     {
+            //                         uiMaxEquality = uiEq;
+            //                         uiMinRefSize = std::get<2>( xTup ).size( );
+            //                         if( bBottom )
+            //                             uiMaxPos = std::get<0>( xTup );
+            //                         else
+            //                             uiMaxPos = std::get<1>( xTup );
+            //                     }
 
-                                return true;
-                            },
-                            !bFullGenome && !bSqueeze, !bFullGenome && bSqueeze );
-                    }
-            }
+            //                     return true;
+            //                 },
+            //                 !bFullGenome && !bSqueeze, !bFullGenome && bSqueeze );
+            //         }
+            // }
         }
         return pybind11::int_( uiMaxPos );
     }
