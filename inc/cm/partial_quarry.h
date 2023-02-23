@@ -236,6 +236,7 @@ class PartialQuarry : public HasSession
     struct ComputeNodeData
     {
         size_t uiLastUpdated = 0;
+        size_t uiLastChecked = 0;
         std::string sError = "";
         bool bRegistered = false;
         bool bTerminal = true;
@@ -309,7 +310,7 @@ class PartialQuarry : public HasSession
     {
         ComputeNode& xNode = vGraph[ xNodeName ];
         ComputeNodeData& xNodeData = vGraphData[ xNodeName ];
-        if( xNodeData.uiLastUpdated < uiCurrTime )
+        if( xNodeData.uiLastChecked < uiCurrTime )
         {
             std::vector<std::string> vOutOfDateReason{ };
             auto p1 = std::chrono::high_resolution_clock::now( );
@@ -358,6 +359,7 @@ class PartialQuarry : public HasSession
                         std::cout << xNode.sNodeName << " was cancelled" << std::endl;
                     // update was cancelled -> we do not know how messed up the result form the last call was
                     xNodeData.uiLastUpdated = 0;
+                    xNodeData.uiLastChecked = 0;
                     return 0;
                 }
 
@@ -374,12 +376,14 @@ class PartialQuarry : public HasSession
         }
         else if( uiVerbosity >= 3 )
             std::cout << "node up to date from previous check " << xNode.sNodeName << std::endl;
-
-        size_t uiRet = xNodeData.uiLastUpdated;
+    
         // node must be up to date now
-        xNodeData.uiLastUpdated = uiCurrTime;
+        xNodeData.uiLastChecked = uiCurrTime;
 
-        return uiRet;
+        if( uiVerbosity >= 4 )
+            std::cout << "check time of node " << xNode.sNodeName << " to " << uiCurrTime << std::endl;
+
+        return xNodeData.uiLastUpdated;
     }
 
 
@@ -595,6 +599,9 @@ class PartialQuarry : public HasSession
             }
             else
                 this->xSession[ toPointer( vKeys ) ] = xVal;
+            #ifndef NDEBUG
+                std::cout << "session updated: " << toString( vKeys ) << std::endl;
+            #endif
         }
     }
 

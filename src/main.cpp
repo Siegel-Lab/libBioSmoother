@@ -181,6 +181,7 @@ PYBIND11_MODULE( libsmoothercpp, m )
         .def( pybind11::init<std::shared_ptr<cm::SpsInterface<false>>>( ) ) //
         .def( pybind11::init<>( ) ) //
         .def_readwrite( "allow_ctrl_c_cancel", &cm::PartialQuarry::bAllowCtrlCCancel ) //
+        .def_readwrite( "verbosity", &cm::PartialQuarry::uiVerbosity ) //
         .def_readwrite( "index", &cm::PartialQuarry::pIndices ) //
         .def( "set_session", &cm::PartialQuarry::setSession ) //
         .def( "get_session", &cm::PartialQuarry::getSession ) //

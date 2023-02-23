@@ -575,7 +575,8 @@ void PartialQuarry::regReplicates( )
                                .fFunc = &PartialQuarry::setBinValues,
                                .vIncomingFunctions = { NodeNames::BinCoords, NodeNames::DatasetIdPerRepl,
                                                        NodeNames::MappingQuality, NodeNames::Directionality },
-                               .vIncomingSession = { { "settings", "normalization", "min_interactions", "val" } },
+                               .vIncomingSession = { { "settings", "normalization", "min_interactions", "val" }, 
+                                                     {"replicates", "by_name"} },
                                .vSessionsIncomingInPrevious = { { "annotation", "by_name" },
                                                                 { "contigs", "column_coordinates" },
                                                                 { "contigs", "row_coordinates" } } } );

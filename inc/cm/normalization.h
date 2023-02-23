@@ -911,6 +911,7 @@ void PartialQuarry::regNormalization( )
                                                        NodeNames::AxisCoords, NodeNames::RadiclSeqSamples,
                                                        NodeNames::IntersectionType, NodeNames::Directionality },
                                .vIncomingSession = { { "replicates", "by_name" },
+                                                     { "settings", "normalization", "normalize_by" },
                                                      { "settings", "normalization", "min_interactions", "val" } },
                                .vSessionsIncomingInPrevious = {
                                    { "settings", "normalization", "radicl_seq_axis_is_column" } } } );
