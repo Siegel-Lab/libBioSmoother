@@ -5,10 +5,12 @@ import argparse
 import os
 import shutil
 
+
 def init(args):
     Indexer(args.index_prefix, strict=True).create_session(
         args.chr_len, args.dividend, args.anno_path, args.order_path, args.test
     )
+
 
 def reset(args):
     for possible in [args.index_prefix, args.index_prefix + ".smoother_index"]:
@@ -17,6 +19,7 @@ def reset(args):
             shutil.copy(possible + "/default_session.json", possible + "/session.json")
             return
     raise RuntimeError("the given index", args.index_prefix, "does not exist.")
+
 
 def repl(args):
     Indexer(args.index_prefix).add_replicate(

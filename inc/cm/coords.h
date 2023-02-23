@@ -757,15 +757,15 @@ bool PartialQuarry::setMappingQuality( )
 bool PartialQuarry::setDirectionality( )
 {
     const std::string sDir = getValue<std::string>( { "settings", "filters", "directionality" } );
-    if(sDir == "all")
+    if( sDir == "all" )
     {
         uiFromSameStrandFilter = 0;
         uiToSameStrandFilter = 2;
-        
+
         uiFromYStrandFilter = 0;
         uiToYStrandFilter = 2;
     }
-    else if(sDir == "same")
+    else if( sDir == "same" )
     {
         uiFromSameStrandFilter = 0;
         uiToSameStrandFilter = 1;
@@ -773,7 +773,7 @@ bool PartialQuarry::setDirectionality( )
         uiFromYStrandFilter = 0;
         uiToYStrandFilter = 2;
     }
-    else if(sDir == "oppo")
+    else if( sDir == "oppo" )
     {
         uiFromSameStrandFilter = 1;
         uiToSameStrandFilter = 2;
@@ -781,7 +781,7 @@ bool PartialQuarry::setDirectionality( )
         uiFromYStrandFilter = 0;
         uiToYStrandFilter = 2;
     }
-    else if(sDir == "forw")
+    else if( sDir == "forw" )
     {
         uiFromSameStrandFilter = 0;
         uiToSameStrandFilter = 1;
@@ -789,7 +789,7 @@ bool PartialQuarry::setDirectionality( )
         uiFromYStrandFilter = 0;
         uiToYStrandFilter = 1;
     }
-    else if(sDir == "rev")
+    else if( sDir == "rev" )
     {
         uiFromSameStrandFilter = 0;
         uiToSameStrandFilter = 1;

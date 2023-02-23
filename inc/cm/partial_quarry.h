@@ -220,6 +220,7 @@ class PartialQuarry : public HasSession
         RnaAssociatedBackground,
         GridSeqSamples,
         RadiclSeqSamples,
+        DatasetIdPerRepl,
         // ICESamples,
         SIZE
     };
@@ -715,6 +716,13 @@ class PartialQuarry : public HasSession
     std::vector<std::array<size_t, 2>> vRadiclSeqCoverage;
     std::vector<std::array<size_t, 2>> vRadiclSeqNumNonEmptyBins;
 
+    std::vector<std::vector<size_t>> vvDatasetIdsPerReplAndChr;
+
+    size_t getDatasetIdfromReplAndChr( size_t uiRepl, size_t uiChrX, size_t uiChrY )
+    {
+        return vvDatasetIdsPerReplAndChr[ uiRepl ][ uiChrY + uiChrX * vActiveChromosomes[ 1 ].size( ) ];
+    }
+
     bool bCancel = false;
 
     template <typename T> class NoCopy
@@ -784,6 +792,9 @@ class PartialQuarry : public HasSession
 
     // replicates.h
     bool setActiveReplicates( );
+
+    // replicates.h
+    bool setDatasetIdPerRepl( );
 
     // replicates.h
     void regReplicates( );
@@ -1123,23 +1134,23 @@ class PartialQuarry : public HasSession
             return sChr;
     }
 
-    std::string to_lower(std::string s) const
+    std::string to_lower( std::string s ) const
     {
         std::string ret;
-        for(const char c : s)
-            ret += std::tolower(c);
+        for( const char c : s )
+            ret += std::tolower( c );
         return ret;
     }
 
   public:
     const pybind11::int_ interpretName( std::string sName, std::vector<bool> vbXAxis, bool bBottom )
     {
-        if( ( bBottom && sName == "*" ) || sName.size( ) == 0 || to_lower(sName) == "start" )
+        if( ( bBottom && sName == "*" ) || sName.size( ) == 0 || to_lower( sName ) == "start" )
             return pybind11::int_( 0 );
-        if( ( !bBottom && sName == "*" ) || sName.size( ) == 0 || to_lower(sName) == "end" )
-            return pybind11::int_( vCanvasSize[vbXAxis[0] ? 0 : 1] );
+        if( ( !bBottom && sName == "*" ) || sName.size( ) == 0 || to_lower( sName ) == "end" )
+            return pybind11::int_( vCanvasSize[ vbXAxis[ 0 ] ? 0 : 1 ] );
 
-        std::regex xName(to_lower(sName));
+        std::regex xName( to_lower( sName ) );
         size_t uiMaxPos = 0;
         const bool bSqueeze =
             this->xSession[ "settings" ][ "filters" ][ "anno_in_multiple_bins" ].get<std::string>( ) == "squeeze";
@@ -1151,7 +1162,7 @@ class PartialQuarry : public HasSession
             size_t uiRunningPos = 0;
             for( auto xChr : vActiveChromosomes[ bX ? 0 : 1 ] )
             {
-                bool bMatch = std::regex_search(to_lower(xChr.sName), xName);
+                bool bMatch = std::regex_search( to_lower( xChr.sName ), xName );
                 size_t uiLen = 0;
                 if( bFullGenome )
                     uiLen = xChr.uiLength;

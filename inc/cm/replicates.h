@@ -39,6 +39,30 @@ bool PartialQuarry::setActiveReplicates( )
     END_RETURN;
 }
 
+bool PartialQuarry::setDatasetIdPerRepl( )
+{
+    vvDatasetIdsPerReplAndChr.clear( );
+    vvDatasetIdsPerReplAndChr.reserve( vActiveReplicates.size( ) );
+
+    for( const std::string& sRep : vActiveReplicates )
+    {
+        vvDatasetIdsPerReplAndChr.emplace_back( );
+        vvDatasetIdsPerReplAndChr.back( ).reserve( vActiveChromosomes[ 0 ].size( ) * vActiveChromosomes[ 1 ].size( ) );
+        for( const ChromDesc& xChromX : vActiveChromosomes[ 0 ] )
+            for( const ChromDesc& xChromY : vActiveChromosomes[ 1 ] )
+            {
+                CANCEL_RETURN;
+                if( hasValue( { "replicates", "by_name", sRep, "ids", xChromX.sName } ) &&
+                    hasValue( { "replicates", "by_name", sRep, "ids", xChromX.sName, xChromY.sName } ) )
+                    vvDatasetIdsPerReplAndChr.back( ).push_back(
+                        getValue<size_t>( { "replicates", "by_name", sRep, "ids", xChromX.sName, xChromY.sName } ) );
+                else
+                    vvDatasetIdsPerReplAndChr.back( ).push_back( std::numeric_limits<size_t>::max( ) );
+            }
+    }
+    END_RETURN;
+}
+
 
 bool PartialQuarry::setIntersectionType( )
 {
@@ -92,7 +116,7 @@ bool PartialQuarry::setBinValues( )
 
     size_t uiMinuend = getValue<size_t>( { "settings", "normalization", "min_interactions", "val" } );
 
-    for( std::string& sRep : vActiveReplicates )
+    for( size_t uiRepl = 0; uiRepl < vActiveReplicates.size( ); uiRepl++ )
     {
         vvBinValues.emplace_back( );
         vvBinValues.back( ).reserve( vBinCoords.size( ) );
@@ -115,15 +139,10 @@ bool PartialQuarry::setBinValues( )
             {
                 if( vCoords[ uiI ].uiChromosomeX != std::numeric_limits<size_t>::max( ) )
                 {
-
-                    std::string sChromNameX = vActiveChromosomes[ uiI ][ vCoords[ uiI ].uiChromosomeX ].sName;
-                    std::string sChromNameY = vActiveChromosomes[ uiI ][ vCoords[ uiI ].uiChromosomeY ].sName;
-                    if( hasValue( { "replicates", "by_name", sRep, "ids", sChromNameX } ) &&
-                        hasValue( { "replicates", "by_name", sRep, "ids", sChromNameX, sChromNameY } ) )
+                    size_t iDataSetId = getDatasetIdfromReplAndChr( uiRepl, vCoords[ uiI ].uiChromosomeX,
+                                                                    vCoords[ uiI ].uiChromosomeY );
+                    if( iDataSetId != std::numeric_limits<size_t>::max( ) )
                     {
-                        size_t iDataSetId =
-                            getValue<size_t>( { "replicates", "by_name", sRep, "ids", sChromNameX, sChromNameY } );
-
                         vVals[ uiI ] = pIndices->
 #if USE_GRID_QUERIES
                                        gridCount
@@ -179,7 +198,8 @@ bool PartialQuarry::setBinValues( )
         }
 
 
-        const size_t uiTot = getValue<size_t>( { "replicates", "by_name", sRep, "total_reads" } );
+        const size_t uiTot =
+            getValue<size_t>( { "replicates", "by_name", vActiveReplicates[ uiRepl ], "total_reads" } );
         vActiveReplicatesTotal.push_back( symmetry( uiTot, uiTot ) );
     }
     END_RETURN;
@@ -196,7 +216,7 @@ bool PartialQuarry::setDecayValues( )
     double fQuantExcl =
         ( 1.0 - getValue<double>( { "settings", "normalization", "ddd_quantile", "val" } ) / 100.0 ) / 2.0;
 
-    for( std::string& sRep : vActiveReplicates )
+    for( size_t uiRepl = 0; uiRepl < vActiveReplicates.size( ); uiRepl++ )
     {
         vvDecayValues.emplace_back( );
         vvDecayValues.back( ).reserve( vDistDepDecCoords.size( ) );
@@ -210,16 +230,13 @@ bool PartialQuarry::setDecayValues( )
                 if( vCoords[ uiI ].uiChromosomeX != std::numeric_limits<size_t>::max( ) &&
                     vCoords[ uiI ].uiChromosomeY != std::numeric_limits<size_t>::max( ) )
                 {
-                    std::string sChromNameX = vActiveChromosomes[ uiI ][ vCoords[ uiI ].uiChromosomeX ].sName;
-                    std::string sChromNameY = vActiveChromosomes[ uiI ][ vCoords[ uiI ].uiChromosomeY ].sName;
+                    size_t iDataSetId = getDatasetIdfromReplAndChr( uiRepl, vCoords[ uiI ].uiChromosomeX,
+                                                                    vCoords[ uiI ].uiChromosomeY );
 
-                    if( hasValue( { "replicates", "by_name", sRep, "ids", sChromNameX } ) &&
-                        hasValue( { "replicates", "by_name", sRep, "ids", sChromNameX, sChromNameY } ) )
+                    if( iDataSetId != std::numeric_limits<size_t>::max( ) )
                     {
-                        size_t iDataSetId =
-                            getValue<size_t>( { "replicates", "by_name", sRep, "ids", sChromNameX, sChromNameY } );
-                        int64_t iChrX = getValue<int64_t>( { "contigs", "lengths", sChromNameX } );
-                        int64_t iChrY = getValue<int64_t>( { "contigs", "lengths", sChromNameY } );
+                        int64_t iChrX = vActiveChromosomes[ 0 ][ vCoords[ uiI ].uiChromosomeX ].uiLength;
+                        int64_t iChrY = vActiveChromosomes[ 1 ][ vCoords[ uiI ].uiChromosomeY ].uiLength;
 
                         /* The two contigs span a rectange of size cW x cH.
                          * The bin has a bottom left corner with a distance of c form the diagonal (positive = to right,
@@ -539,6 +556,13 @@ void PartialQuarry::regReplicates( )
                                                      { "replicates", "list" } },
                                .vSessionsIncomingInPrevious = {} } );
 
+    registerNode( NodeNames::DatasetIdPerRepl,
+                  ComputeNode{ .sNodeName = "dataset_id_per_repl",
+                               .fFunc = &PartialQuarry::setDatasetIdPerRepl,
+                               .vIncomingFunctions = { NodeNames::ActiveReplicates, NodeNames::ActiveChrom },
+                               .vIncomingSession = { { "replicates", "by_name" } },
+                               .vSessionsIncomingInPrevious = {} } );
+
     registerNode( NodeNames::IntersectionType,
                   ComputeNode{ .sNodeName = "intersection_type",
                                .fFunc = &PartialQuarry::setIntersectionType,
@@ -549,10 +573,9 @@ void PartialQuarry::regReplicates( )
     registerNode( NodeNames::BinValues,
                   ComputeNode{ .sNodeName = "bin_values",
                                .fFunc = &PartialQuarry::setBinValues,
-                               .vIncomingFunctions = { NodeNames::BinCoords, NodeNames::ActiveReplicates,
+                               .vIncomingFunctions = { NodeNames::BinCoords, NodeNames::DatasetIdPerRepl,
                                                        NodeNames::MappingQuality, NodeNames::Directionality },
-                               .vIncomingSession = { { "settings", "normalization", "min_interactions", "val" },
-                                                     { "replicates", "by_name" } },
+                               .vIncomingSession = { { "settings", "normalization", "min_interactions", "val" } },
                                .vSessionsIncomingInPrevious = { { "annotation", "by_name" },
                                                                 { "contigs", "column_coordinates" },
                                                                 { "contigs", "row_coordinates" } } } );
@@ -560,14 +583,13 @@ void PartialQuarry::regReplicates( )
     registerNode( NodeNames::DecayValues,
                   ComputeNode{ .sNodeName = "decay_values",
                                .fFunc = &PartialQuarry::setDecayValues,
-                               .vIncomingFunctions = { NodeNames::DecayCoords, NodeNames::ActiveReplicates,
+                               .vIncomingFunctions = { NodeNames::DecayCoords, NodeNames::DatasetIdPerRepl,
                                                        NodeNames::MappingQuality, NodeNames::Directionality },
                                .vIncomingSession = { { "settings", "normalization", "ddd_samples", "val_min" },
                                                      { "settings", "normalization", "ddd_samples", "val_max" },
                                                      { "settings", "normalization", "ddd_quantile", "val" },
-                                                     { "settings", "normalization", "min_interactions", "val" },
-                                                     { "replicates", "by_name" } },
-                               .vSessionsIncomingInPrevious = { { "contigs", "lengths" } } } );
+                                                     { "settings", "normalization", "min_interactions", "val" } },
+                               .vSessionsIncomingInPrevious = { } } );
 
     registerNode( NodeNames::InGroup,
                   ComputeNode{ .sNodeName = "in_group_setting",
