@@ -126,11 +126,10 @@ template <bool CACHED> class SpsInterface : public HasSession
         insert( aStart, aEnd, iValue );
     }
 
-    std::vector<unsigned int> gridCount( size_t iDataSetId, std::array<std::vector<size_t>, D - O> vGrid,
-                                         sps::IntersectionType xIntersect, size_t uiVerbosity = 1 )
+    std::vector<uint32_t> gridCount( size_t iDataSetId, std::array<std::vector<size_t>, D - O> vGrid,
+                                     sps::IntersectionType xIntersect, size_t uiVerbosity = 1 )
     {
-        std::vector<unsigned int> xRet;
-        return xRet;
+        return pIndex->gridCount( iDataSetId, vGrid, xIntersect, uiVerbosity );
     }
 
     size_t count( size_t iDataSetId, std::array<size_t, D - O> vFrom, std::array<size_t, D - O> vTo,

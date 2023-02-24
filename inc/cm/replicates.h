@@ -124,16 +124,74 @@ bool PartialQuarry::setBinValues( )
 
 #if USE_GRID_QUERIES
         vvBinValues.back( ).resize( vBinCoords.size( ) );
+        std::array<std::vector<uint64_t>, 6> vGridQuery{
+            std::vector<uint64_t>{ },
+            std::vector<uint64_t>{ },
+            std::vector<uint64_t>{ uiMapQMin, uiMapQMax },
+            std::vector<uint64_t>{ uiFromAnnoFilter, uiToAnnoFilter },
+            std::vector<uint64_t>{ uiFromSameStrandFilter, uiToSameStrandFilter },
+            std::vector<uint64_t>{ uiFromYStrandFilter, uiToYStrandFilter } };
+        vGridQuery[ 0 ].reserve( vAxisCords[ 0 ].size( ) );
+        vGridQuery[ 1 ].reserve( vAxisCords[ 1 ].size( ) );
         for( const std::array<BinCoordRegion, 2>& vCoords : vBinRegions )
+        {
+            std::array<std::vector<uint32_t>, 2> vRet;
+            for( size_t uiI = 0; uiI < 2; uiI++ )
+            {
+                if( vCoords[ uiI ].uiChromosomeX != std::numeric_limits<size_t>::max( ) )
+                {
+                    vGridQuery[ 0 ].clear( );
+                    vGridQuery[ 1 ].clear( );
+                    vGridQuery[ 0 ].push_back( vAxisCords[ 0 ][ vCoords[ uiI ].uiCoordStartIdxX ].uiIndexPos );
+                    for( size_t uiX = vCoords[ uiI ].uiCoordStartIdxX;
+                         uiX < vCoords[ uiI ].uiNumCoordsX + vCoords[ uiI ].uiCoordStartIdxX;
+                         uiX++ )
+                    {
+                        assert( vAxisCords[ 0 ][ uiX ].uiIndexPos == vGridQuery[ 0 ].back( ) );
+                        vGridQuery[ 0 ].push_back( vAxisCords[ 0 ][ uiX ].uiIndexPos +
+                                                   vAxisCords[ 0 ][ uiX ].uiIndexSize );
+                    }
+                    vGridQuery[ 1 ].push_back( vAxisCords[ 1 ][ vCoords[ uiI ].uiCoordStartIdxY ].uiIndexPos );
+                    for( size_t uiX = vCoords[ uiI ].uiCoordStartIdxY;
+                         uiX < vCoords[ uiI ].uiNumCoordsY + vCoords[ uiI ].uiCoordStartIdxY;
+                         uiX++ )
+                    {
+                        assert( vAxisCords[ 1 ][ uiX ].uiIndexPos == vGridQuery[ 1 ].back( ) );
+                        vGridQuery[ 1 ].push_back( vAxisCords[ 1 ][ uiX ].uiIndexPos +
+                                                   vAxisCords[ 1 ][ uiX ].uiIndexSize );
+                    }
+
+                    size_t iDataSetId = getDatasetIdfromReplAndChr( uiRepl, vCoords[ uiI ].uiChromosomeX,
+                                                                    vCoords[ uiI ].uiChromosomeY );
+                    if(iDataSetId != std::numeric_limits<size_t>::max())
+                    {
+                        vRet[ uiI ] = pIndices->gridCount( iDataSetId, vGridQuery, xIntersect, 0 );
+
+                        for( uint32_t& uiVal : vRet[ uiI ] )
+                            // @todo this is an expensive if instruction
+                            uiVal = uiVal > uiMinuend ? uiVal - uiMinuend : 0;
+                    }
+                    else
+                        vRet[uiI].resize( vCoords[ 0 ].uiNumCoordsX * vCoords[ 0 ].uiNumCoordsY, 0 );
+                }
+                else
+                    vRet[uiI].resize( vCoords[ 0 ].uiNumCoordsX * vCoords[ 0 ].uiNumCoordsY, 0 );
+
+                assert(vRet[uiI].size() == vCoords[ 0 ].uiNumCoordsX * vCoords[ 0 ].uiNumCoordsY);
+            }
+            for( size_t uiI = 0; uiI < vCoords[ 0 ].uiNumCoordsX * vCoords[ 0 ].uiNumCoordsY; uiI++ )
+            {
+                const size_t uiRegionX = uiI % vCoords[ 0 ].uiNumCoordsX;
+                const size_t uiRegionY = uiI / vCoords[ 0 ].uiNumCoordsX;
+                const size_t uiBinPos = (uiRegionX + vCoords[ 0 ].uiCoordStartIdxX) * vAxisCords[ 1 ].size( )
+                                       + (uiRegionY + vCoords[ 0 ].uiCoordStartIdxY) ;
+                vvBinValues.back( )[uiBinPos] = symmetry( vRet[ 0 ][ uiI ], vRet[ 1 ][ uiI ] );
+            }
+        }
 #else
         for( const std::array<BinCoord, 2>& vCoords : vBinCoords )
-#endif
         {
-#if USE_GRID_QUERIES
-            std::array<std::vector<unsigned int>, 2> vVals;
-#else
             std::array<size_t, 2> vVals;
-#endif
             CANCEL_RETURN;
             for( size_t uiI = 0; uiI < 2; uiI++ )
             {
@@ -143,28 +201,15 @@ bool PartialQuarry::setBinValues( )
                                                                     vCoords[ uiI ].uiChromosomeY );
                     if( iDataSetId != std::numeric_limits<size_t>::max( ) )
                     {
-                        vVals[ uiI ] = pIndices->
-#if USE_GRID_QUERIES
-                                       gridCount
-#else
-                                       count
-#endif
-                                       ( iDataSetId,
-#if USE_GRID_QUERIES
-                                         { vCoords[ uiI ].uiIndexY, vCoords[ uiI ].uiIndexX, uiMapQMin,
-                                           uiFromAnnoFilter, uiFromSameStrandFilter, uiFromYStrandFilter },
-                                         { vCoords[ uiI ].uiIndexH, vCoords[ uiI ].uiIndexW },
-                                         { vCoords[ uiI ].uiNumCoordsY, vCoords[ uiI ].uiNumCoordsX, uiMapQMax,
-                                           uiToAnnoFilter, uiToSameStrandFilter, uiToYStrandFilter },
-#else
-                                         { vCoords[ uiI ].uiIndexY, vCoords[ uiI ].uiIndexX, uiMapQMin,
-                                           uiFromAnnoFilter, uiFromSameStrandFilter, uiFromYStrandFilter },
-                                         { vCoords[ uiI ].uiIndexY + vCoords[ uiI ].uiIndexH,
-                                           vCoords[ uiI ].uiIndexX + vCoords[ uiI ].uiIndexW, uiMapQMax, uiToAnnoFilter,
-                                           uiToSameStrandFilter, uiToYStrandFilter },
-#endif
-                                         xIntersect,
-                                         0 );
+                        vVals[ uiI ] =
+                            pIndices->count( iDataSetId,
+                                             { vCoords[ uiI ].uiIndexY, vCoords[ uiI ].uiIndexX, uiMapQMin,
+                                               uiFromAnnoFilter, uiFromSameStrandFilter, uiFromYStrandFilter },
+                                             { vCoords[ uiI ].uiIndexY + vCoords[ uiI ].uiIndexH,
+                                               vCoords[ uiI ].uiIndexX + vCoords[ uiI ].uiIndexW, uiMapQMax,
+                                               uiToAnnoFilter, uiToSameStrandFilter, uiToYStrandFilter },
+                                             xIntersect,
+                                             0 );
                     }
                     else
                         vVals[ uiI ] = { };
@@ -172,31 +217,11 @@ bool PartialQuarry::setBinValues( )
                 else
                     vVals[ uiI ] = { };
 
-#if USE_GRID_QUERIES
-                for( auto& uiX : vVals[ uiI ] )
-                    uiX = uiX > uiMinuend ? uiX - uiMinuend : 0;
-#else
                 vVals[ uiI ] = vVals[ uiI ] > uiMinuend ? vVals[ uiI ] - uiMinuend : 0;
-#endif
             }
-#if USE_GRID_QUERIES
-            const size_t uiHQuery = vCoords[ 0 ].uiNumCoordsX;
-            const size_t uiHScreen = vAxisCords[ 1 ].size( );
-            for( size_t uiI = 0; uiI < vVals[ 0 ].size( ); uiI++ )
-            {
-                const size_t uiVal = symmetry( vVals[ 0 ][ uiI ], vVals[ 1 ].size( ) > 0 ? vVals[ 1 ][ uiI ] : 0 );
-
-                const size_t uiXIdx = uiI % uiHQuery + vCoords[ 0 ].uiCoordStartIdxX;
-                const size_t uiYIdx = uiI / uiHQuery + vCoords[ 0 ].uiCoordStartIdxY;
-                const size_t uiJ = uiXIdx * uiHScreen + uiYIdx;
-
-                vvBinValues.back( )[ uiJ ] = uiVal;
-            }
-#else
             vvBinValues.back( ).push_back( symmetry( vVals[ 0 ], vVals[ 1 ] ) );
-#endif
         }
-
+#endif
 
         const size_t uiTot =
             getValue<size_t>( { "replicates", "by_name", vActiveReplicates[ uiRepl ], "total_reads" } );
@@ -575,8 +600,8 @@ void PartialQuarry::regReplicates( )
                                .fFunc = &PartialQuarry::setBinValues,
                                .vIncomingFunctions = { NodeNames::BinCoords, NodeNames::DatasetIdPerRepl,
                                                        NodeNames::MappingQuality, NodeNames::Directionality },
-                               .vIncomingSession = { { "settings", "normalization", "min_interactions", "val" }, 
-                                                     {"replicates", "by_name"} },
+                               .vIncomingSession = { { "settings", "normalization", "min_interactions", "val" },
+                                                     { "replicates", "by_name" } },
                                .vSessionsIncomingInPrevious = { { "annotation", "by_name" },
                                                                 { "contigs", "column_coordinates" },
                                                                 { "contigs", "row_coordinates" } } } );
@@ -590,7 +615,7 @@ void PartialQuarry::regReplicates( )
                                                      { "settings", "normalization", "ddd_samples", "val_max" },
                                                      { "settings", "normalization", "ddd_quantile", "val" },
                                                      { "settings", "normalization", "min_interactions", "val" } },
-                               .vSessionsIncomingInPrevious = { } } );
+                               .vSessionsIncomingInPrevious = {} } );
 
     registerNode( NodeNames::InGroup,
                   ComputeNode{ .sNodeName = "in_group_setting",

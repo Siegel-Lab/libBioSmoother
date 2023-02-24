@@ -7,7 +7,7 @@
 #pragma once
 
 
-#define USE_GRID_QUERIES 0
+#define USE_GRID_QUERIES 1
 
 #define CANCEL_RETURN                                                                                                  \
     if( this->bCancel )                                                                                                \
@@ -376,7 +376,7 @@ class PartialQuarry : public HasSession
         }
         else if( uiVerbosity >= 3 )
             std::cout << "node up to date from previous check " << xNode.sNodeName << std::endl;
-    
+
         // node must be up to date now
         xNodeData.uiLastChecked = uiCurrTime;
 
@@ -599,9 +599,9 @@ class PartialQuarry : public HasSession
             }
             else
                 this->xSession[ toPointer( vKeys ) ] = xVal;
-            #ifndef NDEBUG
-                std::cout << "session updated: " << toString( vKeys ) << std::endl;
-            #endif
+#ifndef NDEBUG
+            std::cout << "session updated: " << toString( vKeys ) << std::endl;
+#endif
         }
     }
 
