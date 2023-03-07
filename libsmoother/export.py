@@ -368,7 +368,7 @@ def __draw_annotation(session, d, sizes, print_callback=lambda s: None):
                               offset_x - sizes["axis"], offset_x, False, labels=active_anno_x[2][::-1])
             d.append( drawSvg.Line(offset_x, offset, offset_x, 
                                     offset + sizes["annotation"], stroke="black", stroke_width=2) )
-            d.append(drawSvg.Text("Anno.", 18, offset_x - sizes["axis"], offset + sizes["annotation"] / 2, 
+            d.append(drawSvg.Text("Anno.", 14, offset_x - sizes["axis"], offset + sizes["annotation"] / 2, 
                         font_family="Consolas, sans-serif",
                         transform='rotate(-90,' + str(offset_x - sizes["axis"]) + ',' + str(-(offset + sizes["annotation"] / 2)) + ')',
                         text_anchor='middle', dominant_baseline='hanging'))
@@ -378,7 +378,7 @@ def __draw_annotation(session, d, sizes, print_callback=lambda s: None):
                               offset_x - sizes["axis"], offset_x, True, labels=active_anno_y[2][::-1])
             d.append( drawSvg.Line(offset, offset_x, offset + sizes["annotation"], 
                                     offset_x, stroke="black", stroke_width=2) )
-            d.append(drawSvg.Text("Anno.", 18, offset + sizes["annotation"] / 2, offset_x - sizes["axis"],
+            d.append(drawSvg.Text("Anno.", 14, offset + sizes["annotation"] / 2, offset_x - sizes["axis"],
                         font_family="Consolas, sans-serif",
                         text_anchor='middle', dominant_baseline='bottom'))
 
@@ -439,7 +439,7 @@ def __draw_secondary(session, d, sizes, print_callback=lambda s: None):
             __adaptive_ticker(d, active_anno_y, offset_x - sizes["axis"], offset_x, False, label_major=True)
             d.append( drawSvg.Line(offset_x, offset, offset_x, 
                                     offset + sizes["annotation"], stroke="black", stroke_width=2) )
-            d.append(drawSvg.Text("Cov.", 18, offset_x - sizes["axis"], offset + sizes["annotation"] / 2, 
+            d.append(drawSvg.Text("Cov.", 14, offset_x - sizes["axis"], offset + sizes["annotation"] / 2, 
                         font_family="Consolas, sans-serif",
                         transform='rotate(-90,' + str(offset_x - sizes["axis"]) + ',' + str(-(offset + sizes["annotation"] / 2)) + ')',
                         text_anchor='middle', dominant_baseline='hanging'))
@@ -447,7 +447,7 @@ def __draw_secondary(session, d, sizes, print_callback=lambda s: None):
             __adaptive_ticker(d, active_anno_x, offset_x - sizes["axis"], offset_x, True, label_major=True)
             d.append( drawSvg.Line(offset, offset_x, offset + sizes["annotation"], 
                                     offset_x, stroke="black", stroke_width=2) )
-            d.append(drawSvg.Text("Cov.", 18, offset + sizes["annotation"] / 2, offset_x - sizes["axis"],
+            d.append(drawSvg.Text("Cov.", 14, offset + sizes["annotation"] / 2, offset_x - sizes["axis"],
                         font_family="Consolas, sans-serif",
                         text_anchor='middle', dominant_baseline='bottom'))
 
@@ -540,7 +540,7 @@ def __get_sizes(session):
         "show_contigs": session.get_value(["settings", "interface", "show_hide", "regs"]),
         "show_ident_line": session.get_value(["settings", "interface", "show_hide", "indent_line"]),
         "show_axis": session.get_value(["settings", "interface", "show_hide", "axis"]),
-        "coords": 125,
+        "coords": 125, #@todo load these sizes from json
         "contigs": 125,
         "axis": 125,
         "show_contig_borders": session.get_value(["settings", "interface", "show_hide", "contig_borders"]),
@@ -576,7 +576,19 @@ def __make_drawing(session, sizes):
 
     size -= sizes["margin"]
 
-    return drawSvg.Drawing(size, size, displayInline=False)
+    d = drawSvg.Drawing(size, size, displayInline=False)
+
+    d.append(
+        drawSvg.Rectangle(
+            0,
+            0,
+            size,
+            size,
+            fill="#ffffff",
+        )
+    )
+
+    return d
 
 
 def __draw(session):
