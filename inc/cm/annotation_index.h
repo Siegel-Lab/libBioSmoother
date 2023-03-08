@@ -2,9 +2,9 @@
 #include <algorithm>
 #include <cassert>
 #include <cmath>
+#include <functional>
 #include <set>
 #include <tuple>
-#include <functional>
 
 #pragma once
 
@@ -106,29 +106,29 @@ template <template <typename> typename vec_gen_t> class AnnotationDescIndex
 
                 for( size_t uiActive : xActiveIntervals )
                     vIntervals.push_back( Interval{
-                        /*.uiIntervalId =*/ uiIntervalId,
+                        /*.uiIntervalId =*/uiIntervalId,
 
-                        /*.uiIntervalStart =*/ uiCurrPos,
-                        /*.uiIntervalEnd =*/ uiNextPos,
+                        /*.uiIntervalStart =*/uiCurrPos,
+                        /*.uiIntervalEnd =*/uiNextPos,
 
-                        /*.uiAnnoStart =*/ std::get<0>( vIntervalsIn[ uiActive ] ),
-                        /*.uiAnnoEnd =*/ std::get<1>( vIntervalsIn[ uiActive ] ),
+                        /*.uiAnnoStart =*/std::get<0>( vIntervalsIn[ uiActive ] ),
+                        /*.uiAnnoEnd =*/std::get<1>( vIntervalsIn[ uiActive ] ),
 
-                        /*.uiDescId =*/ vDescID[ uiActive ],
-                        /*.bForwStrnd =*/ std::get<3>( vIntervalsIn[ uiActive ] ),
+                        /*.uiDescId =*/vDescID[ uiActive ],
+                        /*.bForwStrnd =*/std::get<3>( vIntervalsIn[ uiActive ] ),
 
-                        /*.uiIntervalCoordsStart =*/ uiIntervalCoordPos,
-                        /*.uiIntervalCoordsEnd =*/ uiIntervalCoordPos + ( uiNextPos - uiCurrPos ),
+                        /*.uiIntervalCoordsStart =*/uiIntervalCoordPos,
+                        /*.uiIntervalCoordsEnd =*/uiIntervalCoordPos + ( uiNextPos - uiCurrPos ),
 
-                        /*.uiAnnoCoordsStart =*/ std::get<0>( vIntervalsIn[ uiActive ] ) - uiSkippedCoords * uiDividend,
-                        /*.uiAnnoCoordsEnd =*/ std::get<1>( vIntervalsIn[ uiActive ] ) - uiSkippedCoords * uiDividend,
+                        /*.uiAnnoCoordsStart =*/std::get<0>( vIntervalsIn[ uiActive ] ) - uiSkippedCoords * uiDividend,
+                        /*.uiAnnoCoordsEnd =*/std::get<1>( vIntervalsIn[ uiActive ] ) - uiSkippedCoords * uiDividend,
                     } );
                 uiIntervalCoordPos += ( uiNextPos - uiCurrPos );
                 ++uiIntervalId;
                 uiLastPos = uiNextPos;
             }
         }
-        vDatasets.push_back( Dataset{ /*.uiStart =*/ uiStartSize, /*.uiEnd =*/ vIntervals.size( ) } );
+        vDatasets.push_back( Dataset{ /*.uiStart =*/uiStartSize, /*.uiEnd =*/vIntervals.size( ) } );
         return vDatasets.size( ) - 1;
     }
 
@@ -218,16 +218,17 @@ template <template <typename> typename vec_gen_t> class AnnotationDescIndex
         auto xBegin = begin( uiDatasetId );
         auto xEnd = end( uiDatasetId );
 
-        if(bIntervalCoords)
-        return std::lower_bound(
-            xBegin, xEnd, uiFrom, []( const Interval& rI, size_t uiFrom ) { return rI.uiIntervalCoordsEnd <= uiFrom; } );
+        if( bIntervalCoords )
+            return std::lower_bound( xBegin, xEnd, uiFrom, []( const Interval& rI, size_t uiFrom ) {
+                return rI.uiIntervalCoordsEnd <= uiFrom;
+            } );
 
-        if(bIntervalCount)
-        return std::lower_bound(
-            xBegin, xEnd, uiFrom,[]( const Interval& rI, size_t uiFrom ) { return rI.uiIntervalId < uiFrom; } );
+        if( bIntervalCount )
+            return std::lower_bound( xBegin, xEnd, uiFrom,
+                                     []( const Interval& rI, size_t uiFrom ) { return rI.uiIntervalId < uiFrom; } );
 
-        return std::lower_bound(
-            xBegin, xEnd, uiFrom,[]( const Interval& rI, size_t uiFrom ) { return rI.uiIntervalEnd <= uiFrom; } );
+        return std::lower_bound( xBegin, xEnd, uiFrom,
+                                 []( const Interval& rI, size_t uiFrom ) { return rI.uiIntervalEnd <= uiFrom; } );
     }
     interval_it_t upperBound( size_t uiDatasetId, size_t uiTo, bool bIntervalCoords = false,
                               bool bIntervalCount = false )
@@ -237,16 +238,17 @@ template <template <typename> typename vec_gen_t> class AnnotationDescIndex
         auto xBegin = begin( uiDatasetId );
         auto xEnd = end( uiDatasetId );
 
-        if(bIntervalCoords)
-        return std::upper_bound(
-            xBegin, xEnd, uiTo,[]( size_t uiTo, const Interval& rI ) { return uiTo <= rI.uiIntervalCoordsStart; } );
+        if( bIntervalCoords )
+            return std::upper_bound( xBegin, xEnd, uiTo, []( size_t uiTo, const Interval& rI ) {
+                return uiTo <= rI.uiIntervalCoordsStart;
+            } );
 
-        if(bIntervalCount)
-        return std::upper_bound(
-            xBegin, xEnd, uiTo,[]( size_t uiTo, const Interval& rI ) { return uiTo <= rI.uiIntervalId; } );
+        if( bIntervalCount )
+            return std::upper_bound( xBegin, xEnd, uiTo,
+                                     []( size_t uiTo, const Interval& rI ) { return uiTo <= rI.uiIntervalId; } );
 
-        return std::upper_bound(
-            xBegin, xEnd, uiTo, []( size_t uiTo, const Interval& rI ) { return uiTo <= rI.uiIntervalStart; } );
+        return std::upper_bound( xBegin, xEnd, uiTo,
+                                 []( size_t uiTo, const Interval& rI ) { return uiTo <= rI.uiIntervalStart; } );
     }
 
     std::array<interval_it_t, 2> getRange( size_t uiDatasetId, size_t uiFrom, size_t uiTo, bool bIntervalCoords = false,

@@ -25,6 +25,7 @@ namespace cm
 struct ChromDesc
 {
     std::string sName;
+    size_t uiUnadjustedLength;
     size_t uiLength;
 };
 
@@ -221,6 +222,7 @@ class PartialQuarry : public HasSession
         GridSeqSamples,
         RadiclSeqSamples,
         DatasetIdPerRepl,
+        ActiveChromLength,
         // ICESamples,
         SIZE
     };
@@ -763,6 +765,8 @@ class PartialQuarry : public HasSession
 
     // coords.h
     bool setActiveChrom( );
+    // coords.h
+    bool setActiveChromLength( );
     // coords.h
     bool setAnnoFilters( );
     // coords.h

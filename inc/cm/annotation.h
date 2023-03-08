@@ -137,14 +137,14 @@ bool PartialQuarry::setAnnotationValues( )
                                     vEndPos.emplace_back( 0 );
                                 vEndPos[ uiRow ] = uiEndPos;
                                 vAnnotationValues[ uiX ].back( ).second.push_back(
-                                    Annotation{ /*.sInfo =*/ std::get<2>( xAnno ),
-                                                /*.bForw =*/ std::get<3>( xAnno ),
-                                                /*.fScreenX =*/ uiStartPos,
-                                                /*.fScreenY =*/ uiEndPos,
-                                                /*.uiIndexX =*/ std::get<0>( xAnno ),
-                                                /*.uiIndexY =*/ std::get<1>( xAnno ),
-                                                /*.uiRow =*/ uiRow,
-                                                /*.uiChromosome =*/ xRegion.uiChromosome } );
+                                    Annotation{ /*.sInfo =*/std::get<2>( xAnno ),
+                                                /*.bForw =*/std::get<3>( xAnno ),
+                                                /*.fScreenX =*/uiStartPos,
+                                                /*.fScreenY =*/uiEndPos,
+                                                /*.uiIndexX =*/std::get<0>( xAnno ),
+                                                /*.uiIndexY =*/std::get<1>( xAnno ),
+                                                /*.uiRow =*/uiRow,
+                                                /*.uiChromosome =*/xRegion.uiChromosome } );
                             }
                         }
                     }
@@ -314,18 +314,19 @@ const pybind11::list PartialQuarry::getDisplayedAnnos( bool bXAxis,
 void PartialQuarry::regAnnotation( )
 {
     registerNode( NodeNames::ActivateAnnotation,
-                  ComputeNode{ /*.sNodeName =*/ "active_annotation",
-                               /*.fFunc =*/ &PartialQuarry::setActivateAnnotation,
-                               /*.vIncomingFunctions =*/ { },
-                               /*.vIncomingSession =*/ { { "annotation", "visible_x" }, { "annotation", "visible_y" } },
-                               /*.vSessionsIncomingInPrevious =*/ {} } );
+                  ComputeNode{ /*.sNodeName =*/"active_annotation",
+                               /*.fFunc =*/&PartialQuarry::setActivateAnnotation,
+                               /*.vIncomingFunctions =*/{ },
+                               /*.vIncomingSession =*/{ { "annotation", "visible_x" }, { "annotation", "visible_y" } },
+                               /*.vSessionsIncomingInPrevious =*/{} } );
 
     registerNode( NodeNames::AnnotationValues,
-                  ComputeNode{ /*.sNodeName =*/ "annotation_values",
-                               /*.fFunc =*/ &PartialQuarry::setAnnotationValues,
-                               /*.vIncomingFunctions =*/ { NodeNames::ActivateAnnotation, NodeNames::AxisCoords },
-                               /*.vIncomingSession =*/ { { "settings", "interface", "max_detailed_anno_display" } },
-                               /*.vSessionsIncomingInPrevious =*/ {
+                  ComputeNode{ /*.sNodeName =*/"annotation_values",
+                               /*.fFunc =*/&PartialQuarry::setAnnotationValues,
+                               /*.vIncomingFunctions =*/{ NodeNames::ActivateAnnotation, NodeNames::AxisCoords },
+                               /*.vIncomingSession =*/{ { "settings", "interface", "max_detailed_anno_display" } },
+                               /*.vSessionsIncomingInPrevious =*/
+                               {
                                    { "settings", "filters", "anno_in_multiple_bins" },
                                    { "dividend" },
                                    { "annotation", "by_name" },
@@ -334,18 +335,18 @@ void PartialQuarry::regAnnotation( )
                                } } );
 
     registerNode( NodeNames::AnnotationCDS,
-                  ComputeNode{ /*.sNodeName =*/ "annotation_cds",
-                               /*.fFunc =*/ &PartialQuarry::setAnnotationCDS,
-                               /*.vIncomingFunctions =*/ { NodeNames::AnnotationValues, NodeNames::AnnotationColors },
-                               /*.vIncomingSession =*/ { { "settings", "interface", "min_anno_dist" } },
-                               /*.vSessionsIncomingInPrevious =*/ { { "dividend" } } } );
+                  ComputeNode{ /*.sNodeName =*/"annotation_cds",
+                               /*.fFunc =*/&PartialQuarry::setAnnotationCDS,
+                               /*.vIncomingFunctions =*/{ NodeNames::AnnotationValues, NodeNames::AnnotationColors },
+                               /*.vIncomingSession =*/{ { "settings", "interface", "min_anno_dist" } },
+                               /*.vSessionsIncomingInPrevious =*/{ { "dividend" } } } );
 
     registerNode( NodeNames::ActivateAnnotationCDS,
-                  ComputeNode{ /*.sNodeName =*/ "active_annotation_cds",
-                               /*.fFunc =*/ &PartialQuarry::setActivateAnnotationCDS,
-                               /*.vIncomingFunctions =*/ { NodeNames::ActivateAnnotation },
-                               /*.vIncomingSession =*/ { },
-                               /*.vSessionsIncomingInPrevious =*/ {} } );
+                  ComputeNode{ /*.sNodeName =*/"active_annotation_cds",
+                               /*.fFunc =*/&PartialQuarry::setActivateAnnotationCDS,
+                               /*.vIncomingFunctions =*/{ NodeNames::ActivateAnnotation },
+                               /*.vIncomingSession =*/{ },
+                               /*.vSessionsIncomingInPrevious =*/{} } );
 }
 
 } // namespace cm

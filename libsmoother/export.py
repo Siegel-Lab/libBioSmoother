@@ -1,6 +1,8 @@
 from .quarry import Quarry
+
 try:
     import drawSvg
+
     HAS_DRAW_SVG = True
 except:
     HAS_DRAW_SVG = False
@@ -59,7 +61,9 @@ def export_tsv(session, print_callback=lambda s: None):
                     )
 
 
-def __conv_coords(p, is_bottom, idx, cds, w_cds, o_cds, w_plane, o_plane, none_for_oob=False):
+def __conv_coords(
+    p, is_bottom, idx, cds, w_cds, o_cds, w_plane, o_plane, none_for_oob=False
+):
     x = w_plane * (p - o_cds) / w_cds + o_plane
     if none_for_oob and (x < o_plane or x >= o_plane + w_plane):
         return None
@@ -85,8 +89,19 @@ def __cat_coords(cp, is_bottom, idx, cds, w_plane, o_plane, categories):
     )
 
 
-def __draw_tick_lines(d, tick_lines, transform, start, end, axis, stroke="black", stroke_width=2,
-                      conv_coords=__conv_coords, opacity=1, labels=None):
+def __draw_tick_lines(
+    d,
+    tick_lines,
+    transform,
+    start,
+    end,
+    axis,
+    stroke="black",
+    stroke_width=2,
+    conv_coords=__conv_coords,
+    opacity=1,
+    labels=None,
+):
     for idx, line in enumerate(tick_lines):
         p = conv_coords(line, None, None, None, *transform, none_for_oob=True)
         if not p is None:
@@ -105,12 +120,37 @@ def __draw_tick_lines(d, tick_lines, transform, start, end, axis, stroke="black"
                 yl = p
                 xl = end - 15
             if stroke_width > 0:
-                d.append(drawSvg.Line(xf, yf, xt, yt, stroke=stroke, stroke_width=stroke_width, stroke_opacity=opacity))
-            if not labels is None and p > transform[3] and p < transform[3] + transform[2]:
+                d.append(
+                    drawSvg.Line(
+                        xf,
+                        yf,
+                        xt,
+                        yt,
+                        stroke=stroke,
+                        stroke_width=stroke_width,
+                        stroke_opacity=opacity,
+                    )
+                )
+            if (
+                not labels is None
+                and p > transform[3]
+                and p < transform[3] + transform[2]
+            ):
                 label = labels[idx]
-                d.append(drawSvg.Text(label, 14, xl, yl, font_family="Consolas, sans-serif",
-                                     transform='rotate(-90,' + str(xl) + ',' + str(-yl) + ')' if axis else 'rotate(0)',
-                                     text_anchor='end', dominant_baseline='middle')) 
+                d.append(
+                    drawSvg.Text(
+                        label,
+                        14,
+                        xl,
+                        yl,
+                        font_family="Consolas, sans-serif",
+                        transform="rotate(-90," + str(xl) + "," + str(-yl) + ")"
+                        if axis
+                        else "rotate(0)",
+                        text_anchor="end",
+                        dominant_baseline="middle",
+                    )
+                )
 
 
 def __to_readable_pos(x, dividend, genome_end, contig_starts):
@@ -133,15 +173,30 @@ def __to_readable_pos(x, dividend, genome_end, contig_starts):
         label = "{:,}".format(x) + " bp"
     return label
 
-def __adaptive_ticker(d, transform, start, end, axis, base=10, mantissas=[1, 2, 5], desired_num_ticks=6, 
-                      num_minor_ticks=5, stroke="black", conv_coords=__conv_coords, opacity=1, label_major=False,
-                      to_readable_pos=str):
+
+def __adaptive_ticker(
+    d,
+    transform,
+    start,
+    end,
+    axis,
+    base=10,
+    mantissas=[1, 2, 5],
+    desired_num_ticks=6,
+    num_minor_ticks=5,
+    stroke="black",
+    conv_coords=__conv_coords,
+    opacity=1,
+    label_major=False,
+    to_readable_pos=str,
+):
     w_cds, o_cds, _, _ = transform
     tick_size = 0
-    for n, m in [ (n,m) for n in range(100) for m in mantissas]:
-        tick_size = base ** n * m
+    for n, m in [(n, m) for n in range(100) for m in mantissas]:
+        tick_size = base**n * m
         if w_cds / tick_size <= desired_num_ticks:
             break
+
     def draw():
         fst_tick = o_cds - o_cds % tick_size
         if fst_tick < o_cds:
@@ -155,15 +210,26 @@ def __adaptive_ticker(d, transform, start, end, axis, base=10, mantissas=[1, 2, 
             else:
                 ticks.append(fst_tick)
             fst_tick += tick_size
-        __draw_tick_lines(d, ticks, transform, start, end, axis, stroke=stroke, stroke_width=1, conv_coords=conv_coords,
-                          opacity=opacity, labels=labels if label_major else None)
+        __draw_tick_lines(
+            d,
+            ticks,
+            transform,
+            start,
+            end,
+            axis,
+            stroke=stroke,
+            stroke_width=1,
+            conv_coords=conv_coords,
+            opacity=opacity,
+            labels=labels if label_major else None,
+        )
+
     draw()
     if num_minor_ticks > 0:
         tick_size /= num_minor_ticks
         start = end - 4
         label_major = False
         draw()
-
 
 
 def __draw_rectangles(
@@ -280,20 +346,53 @@ def __draw_heatmap(session, d, sizes, print_callback=lambda s: None):
         )
 
         if sizes["show_grid_lines"]:
-            __adaptive_ticker(d, x_transform, offset, offset + sizes["heatmap"], True, num_minor_ticks=0,
-                              stroke="lightgrey", opacity=0.3)
-            __adaptive_ticker(d, y_transform, offset, offset + sizes["heatmap"], False, num_minor_ticks=0,
-                              stroke="lightgrey", opacity=0.3)
+            __adaptive_ticker(
+                d,
+                x_transform,
+                offset,
+                offset + sizes["heatmap"],
+                True,
+                num_minor_ticks=0,
+                stroke="lightgrey",
+                opacity=0.3,
+            )
+            __adaptive_ticker(
+                d,
+                y_transform,
+                offset,
+                offset + sizes["heatmap"],
+                False,
+                num_minor_ticks=0,
+                stroke="lightgrey",
+                opacity=0.3,
+            )
         if sizes["show_contig_borders"]:
-            __draw_tick_lines(d, session.get_tick_list(True, print_callback), x_transform, offset, 
-                              offset + sizes["heatmap"], True, "lightgrey", opacity=0.5)
-            __draw_tick_lines(d, session.get_tick_list(False, print_callback), y_transform, offset, 
-                              offset + sizes["heatmap"], False, "lightgrey", opacity=0.5)
+            __draw_tick_lines(
+                d,
+                session.get_tick_list(True, print_callback),
+                x_transform,
+                offset,
+                offset + sizes["heatmap"],
+                True,
+                "lightgrey",
+                opacity=0.5,
+            )
+            __draw_tick_lines(
+                d,
+                session.get_tick_list(False, print_callback),
+                y_transform,
+                offset,
+                offset + sizes["heatmap"],
+                False,
+                "lightgrey",
+                opacity=0.5,
+            )
         if sizes["show_ident_line"]:
             w, x, _, _ = x_transform
             h, y, _, _ = y_transform
             bx, by, tx, ty = [
-                __conv_coords(v, None, None, None, *transform) for v, transform in [
+                __conv_coords(v, None, None, None, *transform)
+                for v, transform in [
                     (max(x, y), x_transform),
                     (max(x, y), y_transform),
                     (min(x + w, y + h), x_transform),
@@ -301,7 +400,18 @@ def __draw_heatmap(session, d, sizes, print_callback=lambda s: None):
                 ]
             ]
             print(bx, by, tx, ty)
-            d.append(drawSvg.Line(bx, by, tx, ty, stroke="lightgrey", stroke_width=2, stroke_opacity=0.5))
+            d.append(
+                drawSvg.Line(
+                    bx,
+                    by,
+                    tx,
+                    ty,
+                    stroke="lightgrey",
+                    stroke_width=2,
+                    stroke_opacity=0.5,
+                )
+            )
+
 
 def __draw_annotation(session, d, sizes, print_callback=lambda s: None):
     if sizes["show_anno"]:
@@ -357,34 +467,114 @@ def __draw_annotation(session, d, sizes, print_callback=lambda s: None):
         )
 
         if sizes["show_grid_lines"]:
-            __adaptive_ticker(d, x_transform, offset, offset + sizes["annotation"], True, num_minor_ticks=0,
-                              stroke="lightgrey", opacity=0.3)
-            __adaptive_ticker(d, y_transform, offset, offset + sizes["annotation"], False, num_minor_ticks=0,
-                              stroke="lightgrey", opacity=0.3)
+            __adaptive_ticker(
+                d,
+                x_transform,
+                offset,
+                offset + sizes["annotation"],
+                True,
+                num_minor_ticks=0,
+                stroke="lightgrey",
+                opacity=0.3,
+            )
+            __adaptive_ticker(
+                d,
+                y_transform,
+                offset,
+                offset + sizes["annotation"],
+                False,
+                num_minor_ticks=0,
+                stroke="lightgrey",
+                opacity=0.3,
+            )
         if sizes["show_contig_borders"]:
-            __draw_tick_lines(d, session.get_tick_list(True, print_callback), x_transform, offset, 
-                              offset + sizes["annotation"], True, "lightgrey", opacity=0.5)
-            __draw_tick_lines(d, session.get_tick_list(False, print_callback), y_transform, offset, 
-                              offset + sizes["annotation"], False, "lightgrey", opacity=0.5)
+            __draw_tick_lines(
+                d,
+                session.get_tick_list(True, print_callback),
+                x_transform,
+                offset,
+                offset + sizes["annotation"],
+                True,
+                "lightgrey",
+                opacity=0.5,
+            )
+            __draw_tick_lines(
+                d,
+                session.get_tick_list(False, print_callback),
+                y_transform,
+                offset,
+                offset + sizes["annotation"],
+                False,
+                "lightgrey",
+                opacity=0.5,
+            )
         if sizes["show_axis"]:
-            __draw_tick_lines(d, [x + 0.5 for x in range(len(active_anno_x[2]))], 
-                              [len(active_anno_x[2]), 0, sizes["annotation"], offset], 
-                              offset_x - sizes["axis"], offset_x, False, labels=active_anno_x[2][::-1])
-            d.append( drawSvg.Line(offset_x, offset, offset_x, 
-                                    offset + sizes["annotation"], stroke="black", stroke_width=2) )
-            d.append(drawSvg.Text("Anno.", 14, offset_x - sizes["axis"], offset + sizes["annotation"] / 2, 
-                        font_family="Consolas, sans-serif",
-                        transform='rotate(-90,' + str(offset_x - sizes["axis"]) + ',' + str(-(offset + sizes["annotation"] / 2)) + ')',
-                        text_anchor='middle', dominant_baseline='hanging'))
+            __draw_tick_lines(
+                d,
+                [x + 0.5 for x in range(len(active_anno_x[2]))],
+                [len(active_anno_x[2]), 0, sizes["annotation"], offset],
+                offset_x - sizes["axis"],
+                offset_x,
+                False,
+                labels=active_anno_x[2][::-1],
+            )
+            d.append(
+                drawSvg.Line(
+                    offset_x,
+                    offset,
+                    offset_x,
+                    offset + sizes["annotation"],
+                    stroke="black",
+                    stroke_width=2,
+                )
+            )
+            d.append(
+                drawSvg.Text(
+                    "Anno.",
+                    14,
+                    offset_x - sizes["axis"],
+                    offset + sizes["annotation"] / 2,
+                    font_family="Consolas, sans-serif",
+                    transform="rotate(-90,"
+                    + str(offset_x - sizes["axis"])
+                    + ","
+                    + str(-(offset + sizes["annotation"] / 2))
+                    + ")",
+                    text_anchor="middle",
+                    dominant_baseline="hanging",
+                )
+            )
 
-            __draw_tick_lines(d, [x + 0.5 for x in range(len(active_anno_y[2]))], 
-                              [len(active_anno_y[2]), 0, sizes["annotation"], offset], 
-                              offset_x - sizes["axis"], offset_x, True, labels=active_anno_y[2][::-1])
-            d.append( drawSvg.Line(offset, offset_x, offset + sizes["annotation"], 
-                                    offset_x, stroke="black", stroke_width=2) )
-            d.append(drawSvg.Text("Anno.", 14, offset + sizes["annotation"] / 2, offset_x - sizes["axis"],
-                        font_family="Consolas, sans-serif",
-                        text_anchor='middle', dominant_baseline='bottom'))
+            __draw_tick_lines(
+                d,
+                [x + 0.5 for x in range(len(active_anno_y[2]))],
+                [len(active_anno_y[2]), 0, sizes["annotation"], offset],
+                offset_x - sizes["axis"],
+                offset_x,
+                True,
+                labels=active_anno_y[2][::-1],
+            )
+            d.append(
+                drawSvg.Line(
+                    offset,
+                    offset_x,
+                    offset + sizes["annotation"],
+                    offset_x,
+                    stroke="black",
+                    stroke_width=2,
+                )
+            )
+            d.append(
+                drawSvg.Text(
+                    "Anno.",
+                    14,
+                    offset + sizes["annotation"] / 2,
+                    offset_x - sizes["axis"],
+                    font_family="Consolas, sans-serif",
+                    text_anchor="middle",
+                    dominant_baseline="bottom",
+                )
+            )
 
 
 def __draw_secondary(session, d, sizes, print_callback=lambda s: None):
@@ -396,7 +586,6 @@ def __draw_secondary(session, d, sizes, print_callback=lambda s: None):
             offset += sizes["coords"]
         if sizes["show_contigs"]:
             offset += sizes["contigs"]
-
 
         offset_x = offset + sizes["secondary"] + sizes["margin"]
         if sizes["show_axis"]:
@@ -430,30 +619,113 @@ def __draw_secondary(session, d, sizes, print_callback=lambda s: None):
         )
 
         if sizes["show_grid_lines"]:
-            __adaptive_ticker(d, x_transform, offset, offset + sizes["secondary"], True, num_minor_ticks=0,
-                              stroke="lightgrey", opacity=0.3)
-            __adaptive_ticker(d, y_transform, offset, offset + sizes["secondary"], False, num_minor_ticks=0,
-                              stroke="lightgrey", opacity=0.3)
+            __adaptive_ticker(
+                d,
+                x_transform,
+                offset,
+                offset + sizes["secondary"],
+                True,
+                num_minor_ticks=0,
+                stroke="lightgrey",
+                opacity=0.3,
+            )
+            __adaptive_ticker(
+                d,
+                y_transform,
+                offset,
+                offset + sizes["secondary"],
+                False,
+                num_minor_ticks=0,
+                stroke="lightgrey",
+                opacity=0.3,
+            )
         if sizes["show_contig_borders"]:
-            __draw_tick_lines(d, session.get_tick_list(True, print_callback), x_transform, offset, 
-                              offset + sizes["secondary"], True, "lightgrey", opacity=0.5)
-            __draw_tick_lines(d, session.get_tick_list(False, print_callback), y_transform, offset, 
-                              offset + sizes["secondary"], False, "lightgrey", opacity=0.5)
+            __draw_tick_lines(
+                d,
+                session.get_tick_list(True, print_callback),
+                x_transform,
+                offset,
+                offset + sizes["secondary"],
+                True,
+                "lightgrey",
+                opacity=0.5,
+            )
+            __draw_tick_lines(
+                d,
+                session.get_tick_list(False, print_callback),
+                y_transform,
+                offset,
+                offset + sizes["secondary"],
+                False,
+                "lightgrey",
+                opacity=0.5,
+            )
         if sizes["show_axis"]:
-            __adaptive_ticker(d, active_anno_y, offset_x - sizes["axis"], offset_x, False, label_major=True)
-            d.append( drawSvg.Line(offset_x, offset, offset_x, 
-                                    offset + sizes["annotation"], stroke="black", stroke_width=2) )
-            d.append(drawSvg.Text("Cov.", 14, offset_x - sizes["axis"], offset + sizes["annotation"] / 2, 
-                        font_family="Consolas, sans-serif",
-                        transform='rotate(-90,' + str(offset_x - sizes["axis"]) + ',' + str(-(offset + sizes["annotation"] / 2)) + ')',
-                        text_anchor='middle', dominant_baseline='hanging'))
+            __adaptive_ticker(
+                d,
+                active_anno_y,
+                offset_x - sizes["axis"],
+                offset_x,
+                False,
+                label_major=True,
+            )
+            d.append(
+                drawSvg.Line(
+                    offset_x,
+                    offset,
+                    offset_x,
+                    offset + sizes["annotation"],
+                    stroke="black",
+                    stroke_width=2,
+                )
+            )
+            d.append(
+                drawSvg.Text(
+                    "Cov.",
+                    14,
+                    offset_x - sizes["axis"],
+                    offset + sizes["annotation"] / 2,
+                    font_family="Consolas, sans-serif",
+                    transform="rotate(-90,"
+                    + str(offset_x - sizes["axis"])
+                    + ","
+                    + str(-(offset + sizes["annotation"] / 2))
+                    + ")",
+                    text_anchor="middle",
+                    dominant_baseline="hanging",
+                )
+            )
 
-            __adaptive_ticker(d, active_anno_x, offset_x - sizes["axis"], offset_x, True, label_major=True)
-            d.append( drawSvg.Line(offset, offset_x, offset + sizes["annotation"], 
-                                    offset_x, stroke="black", stroke_width=2) )
-            d.append(drawSvg.Text("Cov.", 14, offset + sizes["annotation"] / 2, offset_x - sizes["axis"],
-                        font_family="Consolas, sans-serif",
-                        text_anchor='middle', dominant_baseline='bottom'))
+            __adaptive_ticker(
+                d,
+                active_anno_x,
+                offset_x - sizes["axis"],
+                offset_x,
+                True,
+                label_major=True,
+            )
+            d.append(
+                drawSvg.Line(
+                    offset,
+                    offset_x,
+                    offset + sizes["annotation"],
+                    offset_x,
+                    stroke="black",
+                    stroke_width=2,
+                )
+            )
+            d.append(
+                drawSvg.Text(
+                    "Cov.",
+                    14,
+                    offset + sizes["annotation"] / 2,
+                    offset_x - sizes["axis"],
+                    font_family="Consolas, sans-serif",
+                    text_anchor="middle",
+                    dominant_baseline="bottom",
+                )
+            )
+
 
 def __draw_coordinates(session, d, sizes, print_callback=lambda s: None):
     if sizes["show_coords"]:
@@ -478,23 +750,60 @@ def __draw_coordinates(session, d, sizes, print_callback=lambda s: None):
         )
         contig_starts_x = session.get_tick_list(True, print_callback)
         contig_starts_y = session.get_tick_list(False, print_callback)
+
         def to_readable_pos(x):
-            return __to_readable_pos(x, session.get_value(["dividend"]), contig_starts_x[-1], contig_starts_x[:-1])
-        __adaptive_ticker(d, x_transform, offset, offset + sizes["coords"], True, 
-                          to_readable_pos=to_readable_pos, label_major=True)
-        __adaptive_ticker(d, y_transform, offset, offset + sizes["coords"], False,
-                          to_readable_pos=to_readable_pos, label_major=True)
-        d.append( drawSvg.Line(offset_heat, offset + sizes["coords"], offset_heat + sizes["heatmap"], 
-                                offset + sizes["coords"], stroke="black", stroke_width=2) )
-        d.append( drawSvg.Line(offset + sizes["coords"], offset_heat, offset + sizes["coords"], 
-                               offset_heat + sizes["heatmap"], stroke="black", stroke_width=2) )
+            return __to_readable_pos(
+                x,
+                session.get_value(["dividend"]),
+                contig_starts_x[-1],
+                contig_starts_x[:-1],
+            )
+
+        __adaptive_ticker(
+            d,
+            x_transform,
+            offset,
+            offset + sizes["coords"],
+            True,
+            to_readable_pos=to_readable_pos,
+            label_major=True,
+        )
+        __adaptive_ticker(
+            d,
+            y_transform,
+            offset,
+            offset + sizes["coords"],
+            False,
+            to_readable_pos=to_readable_pos,
+            label_major=True,
+        )
+        d.append(
+            drawSvg.Line(
+                offset_heat,
+                offset + sizes["coords"],
+                offset_heat + sizes["heatmap"],
+                offset + sizes["coords"],
+                stroke="black",
+                stroke_width=2,
+            )
+        )
+        d.append(
+            drawSvg.Line(
+                offset + sizes["coords"],
+                offset_heat,
+                offset + sizes["coords"],
+                offset_heat + sizes["heatmap"],
+                stroke="black",
+                stroke_width=2,
+            )
+        )
 
 
 def minmax(v, mi, ma):
     return min(max(v, mi), ma)
 
-def __draw_contigs(session, d, sizes, print_callback=lambda s: None):
 
+def __draw_contigs(session, d, sizes, print_callback=lambda s: None):
     if sizes["show_contigs"]:
         offset = 0
 
@@ -515,40 +824,94 @@ def __draw_contigs(session, d, sizes, print_callback=lambda s: None):
         )
         w, o, _, _ = x_transform
         contig_starts_x = session.get_tick_list(True, print_callback)
-        contig_centers_x = [ (minmax(e, o, w+o)+minmax(s, o, w+o))/2 for s,e in zip(contig_starts_x[:-1], contig_starts_x[1:])]
+        contig_centers_x = [
+            (minmax(e, o, w + o) + minmax(s, o, w + o)) / 2
+            for s, e in zip(contig_starts_x[:-1], contig_starts_x[1:])
+        ]
         contig_starts_y = session.get_tick_list(False, print_callback)
         w, o, _, _ = y_transform
-        contig_centers_y = [ (minmax(e, o, w+o)+minmax(s, o, w+o))/2 for s,e in zip(contig_starts_y[:-1], contig_starts_y[1:])]
+        contig_centers_y = [
+            (minmax(e, o, w + o) + minmax(s, o, w + o)) / 2
+            for s, e in zip(contig_starts_y[:-1], contig_starts_y[1:])
+        ]
         contig_names_x = session.get_ticks(True, print_callback)["contig_names"]
         contig_names_y = session.get_ticks(False, print_callback)["contig_names"]
-        __draw_tick_lines(d, contig_centers_x, x_transform, offset, offset + sizes["contigs"], True, 
-                          stroke_width=0, labels=contig_names_x)
-        __draw_tick_lines(d, contig_centers_y, y_transform, offset, offset + sizes["contigs"], False, 
-                          stroke_width=0, labels=contig_names_y)
+        __draw_tick_lines(
+            d,
+            contig_centers_x,
+            x_transform,
+            offset,
+            offset + sizes["contigs"],
+            True,
+            stroke_width=0,
+            labels=contig_names_x,
+        )
+        __draw_tick_lines(
+            d,
+            contig_centers_y,
+            y_transform,
+            offset,
+            offset + sizes["contigs"],
+            False,
+            stroke_width=0,
+            labels=contig_names_y,
+        )
 
-        y_label, x_label = session.get_value(['settings', "interface", "axis_lables"]).split("_")
+        y_label, x_label = session.get_value(
+            ["settings", "interface", "axis_lables"]
+        ).split("_")
 
-        d.append(drawSvg.Text(x_label, 18, offset_heat + sizes["heatmap"] / 2, offset, 
-                    font_family="Consolas, sans-serif",
-                    text_anchor='middle', dominant_baseline='bottom'))
-        d.append(drawSvg.Text(y_label, 18, offset, offset_heat + sizes["heatmap"] / 2, 
-                    font_family="Consolas, sans-serif",
-                    transform='rotate(-90,' + str(offset) + ',' + str(-(offset_heat + sizes["heatmap"] / 2)) + ')',
-                    text_anchor='middle', dominant_baseline='hanging'))
+        d.append(
+            drawSvg.Text(
+                x_label,
+                18,
+                offset_heat + sizes["heatmap"] / 2,
+                offset,
+                font_family="Consolas, sans-serif",
+                text_anchor="middle",
+                dominant_baseline="bottom",
+            )
+        )
+        d.append(
+            drawSvg.Text(
+                y_label,
+                18,
+                offset,
+                offset_heat + sizes["heatmap"] / 2,
+                font_family="Consolas, sans-serif",
+                transform="rotate(-90,"
+                + str(offset)
+                + ","
+                + str(-(offset_heat + sizes["heatmap"] / 2))
+                + ")",
+                text_anchor="middle",
+                dominant_baseline="hanging",
+            )
+        )
 
 
 def __get_sizes(session):
     return {
         "show_heat": True,
-        "show_coords": session.get_value(["settings", "interface", "show_hide", "coords"]),
-        "show_contigs": session.get_value(["settings", "interface", "show_hide", "regs"]),
-        "show_ident_line": session.get_value(["settings", "interface", "show_hide", "indent_line"]),
+        "show_coords": session.get_value(
+            ["settings", "interface", "show_hide", "coords"]
+        ),
+        "show_contigs": session.get_value(
+            ["settings", "interface", "show_hide", "regs"]
+        ),
+        "show_ident_line": session.get_value(
+            ["settings", "interface", "show_hide", "indent_line"]
+        ),
         "show_axis": session.get_value(["settings", "interface", "show_hide", "axis"]),
-        "coords": 125, #@todo load these sizes from json
+        "coords": 125,  # @todo load these sizes from json
         "contigs": 125,
         "axis": 125,
-        "show_contig_borders": session.get_value(["settings", "interface", "show_hide", "contig_borders"]),
-        "show_grid_lines": session.get_value(["settings", "interface", "show_hide", "grid_lines"]),
+        "show_contig_borders": session.get_value(
+            ["settings", "interface", "show_hide", "contig_borders"]
+        ),
+        "show_grid_lines": session.get_value(
+            ["settings", "interface", "show_hide", "grid_lines"]
+        ),
         "heatmap": session.get_value(["settings", "export", "size", "val"]),
         "margin": session.get_value(["settings", "export", "margins", "val"]),
         "show_anno": session.get_value(
@@ -606,9 +969,13 @@ def __draw(session):
     __draw_contigs(session, d, sizes)
     return d
 
+
 def assert_has_draw_svg():
     if not HAS_DRAW_SVG:
-        raise RuntimeError("could not import drawSvg, is it installed? (try pip install drawSvg==1.9.0)")
+        raise RuntimeError(
+            "could not import drawSvg, is it installed? (try pip install drawSvg==1.9.0)"
+        )
+
 
 def export_png(session):
     assert_has_draw_svg()

@@ -384,68 +384,72 @@ const std::string& PartialQuarry::getBackgroundColor( const std::function<void( 
 void PartialQuarry::regColors( )
 {
     registerNode( NodeNames::Colors,
-                  ComputeNode{ /*.sNodeName =*/ "color_palette",
-                               /*.fFunc =*/ &PartialQuarry::setColors,
-                               /*.vIncomingFunctions =*/ { NodeNames::BetweenGroup },
-                               /*.vIncomingSession =*/ { { "settings", "interface", "color_palette" },
-                                                     { "settings", "interface", "color_low" },
-                                                     { "settings", "interface", "color_high" },
-                                                     { "settings", "normalization", "log_base", "val" } },
-                               /*.vSessionsIncomingInPrevious =*/ {} } );
+                  ComputeNode{ /*.sNodeName =*/"color_palette",
+                               /*.fFunc =*/&PartialQuarry::setColors,
+                               /*.vIncomingFunctions =*/{ NodeNames::BetweenGroup },
+                               /*.vIncomingSession =*/
+                               { { "settings", "interface", "color_palette" },
+                                 { "settings", "interface", "color_low" },
+                                 { "settings", "interface", "color_high" },
+                                 { "settings", "normalization", "log_base", "val" } },
+                               /*.vSessionsIncomingInPrevious =*/{} } );
 
     registerNode( NodeNames::AnnotationColors,
-                  ComputeNode{ /*.sNodeName =*/ "annotation_color_palette",
-                               /*.fFunc =*/ &PartialQuarry::setAnnotationColors,
-                               /*.vIncomingFunctions =*/ { },
-                               /*.vIncomingSession =*/ { { "settings", "interface", "annotation_color_palette" },
-                                                     { "settings", "interface", "annotation_color_palette_dark" } },
-                               /*.vSessionsIncomingInPrevious =*/ {} } );
+                  ComputeNode{ /*.sNodeName =*/"annotation_color_palette",
+                               /*.fFunc =*/&PartialQuarry::setAnnotationColors,
+                               /*.vIncomingFunctions =*/{ },
+                               /*.vIncomingSession =*/
+                               { { "settings", "interface", "annotation_color_palette" },
+                                 { "settings", "interface", "annotation_color_palette_dark" } },
+                               /*.vSessionsIncomingInPrevious =*/{} } );
 
     registerNode( NodeNames::Combined,
-                  ComputeNode{ /*.sNodeName =*/ "combined_bins",
-                               /*.fFunc =*/ &PartialQuarry::setCombined,
-                               /*.vIncomingFunctions =*/ { NodeNames::DistDepDecayRemoved },
-                               /*.vIncomingSession =*/ { },
-                               /*.vSessionsIncomingInPrevious =*/ {} } );
+                  ComputeNode{ /*.sNodeName =*/"combined_bins",
+                               /*.fFunc =*/&PartialQuarry::setCombined,
+                               /*.vIncomingFunctions =*/{ NodeNames::DistDepDecayRemoved },
+                               /*.vIncomingSession =*/{ },
+                               /*.vSessionsIncomingInPrevious =*/{} } );
 
     registerNode( NodeNames::Scaled,
-                  ComputeNode{ /*.sNodeName =*/ "scaled_bins",
-                               /*.fFunc =*/ &PartialQuarry::setScaled,
-                               /*.vIncomingFunctions =*/ { NodeNames::Divided },
-                               /*.vIncomingSession =*/ { { "settings", "normalization", "scale" } },
-                               /*.vSessionsIncomingInPrevious =*/ {} } );
+                  ComputeNode{ /*.sNodeName =*/"scaled_bins",
+                               /*.fFunc =*/&PartialQuarry::setScaled,
+                               /*.vIncomingFunctions =*/{ NodeNames::Divided },
+                               /*.vIncomingSession =*/{ { "settings", "normalization", "scale" } },
+                               /*.vSessionsIncomingInPrevious =*/{} } );
 
     registerNode(
         NodeNames::Colored,
-        ComputeNode{ /*.sNodeName =*/ "colored_bins",
-                     /*.fFunc =*/ &PartialQuarry::setColored,
-                     /*.vIncomingFunctions =*/ { NodeNames::Colors, NodeNames::Scaled },
-                     /*.vIncomingSession =*/ { { "settings", "normalization", "color_range", "val_max" },
-                                           { "settings", "normalization", "color_range", "val_min" } },
-                     /*.vSessionsIncomingInPrevious =*/ { { "settings", "normalization", "log_base", "val" } } } );
+        ComputeNode{ /*.sNodeName =*/"colored_bins",
+                     /*.fFunc =*/&PartialQuarry::setColored,
+                     /*.vIncomingFunctions =*/{ NodeNames::Colors, NodeNames::Scaled },
+                     /*.vIncomingSession =*/
+                     { { "settings", "normalization", "color_range", "val_max" },
+                       { "settings", "normalization", "color_range", "val_min" } },
+                     /*.vSessionsIncomingInPrevious =*/{ { "settings", "normalization", "log_base", "val" } } } );
 
     registerNode( NodeNames::HeatmapCDS,
-                  ComputeNode{ /*.sNodeName =*/ "heatmap_cds",
-                               /*.fFunc =*/ &PartialQuarry::setHeatmapCDS,
-                               /*.vIncomingFunctions =*/ { NodeNames::Colored },
-                               /*.vIncomingSession =*/ { },
-                               /*.vSessionsIncomingInPrevious =*/ { { "dividend" } } } );
+                  ComputeNode{ /*.sNodeName =*/"heatmap_cds",
+                               /*.fFunc =*/&PartialQuarry::setHeatmapCDS,
+                               /*.vIncomingFunctions =*/{ NodeNames::Colored },
+                               /*.vIncomingSession =*/{ },
+                               /*.vSessionsIncomingInPrevious =*/{ { "dividend" } } } );
 
     registerNode( NodeNames::HeatmapExport,
-                  ComputeNode{ /*.sNodeName =*/ "heatmap_export",
-                               /*.fFunc =*/ &PartialQuarry::setHeatmapExport,
-                               /*.vIncomingFunctions =*/ { NodeNames::Scaled },
-                               /*.vIncomingSession =*/ { },
-                               /*.vSessionsIncomingInPrevious =*/ { { "dividend" } } } );
+                  ComputeNode{ /*.sNodeName =*/"heatmap_export",
+                               /*.fFunc =*/&PartialQuarry::setHeatmapExport,
+                               /*.vIncomingFunctions =*/{ NodeNames::Scaled },
+                               /*.vIncomingSession =*/{ },
+                               /*.vSessionsIncomingInPrevious =*/{ { "dividend" } } } );
 
     registerNode(
         NodeNames::Palette,
-        ComputeNode{ /*.sNodeName =*/ "rendered_palette",
-                     /*.fFunc =*/ &PartialQuarry::setPalette,
-                     /*.vIncomingFunctions =*/ { NodeNames::Scaled, NodeNames::Colors },
-                     /*.vIncomingSession =*/ { { "settings", "normalization", "color_range", "val_max" },
-                                           { "settings", "normalization", "color_range", "val_min" } },
-                     /*.vSessionsIncomingInPrevious =*/ { { "settings", "normalization", "log_base", "val" } } } );
+        ComputeNode{ /*.sNodeName =*/"rendered_palette",
+                     /*.fFunc =*/&PartialQuarry::setPalette,
+                     /*.vIncomingFunctions =*/{ NodeNames::Scaled, NodeNames::Colors },
+                     /*.vIncomingSession =*/
+                     { { "settings", "normalization", "color_range", "val_max" },
+                       { "settings", "normalization", "color_range", "val_min" } },
+                     /*.vSessionsIncomingInPrevious =*/{ { "settings", "normalization", "log_base", "val" } } } );
 }
 
 } // namespace cm

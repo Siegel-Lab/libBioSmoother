@@ -149,33 +149,35 @@ std::string PartialQuarry::readableBp( size_t uiBp )
 void PartialQuarry::regBinSize( )
 {
     registerNode( NodeNames::BinSize,
-                  ComputeNode{ /*.sNodeName =*/ "bin_size",
-                               /*.fFunc =*/ &PartialQuarry::setBinSize,
-                               /*.vIncomingFunctions =*/ { },
-                               /*.vIncomingSession =*/ { { "settings", "interface", "snap_bin_size" },
-                                                     { "settings", "interface", "snap_factors" },
-                                                     { "settings", "interface", "min_bin_size", "val" },
-                                                     { "settings", "interface", "max_num_bins", "val" },
-                                                     { "settings", "interface", "max_num_bins_factor" },
-                                                     { "settings", "interface", "squared_bins" },
-                                                     { "settings", "interface", "fixed_number_of_bins" },
-                                                     { "settings", "interface", "fixed_num_bins_x", "val" },
-                                                     { "settings", "interface", "fixed_num_bins_y", "val" },
-                                                     { "dividend" },
-                                                     { "area" } },
-                               /*.vSessionsIncomingInPrevious =*/ {} } );
+                  ComputeNode{ /*.sNodeName =*/"bin_size",
+                               /*.fFunc =*/&PartialQuarry::setBinSize,
+                               /*.vIncomingFunctions =*/{ },
+                               /*.vIncomingSession =*/
+                               { 
+                                 { "settings", "interface", "snap_bin_size" },
+                                 { "settings", "interface", "snap_factors" },
+                                 { "settings", "interface", "min_bin_size", "val" },
+                                 { "settings", "interface", "max_num_bins", "val" },
+                                 { "settings", "interface", "max_num_bins_factor" },
+                                 { "settings", "interface", "squared_bins" },
+                                 { "settings", "interface", "fixed_number_of_bins" },
+                                 { "settings", "interface", "fixed_num_bins_x", "val" },
+                                 { "settings", "interface", "fixed_num_bins_y", "val" },
+                                 { "dividend" },
+                                 { "area" } },
+                               /*.vSessionsIncomingInPrevious =*/{} } );
 
     registerNode( NodeNames::RenderArea,
-                  ComputeNode{ /*.sNodeName =*/ "render_area",
-                               /*.fFunc =*/ &PartialQuarry::setRenderArea,
-                               /*.vIncomingFunctions =*/ { NodeNames::BinSize },
+                  ComputeNode{ /*.sNodeName =*/"render_area",
+                               /*.fFunc =*/&PartialQuarry::setRenderArea,
+                               /*.vIncomingFunctions =*/{ NodeNames::BinSize },
                                /*.vIncomingSession =*/
-                                   {
-                                       { "settings", "export", "do_export_full" },
-                                       { "settings", "contigs", "genome_size" },
-                                       { "settings", "interface", "add_draw_area", "val" },
-                                   },
-                               /*.vSessionsIncomingInPrevious =*/ { { "area" } } } );
+                               {
+                                   { "settings", "export", "do_export_full" },
+                                   { "settings", "contigs", "genome_size" },
+                                   { "settings", "interface", "add_draw_area", "val" },
+                               },
+                               /*.vSessionsIncomingInPrevious =*/{ { "area" } } } );
 }
 
 
