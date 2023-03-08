@@ -66,7 +66,7 @@ class HasSession
 
     void saveSession( )
     {
-        std::ofstream o( sFilePrefix + +"/session.json" );
+        std::ofstream o( sFilePrefix + "/session.json" );
         o << xSession << std::endl;
     }
 
