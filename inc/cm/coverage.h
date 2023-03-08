@@ -65,7 +65,7 @@ size_t PartialQuarry::getMaxCoverageFromRepl( const std::string& sChromName, con
     std::make_heap( vHeap.begin( ), vHeap.end( ) );
 
     while( vHeap.size( ) > 0 &&
-           std::get<3>( vHeap.back( ) ) - std::get<2>( vHeap.back( ) ) > std::max( uiCoverageGetMaxBinSize, 1ul ) )
+           std::get<3>( vHeap.back( ) ) - std::get<2>( vHeap.back( ) ) > std::max( uiCoverageGetMaxBinSize, (size_t)1 ) )
     {
         auto xFront = vHeap.back( );
         vHeap.pop_back( );
@@ -664,10 +664,10 @@ const std::array<double, 2> PartialQuarry::getMinMaxTracks( bool bXAxis,
 void PartialQuarry::regCoverage( )
 {
     registerNode( NodeNames::ActiveCoverage,
-                  ComputeNode{ .sNodeName = "active_coverage",
-                               .fFunc = &PartialQuarry::setActiveCoverage,
-                               .vIncomingFunctions = { },
-                               .vIncomingSession = { { "coverage", "in_column" },
+                  ComputeNode{ /*.sNodeName =*/ "active_coverage",
+                               /*.fFunc =*/ &PartialQuarry::setActiveCoverage,
+                               /*.vIncomingFunctions =*/ { },
+                               /*.vIncomingSession =*/ { { "coverage", "in_column" },
                                                      { "coverage", "in_row" },
                                                      { "coverage", "cov_column_a" },
                                                      { "coverage", "cov_column_b" },
@@ -682,49 +682,49 @@ void PartialQuarry::regCoverage( )
                                                      { "settings", "normalization", "normalize_by" },
                                                      { "coverage", "list" },
                                                      { "replicates", "list" } },
-                               .vSessionsIncomingInPrevious = {} } );
+                               /*.vSessionsIncomingInPrevious =*/ {} } );
 
     registerNode(
         NodeNames::CoverageValues,
         ComputeNode{
-            .sNodeName = "coverage_values",
-            .fFunc = &PartialQuarry::setCoverageValues,
-            .vIncomingFunctions = { NodeNames::ActiveCoverage, NodeNames::AxisCoords, NodeNames::IntersectionType,
+            /*.sNodeName =*/ "coverage_values",
+            /*.fFunc =*/ &PartialQuarry::setCoverageValues,
+            /*.vIncomingFunctions =*/ { NodeNames::ActiveCoverage, NodeNames::AxisCoords, NodeNames::IntersectionType,
                                     NodeNames::Symmetry, NodeNames::MappingQuality, NodeNames::Directionality },
-            .vIncomingSession = { { "settings", "replicates", "coverage_get_max_col" },
+            /*.vIncomingSession =*/ { { "settings", "replicates", "coverage_get_max_col" },
                                   { "settings", "replicates", "coverage_get_max_row" },
                                   { "settings", "replicates", "coverage_get_max_bin_size", "val" },
                                   { "coverage", "by_name" },
                                   { "replicates", "by_name" } },
-            .vSessionsIncomingInPrevious = { { "settings", "filters", "incomplete_alignments" }, { "dividend" } } } );
+            /*.vSessionsIncomingInPrevious =*/ { { "settings", "filters", "incomplete_alignments" }, { "dividend" } } } );
 
     registerNode(
         NodeNames::Tracks,
-        ComputeNode{ .sNodeName = "coverage_tracks",
-                     .fFunc = &PartialQuarry::setTracks,
-                     .vIncomingFunctions = { NodeNames::LCS, NodeNames::AnnotationColors,
+        ComputeNode{ /*.sNodeName =*/ "coverage_tracks",
+                     /*.fFunc =*/ &PartialQuarry::setTracks,
+                     /*.vIncomingFunctions =*/ { NodeNames::LCS, NodeNames::AnnotationColors,
                                              NodeNames::RnaAssociatedBackground, NodeNames::RadiclSeqCoverage },
-                     .vIncomingSession = { { "settings", "normalization", "display_ice_remainder" },
+                     /*.vIncomingSession =*/ { { "settings", "normalization", "display_ice_remainder" },
                                            { "settings", "normalization", "grid_seq_display_background" },
                                            { "settings", "normalization", "radicl_seq_display_coverage" } },
-                     .vSessionsIncomingInPrevious = { { "dividend" },
+                     /*.vSessionsIncomingInPrevious =*/ { { "dividend" },
                                                       { "settings", "normalization", "grid_seq_axis_is_column" },
                                                       { "settings", "normalization", "radicl_seq_axis_is_column" },
                                                       { "settings", "normalization", "normalize_by" } } } );
 
     registerNode( NodeNames::TrackExport,
-                  ComputeNode{ .sNodeName = "track_export",
-                               .fFunc = &PartialQuarry::setTrackExport,
-                               .vIncomingFunctions = { NodeNames::Tracks },
-                               .vIncomingSession = { },
-                               .vSessionsIncomingInPrevious = { { "dividend" } } } );
+                  ComputeNode{ /*.sNodeName =*/ "track_export",
+                               /*.fFunc =*/ &PartialQuarry::setTrackExport,
+                               /*.vIncomingFunctions =*/ { NodeNames::Tracks },
+                               /*.vIncomingSession =*/ { },
+                               /*.vSessionsIncomingInPrevious =*/ { { "dividend" } } } );
 
     registerNode( NodeNames::RankedSlicesCDS,
-                  ComputeNode{ .sNodeName = "ranked_slices_cds",
-                               .fFunc = &PartialQuarry::setRankedSlicesCDS,
-                               .vIncomingFunctions = { NodeNames::RnaAssociatedGenesFilter },
-                               .vIncomingSession = { },
-                               .vSessionsIncomingInPrevious = { { "annotation", "by_name" },
+                  ComputeNode{ /*.sNodeName =*/ "ranked_slices_cds",
+                               /*.fFunc =*/ &PartialQuarry::setRankedSlicesCDS,
+                               /*.vIncomingFunctions =*/ { NodeNames::RnaAssociatedGenesFilter },
+                               /*.vIncomingSession =*/ { },
+                               /*.vSessionsIncomingInPrevious =*/ { { "annotation", "by_name" },
                                                                 { "settings", "normalization", "grid_seq_annotation" },
                                                                 { "dividend" } } } );
 }

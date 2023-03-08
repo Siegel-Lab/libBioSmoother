@@ -573,84 +573,84 @@ const pybind11::dict PartialQuarry::getDecayCDS( const std::function<void( const
 void PartialQuarry::regReplicates( )
 {
     registerNode( NodeNames::ActiveReplicates,
-                  ComputeNode{ .sNodeName = "active_replicates",
-                               .fFunc = &PartialQuarry::setActiveReplicates,
-                               .vIncomingFunctions = { },
-                               .vIncomingSession = { { "replicates", "in_group_a" },
+                  ComputeNode{ /*.sNodeName =*/ "active_replicates",
+                               /*.fFunc=*/ &PartialQuarry::setActiveReplicates,
+                               /*.vIncomingFunctions =*/ { },
+                               /*.vIncomingSession =*/ { { "replicates", "in_group_a" },
                                                      { "replicates", "in_group_b" },
                                                      { "replicates", "list" } },
-                               .vSessionsIncomingInPrevious = {} } );
+                               /*.vSessionsIncomingInPrevious =*/ {} } );
 
     registerNode( NodeNames::DatasetIdPerRepl,
-                  ComputeNode{ .sNodeName = "dataset_id_per_repl",
-                               .fFunc = &PartialQuarry::setDatasetIdPerRepl,
-                               .vIncomingFunctions = { NodeNames::ActiveReplicates, NodeNames::ActiveChrom },
-                               .vIncomingSession = { { "replicates", "by_name" } },
-                               .vSessionsIncomingInPrevious = {} } );
+                  ComputeNode{ /*.sNodeName =*/ "dataset_id_per_repl",
+                               /*.fFunc=*/ &PartialQuarry::setDatasetIdPerRepl,
+                               /*.vIncomingFunctions =*/ { NodeNames::ActiveReplicates, NodeNames::ActiveChrom },
+                               /*.vIncomingSession =*/ { { "replicates", "by_name" } },
+                               /*.vSessionsIncomingInPrevious =*/ {} } );
 
     registerNode( NodeNames::IntersectionType,
-                  ComputeNode{ .sNodeName = "intersection_type",
-                               .fFunc = &PartialQuarry::setIntersectionType,
-                               .vIncomingFunctions = { },
-                               .vIncomingSession = { { "settings", "filters", "ambiguous_mapping" } },
-                               .vSessionsIncomingInPrevious = {} } );
+                  ComputeNode{ /*.sNodeName =*/ "intersection_type",
+                               /*.fFunc=*/ &PartialQuarry::setIntersectionType,
+                               /*.vIncomingFunctions =*/ { },
+                               /*.vIncomingSession =*/ { { "settings", "filters", "ambiguous_mapping" } },
+                               /*.vSessionsIncomingInPrevious =*/ {} } );
 
     registerNode( NodeNames::BinValues,
-                  ComputeNode{ .sNodeName = "bin_values",
-                               .fFunc = &PartialQuarry::setBinValues,
-                               .vIncomingFunctions = { NodeNames::BinCoords, NodeNames::DatasetIdPerRepl,
+                  ComputeNode{ /*.sNodeName =*/ "bin_values",
+                               /*.fFunc=*/ &PartialQuarry::setBinValues,
+                               /*.vIncomingFunctions =*/ { NodeNames::BinCoords, NodeNames::DatasetIdPerRepl,
                                                        NodeNames::MappingQuality, NodeNames::Directionality },
-                               .vIncomingSession = { { "settings", "normalization", "min_interactions", "val" },
+                               /*.vIncomingSession =*/ { { "settings", "normalization", "min_interactions", "val" },
                                                      { "replicates", "by_name" } },
-                               .vSessionsIncomingInPrevious = { { "annotation", "by_name" },
+                               /*.vSessionsIncomingInPrevious =*/ { { "annotation", "by_name" },
                                                                 { "contigs", "column_coordinates" },
                                                                 { "contigs", "row_coordinates" } } } );
 
     registerNode( NodeNames::DecayValues,
-                  ComputeNode{ .sNodeName = "decay_values",
-                               .fFunc = &PartialQuarry::setDecayValues,
-                               .vIncomingFunctions = { NodeNames::DecayCoords, NodeNames::DatasetIdPerRepl,
+                  ComputeNode{ /*.sNodeName =*/ "decay_values",
+                               /*.fFunc=*/ &PartialQuarry::setDecayValues,
+                               /*.vIncomingFunctions =*/ { NodeNames::DecayCoords, NodeNames::DatasetIdPerRepl,
                                                        NodeNames::MappingQuality, NodeNames::Directionality },
-                               .vIncomingSession = { { "settings", "normalization", "ddd_samples", "val_min" },
+                               /*.vIncomingSession =*/ { { "settings", "normalization", "ddd_samples", "val_min" },
                                                      { "settings", "normalization", "ddd_samples", "val_max" },
                                                      { "settings", "normalization", "ddd_quantile", "val" },
                                                      { "settings", "normalization", "min_interactions", "val" } },
-                               .vSessionsIncomingInPrevious = {} } );
+                               /*.vSessionsIncomingInPrevious =*/ {} } );
 
     registerNode( NodeNames::InGroup,
-                  ComputeNode{ .sNodeName = "in_group_setting",
-                               .fFunc = &PartialQuarry::setInGroup,
-                               .vIncomingFunctions = { },
-                               .vIncomingSession = { { "settings", "replicates", "in_group" } },
-                               .vSessionsIncomingInPrevious = {} } );
+                  ComputeNode{ /*.sNodeName =*/ "in_group_setting",
+                               /*.fFunc=*/ &PartialQuarry::setInGroup,
+                               /*.vIncomingFunctions =*/ { },
+                               /*.vIncomingSession =*/ { { "settings", "replicates", "in_group" } },
+                               /*.vSessionsIncomingInPrevious =*/ {} } );
 
     registerNode( NodeNames::BetweenGroup,
-                  ComputeNode{ .sNodeName = "between_group_setting",
-                               .fFunc = &PartialQuarry::setBetweenGroup,
-                               .vIncomingFunctions = { },
-                               .vIncomingSession = { { "settings", "replicates", "between_group" } },
-                               .vSessionsIncomingInPrevious = {} } );
+                  ComputeNode{ /*.sNodeName =*/ "between_group_setting",
+                               /*.fFunc=*/ &PartialQuarry::setBetweenGroup,
+                               /*.vIncomingFunctions =*/ { },
+                               /*.vIncomingSession =*/ { { "settings", "replicates", "between_group" } },
+                               /*.vSessionsIncomingInPrevious =*/ {} } );
 
     registerNode( NodeNames::FlatValues,
-                  ComputeNode{ .sNodeName = "flat_bins",
-                               .fFunc = &PartialQuarry::setFlatValues,
-                               .vIncomingFunctions = { NodeNames::BinValues, NodeNames::InGroup },
-                               .vIncomingSession = { },
-                               .vSessionsIncomingInPrevious = {} } );
+                  ComputeNode{ /*.sNodeName =*/ "flat_bins",
+                               /*.fFunc=*/ &PartialQuarry::setFlatValues,
+                               /*.vIncomingFunctions =*/ { NodeNames::BinValues, NodeNames::InGroup },
+                               /*.vIncomingSession =*/ { },
+                               /*.vSessionsIncomingInPrevious =*/ {} } );
 
     registerNode( NodeNames::FlatDecay,
-                  ComputeNode{ .sNodeName = "flat_decay",
-                               .fFunc = &PartialQuarry::setFlatDecay,
-                               .vIncomingFunctions = { NodeNames::DecayValues },
-                               .vIncomingSession = { },
-                               .vSessionsIncomingInPrevious = {} } );
+                  ComputeNode{ /*.sNodeName =*/ "flat_decay",
+                               /*.fFunc=*/ &PartialQuarry::setFlatDecay,
+                               /*.vIncomingFunctions =*/ { NodeNames::DecayValues },
+                               /*.vIncomingSession =*/ { },
+                               /*.vSessionsIncomingInPrevious =*/ {} } );
 
     registerNode( NodeNames::DecayCDS,
-                  ComputeNode{ .sNodeName = "decay_cds",
-                               .fFunc = &PartialQuarry::setDecayCDS,
-                               .vIncomingFunctions = { NodeNames::FlatDecay, NodeNames::AnnotationColors },
-                               .vIncomingSession = { },
-                               .vSessionsIncomingInPrevious = { { "dividend" } } } );
+                  ComputeNode{ /*.sNodeName =*/ "decay_cds",
+                               /*.fFunc=*/ &PartialQuarry::setDecayCDS,
+                               /*.vIncomingFunctions =*/ { NodeNames::FlatDecay, NodeNames::AnnotationColors },
+                               /*.vIncomingSession =*/ { },
+                               /*.vSessionsIncomingInPrevious =*/ { { "dividend" } } } );
 }
 
 } // namespace cm

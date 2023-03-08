@@ -88,9 +88,12 @@ template <bool CACHED> class SpsInterface : public HasSession
     static const bool BIN_SEARCH_SPARSE = false;
     static const size_t D = 8;
     static const size_t O = 2;
-
+#ifdef WITH_STXXL
     using index_t = sps::Index<typename std::conditional<CACHED, CachedTypeDef<D, O, BIN_SEARCH_SPARSE>,
                                                          DiskTypeDef<D, O, BIN_SEARCH_SPARSE>>::type>;
+#else
+    using index_t = sps::Index<DiskTypeDef<D, O, BIN_SEARCH_SPARSE>>;
+#endif
     std::shared_ptr<index_t> pIndex;
 
   public:

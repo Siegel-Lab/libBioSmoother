@@ -252,16 +252,16 @@ bool PartialQuarry::getSamples( const GetSamplesMode& rMode, const size_t uiNumS
                     const size_t uiAnnoEnd = std::max( uiAnnoStart + 1, rIntervalIt->uiAnnoEnd / uiDividend );
                     vSeenDescIds.insert( uiDescId );
                     rOut.push_back( AnnoCoord{
-                        { .uiChromosome = uiChrom, .uiIndexPos = uiAnnoStart, .uiIndexSize = uiAnnoEnd - uiAnnoStart },
-                        .uiAnnoId = uiVal } );
+                        /*{*/ /*.uiChromosome =*/ uiChrom, /*.uiIndexPos =*/ uiAnnoStart, /*.uiIndexSize =*/ uiAnnoEnd - uiAnnoStart /*}*/,
+                        /*.uiAnnoId =*/ uiVal } );
                 }
                 break;
             }
             case GetSamplesMode::Bins:
-                rOut.push_back( AnnoCoord{ { .uiChromosome = uiChrom,
-                                             .uiIndexPos = ( uiVal - ( rIt - 1 )->first ) * uiBinSize,
-                                             .uiIndexSize = uiBinSize },
-                                           .uiAnnoId = 0 } );
+                rOut.push_back( AnnoCoord{ /*{*/ /*.uiChromosome =*/ uiChrom,
+                                             /*.uiIndexPos =*/ ( uiVal - ( rIt - 1 )->first ) * uiBinSize,
+                                             /*.uiIndexSize =*/ uiBinSize /*}*/,
+                                           /*.uiAnnoId =*/ 0 } );
                 break;
 
             case GetSamplesMode::BinnedAnno:
@@ -618,7 +618,7 @@ bool PartialQuarry::normalizeGridSeq( )
         std::array<double, 2> vdVal = { (double)vvFlatValues[ uiI ][ 0 ], (double)vvFlatValues[ uiI ][ 1 ] };
         for( size_t uiK = 0; uiK < 2; uiK++ )
             vdVal[ uiK ] /= (double)std::max(
-                1ul, vBackgroundGridSeq[ bAxisIsCol ? uiI / vAxisCords[ 1 ].size( ) : uiI % vAxisCords[ 1 ].size( ) ] );
+                (size_t)1, vBackgroundGridSeq[ bAxisIsCol ? uiI / vAxisCords[ 1 ].size( ) : uiI % vAxisCords[ 1 ].size( ) ] );
 
         vvNormalized.push_back( vdVal );
     }
@@ -680,17 +680,17 @@ bool PartialQuarry::normalizeIC( )
     for( size_t uiI = 0; uiI < 2; uiI++ )
     {
         CANCEL_RETURN;
-        IceData xData = { .vSliceBias =
+        IceData xData = { /*.vSliceBias =*/
                               std::array<std::vector<double>, 2>{
                                   std::vector<double>( uiW, 1.0 ),
                                   std::vector<double>( uiH, 1.0 ),
                               },
-                          .vSliceMargin =
+                          /*.vSliceMargin =*/
                               std::array<std::vector<double>, 2>{
                                   std::vector<double>( uiW, 0.0 ),
                                   std::vector<double>( uiH, 0.0 ),
                               },
-                          .vBiases = std::vector<double>( uiW * uiH, 1.0 ) };
+                          /*.vBiases =*/ std::vector<double>( uiW * uiH, 1.0 ) };
         std::array<double, 2> vVar{ 0, 0 };
         std::array<double, 2> vMean{ 0, 0 };
         for( bool bCol : { true, false } )
@@ -844,96 +844,96 @@ PartialQuarry::getScaled( const std::function<void( const std::string& )>& fPyPr
 void PartialQuarry::regNormalization( )
 {
     registerNode( NodeNames::Normalized,
-                  ComputeNode{ .sNodeName = "normalized_bins",
-                               .fFunc = &PartialQuarry::setNormalized,
-                               .vIncomingFunctions = { NodeNames::FlatValues, NodeNames::RnaAssociatedBackground,
+                  ComputeNode{ /*.sNodeName =*/ "normalized_bins",
+                               /*.fFunc =*/ &PartialQuarry::setNormalized,
+                               /*.vIncomingFunctions =*/ { NodeNames::FlatValues, NodeNames::RnaAssociatedBackground,
                                                        NodeNames::RadiclSeqCoverage },
-                               .vIncomingSession = { { "settings", "normalization", "p_accept", "val" },
+                               /*.vIncomingSession =*/ { { "settings", "normalization", "p_accept", "val" },
                                                      { "settings", "normalization", "ice_sparse_slice_filter", "val" },
                                                      { "contigs", "genome_size" } },
-                               .vSessionsIncomingInPrevious = {
+                               /*.vSessionsIncomingInPrevious =*/ {
                                    { "settings", "normalization", "normalize_by" },
                                    { "settings", "normalization", "grid_seq_axis_is_column" },
                                    { "settings", "normalization", "radicl_seq_samples", "val" },
                                    { "settings", "normalization", "radicl_seq_axis_is_column" } } } );
 
     registerNode( NodeNames::GridSeqSamples,
-                  ComputeNode{ .sNodeName = "grid_seq_samples",
-                               .fFunc = &PartialQuarry::setGridSeqSamples,
-                               .vIncomingFunctions = { NodeNames::ActiveChrom },
-                               .vIncomingSession = { { "annotation", "by_name" },
+                  ComputeNode{ /*.sNodeName =*/ "grid_seq_samples",
+                               /*.fFunc =*/ &PartialQuarry::setGridSeqSamples,
+                               /*.vIncomingFunctions =*/ { NodeNames::ActiveChrom },
+                               /*.vIncomingSession =*/ { { "annotation", "by_name" },
                                                      { "dividend" },
                                                      { "settings", "normalization", "normalize_by" },
                                                      { "settings", "normalization", "grid_seq_annotation" },
                                                      { "settings", "normalization", "grid_seq_samples", "val" },
                                                      { "settings", "normalization", "grid_seq_axis_is_column" } },
-                               .vSessionsIncomingInPrevious = {} } );
+                               /*.vSessionsIncomingInPrevious =*/ {} } );
 
     registerNode( NodeNames::RadiclSeqSamples,
-                  ComputeNode{ .sNodeName = "radicl_seq_samples",
-                               .fFunc = &PartialQuarry::setRadiclSeqSamples,
-                               .vIncomingFunctions = { NodeNames::ActiveChrom },
-                               .vIncomingSession = { { "dividend" },
+                  ComputeNode{ /*.sNodeName =*/ "radicl_seq_samples",
+                               /*.fFunc =*/ &PartialQuarry::setRadiclSeqSamples,
+                               /*.vIncomingFunctions =*/ { NodeNames::ActiveChrom },
+                               /*.vIncomingSession =*/ { { "dividend" },
                                                      { "settings", "normalization", "normalize_by" },
                                                      { "settings", "normalization", "radicl_seq_samples", "val" },
                                                      { "settings", "normalization", "radicl_seq_axis_is_column" } },
-                               .vSessionsIncomingInPrevious = {} } );
+                               /*.vSessionsIncomingInPrevious =*/ {} } );
     // registerNode( NodeNames::ICESamples,
-    //               ComputeNode{ .sNodeName = "ice_samples",
-    //                            .fFunc = &PartialQuarry::setICESamples,
-    //                            .vIncomingFunctions = { NodeNames::ActiveChrom },
-    //                            .vIncomingSession = { { "dividend" },
+    //               ComputeNode{ /*.sNodeName =*/ "ice_samples",
+    //                            /*.fFunc=*/ &PartialQuarry::setICESamples,
+    //                            /*.vIncomingFunctions =*/ { NodeNames::ActiveChrom },
+    //                            /*.vIncomingSession =*/ { { "dividend" },
     //                                                  { "settings", "normalization", "normalize_by" },
     //                                                  { "settings", "normalization", "hi_c_samples", "val" } },
-    //                            .vSessionsIncomingInPrevious = {} } );
+    //                            /*.vSessionsIncomingInPrevious =*/ {} } );
 
     registerNode(
         NodeNames::GridSeqCoverage,
-        ComputeNode{ .sNodeName = "grid_seq_coverage",
-                     .fFunc = &PartialQuarry::setGridSeqCoverage,
-                     .vIncomingFunctions = { NodeNames::ActiveReplicates, NodeNames::MappingQuality,
+        ComputeNode{ /*.sNodeName =*/ "grid_seq_coverage",
+                     /*.fFunc =*/ &PartialQuarry::setGridSeqCoverage,
+                     /*.vIncomingFunctions =*/ { NodeNames::ActiveReplicates, NodeNames::MappingQuality,
                                              NodeNames::Directionality, NodeNames::GridSeqSamples,
                                              NodeNames::AxisCoords },
-                     .vIncomingSession = { { "settings", "normalization", "grid_seq_filter_intersection" },
+                     /*.vIncomingSession =*/ { { "settings", "normalization", "grid_seq_filter_intersection" },
                                            { "settings", "normalization", "grid_seq_max_bin_size", "val" },
                                            { "replicates", "by_name" },
                                            { "settings", "normalization", "min_interactions", "val" } },
-                     .vSessionsIncomingInPrevious = { { "settings", "normalization", "grid_seq_axis_is_column" },
+                     /*.vSessionsIncomingInPrevious =*/ { { "settings", "normalization", "grid_seq_axis_is_column" },
                                                       { "settings", "normalization", "normalize_by" },
                                                       { "settings", "normalization", "grid_seq_annotation" },
                                                       { "settings", "normalization", "grid_seq_samples", "val" },
                                                       { "annotation", "by_name" },
                                                       { "dividend" } } } );
     registerNode( NodeNames::RadiclSeqCoverage,
-                  ComputeNode{ .sNodeName = "radicl_coverage",
-                               .fFunc = &PartialQuarry::setRadiclSeqCoverage,
-                               .vIncomingFunctions = { NodeNames::ActiveReplicates, NodeNames::MappingQuality,
+                  ComputeNode{ /*.sNodeName =*/ "radicl_coverage",
+                               /*.fFunc =*/ &PartialQuarry::setRadiclSeqCoverage,
+                               /*.vIncomingFunctions =*/ { NodeNames::ActiveReplicates, NodeNames::MappingQuality,
                                                        NodeNames::AxisCoords, NodeNames::RadiclSeqSamples,
                                                        NodeNames::IntersectionType, NodeNames::Directionality },
-                               .vIncomingSession = { { "replicates", "by_name" },
+                               /*.vIncomingSession =*/ { { "replicates", "by_name" },
                                                      { "settings", "normalization", "normalize_by" },
                                                      { "settings", "normalization", "min_interactions", "val" } },
-                               .vSessionsIncomingInPrevious = {
+                               /*.vSessionsIncomingInPrevious =*/ {
                                    { "settings", "normalization", "radicl_seq_axis_is_column" } } } );
 
     registerNode(
         NodeNames::RnaAssociatedGenesFilter,
-        ComputeNode{ .sNodeName = "rna_associated_genes_filter",
-                     .fFunc = &PartialQuarry::setRnaAssociatedGenesFilter,
-                     .vIncomingFunctions = { NodeNames::GridSeqCoverage },
-                     .vIncomingSession = { { "settings", "normalization", "grid_seq_rna_filter", "val_min" },
+        ComputeNode{ /*.sNodeName =*/ "rna_associated_genes_filter",
+                     /*.fFunc =*/ &PartialQuarry::setRnaAssociatedGenesFilter,
+                     /*.vIncomingFunctions =*/ { NodeNames::GridSeqCoverage },
+                     /*.vIncomingSession =*/ { { "settings", "normalization", "grid_seq_rna_filter", "val_min" },
                                            { "settings", "normalization", "grid_seq_rna_filter", "val_max" },
                                            { "settings", "normalization", "grid_seq_dna_filter", "val_min" },
                                            { "settings", "normalization", "grid_seq_dna_filter", "val_max" } },
-                     .vSessionsIncomingInPrevious = { { "settings", "normalization", "normalize_by" } } } );
+                     /*.vSessionsIncomingInPrevious =*/ { { "settings", "normalization", "normalize_by" } } } );
 
     registerNode(
         NodeNames::RnaAssociatedBackground,
-        ComputeNode{ .sNodeName = "rna_associated_background",
-                     .fFunc = &PartialQuarry::setRnaAssociatedBackground,
-                     .vIncomingFunctions = { NodeNames::RnaAssociatedGenesFilter },
-                     .vIncomingSession = { },
-                     .vSessionsIncomingInPrevious = { { "settings", "normalization", "normalize_by" },
+        ComputeNode{ /*.sNodeName =*/ "rna_associated_background",
+                     /*.fFunc =*/ &PartialQuarry::setRnaAssociatedBackground,
+                     /*.vIncomingFunctions =*/ { NodeNames::RnaAssociatedGenesFilter },
+                     /*.vIncomingSession =*/ { },
+                     /*.vSessionsIncomingInPrevious =*/ { { "settings", "normalization", "normalize_by" },
                                                       { "settings", "normalization", "grid_seq_axis_is_column" },
                                                       { "settings", "normalization", "grid_seq_annotation" },
                                                       { "annotation", "by_name" },
@@ -941,20 +941,20 @@ void PartialQuarry::regNormalization( )
                                                       { "dividend" } } } );
 
     registerNode( NodeNames::DistDepDecayRemoved,
-                  ComputeNode{ .sNodeName = "dist_dep_dec_normalized_bins",
-                               .fFunc = &PartialQuarry::setDistDepDecayRemoved,
-                               .vIncomingFunctions = { NodeNames::Normalized, NodeNames::FlatDecay },
-                               .vIncomingSession = { },
-                               .vSessionsIncomingInPrevious = { { "settings", "normalization", "ddd" } } } );
+                  ComputeNode{ /*.sNodeName =*/ "dist_dep_dec_normalized_bins",
+                               /*.fFunc =*/ &PartialQuarry::setDistDepDecayRemoved,
+                               /*.vIncomingFunctions =*/ { NodeNames::Normalized, NodeNames::FlatDecay },
+                               /*.vIncomingSession =*/ { },
+                               /*.vSessionsIncomingInPrevious =*/ { { "settings", "normalization", "ddd" } } } );
 
     registerNode( NodeNames::Divided,
-                  ComputeNode{ .sNodeName = "divided_by_tracks",
-                               .fFunc = &PartialQuarry::setDivided,
-                               .vIncomingFunctions = { NodeNames::Combined },
-                               .vIncomingSession = { { "settings", "normalization", "divide_by_column_coverage" },
+                  ComputeNode{ /*.sNodeName =*/ "divided_by_tracks",
+                               /*.fFunc =*/ &PartialQuarry::setDivided,
+                               /*.vIncomingFunctions =*/ { NodeNames::Combined },
+                               /*.vIncomingSession =*/ { { "settings", "normalization", "divide_by_column_coverage" },
                                                      { "settings", "normalization", "divide_by_row_coverage" },
                                                      { "coverage", "list" } },
-                               .vSessionsIncomingInPrevious = {} } );
+                               /*.vSessionsIncomingInPrevious =*/ {} } );
 }
 
 } // namespace cm

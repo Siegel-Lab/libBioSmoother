@@ -93,14 +93,14 @@ std::pair<std::vector<AxisCoord>, std::vector<AxisRegion>> axisCoordsHelper( siz
             }
             if( bAddBin )
                 vRet.push_back( AxisCoord{
-                    {
-                        .uiChromosome = uiI, //
-                        .uiIndexPos = uiIndexPos, //
-                        .uiIndexSize = uiCurrBinSize, //
-                    },
-                    .uiScreenPos = uiCurrScreenPos, //
-                    .uiScreenSize = uiCurrBinSize, //
-                    .uiRegionIdx = uiChr //
+                    //{
+                        /*.uiChromosome =*/ uiI, //
+                        /*.uiIndexPos =*/ uiIndexPos, //
+                        /*.uiIndexSize =*/ uiCurrBinSize, //
+                    //},
+                    /*.uiScreenPos =*/ uiCurrScreenPos, //
+                    /*.uiScreenSize =*/ uiCurrBinSize, //
+                    /*.uiRegionIdx =*/ uiChr //
                 } );
             bool bIncScreenPos;
             switch( iSmallerBins )
@@ -128,18 +128,18 @@ std::pair<std::vector<AxisCoord>, std::vector<AxisRegion>> axisCoordsHelper( siz
         {
             assert( uiItrEndPos >= uiStartChromPos );
             vRet2.push_back( AxisRegion{
-                {
-                    {
-                        .uiChromosome = uiI, //
-                        .uiIndexPos = uiStartChromPos, //
-                        .uiIndexSize = uiItrEndPos - uiStartChromPos //
-                    },
-                    .uiScreenPos = uiStartScreenPos, //
-                    .uiScreenSize = uiCurrScreenPos - uiStartScreenPos, //
-                    .uiRegionIdx = uiChr //
-                },
-                .uiCoordStartIdx = uiStartIdx, //
-                .uiNumCoords = vRet.size( ) - uiStartIdx //
+                //{
+                    //{
+                        /*.uiChromosome =*/ uiI, //
+                        /*.uiIndexPos =*/ uiStartChromPos, //
+                        /*.uiIndexSize =*/ uiItrEndPos - uiStartChromPos, //
+                    //},
+                    /*.uiScreenPos =*/ uiStartScreenPos, //
+                    /*.uiScreenSize =*/ uiCurrScreenPos - uiStartScreenPos, //
+                    /*.uiRegionIdx =*/ uiChr, //
+                //},
+                /*.uiCoordStartIdx =*/ uiStartIdx, //
+                /*.uiNumCoords =*/ vRet.size( ) - uiStartIdx //
             } );
         }
 
@@ -333,14 +333,14 @@ annoCoordsHelper( size_t uiBinSize, size_t uiScreenStartPos, size_t uiScreenEndP
                     }
 
                     vRet.push_back( AxisCoord{
-                        {
-                            .uiChromosome = uiI, //
-                            .uiIndexPos = uiIndexPos, //
-                            .uiIndexSize = uiCurrIndexSize //
-                        },
-                        .uiScreenPos = uiCurrScreenPos, //
-                        .uiScreenSize = uiCurrScreenSize, //
-                        .uiRegionIdx = uiChr //
+                        /*{*/
+                            /*.uiChromosome =*/ uiI, //
+                            /*.uiIndexPos =*/ uiIndexPos, //
+                            /*.uiIndexSize =*/ uiCurrIndexSize, //
+                        /*},*/
+                        /*.uiScreenPos =*/ uiCurrScreenPos, //
+                        /*.uiScreenSize =*/ uiCurrScreenSize, //
+                        /*.uiRegionIdx =*/ uiChr //
                     } );
                     if( iAnnoInMultipleBins != 2 && vRet2.size( ) > 0 && vRet2.back( ).uiChromosome == uiI &&
                         vRet2.back( ).uiIndexPos + vRet2.back( ).uiIndexSize == uiIndexPos )
@@ -352,18 +352,18 @@ annoCoordsHelper( size_t uiBinSize, size_t uiScreenStartPos, size_t uiScreenEndP
                     else // create new AxisRegion
                     {
                         vRet2.push_back( AxisRegion{
-                            {
-                                {
-                                    .uiChromosome = uiI, //
-                                    .uiIndexPos = uiIndexPos, //
-                                    .uiIndexSize = uiCurrIndexSize //
-                                },
-                                .uiScreenPos = uiCurrScreenPos, //
-                                .uiScreenSize = uiCurrScreenSize, //
-                                .uiRegionIdx = uiChr //
-                            },
-                            .uiCoordStartIdx = vRet.size( ) - 1, //
-                            .uiNumCoords = 1 //
+                            /*{*/
+                                /*{*/
+                                    /*.uiChromosome =*/ uiI, //
+                                    /*.uiIndexPos =*/ uiIndexPos, //
+                                    /*.uiIndexSize =*/ uiCurrIndexSize, //
+                                /*},*/
+                                /*.uiScreenPos =*/ uiCurrScreenPos, //
+                                /*.uiScreenSize =*/ uiCurrScreenSize, //
+                                /*.uiRegionIdx =*/ uiChr, //
+                            /*},*/
+                            /*.uiCoordStartIdx =*/ vRet.size( ) - 1, //
+                            /*.uiNumCoords =*/ 1 //
                         } );
                     }
 
@@ -416,7 +416,7 @@ std::vector<ChromDesc> activeChromList( json xChromLen, json xChromDisp )
     for( auto& xChrom : xChromDisp )
     {
         std::string sChrom = xChrom.get<std::string>( );
-        vRet.emplace_back( ChromDesc{ .sName = sChrom, .uiLength = xChromLen[ sChrom ].get<size_t>( ) } );
+        vRet.emplace_back( ChromDesc{ /*.sName =*/ sChrom, /*.uiLength =*/ xChromLen[ sChrom ].get<size_t>( ) } );
     }
     return vRet;
 }
@@ -638,16 +638,16 @@ bool PartialQuarry::setAxisCoords( )
         if( getValue<std::string>( { "contigs", bX ? "column_coordinates" : "row_coordinates" } ) == "full_genome" )
             xRet = axisCoordsHelper(
                 bX ? this->uiBinWidth : this->uiBinHeight,
-                bX ? std::max( 0l, this->iStartX ) : std::max( 0l, this->iStartY ),
-                bX ? std::max( 0l, this->iEndX ) : std::max( 0l, this->iEndY ),
+                bX ? std::max( (int64_t)0, this->iStartX ) : std::max( (int64_t)0, this->iStartY ),
+                bX ? std::max( (int64_t)0, this->iEndX ) : std::max( (int64_t)0, this->iEndY ),
                 smaller_bin_to_num( getValue<std::string>( { "settings", "filters", "cut_off_bin" } ) ),
                 this->vActiveChromosomes[ bX ? 0 : 1 ],
                 this->bCancel );
         else
             xRet = annoCoordsHelper<SpsInterface<false>::anno_t>(
                 bX ? this->uiBinWidth : this->uiBinHeight,
-                bX ? std::max( 0l, this->iStartX ) : std::max( 0l, this->iStartY ),
-                bX ? std::max( 0l, this->iEndX ) : std::max( 0l, this->iEndY ),
+                bX ? std::max( (int64_t)0, this->iStartX ) : std::max( (int64_t)0, this->iStartY ),
+                bX ? std::max( (int64_t)0, this->iEndX ) : std::max( (int64_t)0, this->iEndY ),
                 smaller_bin_to_num( getValue<std::string>( { "settings", "filters", "cut_off_bin" } ) ),
                 multiple_anno( getValue<std::string>( { "settings", "filters", "multiple_annos_in_bin" } ) ),
                 multiple_bins( getValue<std::string>( { "settings", "filters", "anno_in_multiple_bins" } ) ),
@@ -808,52 +808,52 @@ std::array<out_t, 2> PartialQuarry::binObjFromCoords( const in_t& xX, const in_t
     switch( uiSymmetry )
     {
         case 0:
-            return { out_t{ BinCoordBase{ .uiChromosomeX = xX.uiChromosome,
-                                          .uiChromosomeY = xY.uiChromosome,
+            return { out_t{ BinCoordBase{ /*.uiChromosomeX =*/ xX.uiChromosome,
+                                          /*.uiChromosomeY =*/ xY.uiChromosome,
 
-                                          .uiScreenX = xX.uiScreenPos,
-                                          .uiScreenY = xY.uiScreenPos,
+                                          /*.uiScreenX =*/ xX.uiScreenPos,
+                                          /*.uiScreenY =*/ xY.uiScreenPos,
 
-                                          .uiIndexX = xX.uiIndexPos,
-                                          .uiIndexY = xY.uiIndexPos,
+                                          /*.uiIndexX =*/ xX.uiIndexPos,
+                                          /*.uiIndexY =*/ xY.uiIndexPos,
 
-                                          .uiScreenW = xX.uiScreenSize,
-                                          .uiScreenH = xY.uiScreenSize,
+                                          /*.uiScreenW =*/ xX.uiScreenSize,
+                                          /*.uiScreenH =*/ xY.uiScreenSize,
 
-                                          .uiIndexW = xX.uiIndexSize,
-                                          .uiIndexH = xY.uiIndexSize } },
+                                          /*.uiIndexW =*/ xX.uiIndexSize,
+                                          /*.uiIndexH =*/ xY.uiIndexSize } },
                      out_t{} };
             break;
         case 1:
         case 2:
-            return { out_t{ BinCoordBase{ .uiChromosomeX = xX.uiChromosome,
-                                          .uiChromosomeY = xY.uiChromosome,
+            return { out_t{ BinCoordBase{ /*.uiChromosomeX =*/ xX.uiChromosome,
+                                          /*.uiChromosomeY =*/ xY.uiChromosome,
 
-                                          .uiScreenX = xX.uiScreenPos,
-                                          .uiScreenY = xY.uiScreenPos,
+                                          /*.uiScreenX =*/ xX.uiScreenPos,
+                                          /*.uiScreenY =*/ xY.uiScreenPos,
 
-                                          .uiIndexX = xX.uiIndexPos,
-                                          .uiIndexY = xY.uiIndexPos,
+                                          /*.uiIndexX =*/ xX.uiIndexPos,
+                                          /*.uiIndexY =*/ xY.uiIndexPos,
 
-                                          .uiScreenW = xX.uiScreenSize,
-                                          .uiScreenH = xY.uiScreenSize,
+                                          /*.uiScreenW =*/ xX.uiScreenSize,
+                                          /*.uiScreenH =*/ xY.uiScreenSize,
 
-                                          .uiIndexW = xX.uiIndexSize,
-                                          .uiIndexH = xY.uiIndexSize } },
-                     out_t{ BinCoordBase{ .uiChromosomeX = xY.uiChromosome,
-                                          .uiChromosomeY = xX.uiChromosome,
+                                          /*.uiIndexW =*/ xX.uiIndexSize,
+                                          /*.uiIndexH =*/ xY.uiIndexSize } },
+                     out_t{ BinCoordBase{ /*.uiChromosomeX =*/ xY.uiChromosome,
+                                          /*.uiChromosomeY =*/ xX.uiChromosome,
 
-                                          .uiScreenX = xX.uiScreenPos,
-                                          .uiScreenY = xY.uiScreenPos,
+                                          /*.uiScreenX =*/ xX.uiScreenPos,
+                                          /*.uiScreenY =*/ xY.uiScreenPos,
 
-                                          .uiIndexX = xY.uiIndexPos,
-                                          .uiIndexY = xX.uiIndexPos,
+                                          /*.uiIndexX =*/ xY.uiIndexPos,
+                                          /*.uiIndexY =*/ xX.uiIndexPos,
 
-                                          .uiScreenW = xY.uiScreenSize,
-                                          .uiScreenH = xX.uiScreenSize,
+                                          /*.uiScreenW =*/ xY.uiScreenSize,
+                                          /*.uiScreenH =*/ xX.uiScreenSize,
 
-                                          .uiIndexW = xY.uiIndexSize,
-                                          .uiIndexH = xX.uiIndexSize } } };
+                                          /*.uiIndexW =*/ xY.uiIndexSize,
+                                          /*.uiIndexH =*/ xX.uiIndexSize } } };
             break;
         case 3:
             // @todo double query for bins overlapping diagonal (also fix binRegion function below)
@@ -869,38 +869,38 @@ std::array<out_t, 2> PartialQuarry::binObjFromCoords( const in_t& xX, const in_t
                 size_t uiIndexW = uiDiagIntersect2X - uiDiagIntersect1X;
                 size_t uiIndexH = uiDiagIntersect2Y - uiDiagIntersect1Y;
 
-                return { out_t{ BinCoordBase{ .uiChromosomeX = xY.uiChromosome,
-                                              .uiChromosomeY = xX.uiChromosome,
+                return { out_t{ BinCoordBase{ /*.uiChromosomeX =*/ xY.uiChromosome,
+                                              /*.uiChromosomeY =*/ xX.uiChromosome,
 
-                                              .uiScreenX = xX.uiScreenPos,
-                                              .uiScreenY = xY.uiScreenPos,
+                                              /*.uiScreenX =*/ xX.uiScreenPos,
+                                              /*.uiScreenY =*/ xY.uiScreenPos,
 
-                                              .uiIndexX = uiDiagIntersect1Y,
-                                              .uiIndexY = uiDiagIntersect1X,
+                                              /*.uiIndexX =*/ uiDiagIntersect1Y,
+                                              /*.uiIndexY =*/ uiDiagIntersect1X,
 
-                                              .uiScreenW = xX.uiScreenSize,
-                                              .uiScreenH = xY.uiScreenSize,
+                                              /*.uiScreenW =*/ xX.uiScreenSize,
+                                              /*.uiScreenH =*/ xY.uiScreenSize,
 
-                                              .uiIndexW = uiIndexH,
-                                              .uiIndexH = uiIndexW } },
+                                              /*.uiIndexW =*/ uiIndexH,
+                                              /*.uiIndexH =*/ uiIndexW } },
 
                          out_t{} };
             }
             else
-                return { out_t{ BinCoordBase{ .uiChromosomeX = xX.uiChromosome,
-                                              .uiChromosomeY = xY.uiChromosome,
+                return { out_t{ BinCoordBase{ /*.uiChromosomeX =*/ xX.uiChromosome,
+                                              /*.uiChromosomeY =*/ xY.uiChromosome,
 
-                                              .uiScreenX = xX.uiScreenPos,
-                                              .uiScreenY = xY.uiScreenPos,
+                                              /*.uiScreenX =*/ xX.uiScreenPos,
+                                              /*.uiScreenY =*/ xY.uiScreenPos,
 
-                                              .uiIndexX = xX.uiIndexPos,
-                                              .uiIndexY = xY.uiIndexPos,
+                                              /*.uiIndexX =*/ xX.uiIndexPos,
+                                              /*.uiIndexY =*/ xY.uiIndexPos,
 
-                                              .uiScreenW = xX.uiScreenSize,
-                                              .uiScreenH = xY.uiScreenSize,
+                                              /*.uiScreenW =*/ xX.uiScreenSize,
+                                              /*.uiScreenH =*/ xY.uiScreenSize,
 
-                                              .uiIndexW = xX.uiIndexSize,
-                                              .uiIndexH = xY.uiIndexSize } },
+                                              /*.uiIndexW =*/ xX.uiIndexSize,
+                                              /*.uiIndexH =*/ xY.uiIndexSize } },
                          out_t{} };
             break;
         case 4:
@@ -918,36 +918,36 @@ std::array<out_t, 2> PartialQuarry::binObjFromCoords( const in_t& xX, const in_t
                 // size_t uiIndexW = uiDiagIntersect2X - uiDiagIntersect1X;
                 // size_t uiIndexH = uiDiagIntersect2Y - uiDiagIntersect1Y;
 
-                return { out_t{ BinCoordBase{ .uiChromosomeX = xY.uiChromosome,
-                                              .uiChromosomeY = xX.uiChromosome,
+                return { out_t{ BinCoordBase{ /*.uiChromosomeX =*/ xY.uiChromosome,
+                                              /*.uiChromosomeY =*/ xX.uiChromosome,
 
-                                              .uiScreenX = xX.uiScreenPos,
-                                              .uiScreenY = xY.uiScreenPos,
+                                              /*.uiScreenX =*/ xX.uiScreenPos,
+                                              /*.uiScreenY =*/ xY.uiScreenPos,
 
-                                              .uiIndexX = xY.uiIndexPos,
-                                              .uiIndexY = xX.uiIndexPos,
+                                              /*.uiIndexX =*/ xY.uiIndexPos,
+                                              /*.uiIndexY =*/ xX.uiIndexPos,
 
-                                              .uiScreenW = xX.uiScreenSize,
-                                              .uiScreenH = xY.uiScreenSize,
+                                              /*.uiScreenW =*/ xX.uiScreenSize,
+                                              /*.uiScreenH =*/ xY.uiScreenSize,
 
-                                              .uiIndexW = xY.uiIndexSize,
-                                              .uiIndexH = xX.uiIndexSize } },
+                                              /*.uiIndexW =*/ xY.uiIndexSize,
+                                              /*.uiIndexH =*/ xX.uiIndexSize } },
                          out_t{} };
             else
-                return { out_t{ BinCoordBase{ .uiChromosomeX = xX.uiChromosome,
-                                              .uiChromosomeY = xY.uiChromosome,
+                return { out_t{ BinCoordBase{ /*.uiChromosomeX =*/ xX.uiChromosome,
+                                              /*.uiChromosomeY =*/ xY.uiChromosome,
 
-                                              .uiScreenX = xX.uiScreenPos,
-                                              .uiScreenY = xY.uiScreenPos,
+                                              /*.uiScreenX =*/ xX.uiScreenPos,
+                                              /*.uiScreenY =*/ xY.uiScreenPos,
 
-                                              .uiIndexX = xX.uiIndexPos,
-                                              .uiIndexY = xY.uiIndexPos,
+                                              /*.uiIndexX =*/ xX.uiIndexPos,
+                                              /*.uiIndexY =*/ xY.uiIndexPos,
 
-                                              .uiScreenW = xX.uiScreenSize,
-                                              .uiScreenH = xY.uiScreenSize,
+                                              /*.uiScreenW =*/ xX.uiScreenSize,
+                                              /*.uiScreenH =*/ xY.uiScreenSize,
 
-                                              .uiIndexW = xX.uiIndexSize,
-                                              .uiIndexH = xY.uiIndexSize } },
+                                              /*.uiIndexW =*/ xX.uiIndexSize,
+                                              /*.uiIndexH =*/ xY.uiIndexSize } },
                          out_t{} };
             break;
         default:
@@ -1154,90 +1154,90 @@ size_t PartialQuarry::getAxisSize( bool bXAxis, const std::function<void( const 
 void PartialQuarry::regCoords( )
 {
     registerNode( NodeNames::LCS,
-                  ComputeNode{ .sNodeName = "longest_common_substring",
-                               .fFunc = &PartialQuarry::setLCS,
-                               .vIncomingFunctions = { },
-                               .vIncomingSession = { { "contigs", "list" } },
-                               .vSessionsIncomingInPrevious = {} } );
+                  ComputeNode{ /*.sNodeName =*/ "longest_common_substring",
+                               /*.fFunc =*/ &PartialQuarry::setLCS,
+                               /*.vIncomingFunctions =*/ { },
+                               /*.vIncomingSession =*/ { { "contigs", "list" } },
+                               /*.vSessionsIncomingInPrevious =*/ {} } );
 
     registerNode( NodeNames::ActiveChrom,
-                  ComputeNode{ .sNodeName = "active_chroms",
-                               .fFunc = &PartialQuarry::setActiveChrom,
-                               .vIncomingFunctions = { },
-                               .vIncomingSession = { { "contigs", "displayed_on_x" },
+                  ComputeNode{ /*.sNodeName =*/ "active_chroms",
+                               /*.fFunc =*/ &PartialQuarry::setActiveChrom,
+                               /*.vIncomingFunctions =*/ { },
+                               /*.vIncomingSession =*/ { { "contigs", "displayed_on_x" },
                                                      { "contigs", "displayed_on_y" },
                                                      { "contigs", "lengths" } },
-                               .vSessionsIncomingInPrevious = {} } );
+                               /*.vSessionsIncomingInPrevious =*/ {} } );
 
     registerNode(
         NodeNames::Ticks,
-        ComputeNode{ .sNodeName = "ticks",
-                     .fFunc = &PartialQuarry::setTicks,
-                     .vIncomingFunctions = { NodeNames::LCS, NodeNames::AnnotationValues, NodeNames::CanvasSize },
-                     .vIncomingSession = { },
-                     .vSessionsIncomingInPrevious = { { "contigs", "column_coordinates" },
+        ComputeNode{ /*.sNodeName =*/ "ticks",
+                     /*.fFunc =*/ &PartialQuarry::setTicks,
+                     /*.vIncomingFunctions =*/ { NodeNames::LCS, NodeNames::AnnotationValues, NodeNames::CanvasSize },
+                     /*.vIncomingSession =*/ { },
+                     /*.vSessionsIncomingInPrevious =*/ { { "contigs", "column_coordinates" },
                                                       { "contigs", "row_coordinates" },
                                                       { "settings", "filters", "anno_in_multiple_bins" },
                                                       { "annotation", "by_name" },
                                                       { "dividend" } } } );
 
     registerNode( NodeNames::CanvasSize,
-                  ComputeNode{ .sNodeName = "canvas_size",
-                               .fFunc = &PartialQuarry::setCanvasSize,
-                               .vIncomingFunctions = { NodeNames::ActiveChrom },
-                               .vIncomingSession = { { "contigs", "column_coordinates" },
+                  ComputeNode{ /*.sNodeName =*/ "canvas_size",
+                               /*.fFunc =*/ &PartialQuarry::setCanvasSize,
+                               /*.vIncomingFunctions =*/ { NodeNames::ActiveChrom },
+                               /*.vIncomingSession =*/ { { "contigs", "column_coordinates" },
                                                      { "contigs", "row_coordinates" },
                                                      { "settings", "filters", "anno_in_multiple_bins" },
                                                      { "annotation", "by_name" } },
-                               .vSessionsIncomingInPrevious = {} } );
+                               /*.vSessionsIncomingInPrevious =*/ {} } );
 
     registerNode( NodeNames::AxisCoords,
-                  ComputeNode{ .sNodeName = "axis_coords",
-                               .fFunc = &PartialQuarry::setAxisCoords,
-                               .vIncomingFunctions = { NodeNames::ActiveChrom, NodeNames::RenderArea },
-                               .vIncomingSession = { { "settings", "filters", "cut_off_bin" },
+                  ComputeNode{ /*.sNodeName =*/ "axis_coords",
+                               /*.fFunc =*/ &PartialQuarry::setAxisCoords,
+                               /*.vIncomingFunctions =*/ { NodeNames::ActiveChrom, NodeNames::RenderArea },
+                               /*.vIncomingSession =*/ { { "settings", "filters", "cut_off_bin" },
                                                      { "settings", "filters", "multiple_annos_in_bin" },
                                                      { "settings", "filters", "anno_in_multiple_bins" },
                                                      { "contigs", "column_coordinates" },
                                                      { "contigs", "row_coordinates" },
                                                      { "annotation", "by_name" } },
-                               .vSessionsIncomingInPrevious = {} } );
+                               /*.vSessionsIncomingInPrevious =*/ {} } );
 
-    registerNode( NodeNames::Symmetry, ComputeNode{ .sNodeName = "symmetry_setting",
-                                                    .fFunc = &PartialQuarry::setSymmetry,
-                                                    .vIncomingFunctions = { },
-                                                    .vIncomingSession = { { "settings", "filters", "symmetry" } },
-                                                    .vSessionsIncomingInPrevious = {} } );
+    registerNode( NodeNames::Symmetry, ComputeNode{ /*.sNodeName =*/ "symmetry_setting",
+                                                    /*.fFunc =*/ &PartialQuarry::setSymmetry,
+                                                    /*.vIncomingFunctions =*/ { },
+                                                    /*.vIncomingSession =*/ { { "settings", "filters", "symmetry" } },
+                                                    /*.vSessionsIncomingInPrevious =*/ {} } );
 
     registerNode( NodeNames::MappingQuality,
-                  ComputeNode{ .sNodeName = "mapping_quality_setting",
-                               .fFunc = &PartialQuarry::setMappingQuality,
-                               .vIncomingFunctions = { },
-                               .vIncomingSession = { { "settings", "filters", "mapping_q", "val_min" },
+                  ComputeNode{ /*.sNodeName =*/ "mapping_quality_setting",
+                               /*.fFunc =*/ &PartialQuarry::setMappingQuality,
+                               /*.vIncomingFunctions =*/ { },
+                               /*.vIncomingSession =*/ { { "settings", "filters", "mapping_q", "val_min" },
                                                      { "settings", "filters", "mapping_q", "val_max" },
                                                      { "settings", "filters", "incomplete_alignments" } },
-                               .vSessionsIncomingInPrevious = {} } );
+                               /*.vSessionsIncomingInPrevious =*/ {} } );
 
     registerNode( NodeNames::Directionality,
-                  ComputeNode{ .sNodeName = "directionality_setting",
-                               .fFunc = &PartialQuarry::setDirectionality,
-                               .vIncomingFunctions = { },
-                               .vIncomingSession = { { "settings", "filters", "directionality" } },
-                               .vSessionsIncomingInPrevious = {} } );
+                  ComputeNode{ /*.sNodeName =*/ "directionality_setting",
+                               /*.fFunc =*/ &PartialQuarry::setDirectionality,
+                               /*.vIncomingFunctions =*/ { },
+                               /*.vIncomingSession =*/ { { "settings", "filters", "directionality" } },
+                               /*.vSessionsIncomingInPrevious =*/ {} } );
 
     registerNode( NodeNames::BinCoords,
-                  ComputeNode{ .sNodeName = "bin_coords",
-                               .fFunc = &PartialQuarry::setBinCoords,
-                               .vIncomingFunctions = { NodeNames::AxisCoords, NodeNames::AnnoFilters,
+                  ComputeNode{ /*.sNodeName =*/ "bin_coords",
+                               /*.fFunc =*/ &PartialQuarry::setBinCoords,
+                               /*.vIncomingFunctions =*/ { NodeNames::AxisCoords, NodeNames::AnnoFilters,
                                                        NodeNames::IntersectionType, NodeNames::Symmetry },
-                               .vIncomingSession = { { "settings", "filters", "min_diag_dist", "val" } },
-                               .vSessionsIncomingInPrevious = { { "dividend" } } } );
+                               /*.vIncomingSession =*/ { { "settings", "filters", "min_diag_dist", "val" } },
+                               /*.vSessionsIncomingInPrevious =*/ { { "dividend" } } } );
 
     registerNode( NodeNames::AnnoFilters,
-                  ComputeNode{ .sNodeName = "anno_filters",
-                               .fFunc = &PartialQuarry::setAnnoFilters,
-                               .vIncomingFunctions = { NodeNames::ActiveChrom },
-                               .vIncomingSession = { { "annotation", "filterable" },
+                  ComputeNode{ /*.sNodeName =*/ "anno_filters",
+                               /*.fFunc =*/ &PartialQuarry::setAnnoFilters,
+                               /*.vIncomingFunctions =*/ { NodeNames::ActiveChrom },
+                               /*.vIncomingSession =*/ { { "annotation", "filterable" },
                                                      { "annotation", "filter" },
                                                      { "annotation", "filter_row" },
                                                      { "annotation", "filter_col" },
@@ -1245,25 +1245,25 @@ void PartialQuarry::regCoords( )
                                                      { "contigs", "row_coordinates" },
                                                      { "contigs", "column_coordinates" },
                                                      { "annotation", "list" } },
-                               .vSessionsIncomingInPrevious = {} } );
+                               /*.vSessionsIncomingInPrevious =*/ {} } );
 
     registerNode( NodeNames::DecayCoords,
-                  ComputeNode{ .sNodeName = "decay_coords",
-                               .fFunc = &PartialQuarry::setDecayCoords,
-                               .vIncomingFunctions = { NodeNames::BinCoords },
-                               .vIncomingSession = { { "settings", "normalization", "ddd" },
+                  ComputeNode{ /*.sNodeName =*/ "decay_coords",
+                               /*.fFunc =*/ &PartialQuarry::setDecayCoords,
+                               /*.vIncomingFunctions =*/ { NodeNames::BinCoords },
+                               /*.vIncomingSession =*/ { { "settings", "normalization", "ddd" },
                                                      { "settings", "normalization", "ddd_show" } },
-                               .vSessionsIncomingInPrevious = {} } );
+                               /*.vSessionsIncomingInPrevious =*/ {} } );
 
     registerNode( NodeNames::GridSeqCoords,
-                  ComputeNode{ .sNodeName = "grid_seq_coords",
-                               .fFunc = &PartialQuarry::setGridSeqCoords,
-                               .vIncomingFunctions = { NodeNames::ActiveChrom },
-                               .vIncomingSession = { { "settings", "normalization", "grid_seq_slice_samples" },
+                  ComputeNode{ /*.sNodeName =*/ "grid_seq_coords",
+                               /*.fFunc =*/ &PartialQuarry::setGridSeqCoords,
+                               /*.vIncomingFunctions =*/ { NodeNames::ActiveChrom },
+                               /*.vIncomingSession =*/ { { "settings", "normalization", "grid_seq_slice_samples" },
                                                      { "settings", "normalization", "grid_seq_anno_type" },
                                                      { "annotation", "by_name" },
                                                      { "settings", "normalization", "normalize_by" } },
-                               .vSessionsIncomingInPrevious = {} } );
+                               /*.vSessionsIncomingInPrevious =*/ {} } );
 }
 
 } // namespace cm

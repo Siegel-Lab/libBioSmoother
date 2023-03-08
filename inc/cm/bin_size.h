@@ -149,10 +149,10 @@ std::string PartialQuarry::readableBp( size_t uiBp )
 void PartialQuarry::regBinSize( )
 {
     registerNode( NodeNames::BinSize,
-                  ComputeNode{ .sNodeName = "bin_size",
-                               .fFunc = &PartialQuarry::setBinSize,
-                               .vIncomingFunctions = { },
-                               .vIncomingSession = { { "settings", "interface", "snap_bin_size" },
+                  ComputeNode{ /*.sNodeName =*/ "bin_size",
+                               /*.fFunc =*/ &PartialQuarry::setBinSize,
+                               /*.vIncomingFunctions =*/ { },
+                               /*.vIncomingSession =*/ { { "settings", "interface", "snap_bin_size" },
                                                      { "settings", "interface", "snap_factors" },
                                                      { "settings", "interface", "min_bin_size", "val" },
                                                      { "settings", "interface", "max_num_bins", "val" },
@@ -163,19 +163,19 @@ void PartialQuarry::regBinSize( )
                                                      { "settings", "interface", "fixed_num_bins_y", "val" },
                                                      { "dividend" },
                                                      { "area" } },
-                               .vSessionsIncomingInPrevious = {} } );
+                               /*.vSessionsIncomingInPrevious =*/ {} } );
 
     registerNode( NodeNames::RenderArea,
-                  ComputeNode{ .sNodeName = "render_area",
-                               .fFunc = &PartialQuarry::setRenderArea,
-                               .vIncomingFunctions = { NodeNames::BinSize },
-                               .vIncomingSession =
+                  ComputeNode{ /*.sNodeName =*/ "render_area",
+                               /*.fFunc =*/ &PartialQuarry::setRenderArea,
+                               /*.vIncomingFunctions =*/ { NodeNames::BinSize },
+                               /*.vIncomingSession =*/
                                    {
                                        { "settings", "export", "do_export_full" },
                                        { "settings", "contigs", "genome_size" },
                                        { "settings", "interface", "add_draw_area", "val" },
                                    },
-                               .vSessionsIncomingInPrevious = { { "area" } } } );
+                               /*.vSessionsIncomingInPrevious =*/ { { "area" } } } );
 }
 
 
