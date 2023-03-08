@@ -154,20 +154,29 @@ template <bool CACHE> void exportSpsInterface( pybind11::module& m )
 
 PYBIND11_MODULE( libsmoothercpp, m )
 {
+#ifdef WITH_STXXL
     // prevent creation of stxxl log files
     if( getenv( (char*)"STXXLLOGFILE" ) == nullptr )
         putenv( (char*)"STXXLLOGFILE=/dev/null" );
     if( getenv( (char*)"STXXLERRLOGFILE" ) == nullptr )
         putenv( (char*)"STXXLERRLOGFILE=/dev/null" );
+#endif
 
     m.attr( "LIB_SMOOTHER_CPP_VERSION" ) = LIB_SMOOTHER_CPP_VERSION;
     m.attr( "LIB_SMOOTHER_CPP_BUILD_TIME" ) = LIB_SMOOTHER_CPP_BUILD_TIME;
     m.attr( "SPS_VERSION" ) = SPS_VERSION;
     m.attr( "SPS_BUILD_TIME" ) = SPS_BUILD_TIME;
+
 #ifdef NDEBUG
     m.attr( "DEBUG" ) = false;
 #else
     m.attr( "DEBUG" ) = true;
+#endif
+
+#ifdef WITH_STXXL
+    m.attr( "WITH_STXXL" ) = true;
+#else
+    m.attr( "WITH_STXXL" ) = false;
 #endif
 
     m.def( "test", &cm::testFunc );
