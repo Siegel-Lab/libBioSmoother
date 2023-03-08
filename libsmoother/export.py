@@ -1,5 +1,9 @@
 from .quarry import Quarry
-import drawSvg
+try:
+    import drawSvg
+    HAS_DRAW_SVG = True
+except:
+    HAS_DRAW_SVG = False
 
 
 def __write_header(out_file):
@@ -602,14 +606,19 @@ def __draw(session):
     __draw_contigs(session, d, sizes)
     return d
 
+def assert_has_draw_svg():
+    if not HAS_DRAW_SVG:
+        raise RuntimeError("could not import drawSvg, is it installed? (try pip install drawSvg==1.9.0)")
 
 def export_png(session):
+    assert_has_draw_svg()
     __draw(session).savePng(
         session.get_value(["settings", "export", "prefix"]) + ".png"
     )
 
 
 def export_svg(session):
+    assert_has_draw_svg()
     __draw(session).saveSvg(
         session.get_value(["settings", "export", "prefix"]) + ".svg"
     )
