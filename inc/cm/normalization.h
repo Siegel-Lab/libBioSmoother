@@ -211,12 +211,12 @@ bool PartialQuarry::getSamples( const GetSamplesMode& rMode, const size_t uiNumS
                     vChromIdForSampleIdx.emplace_back( uiMaxSamples, uiI );
                     uiMaxSamples += rActiveChrom.uiLength / uiBinSize;
                     break;
-                case GetSamplesMode::BinnedAnno:
-                    vChromIdForSampleIdx.emplace_back( uiMaxSamples, uiI );
-                    uiMaxSamples +=
-                        pIndices->vAnno.totalIntervalSize( rAnnoJson[ rActiveChrom.sName ].get<int64_t>( ) ) /
-                        uiBinSize;
-                    break;
+                // case GetSamplesMode::BinnedAnno:
+                //     vChromIdForSampleIdx.emplace_back( uiMaxSamples, uiI );
+                //     uiMaxSamples +=
+                //         pIndices->vAnno.totalIntervalSize( rAnnoJson[ rActiveChrom.sName ].get<int64_t>( ) ) /
+                //         uiBinSize;
+                //     break;
 
                 default:
                     assert( false );
@@ -264,9 +264,8 @@ bool PartialQuarry::getSamples( const GetSamplesMode& rMode, const size_t uiNumS
                                            /*.uiAnnoId =*/0 } );
                 break;
 
-            case GetSamplesMode::BinnedAnno:
-                throw std::runtime_error( "@todo" );
-                break;
+            // case GetSamplesMode::BinnedAnno:
+            //     break;
 
             default:
                 assert( false );

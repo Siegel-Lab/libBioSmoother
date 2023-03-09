@@ -869,8 +869,8 @@ class PartialQuarry : public HasSession
     enum GetSamplesMode
     {
         OneAnnotation,
-        Bins,
-        BinnedAnno
+        Bins
+        //, BinnedAnno
     };
     bool getSamples( const GetSamplesMode&, const size_t, const std::string&, const size_t, const bool, const bool,
                      std::vector<AnnoCoord>& );
@@ -1154,81 +1154,78 @@ class PartialQuarry : public HasSession
     }
 
   public:
-    const pybind11::int_ interpretName( std::string sName, std::vector<bool> vbXAxis, bool bBottom )
+    const pybind11::int_ interpretName( std::string sName, bool bXAxis, bool bBottom )
     {
         if( ( bBottom && sName == "*" ) || sName.size( ) == 0 || to_lower( sName ) == "start" )
             return pybind11::int_( 0 );
         if( ( !bBottom && sName == "*" ) || sName.size( ) == 0 || to_lower( sName ) == "end" )
-            return pybind11::int_( vCanvasSize[ vbXAxis[ 0 ] ? 0 : 1 ] );
+            return pybind11::int_( vCanvasSize[ bXAxis ? 0 : 1 ] );
 
         std::regex xName( to_lower( sName ) );
         size_t uiMaxPos = 0;
         const bool bSqueeze =
             this->xSession[ "settings" ][ "filters" ][ "anno_in_multiple_bins" ].get<std::string>( ) == "squeeze";
-        for( bool bX : vbXAxis )
+        std::string sCoords =
+            this->xSession[ "contigs" ][ bXAxis ? "column_coordinates" : "row_coordinates" ].get<std::string>( );
+        const bool bFullGenome = sCoords == "full_genome";
+        size_t uiRunningPos = 0;
+        for( auto xChr : vActiveChromosomes[ bXAxis ? 0 : 1 ] )
         {
-            std::string sCoords =
-                this->xSession[ "contigs" ][ bX ? "column_coordinates" : "row_coordinates" ].get<std::string>( );
-            const bool bFullGenome = sCoords == "full_genome";
-            size_t uiRunningPos = 0;
-            for( auto xChr : vActiveChromosomes[ bX ? 0 : 1 ] )
+            bool bMatch = std::regex_search( to_lower( xChr.sName ), xName );
+            size_t uiLen = 0;
+            if( bFullGenome )
+                uiLen = xChr.uiLength;
+            else if( this->xSession[ "annotation" ][ "by_name" ][ sCoords ].contains( xChr.sName ) )
             {
-                bool bMatch = std::regex_search( to_lower( xChr.sName ), xName );
-                size_t uiLen = 0;
-                if( bFullGenome )
-                    uiLen = xChr.uiLength;
-                else if( this->xSession[ "annotation" ][ "by_name" ][ sCoords ].contains( xChr.sName ) )
-                {
-                    int64_t iDataSetId =
-                        this->xSession[ "annotation" ][ "by_name" ][ sCoords ][ xChr.sName ].get<int64_t>( );
-                    if( bSqueeze )
-                        uiLen = pIndices->vAnno.numIntervals( iDataSetId );
-                    else
-                        uiLen = pIndices->vAnno.totalIntervalSize( iDataSetId );
-                }
-                if( bMatch )
-                {
-                    if( bBottom )
-                    {
-                        uiMaxPos = uiRunningPos;
-                        break;
-                    }
-                    else
-                        uiMaxPos = uiRunningPos + uiLen;
-                }
-                uiRunningPos += uiLen;
+                int64_t iDataSetId =
+                    this->xSession[ "annotation" ][ "by_name" ][ sCoords ][ xChr.sName ].get<int64_t>( );
+                if( bSqueeze )
+                    uiLen = pIndices->vAnno.numIntervals( iDataSetId );
+                else
+                    uiLen = pIndices->vAnno.totalIntervalSize( iDataSetId );
             }
-
-
-            // for( std::string sAnno : vActiveAnnotation[ bX ? 0 : 1 ] )
-            // {
-            //     auto& rJson = this->xSession[ "annotation" ][ "by_name" ][ sAnno ];
-            //     for( auto xChr : vActiveChromosomes[ bX ? 0 : 1 ] )
-            //         if( rJson.contains( xChr.sName ) )
-            //         {
-            //             int64_t iDataSetId = rJson[ xChr.sName ].get<int64_t>( );
-            //             pIndices->vAnno.iterate(
-            //                 iDataSetId,
-            //                 [ & ]( std::tuple<size_t, size_t, std::string, bool> xTup ) {
-            //                     std::string sSearch = sAnno + "=" + std::get<2>( xTup );
-            //                     size_t uiEq = stringCompare( sName, sSearch );
-            //                     if( uiEq > uiMaxEquality ||
-            //                         ( uiEq == uiMaxEquality && std::get<2>( xTup ).size( ) < uiMinRefSize ) )
-            //                     {
-            //                         uiMaxEquality = uiEq;
-            //                         uiMinRefSize = std::get<2>( xTup ).size( );
-            //                         if( bBottom )
-            //                             uiMaxPos = std::get<0>( xTup );
-            //                         else
-            //                             uiMaxPos = std::get<1>( xTup );
-            //                     }
-
-            //                     return true;
-            //                 },
-            //                 !bFullGenome && !bSqueeze, !bFullGenome && bSqueeze );
-            //         }
-            // }
+            if( bMatch )
+            {
+                if( bBottom )
+                {
+                    uiMaxPos = uiRunningPos;
+                    break;
+                }
+                else
+                    uiMaxPos = uiRunningPos + uiLen;
+            }
+            uiRunningPos += uiLen;
         }
+
+
+        // for( std::string sAnno : vActiveAnnotation[ bX ? 0 : 1 ] )
+        // {
+        //     auto& rJson = this->xSession[ "annotation" ][ "by_name" ][ sAnno ];
+        //     for( auto xChr : vActiveChromosomes[ bX ? 0 : 1 ] )
+        //         if( rJson.contains( xChr.sName ) )
+        //         {
+        //             int64_t iDataSetId = rJson[ xChr.sName ].get<int64_t>( );
+        //             pIndices->vAnno.iterate(
+        //                 iDataSetId,
+        //                 [ & ]( std::tuple<size_t, size_t, std::string, bool> xTup ) {
+        //                     std::string sSearch = sAnno + "=" + std::get<2>( xTup );
+        //                     size_t uiEq = stringCompare( sName, sSearch );
+        //                     if( uiEq > uiMaxEquality ||
+        //                         ( uiEq == uiMaxEquality && std::get<2>( xTup ).size( ) < uiMinRefSize ) )
+        //                     {
+        //                         uiMaxEquality = uiEq;
+        //                         uiMinRefSize = std::get<2>( xTup ).size( );
+        //                         if( bBottom )
+        //                             uiMaxPos = std::get<0>( xTup );
+        //                         else
+        //                             uiMaxPos = std::get<1>( xTup );
+        //                     }
+
+        //                     return true;
+        //                 },
+        //                 !bFullGenome && !bSqueeze, !bFullGenome && bSqueeze );
+        //         }
+        // }
         return pybind11::int_( uiMaxPos );
     }
 

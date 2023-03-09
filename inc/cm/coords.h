@@ -461,7 +461,6 @@ bool PartialQuarry::setLCS( )
 
 bool PartialQuarry::setCanvasSize( )
 {
-    // @todo consider smaller_bin_to_num
     for( size_t uiI = 0; uiI < 2; uiI++ )
     {
 
