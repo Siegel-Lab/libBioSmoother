@@ -34,10 +34,10 @@ std::tuple<size_t, int64_t, size_t, size_t> PartialQuarry::makeHeapTuple( bool b
                                                                           const size_t uiTo, int64_t iDataSetId,
                                                                           size_t uiStart, size_t uiEnd )
 {
-    const size_t uiXMin = bCol != bSymPart ? uiFrom : uiStart;
-    const size_t uiXMax = bCol != bSymPart ? uiTo : uiEnd;
-    const size_t uiYMin = bCol != bSymPart ? uiStart : uiFrom;
-    const size_t uiYMax = bCol != bSymPart ? uiEnd : uiTo;
+    const coordinate_t uiXMin = bCol != bSymPart ? uiFrom : uiStart;
+    const coordinate_t uiXMax = bCol != bSymPart ? uiTo : uiEnd;
+    const coordinate_t uiYMin = bCol != bSymPart ? uiStart : uiFrom;
+    const coordinate_t uiYMax = bCol != bSymPart ? uiEnd : uiTo;
     // @todo adjust for symmetry
     const size_t uiCount = pIndices->count(
         iDataSetId, { uiYMin, uiXMin, uiMapQMin, uiFromAnnoFilter, uiFromSameStrandFilter, uiFromYStrandFilter },
