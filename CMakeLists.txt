@@ -14,7 +14,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
-IF(CMAKE_COMPILER_IS_GNUCC)
+if (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
     # enable warnings (always good)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -W -Wall")
     # throw error for undefined symbols
@@ -24,7 +24,7 @@ IF(CMAKE_COMPILER_IS_GNUCC)
     # Add -O0 to remove optimizations when using gcc
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0")
     set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -O0")
-ENDIF(CMAKE_COMPILER_IS_GNUCC)
+ENDIF(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
 
 # Enable Link time optimization
 include(CheckIPOSupported)
@@ -69,6 +69,7 @@ target_include_directories( libsmoothercpp PUBLIC ${CMAKE_BINARY_DIR}/generated/
 target_include_directories( libsmoothercpp SYSTEM PRIVATE ${STXXL_INCLUDE_DIRS} )
 target_link_libraries( libsmoothercpp PRIVATE libsps )
 target_compile_definitions( libsmoothercpp PRIVATE WITH_PYTHON )
+target_compile_definitions( libsmoothercpp PRIVATE CXX_COMPILER_ID="${CMAKE_CXX_COMPILER_ID}" )
 add_dependencies( libsmoothercpp cm_config_version cm_config_build_time )
 
 add_custom_target(format COMMAND "clang-format" "-i" "-style=file" "inc/cm/*.h" "src/*.cpp" 

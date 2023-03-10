@@ -634,7 +634,10 @@ class PartialQuarry : public HasSession
             setSession( this->xSession[ "next" ] );
     }
 
-    std::shared_ptr<SpsInterface<false>> pIndices;
+    using interface_t = SpsInterface<false>;
+    std::shared_ptr<interface_t> pIndices;
+
+    using coordinate_t = interface_t::coordinate_t;
 
   private:
     size_t uiBinWidth, uiBinHeight;

@@ -97,6 +97,8 @@ template <bool CACHED> class SpsInterface : public HasSession
     std::shared_ptr<index_t> pIndex;
 
   public:
+    using coordinate_t = index_t::coordinate_t;
+
     SpsInterface( std::string sFilePrefix, bool bWrite )
         : HasSession( sFilePrefix ), //
           vAnno( sFilePrefix + "/anno", bWrite ), //
@@ -129,13 +131,13 @@ template <bool CACHED> class SpsInterface : public HasSession
         insert( aStart, aEnd, iValue );
     }
 
-    std::vector<uint32_t> gridCount( size_t iDataSetId, std::array<std::vector<size_t>, D - O> vGrid,
+    std::vector<uint32_t> gridCount( size_t iDataSetId, std::array<std::vector<coordinate_t>, D - O> vGrid,
                                      sps::IntersectionType xIntersect, size_t uiVerbosity = 1 )
     {
         return pIndex->gridCount( iDataSetId, vGrid, xIntersect, uiVerbosity );
     }
 
-    size_t count( size_t iDataSetId, std::array<size_t, D - O> vFrom, std::array<size_t, D - O> vTo,
+    size_t count( size_t iDataSetId, std::array<coordinate_t, D - O> vFrom, std::array<coordinate_t, D - O> vTo,
                   sps::IntersectionType xIntersect, size_t uiVerbosity = 1 )
     {
         return pIndex->count( iDataSetId, vFrom, vTo, xIntersect, uiVerbosity );
