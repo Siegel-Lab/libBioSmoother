@@ -1,5 +1,5 @@
 from .indexer_parser import make_main_parser
-from ._import_lib_smoother_cpp import SPS_VERSION, LIB_SMOOTHER_CPP_VERSION
+from ._import_lib_smoother_cpp import SPS_VERSION, LIB_SMOOTHER_CPP_VERSION, COMPILER_ID
 from importlib.metadata import version
 import argparse
 
@@ -18,6 +18,7 @@ def main():
     parser.add_argument(
         "--version_sps", help=argparse.SUPPRESS, action="version", version=SPS_VERSION
     )
+    parser.add_argument('--compiler_id', action='version', help=argparse.SUPPRESS, version=COMPILER_ID)
 
     args = parser.parse_args()
 

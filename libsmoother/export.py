@@ -903,9 +903,9 @@ def __get_sizes(session):
             ["settings", "interface", "show_hide", "indent_line"]
         ),
         "show_axis": session.get_value(["settings", "interface", "show_hide", "axis"]),
-        "coords": 125,  # @todo load these sizes from json
-        "contigs": 125,
-        "axis": 125,
+        "coords": session.get_value(["settings", "export", "coords", "val"]),
+        "contigs": session.get_value(["settings", "export", "contigs", "val"]),
+        "axis": session.get_value(["settings", "export", "axis", "val"]),
         "show_contig_borders": session.get_value(
             ["settings", "interface", "show_hide", "contig_borders"]
         ),
