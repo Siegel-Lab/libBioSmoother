@@ -23,6 +23,7 @@ dependencies:
     - sphinx-mdinclude
     - psutil
     - drawSvg>=1.9.0
+    - statsmodels
   - breathe
   - tectonic
   - clang-format

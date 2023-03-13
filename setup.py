@@ -156,6 +156,7 @@ setup(
         'make',
         'libsps @ git+https://github.com/Siegel-Lab/libSps@stable-latest',
         'scipy',
+        'statsmodels',
         'scikit-learn',
     ],
     entry_points={
