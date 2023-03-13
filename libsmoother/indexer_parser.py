@@ -48,6 +48,9 @@ def norm(args):
         args.only_points,
         args.no_map_q,
         args.no_multi_map,
+        args.no_cat,
+        args.no_strand,
+        args.shekelyan,
     )
 
 
@@ -206,6 +209,20 @@ def add_parsers(main_parser):
         action="store_true",
         help="Do not multi mapping information (reads that map to multiple loci). This will make the index faster and smaller. (default: off)",
     )
+    norm_parser.add_argument(
+        "-c",
+        "--no_cat",
+        action="store_true",
+        help="Do not store category information. (default: off)",
+    )
+    norm_parser.add_argument(
+        "-s",
+        "--no_strand",
+        action="store_true",
+        help="Do not store strand information. (default: off)",
+    )
+    norm_parser.add_argument("--shekelyan", help=argparse.SUPPRESS, action="store_true")
+    norm_parser.add_argument("--no_groups", help=argparse.SUPPRESS, action="store_true")
 
     export_parser = main_parser.add_parser(
         "export", help="Export the current index session to a file."

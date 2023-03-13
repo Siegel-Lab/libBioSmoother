@@ -254,16 +254,17 @@ class Indexer:
     def __get_cat_indices_1d(self, cats):
         doubles = -1
         no_anno = True
+        idx_list = []
         for idx, c in enumerate(cats):
             if c:
                 no_anno = False
-                idx_list.append(idx * 3 + 1)
+                idx_list.append((idx * 3 + 1, 1))
                 doubles += 1
         if no_anno:
-            return [len(cat_x) * 3]
+            return [len(cats) * 3]
         if doubles > 0:
             for _ in range(0, doubles):
-                idx_list.append(len(cat_x) * 3 + 1)
+                idx_list.append((len(cats) * 3 + 1, -1))
         return idx_list
 
     def __get_cat_indices_2d(self, cat_x, cat_y):
@@ -370,14 +371,14 @@ class Indexer:
                         cat_y = cat_x
                     else:
                         cat_x = self.indices.anno.get_categories(
-                            pos_1_s,
-                            pos_1_e,
+                            int(pos_1_s),
+                            int(pos_1_e),
                             self.session_default["dividend"],
                             anno_ids_x,
                         )
                         cat_y = self.indices.anno.get_categories(
-                            pos_2_s,
-                            pos_2_e,
+                            int(pos_2_s),
+                            int(pos_2_e),
                             self.session_default["dividend"],
                             anno_ids_y,
                         )
@@ -392,10 +393,11 @@ class Indexer:
                     if no_map_q:
                         map_q = 1
                     if no_strand:
-                        strand_idx = 0
+                        same_strand_idx = 0
+                        y_strand_idx = 0
                     else:
-                        same_strand_idx = 0 if strand_1 == strand_2 else 1
-                        y_strand_idx = 0 if strand_1 else 1
+                        same_strand_idx = 0 if bool(strand_1) == bool(strand_2) else 1
+                        y_strand_idx = 0 if bool(strand_1) else 1
 
                     for cat_idx, val in self.__get_cat_indices_2d(cat_x, cat_y):
                         start = [
@@ -446,7 +448,7 @@ class Indexer:
 
         self.save_session()
 
-        print("done generating index")
+        self.progress_print("done generating dataset.", force_print=True)
 
     def add_normalization(
         self,
@@ -458,36 +460,18 @@ class Indexer:
         only_points=False,
         no_map_q=False,
         no_multi_map=False,
+        no_category=False,
+        no_strand=False,
+        shekelyan=False,
     ):
-        raise RuntimeError("Categories need to be fixed first")
         if not self.name_unique(name):
             raise RuntimeError(
                 "The track name you provide must be unique but is not. "
                 + "Use the <list> command to see all tracks."
             )
 
-        if not (no_map_q and no_multi_map):
-            self.progress_print(
-                "pre-scanning file for index parameters...", force_print=True
-            )
-            has_map_q, multi_map = has_map_q_and_multi_map(
-                path,
-                "test" in self.session_default,
-                self.session_default["contigs"]["list"],
-                lambda *x: self.progress_print("scanning", *x),
-                parse_func=parse_track,
-            )
-        if no_map_q:
-            has_map_q = False
-        if no_multi_map:
-            multi_map = False
-
         self.progress_print(
             "generating track",
-            "with" if has_map_q else "without",
-            "mapping quality and",
-            "with" if multi_map else "without",
-            "multi mapping.",
             force_print=True,
         )
 
@@ -496,8 +480,6 @@ class Indexer:
             ["coverage", "by_name", name],
             {
                 "ids": {},
-                "has_map_q": has_map_q,
-                "has_multimapping": multi_map,
                 "path": path,
             },
         )
@@ -506,11 +488,8 @@ class Indexer:
         if group in ["row", "both"]:
             self.append_session(["coverage", "in_row"], name)
 
-        o = 1 if multi_map else 0
-        d = o + (2 if has_map_q else 1)
-
         read_iterator = chr_order_coverage(
-            self.prefix + ".smoother_index",
+            self.prefix,
             name,
             path,
             get_filesize(path),
@@ -521,13 +500,14 @@ class Indexer:
         )
         total_reads = 0
 
-        cnt = 0
         num_itr = len(read_iterator)
+        cnt = 0
         for chr_x in read_iterator.itr_x_axis():
             anno_ids = [
                 self.session_default["annotation"]["by_name"][anno][chr_x]
-                for anno in self.session_default["annotation"]["list"]
                 if chr_x in self.session_default["annotation"]["by_name"][anno]
+                else -1
+                for anno in self.session_default["annotation"]["list"]
             ]
             cnt += 1
             self.progress_print(
@@ -542,36 +522,54 @@ class Indexer:
                 read_name,
                 pos_1_s,
                 pos_1_e,
+                strand_1,
                 map_q,
             ) in read_iterator.itr_cell(chr_x):
                 total_reads += 1
-                if no_cat:
-                    cat = []
+                if no_category:
+                    cat = [False] * len(
+                            self.session_default["annotation"]["list"]
+                        )
                 else:
                     cat = self.indices.anno.get_categories(
-                        pos_1_s, pos_1_e, self.session_default["dividend"], anno_ids
+                        int(pos_1_s), int(pos_1_e), self.session_default["dividend"], anno_ids
                     )
+
                 act_pos_1_s = int(pos_1_s) // self.session_default["dividend"]
-                act_pos_1_e = int(pos_1_e) // self.session_default["dividend"]
-                if has_map_q and multi_map:
-                    start = [*cat, act_pos_1_s, MAP_Q_MAX - int(map_q) - 1]
-                    end = [*cat, act_pos_1_e, MAP_Q_MAX - int(map_q) - 1]
-                elif has_map_q and not multi_map:
-                    start = [*cat, act_pos_1_s, MAP_Q_MAX - int(map_q) - 1]
-                    end = [*cat, 0, 0]
-                elif not has_map_q and multi_map:
-                    start = [*cat, act_pos_1_s]
-                    end = [*cat, act_pos_1_e]
-                elif not has_map_q and not multi_map:
-                    start = [*cat, act_pos_1_s]
-                    end = [*cat, 0]
+                if no_multi_map:
+                    act_pos_1_e = act_pos_1_s
                 else:
-                    raise RuntimeError("this statement should never be reached")
-                self.indices.insert(d + len(anno_ids), o, start, end)
+                    act_pos_1_e = int(pos_1_e) // self.session_default["dividend"]
+
+                if no_map_q:
+                    map_q = 1
+                if no_strand:
+                    strand_idx = 0
+                else:
+                    strand_idx = 0 if bool(strand_1) else 1
+
+                for cat_idx, val in self.__get_cat_indices_1d(cat):
+                    start = [
+                        act_pos_1_s,
+                        0,
+                        MAP_Q_MAX - int(map_q) - 1,
+                        cat_idx,
+                        strand_idx,
+                        0,
+                    ]
+                    end = [
+                        act_pos_1_e,
+                        0,
+                        MAP_Q_MAX - int(map_q) - 1,
+                        cat_idx,
+                        strand_idx,
+                        0,
+                    ]
+                    self.indices.insert(start, end, val)
             self.set_session(
                 ["coverage", "by_name", name, "ids", chr_x],
                 self.indices.generate(
-                    d + len(anno_ids), o, verbosity=GENERATE_VERBOSITY
+                    fac=-2 if shekelyan else -1, verbosity=GENERATE_VERBOSITY
                 ),
             )
 
@@ -589,4 +587,4 @@ class Indexer:
 
         self.save_session()
 
-        print("done generating track")
+        self.progress_print("done generating track.", force_print=True)

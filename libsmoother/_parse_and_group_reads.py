@@ -1,10 +1,9 @@
 PRINT_MODULO = 1000
-import subprocess
 import errno
 import os
 
 TEST_FAC = 100000
-MAX_READS_IM_MEM = 1000000
+MAX_READS_IM_MEM = 10000
 
 
 def simplified_filepath(path):
@@ -35,7 +34,7 @@ def parse_tsv(in_filename, test, chr_filter, line_format, progress_print=print):
         file_pos = 0
         file_size = get_filesize(in_filename)
         for idx_2, line in enumerate(in_file_1):
-            file_pos += len(line) + 1
+            file_pos += len(line)
             if idx_2 % PRINT_MODULO == PRINT_MODULO - 1:
                 progress_print(
                     "file",
@@ -199,7 +198,6 @@ def group_reads(
     no_groups=False,
     test=False,
 ):
-    file_name = simplified_filepath(in_filename)
     curr_read_name = None
     group = []
 
@@ -231,7 +229,7 @@ def group_reads(
             yield curr_read_name, chrs, pos_s, pos_e, map_q, strands
         group = []
 
-    for idx_2, (
+    for (
         _,
         read_name,
         chrs,
@@ -239,7 +237,7 @@ def group_reads(
         mapqs,
         tags,
         strands,
-    ) in enumerate(parse_func(in_filename, test, chr_filter, progress_print)):
+    ) in parse_func(in_filename, test, chr_filter, progress_print):
         if read_name != curr_read_name and len(group) > 0 and len(group[0]) > 0:
             yield from deal_with_group()
         curr_read_name = read_name
@@ -256,14 +254,15 @@ def group_reads(
 
 
 class ChrOrderHeatmapIterator:
-    def __init__(self, chrs, prefix):
+    def __init__(self, chrs, in_file, prefix):
         self.chrs = chrs
+        self.in_file = in_file
         self.prefix = prefix
 
     def cleanup(self):
         for chr_1 in set(self.chrs.keys()):
             for chr_2 in set(self.chrs[chr_1].keys()):
-                if self.chrs[chr_1][chr_2] is None:
+                if self.in_file[chr_1][chr_2]:
                     os.remove(self.prefix + "." + chr_1 + "." + chr_2)
 
     def itr_x_axis(self):
@@ -281,13 +280,13 @@ class ChrOrderHeatmapIterator:
 
     def itr_cell(self, chr_x, chr_y):
         if chr_x in self.chrs and chr_y in self.chrs[chr_x]:
-            if self.chrs[chr_x][chr_y] is None:
+            if self.in_file[chr_x][chr_y]:
                 with open(self.prefix + "." + chr_x + "." + chr_y, "r") as in_file:
                     for line in in_file:
                         yield line.split()
-            else:
-                for tup in self.chrs[chr_x][chr_y]:
-                    yield tup
+            for tup in self.chrs[chr_x][chr_y]:
+                yield tup
+                
 
     def itr_row(self, chr_y):
         for chr_x in self.itr_x_axis():
@@ -320,6 +319,7 @@ def chr_order_heatmap(
 ):
     prefix = index_prefix + "/.tmp." + dataset_name
     chrs = {}
+    in_file = {}
     if do_force_upper_triangle:
         parse_func = force_upper_triangle
     else:
@@ -337,56 +337,42 @@ def chr_order_heatmap(
         chr_1, chr_2 = chrs_
         if chr_1 not in chrs:
             chrs[chr_1] = {}
+            in_file[chr_1] = {}
         if chr_2 not in chrs[chr_1]:
             chrs[chr_1][chr_2] = []
-        if chrs[chr_1][chr_2] is None:
-            with open(prefix + "." + chr_1 + "." + chr_2, "a") as out_file:
-                out_file.write(
-                    "\t".join(
-                        [
-                            read_name,
-                            str(pos_s[0]),
-                            str(pos_e[0]),
-                            str(pos_s[1]),
-                            str(pos_e[1]),
-                            str(strands[0]),
-                            str(strands[1]),
-                            str(map_q),
-                        ]
-                    )
-                    + "\n"
-                )
-        else:
-            chrs[chr_1][chr_2].append(
-                (
-                    read_name,
-                    pos_s[0],
-                    pos_e[0],
-                    pos_s[1],
-                    pos_e[1],
-                    strands[0],
-                    strands[1],
-                    map_q,
-                )
+            in_file[chr_1][chr_2] = False
+        chrs[chr_1][chr_2].append(
+            (
+                read_name,
+                pos_s[0],
+                pos_e[0],
+                pos_s[1],
+                pos_e[1],
+                strands[0],
+                strands[1],
+                map_q,
             )
+        )
 
-            if len(chrs[chr_1][chr_2]) >= MAX_READS_IM_MEM and False:
-                with open(prefix + "." + chr_1 + "." + chr_2, "w") as out_file:
-                    for tup in chrs[chr_1][chr_2]:
-                        out_file.write("\t".join([str(x) for x in tup]) + "\n")
-                chrs[chr_1][chr_2] = None
+        if len(chrs[chr_1][chr_2]) >= MAX_READS_IM_MEM:
+            with open(prefix + "." + chr_1 + "." + chr_2, "a" if in_file[chr_1][chr_2] else "w" ) as out_file:
+                for tup in chrs[chr_1][chr_2]:
+                    out_file.write("\t".join([str(x) for x in tup]) + "\n")
+            chrs[chr_1][chr_2] = []
+            in_file[chr_1][chr_2] = True
 
-    return ChrOrderHeatmapIterator(chrs, prefix)
+    return ChrOrderHeatmapIterator(chrs, in_file, prefix)
 
 
 class ChrOrderCoverageIterator:
-    def __init__(self, chrs, prefix):
+    def __init__(self, chrs, in_file, prefix):
         self.chrs = chrs
+        self.in_file = in_file
         self.prefix = prefix
 
     def cleanup(self):
         for chr_ in self.chrs.keys():
-            if self.chrs[chr_] is None:
+            if self.in_file[chr_]:
                 os.remove(self.prefix + "." + chr_)
 
     def itr_x_axis(self):
@@ -394,13 +380,12 @@ class ChrOrderCoverageIterator:
             yield x
 
     def itr_cell(self, chr_):
-        if self.chrs[chr_] is None:
+        if self.in_file[chr_]:
             with open(self.prefix + "." + chr_, "r") as in_file:
                 for line in in_file:
                     yield line.split()
-        else:
-            for tup in self.chrs[chr_]:
-                yield tup
+        for tup in self.chrs[chr_]:
+            yield tup
 
     def __len__(self):
         return len(self.chrs)
@@ -417,8 +402,8 @@ def chr_order_coverage(
     progress_print=print,
 ):
     prefix = index_prefix + "/.tmp." + dataset_name
-    out_files = {}
     chrs = {}
+    in_file = {}
     for (
         read_name,
         chrs_,
@@ -431,31 +416,17 @@ def chr_order_coverage(
     ):
         if chrs_[0] not in chrs:
             chrs[chrs_[0]] = []
-        if chrs[chrs_[0]] is None:
-            with open(prefix + "." + chrs_[0], "a") as out_file:
-                out_file.write(
-                    "\t".join(
-                        [
-                            read_name,
-                            str(pos_s[0]),
-                            str(pos_e[0]),
-                            str(strands[1]),
-                            str(strands[1]),
-                            str(map_q),
-                        ]
-                    )
-                    + "\n"
-                )
-        else:
-            chrs[chrs_[0]].append((read_name, pos_s[0], pos_e[0], map_q))
+            in_file[chrs_[0]] = False
+        chrs[chrs_[0]].append((read_name, pos_s[0], pos_e[0], strands[0], map_q))
 
-            if len(chrs[chrs_[0]]) >= MAX_READS_IM_MEM:
-                with open(prefix + "." + chrs_[0], "w") as out_file:
-                    for tup in chrs[chrs_[0]]:
-                        out_file.write("\t".join([str(x) for x in tup]) + "\n")
-                chrs[chrs_[0]] = None
+        if len(chrs[chrs_[0]]) >= MAX_READS_IM_MEM:
+            with open(prefix + "." + chrs_[0], "a" if in_file[chrs_[0]] else "w") as out_file:
+                for tup in chrs[chrs_[0]]:
+                    out_file.write("\t".join([str(x) for x in tup]) + "\n")
+            chrs[chrs_[0]] = []
+            in_file[chrs_[0]] = True
 
-    return ChrOrderCoverageIterator(chrs, prefix)
+    return ChrOrderCoverageIterator(chrs, in_file, prefix)
 
 
 def get_filesize(path):
