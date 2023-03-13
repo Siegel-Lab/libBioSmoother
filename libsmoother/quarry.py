@@ -120,6 +120,27 @@ class Quarry(PartialQuarry):
                 return Plasma256
             elif palette_name == "Turbo256":
                 return Turbo256
+            elif palette_name == "Fall":
+                white = "ffffff"
+                orange = "f5a623"
+                red = "d0021b"
+                black = "000000"
+                return [
+                    self.__combine_hex_values(
+                        {white: 1 - x / 100, orange: x / 100}
+                    )
+                    for x in range(100)
+                ] + [
+                    self.__combine_hex_values(
+                        {orange: 1 - x / 100, red: x / 100}
+                    )
+                    for x in range(100)
+                ] + [
+                    self.__combine_hex_values(
+                        {red: 1 - x / 100, black: x / 100}
+                    )
+                    for x in range(100)
+                ]
             elif palette_name == "LowToHigh":
                 return [
                     self.__combine_hex_values(
