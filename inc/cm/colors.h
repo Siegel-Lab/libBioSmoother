@@ -164,6 +164,9 @@ bool PartialQuarry::setColored( )
 {
     vColored.clear( );
     vColored.reserve( vScaled.size( ) );
+    vRanged.clear( );
+    vRanged.reserve( vScaled.size( ) );
+
     double fMin = getValue<double>( { "settings", "normalization", "color_range", "val_min" } );
     double fMax = getValue<double>( { "settings", "normalization", "color_range", "val_max" } );
     double fBase = getValue<double>( { "settings", "normalization", "log_base", "val" } );
@@ -181,7 +184,8 @@ bool PartialQuarry::setColored( )
             fDataMin = std::min( fDataMin, fC );
             fDataMax = std::max( fDataMax, fC );
 
-            vColored.push_back( vColorPalette[ colorIndex( logScale( colorRange( fMin, fMax, fC ), fBase ) ) ] );
+            vRanged.push_back( colorRange( fMin, fMax, fC ) );
+            vColored.push_back( vColorPalette[ colorIndex( logScale( vRanged.back() , fBase ) ) ] );
         }
     }
     END_RETURN;
@@ -195,8 +199,8 @@ bool PartialQuarry::setPalette( )
     double fMaxR = getValue<double>( { "settings", "normalization", "color_range", "val_max" } );
     double fBase = getValue<double>( { "settings", "normalization", "log_base", "val" } );
 
-    for( double fC = std::min( fDataMin, fMinR ); fC <= std::max( fDataMax, fMaxR );
-         fC += std::max( 1.0, std::max( fDataMax, fMaxR ) - std::min( fDataMin, fMinR ) ) / 255.0 )
+    for( double fC = fMinR; fC <= fMaxR;
+         fC += std::max( 1.0, fMaxR - fMinR ) / 255.0 )
     {
         CANCEL_RETURN;
         vNew.append( vColorPalette[ colorIndex( logScale( colorRange( fMinR, fMaxR, fC ), fBase ) ) ] );
@@ -254,8 +258,10 @@ bool PartialQuarry::setHeatmapCDS( )
     pybind11::list vIndexSymTop;
 
     pybind11::list vScoreTotal;
+    pybind11::list vRangedOut;
     pybind11::list vScoreA;
     pybind11::list vScoreB;
+    pybind11::list vZero;
 
     size_t uiDividend = getValue<size_t>( { "dividend" } );
 
@@ -263,7 +269,7 @@ bool PartialQuarry::setHeatmapCDS( )
     {
         CANCEL_RETURN;
 
-        if( vColored[ uiI ] != sBackgroundColor )
+        if( vColored[ uiI ] != sBackgroundColor || true )
         {
             vScreenBottom.append( vBinCoords[ uiI ][ 0 ].uiScreenY );
             vScreenLeft.append( vBinCoords[ uiI ][ 0 ].uiScreenX );
@@ -273,8 +279,8 @@ bool PartialQuarry::setHeatmapCDS( )
             vColor.append( vColored[ uiI ] );
 
 
-            std::string sChromNameX = vActiveChromosomes[ 0 ][ vBinCoords[ uiI ][ 0 ].uiChromosomeX ].sName;
-            std::string sChromNameY = vActiveChromosomes[ 1 ][ vBinCoords[ uiI ][ 0 ].uiChromosomeY ].sName;
+            std::string sChromNameX = substringChr(vActiveChromosomes[ 0 ][ vBinCoords[ uiI ][ 0 ].uiChromosomeX ].sName);
+            std::string sChromNameY = substringChr(vActiveChromosomes[ 1 ][ vBinCoords[ uiI ][ 0 ].uiChromosomeY ].sName);
             vChrX.append( sChromNameX );
             vChrY.append( sChromNameY );
             vIndexLeft.append( readableBp( vBinCoords[ uiI ][ 0 ].uiIndexX * uiDividend ) );
@@ -286,8 +292,8 @@ bool PartialQuarry::setHeatmapCDS( )
 
             if( vBinCoords[ uiI ][ 1 ].uiChromosomeX != std::numeric_limits<size_t>::max( ) )
             {
-                std::string sChromNameX = vActiveChromosomes[ 0 ][ vBinCoords[ uiI ][ 1 ].uiChromosomeX ].sName;
-                std::string sChromNameY = vActiveChromosomes[ 1 ][ vBinCoords[ uiI ][ 1 ].uiChromosomeY ].sName;
+                std::string sChromNameX = substringChr( vActiveChromosomes[ 0 ][ vBinCoords[ uiI ][ 1 ].uiChromosomeX ].sName );
+                std::string sChromNameY = substringChr( vActiveChromosomes[ 1 ][ vBinCoords[ uiI ][ 1 ].uiChromosomeY ].sName );
                 vChrXSym.append( sChromNameX );
                 vChrYSym.append( sChromNameY );
                 vIndexSymLeft.append( readableBp( vBinCoords[ uiI ][ 1 ].uiIndexX * uiDividend ) );
@@ -308,8 +314,10 @@ bool PartialQuarry::setHeatmapCDS( )
             }
 
             vScoreTotal.append( vScaled[ uiI ] );
+            vRangedOut.append( vRanged[ uiI ] );
             vScoreA.append( vvNormalized[ uiI ][ 0 ] );
             vScoreB.append( vvNormalized[ uiI ][ 1 ] );
+            vZero.append(0);
         }
     }
 
@@ -336,8 +344,11 @@ bool PartialQuarry::setHeatmapCDS( )
                                   "index_symmetry_top"_a = vIndexSymTop,
 
                                   "score_total"_a = vScoreTotal,
+                                  "ranged_score"_a = vRangedOut,
                                   "score_a"_a = vScoreA,
-                                  "score_b"_a = vScoreB );
+                                  "score_b"_a = vScoreB,
+                                  "0"_a = vZero
+                                   );
     END_RETURN;
 }
 

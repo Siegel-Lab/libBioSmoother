@@ -674,6 +674,7 @@ class PartialQuarry : public HasSession
     std::vector<double> vCombined;
     std::vector<double> vDivided;
     std::vector<double> vScaled;
+    std::vector<double> vRanged;
     std::vector<std::string> vColored;
 
     std::string sBackgroundColor;
