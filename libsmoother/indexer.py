@@ -261,10 +261,9 @@ class Indexer:
                 idx_list.append((idx * 3 + 1, 1))
                 doubles += 1
         if no_anno:
-            return [len(cats) * 3]
+            return [(len(cats) * 3, 1)]
         if doubles > 0:
-            for _ in range(0, doubles):
-                idx_list.append((len(cats) * 3 + 1, -1))
+            idx_list.append((len(cats) * 3 + 1, -doubles))
         return idx_list
 
     def __get_cat_indices_2d(self, cat_x, cat_y):
@@ -280,8 +279,7 @@ class Indexer:
         if no_anno:
             return [(max(len(cat_x), len(cat_y)) * 3, 1)]
         if doubles > 0:
-            for _ in range(0, doubles):
-                idx_list.append((max(len(cat_x), len(cat_y)) * 3 + 1, -1))
+            idx_list.append((max(len(cat_x), len(cat_y)) * 3 + 1, -doubles))
         return idx_list
 
     def add_replicate(

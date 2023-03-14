@@ -158,8 +158,8 @@ bool PartialQuarry::setCoverageValues( )
                     if( iDataSetId != -1 )
                         uiVal =
                             pIndices->count( iDataSetId,
-                                             { xCoords.uiIndexPos, 0, uiMapQMin, uiFromAnnoFilter },
-                                             { xCoords.uiIndexPos + xCoords.uiIndexSize, 1, uiMapQMax, uiToAnnoFilter },
+                                             { xCoords.uiIndexPos, 0, uiMapQMin, uiFromAnnoFilter, 0, 0 },
+                                             { xCoords.uiIndexPos + xCoords.uiIndexSize, 1, uiMapQMax, uiToAnnoFilter, 1, 1 },
                                              xIntersect,
                                              0 );
                 }
@@ -223,7 +223,7 @@ bool PartialQuarry::setTracks( )
         for( size_t uiX = 0; uiX < vAxisCords[ uiI ].size( ); uiX++ )
         {
             CANCEL_RETURN;
-            for( size_t uiId = 0; uiId < vvCoverageValues[ uiI ].size( ); uiI++ )
+            for( size_t uiId = 0; uiId < vvCoverageValues[ uiI ].size( ); uiId++ )
             {
                 auto uiVal = (double)vvCoverageValues[ uiI ][ uiId ][ uiX ];
                 vvMinMaxTracks[ uiI ][ 0 ] = std::min( vvMinMaxTracks[ uiI ][ 0 ], uiVal );
@@ -424,7 +424,7 @@ bool PartialQuarry::setTracks( )
             ++uiCnt;
         }
 
-        for( size_t uiId = 0; uiId < vvCoverageValues[ uiI ].size( ); uiI++ )
+        for( size_t uiId = 0; uiId < vvCoverageValues[ uiI ].size( ); uiId++ )
         {
             pybind11::list vScreenPos;
             pybind11::list vIndexStart;
@@ -504,6 +504,7 @@ bool PartialQuarry::setTracks( )
             ++uiCnt;
         }
 
+        assert(uiI < xTracksCDS.size());
         xTracksCDS[ uiI ] = pybind11::dict( "chrs"_a = vChrs,
                                             "screen_pos"_a = vScreenPoss,
 
@@ -705,7 +706,7 @@ void PartialQuarry::regCoverage( )
                                /*.fFunc =*/&PartialQuarry::setTracks,
                                /*.vIncomingFunctions =*/
                                { NodeNames::LCS, NodeNames::AnnotationColors, NodeNames::RnaAssociatedBackground,
-                                 NodeNames::RadiclSeqCoverage },
+                                 NodeNames::RadiclSeqCoverage, NodeNames::CoverageValues },
                                /*.vIncomingSession =*/
                                { { "settings", "normalization", "display_ice_remainder" },
                                  { "settings", "normalization", "grid_seq_display_background" },

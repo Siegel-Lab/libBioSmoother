@@ -277,7 +277,7 @@ def __draw_lines(
         c,
     ) in zip(cds[x], cds[y], cds[color]):
         xs2, ysy = [
-            [conv_coords(p, is_bottom, *transform) for p in ps]
+            [conv_coords(p, is_bottom, None, None, *transform) for p in ps]
             for ps, is_bottom, transform, conv_coords in [
                 (xs, True, x_transform, conv_coords_x),
                 (ys, True, y_transform, conv_coords_y),
@@ -663,7 +663,7 @@ def __draw_secondary(session, d, sizes, print_callback=lambda s: None):
         if sizes["show_axis"]:
             __adaptive_ticker(
                 d,
-                active_anno_y,
+                active_anno_x,
                 offset_x - sizes["axis"],
                 offset_x,
                 False,
@@ -698,7 +698,7 @@ def __draw_secondary(session, d, sizes, print_callback=lambda s: None):
 
             __adaptive_ticker(
                 d,
-                active_anno_x,
+                active_anno_y,
                 offset_x - sizes["axis"],
                 offset_x,
                 True,
