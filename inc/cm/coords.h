@@ -640,9 +640,9 @@ bool PartialQuarry::setActiveChromLength( )
         const size_t uiBinSize = bX ? uiBinWidth : uiBinHeight;
         for( auto& rChr : this->vActiveChromosomes[ bX ? 0 : 1 ] )
             if( uiSmallerVal == 4 && bGenomeCoords ) // fit_chrom_smaller
-                rChr.uiLength = uiBinSize * (rChr.uiUnadjustedLength / uiBinSize);
+                rChr.uiLength = uiBinSize * ( rChr.uiUnadjustedLength / uiBinSize );
             else if( uiSmallerVal == 5 && bGenomeCoords ) // fit_chrom_larger
-                rChr.uiLength = uiBinSize * (((rChr.uiUnadjustedLength - 1) / uiBinSize) + 1);
+                rChr.uiLength = uiBinSize * ( ( ( rChr.uiUnadjustedLength - 1 ) / uiBinSize ) + 1 );
             else
                 rChr.uiLength = rChr.uiUnadjustedLength;
     }
@@ -782,6 +782,9 @@ bool PartialQuarry::setDirectionality( )
 
         uiFromYStrandFilter = 0;
         uiToYStrandFilter = 2;
+
+        ui1DFromStrandFilter = 0;
+        ui1DToStrandFilter = 2;
     }
     else if( sDir == "same" )
     {
@@ -790,6 +793,9 @@ bool PartialQuarry::setDirectionality( )
 
         uiFromYStrandFilter = 0;
         uiToYStrandFilter = 2;
+
+        ui1DFromStrandFilter = 0;
+        ui1DToStrandFilter = 2;
     }
     else if( sDir == "oppo" )
     {
@@ -798,6 +804,9 @@ bool PartialQuarry::setDirectionality( )
 
         uiFromYStrandFilter = 0;
         uiToYStrandFilter = 2;
+
+        ui1DFromStrandFilter = 0;
+        ui1DToStrandFilter = 2;
     }
     else if( sDir == "forw" )
     {
@@ -806,6 +815,9 @@ bool PartialQuarry::setDirectionality( )
 
         uiFromYStrandFilter = 0;
         uiToYStrandFilter = 1;
+
+        ui1DFromStrandFilter = 0;
+        ui1DToStrandFilter = 1;
     }
     else if( sDir == "rev" )
     {
@@ -814,6 +826,9 @@ bool PartialQuarry::setDirectionality( )
 
         uiFromYStrandFilter = 1;
         uiToYStrandFilter = 2;
+
+        ui1DFromStrandFilter = 1;
+        ui1DToStrandFilter = 2;
     }
     else
         throw std::logic_error( "unknown directionality setting" );
@@ -821,42 +836,40 @@ bool PartialQuarry::setDirectionality( )
 }
 
 
-template <typename out_t, typename in_t>
-const out_t makeSymBin( const in_t& xX, const in_t& xY )
+template <typename out_t, typename in_t> const out_t makeSymBin( const in_t& xX, const in_t& xY )
 {
     return out_t{ BinCoordBase{ /*.uiChromosomeX =*/xX.uiChromosome,
-                                          /*.uiChromosomeY =*/xY.uiChromosome,
+                                /*.uiChromosomeY =*/xY.uiChromosome,
 
-                                          /*.uiScreenX =*/xX.uiScreenPos,
-                                          /*.uiScreenY =*/xY.uiScreenPos,
+                                /*.uiScreenX =*/xX.uiScreenPos,
+                                /*.uiScreenY =*/xY.uiScreenPos,
 
-                                          /*.uiIndexX =*/xX.uiIndexPos,
-                                          /*.uiIndexY =*/xY.uiIndexPos,
+                                /*.uiIndexX =*/xX.uiIndexPos,
+                                /*.uiIndexY =*/xY.uiIndexPos,
 
-                                          /*.uiScreenW =*/xX.uiScreenSize,
-                                          /*.uiScreenH =*/xY.uiScreenSize,
+                                /*.uiScreenW =*/xX.uiScreenSize,
+                                /*.uiScreenH =*/xY.uiScreenSize,
 
-                                          /*.uiIndexW =*/xX.uiIndexSize,
-                                          /*.uiIndexH =*/xY.uiIndexSize } };
+                                /*.uiIndexW =*/xX.uiIndexSize,
+                                /*.uiIndexH =*/xY.uiIndexSize } };
 }
 
-template <typename out_t, typename in_t>
-const out_t makeAsymBin( const in_t& xX, const in_t& xY )
+template <typename out_t, typename in_t> const out_t makeAsymBin( const in_t& xX, const in_t& xY )
 {
     return out_t{ BinCoordBase{ /*.uiChromosomeX =*/xY.uiChromosome,
-                                          /*.uiChromosomeY =*/xX.uiChromosome,
+                                /*.uiChromosomeY =*/xX.uiChromosome,
 
-                                          /*.uiScreenX =*/xX.uiScreenPos,
-                                          /*.uiScreenY =*/xY.uiScreenPos,
+                                /*.uiScreenX =*/xX.uiScreenPos,
+                                /*.uiScreenY =*/xY.uiScreenPos,
 
-                                          /*.uiIndexX =*/xY.uiIndexPos,
-                                          /*.uiIndexY =*/xX.uiIndexPos,
+                                /*.uiIndexX =*/xY.uiIndexPos,
+                                /*.uiIndexY =*/xX.uiIndexPos,
 
-                                          /*.uiScreenW =*/xX.uiScreenSize,
-                                          /*.uiScreenH =*/xY.uiScreenSize,
+                                /*.uiScreenW =*/xX.uiScreenSize,
+                                /*.uiScreenH =*/xY.uiScreenSize,
 
-                                          /*.uiIndexW =*/xY.uiIndexSize,
-                                          /*.uiIndexH =*/xX.uiIndexSize } };
+                                /*.uiIndexW =*/xY.uiIndexSize,
+                                /*.uiIndexH =*/xX.uiIndexSize } };
 }
 
 template <typename out_t, typename in_t>
@@ -865,13 +878,12 @@ std::array<out_t, 2> PartialQuarry::binObjFromCoords( const in_t& xX, const in_t
     switch( uiSymmetry )
     {
         case 0: // all
-            return { makeSymBin<out_t, in_t>(xX, xY), out_t{} };
+            return { makeSymBin<out_t, in_t>( xX, xY ), out_t{} };
             break;
         case 1: // sym
         case 2: // asym
         case 3: // mirror
-            return { makeSymBin<out_t, in_t>(xX, xY),
-                     makeAsymBin<out_t, in_t>(xX, xY) };
+            return { makeSymBin<out_t, in_t>( xX, xY ), makeAsymBin<out_t, in_t>( xX, xY ) };
             break;
         default:
             throw std::logic_error( "unknown symmetry setting" );

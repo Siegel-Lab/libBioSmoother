@@ -683,6 +683,8 @@ class PartialQuarry : public HasSession
     size_t uiToAnnoFilter;
     size_t uiFromSameStrandFilter;
     size_t uiToSameStrandFilter;
+    size_t ui1DFromStrandFilter;
+    size_t ui1DToStrandFilter;
     size_t uiFromYStrandFilter;
     size_t uiToYStrandFilter;
     size_t uiMapQMin;
@@ -826,14 +828,13 @@ class PartialQuarry : public HasSession
     // coverage.h
     bool setTrackExport( );
     // coverage.h
-    size_t getMaxCoverageFromRepl( const AxisCoord&, const std::string&, size_t, bool, bool );
+    size_t getMaxCoverageFromRepl( const AxisCoord&, const size_t, size_t, bool, bool );
     // coverage.h
-    size_t getMaxCoverageFromRepl( const std::string&, const size_t, const size_t, const std::string&, size_t, bool,
-                                   bool );
+    size_t getMaxCoverageFromRepl( const size_t, const size_t, const size_t, const size_t, size_t, bool, bool );
     // coverage.h
-    size_t getCoverageFromRepl( const AxisCoord&, const std::string&, bool, bool );
+    size_t getCoverageFromRepl( const AxisCoord&, const size_t, bool, bool );
     // coverage.h
-    size_t getCoverageFromRepl( const std::string&, const size_t, const size_t, const std::string&, bool, bool );
+    size_t getCoverageFromRepl( const size_t, const size_t, const size_t, const size_t, bool, bool );
     // coverage.h
     std::tuple<size_t, int64_t, size_t, size_t> makeHeapTuple( bool, bool, const size_t, const size_t, int64_t, size_t,
                                                                size_t );

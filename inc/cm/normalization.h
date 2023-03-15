@@ -211,12 +211,12 @@ bool PartialQuarry::getSamples( const GetSamplesMode& rMode, const size_t uiNumS
                     vChromIdForSampleIdx.emplace_back( uiMaxSamples, uiI );
                     uiMaxSamples += rActiveChrom.uiLength / uiBinSize;
                     break;
-                // case GetSamplesMode::BinnedAnno:
-                //     vChromIdForSampleIdx.emplace_back( uiMaxSamples, uiI );
-                //     uiMaxSamples +=
-                //         pIndices->vAnno.totalIntervalSize( rAnnoJson[ rActiveChrom.sName ].get<int64_t>( ) ) /
-                //         uiBinSize;
-                //     break;
+                    // case GetSamplesMode::BinnedAnno:
+                    //     vChromIdForSampleIdx.emplace_back( uiMaxSamples, uiI );
+                    //     uiMaxSamples +=
+                    //         pIndices->vAnno.totalIntervalSize( rAnnoJson[ rActiveChrom.sName ].get<int64_t>( ) ) /
+                    //         uiBinSize;
+                    //     break;
 
                 default:
                     assert( false );
@@ -264,8 +264,8 @@ bool PartialQuarry::getSamples( const GetSamplesMode& rMode, const size_t uiNumS
                                            /*.uiAnnoId =*/0 } );
                 break;
 
-            // case GetSamplesMode::BinnedAnno:
-            //     break;
+                // case GetSamplesMode::BinnedAnno:
+                //     break;
 
             default:
                 assert( false );
@@ -361,7 +361,7 @@ bool PartialQuarry::setRadiclSeqCoverage( )
         vRawCoverage.clear( );
 
         // collect raw values
-        for( const std::string& sRep : vActiveReplicates )
+        for( size_t uiI = 0; uiI < vActiveReplicates.size( ); uiI++ )
         {
             CANCEL_RETURN;
 
@@ -369,7 +369,7 @@ bool PartialQuarry::setRadiclSeqCoverage( )
             for( size_t uiJ = 0; uiJ < 2; uiJ++ )
             {
                 CANCEL_RETURN;
-                vVals[ uiJ ] = getCoverageFromRepl( rAxis, sRep, bAxisIsCol, uiJ != 0 );
+                vVals[ uiJ ] = getCoverageFromRepl( rAxis, uiI, bAxisIsCol, uiJ != 0 );
                 vVals[ uiJ ] = vVals[ uiJ ] > uiMinuend ? vVals[ uiJ ] - uiMinuend : 0;
             }
 
@@ -436,7 +436,7 @@ bool PartialQuarry::setRadiclSeqCoverage( )
 
                 vRawCoverage.push_back( symmetry( vVals[ 0 ], vVals[ 1 ] ) );
             }
-            // @todo code duplication...
+            // @todo-low-prio code duplication...
             for( size_t uiJ = 0; uiJ < 2; uiJ++ )
             {
                 std::vector<size_t> vCollected;
@@ -483,11 +483,10 @@ bool PartialQuarry::setGridSeqCoverage( )
         else
             vGridSeqAnnoCoverage.push_back( { 0, 0 } );
 
-        for( const std::string& sRep : vActiveReplicates )
+        for( size_t uiI = 0; uiI < vActiveReplicates.size( ); uiI++ )
         {
             CANCEL_RETURN;
 
-            const std::string& rChr = this->vActiveChromosomes[ 0 ][ rSample.uiChromosome ].sName;
             const size_t uiAnnoStart = rSample.uiIndexPos;
             const size_t uiAnnoEnd = rSample.uiIndexPos + rSample.uiIndexSize;
 
@@ -497,10 +496,11 @@ bool PartialQuarry::setGridSeqCoverage( )
                 for( size_t uiJ = 0; uiJ < 2; uiJ++ )
                 {
                     if( uiK == 0 )
-                        vVals[ uiJ ] = getCoverageFromRepl( rChr, uiAnnoStart, uiAnnoEnd, sRep, bAxisIsCol, uiJ != 0 );
+                        vVals[ uiJ ] = getCoverageFromRepl( rSample.uiChromosome, uiAnnoStart, uiAnnoEnd, uiI,
+                                                            bAxisIsCol, uiJ != 0 );
                     else
-                        vVals[ uiJ ] = getMaxCoverageFromRepl( rChr, uiAnnoStart, uiAnnoEnd, sRep, uiCoverageMaxBinSize,
-                                                               !bAxisIsCol, uiJ != 0 );
+                        vVals[ uiJ ] = getMaxCoverageFromRepl( rSample.uiChromosome, uiAnnoStart, uiAnnoEnd, uiI,
+                                                               uiCoverageMaxBinSize, !bAxisIsCol, uiJ != 0 );
                     vVals[ uiJ ] = vVals[ uiJ ] > uiMinuend ? vVals[ uiJ ] - uiMinuend : 0;
                 }
 
@@ -540,7 +540,7 @@ bool PartialQuarry::setRnaAssociatedGenesFilter( )
     END_RETURN;
 }
 
-// @todo think about blacking out columns that are not chromatin associated
+// @todo-low-prio think about blacking out columns that are not chromatin associated
 bool PartialQuarry::setRnaAssociatedBackground( )
 {
     if( getValue<std::string>( { "settings", "normalization", "normalize_by" } ) != "grid-seq" )
@@ -593,12 +593,13 @@ bool PartialQuarry::setRnaAssociatedBackground( )
                         size_t iDataSetId = getDatasetIdfromReplAndChr( uiRepl, uiChrX, uiChrY );
 
                         if( iDataSetId != std::numeric_limits<size_t>::max( ) )
-                            vBackgroundGridSeq.back( ) +=
-                                pIndices->count( iDataSetId,
-                                                 { uiStartY, uiStartX, uiMapQMin, uiFromAnnoFilter },
-                                                 { uiEndY, uiEndX, uiMapQMax, uiToAnnoFilter },
-                                                 xIntersect,
-                                                 0 );
+                            vBackgroundGridSeq.back( ) += pIndices->count(
+                                iDataSetId,
+                                { uiStartY, uiStartX, uiMapQMin, uiFromAnnoFilter, uiFromSameStrandFilter,
+                                  uiFromYStrandFilter },
+                                { uiEndY, uiEndX, uiMapQMax, uiToAnnoFilter, uiToSameStrandFilter, uiToYStrandFilter },
+                                xIntersect,
+                                0 );
                     }
                 }
             }

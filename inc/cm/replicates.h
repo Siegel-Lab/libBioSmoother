@@ -167,7 +167,7 @@ bool PartialQuarry::setBinValues( )
                         vRet[ uiI ] = pIndices->gridCount( iDataSetId, vGridQuery, xIntersect, 0 );
 
                         for( uint32_t& uiVal : vRet[ uiI ] )
-                            // @todo this is an expensive if instruction
+                            // @todo-low-prio this is an expensive if instruction
                             uiVal = uiVal > uiMinuend ? uiVal - uiMinuend : 0;
                     }
                     else

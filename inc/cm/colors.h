@@ -185,7 +185,7 @@ bool PartialQuarry::setColored( )
             fDataMax = std::max( fDataMax, fC );
 
             vRanged.push_back( colorRange( fMin, fMax, fC ) );
-            vColored.push_back( vColorPalette[ colorIndex( logScale( vRanged.back() , fBase ) ) ] );
+            vColored.push_back( vColorPalette[ colorIndex( logScale( vRanged.back( ), fBase ) ) ] );
         }
     }
     END_RETURN;
@@ -199,8 +199,7 @@ bool PartialQuarry::setPalette( )
     double fMaxR = getValue<double>( { "settings", "normalization", "color_range", "val_max" } );
     double fBase = getValue<double>( { "settings", "normalization", "log_base", "val" } );
 
-    for( double fC = fMinR; fC <= fMaxR;
-         fC += std::max( 1.0, fMaxR - fMinR ) / 255.0 )
+    for( double fC = fMinR; fC <= fMaxR; fC += std::max( 1.0, fMaxR - fMinR ) / 255.0 )
     {
         CANCEL_RETURN;
         vNew.append( vColorPalette[ colorIndex( logScale( colorRange( fMinR, fMaxR, fC ), fBase ) ) ] );
@@ -279,8 +278,10 @@ bool PartialQuarry::setHeatmapCDS( )
             vColor.append( vColored[ uiI ] );
 
 
-            std::string sChromNameX = substringChr(vActiveChromosomes[ 0 ][ vBinCoords[ uiI ][ 0 ].uiChromosomeX ].sName);
-            std::string sChromNameY = substringChr(vActiveChromosomes[ 1 ][ vBinCoords[ uiI ][ 0 ].uiChromosomeY ].sName);
+            std::string sChromNameX =
+                substringChr( vActiveChromosomes[ 0 ][ vBinCoords[ uiI ][ 0 ].uiChromosomeX ].sName );
+            std::string sChromNameY =
+                substringChr( vActiveChromosomes[ 1 ][ vBinCoords[ uiI ][ 0 ].uiChromosomeY ].sName );
             vChrX.append( sChromNameX );
             vChrY.append( sChromNameY );
             vIndexLeft.append( readableBp( vBinCoords[ uiI ][ 0 ].uiIndexX * uiDividend ) );
@@ -292,8 +293,10 @@ bool PartialQuarry::setHeatmapCDS( )
 
             if( vBinCoords[ uiI ][ 1 ].uiChromosomeX != std::numeric_limits<size_t>::max( ) )
             {
-                std::string sChromNameX = substringChr( vActiveChromosomes[ 0 ][ vBinCoords[ uiI ][ 1 ].uiChromosomeX ].sName );
-                std::string sChromNameY = substringChr( vActiveChromosomes[ 1 ][ vBinCoords[ uiI ][ 1 ].uiChromosomeY ].sName );
+                std::string sChromNameX =
+                    substringChr( vActiveChromosomes[ 0 ][ vBinCoords[ uiI ][ 1 ].uiChromosomeX ].sName );
+                std::string sChromNameY =
+                    substringChr( vActiveChromosomes[ 1 ][ vBinCoords[ uiI ][ 1 ].uiChromosomeY ].sName );
                 vChrXSym.append( sChromNameX );
                 vChrYSym.append( sChromNameY );
                 vIndexSymLeft.append( readableBp( vBinCoords[ uiI ][ 1 ].uiIndexX * uiDividend ) );
@@ -317,7 +320,7 @@ bool PartialQuarry::setHeatmapCDS( )
             vRangedOut.append( vRanged[ uiI ] );
             vScoreA.append( vvNormalized[ uiI ][ 0 ] );
             vScoreB.append( vvNormalized[ uiI ][ 1 ] );
-            vZero.append(0);
+            vZero.append( 0 );
         }
     }
 
@@ -347,8 +350,7 @@ bool PartialQuarry::setHeatmapCDS( )
                                   "ranged_score"_a = vRangedOut,
                                   "score_a"_a = vScoreA,
                                   "score_b"_a = vScoreB,
-                                  "0"_a = vZero
-                                   );
+                                  "0"_a = vZero );
     END_RETURN;
 }
 

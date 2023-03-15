@@ -178,7 +178,7 @@ PYBIND11_MODULE( libsmoothercpp, m )
 #else
     m.attr( "WITH_STXXL" ) = false;
 #endif
-    
+
     m.attr( "COMPILER_ID" ) = CXX_COMPILER_ID;
 
     m.def( "test", &cm::testFunc );

@@ -74,5 +74,5 @@ add_dependencies( libsmoothercpp cm_config_version cm_config_build_time )
 
 add_custom_target(format COMMAND "clang-format" "-i" "-style=file" "inc/cm/*.h" "src/*.cpp" 
                   COMMAND "black" "libsmoother/"
-                  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} VERBATIM)
+                  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} VERBATIM)
 

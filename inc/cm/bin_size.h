@@ -153,8 +153,7 @@ void PartialQuarry::regBinSize( )
                                /*.fFunc =*/&PartialQuarry::setBinSize,
                                /*.vIncomingFunctions =*/{ },
                                /*.vIncomingSession =*/
-                               { 
-                                 { "settings", "interface", "snap_bin_size" },
+                               { { "settings", "interface", "snap_bin_size" },
                                  { "settings", "interface", "snap_factors" },
                                  { "settings", "interface", "min_bin_size", "val" },
                                  { "settings", "interface", "max_num_bins", "val" },
