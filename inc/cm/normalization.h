@@ -421,7 +421,7 @@ bool PartialQuarry::setRadiclSeqCoverage( )
                         const size_t uiYMin = bAxisIsCol != bSymPart ? rSample.uiIndexPos : rAxis.uiIndexPos;
                         const size_t uiYMax = bAxisIsCol != bSymPart ? rSample.uiIndexPos + rSample.uiIndexSize
                                                                      : rAxis.uiIndexPos + rAxis.uiIndexSize;
-                        // @todo adjust for symmetry
+
                         vVals[ uiJ ] = pIndices->count(
                             uiDataSetId,
                             { uiYMin, uiXMin, uiMapQMin, uiFromAnnoFilter, uiFromSameStrandFilter,

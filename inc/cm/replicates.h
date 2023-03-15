@@ -98,8 +98,7 @@ template <typename v_t> v_t PartialQuarry::symmetry( v_t uiA, v_t uiB )
                 return uiA - uiB;
             else
                 return 0;
-        case 3: // toptobot
-        case 4: // bottotop
+        case 3: // mirror
             return uiA + uiB;
         default:
             throw std::logic_error( "unknown symmetry setting" );

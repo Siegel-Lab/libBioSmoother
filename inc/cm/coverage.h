@@ -38,7 +38,6 @@ std::tuple<size_t, int64_t, size_t, size_t> PartialQuarry::makeHeapTuple( bool b
     const coordinate_t uiXMax = bCol != bSymPart ? uiTo : uiEnd;
     const coordinate_t uiYMin = bCol != bSymPart ? uiStart : uiFrom;
     const coordinate_t uiYMax = bCol != bSymPart ? uiEnd : uiTo;
-    // @todo adjust for symmetry
     const size_t uiCount = pIndices->count(
         iDataSetId, { uiYMin, uiXMin, uiMapQMin, uiFromAnnoFilter, uiFromSameStrandFilter, uiFromYStrandFilter },
         { uiYMax, uiXMax, uiMapQMax, uiToAnnoFilter, uiToSameStrandFilter, uiToYStrandFilter }, xIntersect, 0 );
@@ -113,7 +112,6 @@ size_t PartialQuarry::getCoverageFromRepl( const std::string& sChromName, const 
             const size_t uiXMax = bCol != bSymPart ? uiTo : rDesc.uiLength;
             const size_t uiYMin = bCol != bSymPart ? 0 : uiFrom;
             const size_t uiYMax = bCol != bSymPart ? rDesc.uiLength : uiTo;
-            // @todo adjust for symmetry
             uiRet += pIndices->count( uiDatasetId, { uiYMin, uiXMin, uiMapQMin, uiFromAnnoFilter },
                                       { uiYMax, uiXMax, uiMapQMax, uiToAnnoFilter }, xIntersect, 0 );
         }
