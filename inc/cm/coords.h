@@ -144,7 +144,7 @@ std::pair<std::vector<AxisCoord>, std::vector<AxisRegion>> axisCoordsHelper( siz
         }
 
         // when making contig ends larger don't skip the beginning of the next contig because of it
-        if( iSmallerBins == 3 && uiCurrScreenPos >= uiChromosomeStartPos && uiCurrScreenPos > uiChromosomeEndPos )
+        if( iSmallerBins == 5 && uiCurrScreenPos >= uiChromosomeStartPos && uiCurrScreenPos > uiChromosomeEndPos )
             uiCurrScreenPos = uiChromosomeEndPos;
 
         uiChromosomeStartPos = uiChromosomeEndPos;
