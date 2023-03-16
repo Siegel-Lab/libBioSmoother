@@ -228,8 +228,8 @@ PYBIND11_MODULE( libsmoothercpp, m )
         .def( "get_dot", &cm::PartialQuarry::getDOT ) //
         .def( "get_background_color", &cm::PartialQuarry::getBackgroundColor ) //
         .def( "get_ticks", &cm::PartialQuarry::getTicks ) //
+        .def( "get_contig_ticks", &cm::PartialQuarry::getContigTicks ) //
         .def( "get_tick_list", &cm::PartialQuarry::getTickList ) //
-        .def( "get_tick_list_2", &cm::PartialQuarry::getTickList2 ) //
         .def( "get_canvas_size", &cm::PartialQuarry::getCanvasSize ) //
         .def( "get_tracks", &cm::PartialQuarry::getTracks ) //
         .def( "get_ranked_slices", &cm::PartialQuarry::getRankedSlices ) //

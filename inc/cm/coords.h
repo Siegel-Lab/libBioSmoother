@@ -128,7 +128,7 @@ std::pair<std::vector<AxisCoord>, std::vector<AxisRegion>> axisCoordsHelper( siz
         {
             assert( uiItrEndPos >= uiStartChromPos );
             vRet2.push_back( AxisRegion{
-                //{
+                //{é
                 //{
                 /*.uiChromosome =*/uiI, //
                 /*.uiIndexPos =*/uiStartChromPos, //
@@ -519,61 +519,23 @@ bool PartialQuarry::setTicks( )
     {
         pybind11::list vNames;
         pybind11::list vStartPos;
-        pybind11::list vFullList;
 
         size_t uiRunningStart = 0;
         std::string sCoords =
             getValue<std::string>( { "contigs", uiI == 0 ? "column_coordinates" : "row_coordinates" } );
-        if( sCoords == "full_genome" )
+        auto rJson = getValue<json>( { "annotation", "by_name", sCoords } );
+        for( ChromDesc& rDesc : this->vActiveChromosomes[ uiI ] )
         {
-            for( ChromDesc& rDesc : this->vActiveChromosomes[ uiI ] )
-            {
-                CANCEL_RETURN;
-                vNames.append( substringChr( rDesc.sName ) );
-                vStartPos.append( uiRunningStart );
-                vFullList.append( uiRunningStart );
+            CANCEL_RETURN;
+            vNames.append( substringChr( rDesc.sName ) );
+            vStartPos.append( uiRunningStart );
+            if( sCoords == "full_genome" )
                 uiRunningStart += rDesc.uiLength;
-            }
-        }
-        else
-        {
-            auto rJson = getValue<json>( { "annotation", "by_name", sCoords } );
-            for( AxisRegion& xRegion : vAxisRegions[ uiI ] )
+            else
             {
-                CANCEL_RETURN;
-                std::string sChromName = vActiveChromosomes[ uiI ][ xRegion.uiChromosome ].sName;
-                if( rJson.contains( sChromName ) )
+                int64_t iDataSetId = rJson[ rDesc.sName ].get<int64_t>( );
+                if( rJson.contains( rDesc.sName ) )
                 {
-                    int64_t iDataSetId = rJson[ sChromName ].get<int64_t>( );
-                    auto xFirst = pIndices->vAnno.lowerBound( iDataSetId, xRegion.uiIndexPos, !bSqueeze, bSqueeze );
-
-                    std::vector<std::string> vSplit =
-                        splitString<std::vector<std::string>>( pIndices->vAnno.desc( *xFirst ), '\n' );
-                    std::string sId = "n/a";
-                    const std::string csID = "ID=";
-                    for( std::string sX : vSplit )
-                        if( sX.substr( 0, csID.size( ) ) == csID )
-                        {
-                            size_t uiX = sX.rfind( ":" );
-                            if( uiX != std::string::npos )
-                                sId = sX.substr( csID.size( ), uiX - csID.size( ) );
-                            else
-                                sId = sX.substr( csID.size( ) );
-                        }
-
-                    vNames.append( substringChr( sChromName ) + " - " + sId );
-                    vStartPos.append( xRegion.uiScreenPos );
-                }
-            }
-
-            for( auto xChr : this->vActiveChromosomes[ uiI ] )
-            {
-                CANCEL_RETURN;
-                if( rJson.contains( xChr.sName ) )
-                {
-                    int64_t iDataSetId = rJson[ xChr.sName ].get<int64_t>( );
-                    vFullList.append( uiRunningStart );
-
                     if( bSqueeze )
                         uiRunningStart += pIndices->vAnno.numIntervals( iDataSetId );
                     else
@@ -581,16 +543,27 @@ bool PartialQuarry::setTicks( )
                 }
             }
         }
+
         assert( uiRunningStart == vCanvasSize[ uiI ] );
-        vFullList.append( uiRunningStart );
         vStartPos.append( uiRunningStart );
 
-        xTicksCDS[ uiI ] = pybind11::dict( "contig_starts"_a = vStartPos,
+        xContigTicksCDS[ uiI ] = pybind11::dict( "contig_starts"_a = vStartPos,
                                            "genome_end"_a = vCanvasSize[ uiI ],
-                                           "dividend"_a = uiDividend,
                                            "contig_names"_a = vNames );
-        vTickLists[ uiI ] = vFullList;
-        vTickLists2[ uiI ] = vStartPos;
+        vTickLists[ uiI ] = vStartPos;
+
+        pybind11::list vScreenStart;
+        pybind11::list vIndexStart;
+        for( AxisRegion& xRegion : vAxisRegions[ uiI ] )
+        {
+            vScreenStart.append( xRegion.uiScreenPos );
+            vIndexStart.append( xRegion.uiIndexPos );
+        }
+
+        xTicksCDS[ uiI ] = pybind11::dict( "screen_starts"_a = vScreenStart,
+                                           "index_starts"_a = vIndexStart,
+                                           "dividend"_a = uiDividend,
+                                           "genome_end"_a = vCanvasSize[ uiI ] );
     }
     END_RETURN;
 }
@@ -601,6 +574,12 @@ const pybind11::dict PartialQuarry::getTicks( bool bXAxis, const std::function<v
     return xTicksCDS[ bXAxis ? 0 : 1 ];
 }
 
+const pybind11::dict PartialQuarry::getContigTicks( bool bXAxis, const std::function<void( const std::string& )>& fPyPrint )
+{
+    update( NodeNames::Ticks, fPyPrint );
+    return xContigTicksCDS[ bXAxis ? 0 : 1 ];
+}
+
 const pybind11::list PartialQuarry::getTickList( bool bXAxis,
                                                  const std::function<void( const std::string& )>& fPyPrint )
 {
@@ -608,12 +587,6 @@ const pybind11::list PartialQuarry::getTickList( bool bXAxis,
     return vTickLists[ bXAxis ? 0 : 1 ];
 }
 
-const pybind11::list PartialQuarry::getTickList2( bool bXAxis,
-                                                  const std::function<void( const std::string& )>& fPyPrint )
-{
-    update( NodeNames::Ticks, fPyPrint );
-    return vTickLists2[ bXAxis ? 0 : 1 ];
-}
 
 const std::array<size_t, 2> PartialQuarry::getCanvasSize( const std::function<void( const std::string& )>& fPyPrint )
 {

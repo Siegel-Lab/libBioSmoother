@@ -711,9 +711,9 @@ class PartialQuarry : public HasSession
     std::array<std::vector<std::string>, 2> vTrackExportNames;
     std::array<std::vector<std::tuple<std::string, size_t, size_t, std::vector<double>>>, 2> vTrackExport;
     std::array<pybind11::dict, 2> xTicksCDS;
+    std::array<pybind11::dict, 2> xContigTicksCDS;
     std::array<pybind11::dict, 2> xTracksCDS;
     std::array<pybind11::list, 2> vTickLists;
-    std::array<pybind11::list, 2> vTickLists2;
     std::array<size_t, 2> vCanvasSize;
     std::array<std::array<double, 2>, 2> vvMinMaxTracks;
     double fMax, fMin;
@@ -1059,10 +1059,10 @@ class PartialQuarry : public HasSession
 
     // colors.h
     const pybind11::dict getTicks( bool, const std::function<void( const std::string& )>& );
+    const pybind11::dict getContigTicks( bool, const std::function<void( const std::string& )>& );
 
     // colors.h
     const pybind11::list getTickList( bool, const std::function<void( const std::string& )>& );
-    const pybind11::list getTickList2( bool, const std::function<void( const std::string& )>& );
 
     // coords.h
     const std::vector<AxisCoord>& getAxisCoords( bool, const std::function<void( const std::string& )>& );
