@@ -287,8 +287,7 @@ template <template <typename> typename vec_gen_t> class AnnotationDescIndex
             bool bFound = false;
             if( uiDatasetId > 0 )
                 iterate(
-                    uiDatasetId, (size_t)std::round( uiFrom / (double)uiDividend ),
-                    (size_t)std::round( uiTo / (double)uiDividend ),
+                    uiDatasetId, uiFrom / uiDividend, uiTo / uiDividend + 1,
                     [ & ]( std::tuple<size_t, size_t, std::string, bool> xTup ) {
                         if( std::get<0>( xTup ) <= uiTo && std::get<1>( xTup ) > uiFrom )
                             bFound = true;

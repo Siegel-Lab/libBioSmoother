@@ -286,7 +286,6 @@ class ChrOrderHeatmapIterator:
                         yield line.split()
             for tup in self.chrs[chr_x][chr_y]:
                 yield tup
-                
 
     def itr_row(self, chr_y):
         for chr_x in self.itr_x_axis():
@@ -355,7 +354,10 @@ def chr_order_heatmap(
         )
 
         if len(chrs[chr_1][chr_2]) >= MAX_READS_IM_MEM:
-            with open(prefix + "." + chr_1 + "." + chr_2, "a" if in_file[chr_1][chr_2] else "w" ) as out_file:
+            with open(
+                prefix + "." + chr_1 + "." + chr_2,
+                "a" if in_file[chr_1][chr_2] else "w",
+            ) as out_file:
                 for tup in chrs[chr_1][chr_2]:
                     out_file.write("\t".join([str(x) for x in tup]) + "\n")
             chrs[chr_1][chr_2] = []
@@ -420,7 +422,9 @@ def chr_order_coverage(
         chrs[chrs_[0]].append((read_name, pos_s[0], pos_e[0], strands[0], map_q))
 
         if len(chrs[chrs_[0]]) >= MAX_READS_IM_MEM:
-            with open(prefix + "." + chrs_[0], "a" if in_file[chrs_[0]] else "w") as out_file:
+            with open(
+                prefix + "." + chrs_[0], "a" if in_file[chrs_[0]] else "w"
+            ) as out_file:
                 for tup in chrs[chrs_[0]]:
                     out_file.write("\t".join([str(x) for x in tup]) + "\n")
             chrs[chrs_[0]] = []

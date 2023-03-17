@@ -82,7 +82,7 @@ class Quarry(PartialQuarry):
                     * fac
                 )
                 if i > 0 and HAS_PALETTES:
-                    p = 1 / (i+1)
+                    p = 1 / (i + 1)
                     x = val[jdx]
                     ret.append(binom_test(x, max(x, n), p, alternative="greater"))
                 else:
@@ -125,22 +125,20 @@ class Quarry(PartialQuarry):
                 orange = "f5a623"
                 red = "d0021b"
                 black = "000000"
-                return [
-                    self.__combine_hex_values(
-                        {white: 1 - x / 100, orange: x / 100}
-                    )
-                    for x in range(100)
-                ] + [
-                    self.__combine_hex_values(
-                        {orange: 1 - x / 100, red: x / 100}
-                    )
-                    for x in range(100)
-                ] + [
-                    self.__combine_hex_values(
-                        {red: 1 - x / 100, black: x / 100}
-                    )
-                    for x in range(100)
-                ]
+                return (
+                    [
+                        self.__combine_hex_values({white: 1 - x / 100, orange: x / 100})
+                        for x in range(100)
+                    ]
+                    + [
+                        self.__combine_hex_values({orange: 1 - x / 100, red: x / 100})
+                        for x in range(100)
+                    ]
+                    + [
+                        self.__combine_hex_values({red: 1 - x / 100, black: x / 100})
+                        for x in range(100)
+                    ]
+                )
             elif palette_name == "LowToHigh":
                 return [
                     self.__combine_hex_values(

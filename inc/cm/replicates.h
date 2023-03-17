@@ -604,7 +604,7 @@ void PartialQuarry::regReplicates( )
             /*.vIncomingSession =*/
             { { "settings", "normalization", "min_interactions", "val" }, { "replicates", "by_name" } },
             /*.vSessionsIncomingInPrevious =*/
-            { { "annotation", "by_name" }, { "contigs", "column_coordinates" }, { "contigs", "row_coordinates" } } } );
+            {} } );
 
     registerNode( NodeNames::DecayValues,
                   ComputeNode{ /*.sNodeName =*/"decay_values",

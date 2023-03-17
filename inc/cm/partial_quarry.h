@@ -758,6 +758,8 @@ class PartialQuarry : public HasSession
     // bin_size.h
     size_t nextEvenNumber( double );
 
+    // coords.h
+    size_t getAnnoListId( std::string );
 
     // bin_size.h
     bool setBinSize( );
@@ -1170,9 +1172,9 @@ class PartialQuarry : public HasSession
         size_t uiMaxPos = 0;
         const bool bSqueeze =
             this->xSession[ "settings" ][ "filters" ][ "anno_in_multiple_bins" ].get<std::string>( ) == "squeeze";
-        std::string sCoords =
-            this->xSession[ "contigs" ][ bXAxis ? "column_coordinates" : "row_coordinates" ].get<std::string>( );
-        const bool bFullGenome = sCoords == "full_genome";
+        std::string sCoords = getValue<std::string>( { "contigs", "annotation_coordinates" } );
+        const bool bFullGenome =
+            !getValue<bool>( { "settings", "filters", bXAxis ? "anno_coords_col" : "anno_coords_row" } );
         size_t uiRunningPos = 0;
         for( auto xChr : vActiveChromosomes[ bXAxis ? 0 : 1 ] )
         {

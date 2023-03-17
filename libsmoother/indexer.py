@@ -148,8 +148,6 @@ class Indexer:
                 "visible_x": [],
                 "visible_y": [],
                 "filter": None,
-                "filter_row": False,
-                "filter_col": True,
             },
         )
         self.set_session(
@@ -160,8 +158,7 @@ class Indexer:
                 "displayed_on_x": [],
                 "displayed_on_y": [],
                 "genome_size": 0,
-                "column_coordinates": "full_genome",
-                "row_coordinates": "full_genome",
+                "annotation_coordinates": "",
             },
         )
         if test:
@@ -222,6 +219,9 @@ class Indexer:
         for name in sorted(list(sorted_list.keys())):
             if not name in order:
                 order.append(name)
+        if len(order) > 0:
+            self.set_session(["contigs", "annotation_coordinates"], order[0])
+            self.set_session(["annotation", "filter"], order[0])
         for name in order:
             chroms = sorted_list[name]
             if name not in self.session_default["annotation"]["list"]:
@@ -525,12 +525,13 @@ class Indexer:
             ) in read_iterator.itr_cell(chr_x):
                 total_reads += 1
                 if no_category:
-                    cat = [False] * len(
-                            self.session_default["annotation"]["list"]
-                        )
+                    cat = [False] * len(self.session_default["annotation"]["list"])
                 else:
                     cat = self.indices.anno.get_categories(
-                        int(pos_1_s), int(pos_1_e), self.session_default["dividend"], anno_ids
+                        int(pos_1_s),
+                        int(pos_1_e),
+                        self.session_default["dividend"],
+                        anno_ids,
                     )
 
                 act_pos_1_s = int(pos_1_s) // self.session_default["dividend"]

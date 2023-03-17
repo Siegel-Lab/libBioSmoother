@@ -72,7 +72,12 @@ target_compile_definitions( libsmoothercpp PRIVATE WITH_PYTHON )
 target_compile_definitions( libsmoothercpp PRIVATE CXX_COMPILER_ID="${CMAKE_CXX_COMPILER_ID}" )
 add_dependencies( libsmoothercpp cm_config_version cm_config_build_time )
 
-add_custom_target(format COMMAND "clang-format" "-i" "-style=file" "inc/cm/*.h" "src/*.cpp" 
+file(GLOB format_files
+     "inc/cm/*.h"
+     "src/*.cpp"
+)
+add_custom_target(format 
+                  COMMAND "clang-format" "-i" "--style=file" ${format_files}
                   COMMAND "black" "libsmoother/"
                   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} VERBATIM)
 

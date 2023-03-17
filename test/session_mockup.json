@@ -18,8 +18,7 @@
             "chr_2"
         ],
         "genome_size": 60,
-        "column_coordinates": "full_genome",
-        "row_coordinates": "full_genome"
+        "annotation_coordinates": "gene"
     },
     "area": {
         "x_start": 0,
@@ -137,7 +136,7 @@
         ],
         "visible_x": [],
         "visible_y": [],
-        "filter": null,
+        "filter": "gene",
         "filter_row": false,
         "filter_col": true,
         "by_name":{

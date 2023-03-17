@@ -18,7 +18,9 @@ def main():
     parser.add_argument(
         "--version_sps", help=argparse.SUPPRESS, action="version", version=SPS_VERSION
     )
-    parser.add_argument('--compiler_id', action='version', help=argparse.SUPPRESS, version=COMPILER_ID)
+    parser.add_argument(
+        "--compiler_id", action="version", help=argparse.SUPPRESS, version=COMPILER_ID
+    )
 
     args = parser.parse_args()
 

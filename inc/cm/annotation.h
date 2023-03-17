@@ -59,8 +59,7 @@ bool PartialQuarry::setAnnotationValues( )
     for( size_t uiX : { 0, 1 } )
     {
         const bool bIsGenomeCoords =
-            getValue<std::string>( { "contigs", ( uiX == 0 ) ? "column_coordinates" : "row_coordinates" } ) ==
-            "full_genome";
+            !getValue<bool>( { "settings", "filters", ( uiX == 0 ) ? "anno_coords_col" : "anno_coords_row" } );
         size_t uiMinAnnoDist = 2;
         vAnnotationValues[ uiX ].clear( );
         vAnnotationValues[ uiX ].reserve( vActiveAnnotation[ uiX ].size( ) );
@@ -330,8 +329,8 @@ void PartialQuarry::regAnnotation( )
                                    { "settings", "filters", "anno_in_multiple_bins" },
                                    { "dividend" },
                                    { "annotation", "by_name" },
-                                   { "contigs", "column_coordinates" },
-                                   { "contigs", "row_coordinates" },
+                                   { "settings", "filters", "anno_coords_row" },
+                                   { "settings", "filters", "anno_coords_col" },
                                } } );
 
     registerNode( NodeNames::AnnotationCDS,

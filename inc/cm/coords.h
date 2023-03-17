@@ -465,9 +465,10 @@ bool PartialQuarry::setCanvasSize( )
     {
 
         size_t uiRunningStart = 0;
-        std::string sCoords =
-            getValue<std::string>( { "contigs", uiI == 0 ? "column_coordinates" : "row_coordinates" } );
-        if( sCoords == "full_genome" )
+
+        const bool bAnnoCoords =
+            getValue<bool>( { "settings", "filters", uiI == 0 ? "anno_coords_col" : "anno_coords_row" } );
+        if( !bAnnoCoords )
         {
             for( ChromDesc& rDesc : this->vActiveChromosomes[ uiI ] )
             {
@@ -479,7 +480,8 @@ bool PartialQuarry::setCanvasSize( )
         {
             size_t iAnnoInMultipleBins =
                 multiple_bins( getValue<std::string>( { "settings", "filters", "anno_in_multiple_bins" } ) );
-            auto rJson = getValue<json>( { "annotation", "by_name", sCoords } );
+            auto rJson = getValue<json>(
+                { "annotation", "by_name", getValue<std::string>( { "contigs", "annotation_coordinates" } ) } );
 
             uiRunningStart = 0;
             for( auto xChr : this->vActiveChromosomes[ uiI ] )
@@ -521,15 +523,16 @@ bool PartialQuarry::setTicks( )
         pybind11::list vStartPos;
 
         size_t uiRunningStart = 0;
-        std::string sCoords =
-            getValue<std::string>( { "contigs", uiI == 0 ? "column_coordinates" : "row_coordinates" } );
-        auto rJson = getValue<json>( { "annotation", "by_name", sCoords } );
+        const bool bAnnoCoords =
+            getValue<bool>( { "settings", "filters", uiI == 0 ? "anno_coords_col" : "anno_coords_row" } );
+        auto rJson = getValue<json>(
+            { "annotation", "by_name", getValue<std::string>( { "contigs", "annotation_coordinates" } ) } );
         for( ChromDesc& rDesc : this->vActiveChromosomes[ uiI ] )
         {
             CANCEL_RETURN;
             vNames.append( substringChr( rDesc.sName ) );
             vStartPos.append( uiRunningStart );
-            if( sCoords == "full_genome" )
+            if( !bAnnoCoords )
                 uiRunningStart += rDesc.uiLength;
             else
             {
@@ -547,9 +550,8 @@ bool PartialQuarry::setTicks( )
         assert( uiRunningStart == vCanvasSize[ uiI ] );
         vStartPos.append( uiRunningStart );
 
-        xContigTicksCDS[ uiI ] = pybind11::dict( "contig_starts"_a = vStartPos,
-                                           "genome_end"_a = vCanvasSize[ uiI ],
-                                           "contig_names"_a = vNames );
+        xContigTicksCDS[ uiI ] = pybind11::dict( "contig_starts"_a = vStartPos, "genome_end"_a = vCanvasSize[ uiI ],
+                                                 "contig_names"_a = vNames );
         vTickLists[ uiI ] = vStartPos;
 
         pybind11::list vScreenStart;
@@ -574,7 +576,8 @@ const pybind11::dict PartialQuarry::getTicks( bool bXAxis, const std::function<v
     return xTicksCDS[ bXAxis ? 0 : 1 ];
 }
 
-const pybind11::dict PartialQuarry::getContigTicks( bool bXAxis, const std::function<void( const std::string& )>& fPyPrint )
+const pybind11::dict PartialQuarry::getContigTicks( bool bXAxis,
+                                                    const std::function<void( const std::string& )>& fPyPrint )
 {
     update( NodeNames::Ticks, fPyPrint );
     return xContigTicksCDS[ bXAxis ? 0 : 1 ];
@@ -609,7 +612,7 @@ bool PartialQuarry::setActiveChromLength( )
     for( bool bX : { true, false } )
     {
         const bool bGenomeCoords =
-            getValue<std::string>( { "contigs", bX ? "column_coordinates" : "row_coordinates" } ) == "full_genome";
+            !getValue<bool>( { "settings", "filters", bX ? "anno_coords_col" : "anno_coords_row" } );
         const size_t uiBinSize = bX ? uiBinWidth : uiBinHeight;
         for( auto& rChr : this->vActiveChromosomes[ bX ? 0 : 1 ] )
             if( uiSmallerVal == 4 && bGenomeCoords ) // fit_chrom_smaller
@@ -626,9 +629,11 @@ bool PartialQuarry::setAxisCoords( )
 {
     for( bool bX : { true, false } )
     {
+        const bool bAnnoCoords =
+            getValue<bool>( { "settings", "filters", bX ? "anno_coords_col" : "anno_coords_row" } );
         CANCEL_RETURN;
         std::pair<std::vector<AxisCoord>, std::vector<AxisRegion>> xRet;
-        if( getValue<std::string>( { "contigs", bX ? "column_coordinates" : "row_coordinates" } ) == "full_genome" )
+        if( !bAnnoCoords )
             xRet = axisCoordsHelper(
                 bX ? this->uiBinWidth : this->uiBinHeight,
                 bX ? std::max( (int64_t)0, this->iStartX ) : std::max( (int64_t)0, this->iStartY ),
@@ -646,8 +651,7 @@ bool PartialQuarry::setAxisCoords( )
                 multiple_bins( getValue<std::string>( { "settings", "filters", "anno_in_multiple_bins" } ) ),
                 this->vActiveChromosomes[ bX ? 0 : 1 ], this->bCancel,
                 getValue<json>(
-                    { "annotation", "by_name",
-                      getValue<std::string>( { "contigs", bX ? "column_coordinates" : "row_coordinates" } ) } ),
+                    { "annotation", "by_name", getValue<std::string>( { "contigs", "annotation_coordinates" } ) } ),
                 pIndices->vAnno );
         this->vAxisCords[ bX ? 0 : 1 ] = xRet.first;
         this->vAxisRegions[ bX ? 0 : 1 ] = xRet.second;
@@ -686,28 +690,55 @@ bool PartialQuarry::setGridSeqCoords( )
     END_RETURN;
 }
 
+size_t PartialQuarry::getAnnoListId( std::string sAnno )
+{
+    const json& rList = getValue<json>( { "annotation", "list" } );
+    size_t uiI = 0;
+    for( const auto& rEle : rList )
+    {
+        if( rEle.get<std::string>( ) == sAnno )
+            break;
+        uiI += 1;
+    }
+    return uiI;
+}
 
 bool PartialQuarry::setAnnoFilters( )
 {
-    const json& rList = getValue<json>( { "annotation", "list" } );
-    if( getValue<json>( { "annotation", "filter" } ).is_null( ) )
+    const std::string sCoordAnno = getValue<std::string>( { "contigs", "annotation_coordinates" } );
+    const bool bAnnoCoordsRow = getValue<bool>( { "settings", "filters", "anno_coords_row" } );
+    const bool bAnnoCoordsCol = getValue<bool>( { "settings", "filters", "anno_coords_col" } );
+
+    const std::string sFilterAnno = getValue<std::string>( { "annotation", "filter" } );
+    const bool bFilterAnnoRow = getValue<bool>( { "settings", "filters", "anno_filter_row" } );
+    const bool bFilterAnnoCol = getValue<bool>( { "settings", "filters", "anno_filter_col" } );
+
+    const bool bCoords = bAnnoCoordsRow || bAnnoCoordsCol;
+    const bool bFilter = ( bFilterAnnoRow || bFilterAnnoCol ) && ( !bCoords || sCoordAnno == sFilterAnno );
+
+    const bool bOneOf = bCoords || bFilter;
+    const bool bRow = bOneOf && ( bAnnoCoordsRow || ( bFilter && bFilterAnnoRow ) );
+    const bool bCol = bOneOf && ( bAnnoCoordsCol || ( bFilter && bFilterAnnoCol ) );
+
+    if( bOneOf )
     {
-        uiFromAnnoFilter = 0;
-        uiToAnnoFilter = rList.size( ) * 3 + 2;
-    }
-    else
-    {
+        const size_t uiAnnotationFilterIdx = getAnnoListId( bCoords ? sCoordAnno : sFilterAnno );
         const std::array<std::array<size_t, 2>, 2> vvAF{
             /*x false*/ std::array<size_t, 2>{ /*y false*/ 0, /*y true*/ 0 },
             /*x true */ std::array<size_t, 2>{ /*y false*/ 1, /*y true*/ 1 } };
         const std::array<std::array<size_t, 2>, 2> vvAT{
-            /*x false*/ std::array<size_t, 2>{ /*y false*/ 4, /*y true*/ 2 },
+            /*x false*/ std::array<size_t, 2>{ /*y false*/ 3, /*y true*/ 2 },
             /*x true */ std::array<size_t, 2>{ /*y false*/ 3, /*y true*/ 2 } };
-        const size_t uiI = rList.find( getValue<std::string>( { "annotation", "filter" } ) ) - rList.begin( );
-        const bool bFilterRow = getValue<bool>( { "annotation", "filter_row" } );
-        const bool bFilterCol = getValue<bool>( { "annotation", "filter_col" } );
-        uiFromAnnoFilter = uiI * 3 + vvAF[ bFilterRow ][ bFilterCol ];
-        uiToAnnoFilter = uiI * 3 + vvAT[ bFilterRow ][ bFilterCol ];
+        uiFromAnnoFilter = uiAnnotationFilterIdx * 3 + vvAF[ bRow ][ bCol ];
+        uiToAnnoFilter = uiAnnotationFilterIdx * 3 + vvAT[ bRow ][ bCol ];
+        std::cout << "uiFromAnnoFilter: " << uiFromAnnoFilter << " uiToAnnoFilter: " << uiToAnnoFilter
+                  << " bCoords ? sCoordAnno : sFilterAnno:" << ( bCoords ? sCoordAnno : sFilterAnno )
+                  << " uiAnnotationFilterIdx: " << uiAnnotationFilterIdx << std::endl;
+    }
+    else
+    {
+        uiFromAnnoFilter = 0;
+        uiToAnnoFilter = getValue<json>( { "annotation", "list" } ).size( ) * 3 + 2;
     }
 
     END_RETURN;
@@ -1042,11 +1073,10 @@ void PartialQuarry::regCoords( )
                                /*.fFunc =*/&PartialQuarry::setActiveChromLength,
                                /*.vIncomingFunctions =*/{ NodeNames::ActiveChrom, NodeNames::BinSize },
                                /*.vIncomingSession =*/
-                               {
-                                   { "settings", "filters", "cut_off_bin" },
-                                   { "contigs", "row_coordinates" },
-                                   { "contigs", "column_coordinates" },
-                               },
+                               { { "settings", "filters", "cut_off_bin" },
+                                 { "contigs", "annotation_coordinates" },
+                                 { "settings", "filters", "anno_coords_row" },
+                                 { "settings", "filters", "anno_coords_col" } },
                                /*.vSessionsIncomingInPrevious =*/{} } );
 
     registerNode(
@@ -1056,8 +1086,9 @@ void PartialQuarry::regCoords( )
                      /*.vIncomingFunctions =*/{ NodeNames::LCS, NodeNames::AnnotationValues, NodeNames::CanvasSize },
                      /*.vIncomingSession =*/{ },
                      /*.vSessionsIncomingInPrevious =*/
-                     { { "contigs", "column_coordinates" },
-                       { "contigs", "row_coordinates" },
+                     { { "contigs", "annotation_coordinates" },
+                       { "settings", "filters", "anno_coords_row" },
+                       { "settings", "filters", "anno_coords_col" },
                        { "settings", "filters", "anno_in_multiple_bins" },
                        { "annotation", "by_name" },
                        { "dividend" } } } );
@@ -1067,8 +1098,9 @@ void PartialQuarry::regCoords( )
                                /*.fFunc =*/&PartialQuarry::setCanvasSize,
                                /*.vIncomingFunctions =*/{ NodeNames::ActiveChromLength },
                                /*.vIncomingSession =*/
-                               { { "contigs", "column_coordinates" },
-                                 { "contigs", "row_coordinates" },
+                               { { "contigs", "annotation_coordinates" },
+                                 { "settings", "filters", "anno_coords_row" },
+                                 { "settings", "filters", "anno_coords_col" },
                                  { "settings", "filters", "anno_in_multiple_bins" },
                                  { "annotation", "by_name" } },
                                /*.vSessionsIncomingInPrevious =*/{} } );
@@ -1081,8 +1113,9 @@ void PartialQuarry::regCoords( )
                                { { "settings", "filters", "cut_off_bin" },
                                  { "settings", "filters", "multiple_annos_in_bin" },
                                  { "settings", "filters", "anno_in_multiple_bins" },
-                                 { "contigs", "column_coordinates" },
-                                 { "contigs", "row_coordinates" },
+                                 { "contigs", "annotation_coordinates" },
+                                 { "settings", "filters", "anno_coords_row" },
+                                 { "settings", "filters", "anno_coords_col" },
                                  { "annotation", "by_name" } },
                                /*.vSessionsIncomingInPrevious =*/{} } );
 
@@ -1123,13 +1156,12 @@ void PartialQuarry::regCoords( )
                                /*.fFunc =*/&PartialQuarry::setAnnoFilters,
                                /*.vIncomingFunctions =*/{ NodeNames::ActiveChromLength },
                                /*.vIncomingSession =*/
-                               { { "annotation", "filterable" },
-                                 { "annotation", "filter" },
-                                 { "annotation", "filter_row" },
-                                 { "annotation", "filter_col" },
-                                 { "annotation", "by_name" },
-                                 { "contigs", "row_coordinates" },
-                                 { "contigs", "column_coordinates" },
+                               { { "annotation", "filter" },
+                                 { "settings", "filters", "anno_filter_row" },
+                                 { "settings", "filters", "anno_filter_col" },
+                                 { "contigs", "annotation_coordinates" },
+                                 { "settings", "filters", "anno_coords_row" },
+                                 { "settings", "filters", "anno_coords_col" },
                                  { "annotation", "list" } },
                                /*.vSessionsIncomingInPrevious =*/{} } );
 
