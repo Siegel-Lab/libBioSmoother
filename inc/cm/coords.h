@@ -100,7 +100,8 @@ std::pair<std::vector<AxisCoord>, std::vector<AxisRegion>> axisCoordsHelper( siz
                     //},
                     /*.uiScreenPos =*/uiCurrScreenPos, //
                     /*.uiScreenSize =*/uiCurrBinSize, //
-                    /*.uiRegionIdx =*/uiChr //
+                    /*.uiRegionIdx =*/uiChr, //
+                    /*.uiIdx =*/ vRet.size() //
                 } );
             bool bIncScreenPos;
             switch( iSmallerBins )
@@ -137,6 +138,7 @@ std::pair<std::vector<AxisCoord>, std::vector<AxisRegion>> axisCoordsHelper( siz
                 /*.uiScreenPos =*/uiStartScreenPos, //
                 /*.uiScreenSize =*/uiCurrScreenPos - uiStartScreenPos, //
                 /*.uiRegionIdx =*/uiChr, //
+                /*.uiIdx =*/ vRet2.size(), //
                 //},
                 /*.uiCoordStartIdx =*/uiStartIdx, //
                 /*.uiNumCoords =*/vRet.size( ) - uiStartIdx //
@@ -341,7 +343,8 @@ annoCoordsHelper( size_t uiBinSize, size_t uiScreenStartPos, size_t uiScreenEndP
                         /*},*/
                         /*.uiScreenPos =*/uiCurrScreenPos, //
                         /*.uiScreenSize =*/uiCurrScreenSize, //
-                        /*.uiRegionIdx =*/uiChr //
+                        /*.uiRegionIdx =*/uiChr, //
+                        /*.uiIdx =*/ vRet.size() //
                     } );
                     if( iAnnoInMultipleBins != 2 && vRet2.size( ) > 0 && vRet2.back( ).uiChromosome == uiI &&
                         vRet2.back( ).uiIndexPos + vRet2.back( ).uiIndexSize == uiIndexPos )
@@ -362,6 +365,7 @@ annoCoordsHelper( size_t uiBinSize, size_t uiScreenStartPos, size_t uiScreenEndP
                             /*.uiScreenPos =*/uiCurrScreenPos, //
                             /*.uiScreenSize =*/uiCurrScreenSize, //
                             /*.uiRegionIdx =*/uiChr, //
+                            /*.uiIdx =*/ vRet2.size(), //
                             /*},*/
                             /*.uiCoordStartIdx =*/vRet.size( ) - 1, //
                             /*.uiNumCoords =*/1 //
@@ -731,9 +735,6 @@ bool PartialQuarry::setAnnoFilters( )
             /*x true */ std::array<size_t, 2>{ /*y false*/ 3, /*y true*/ 2 } };
         uiFromAnnoFilter = uiAnnotationFilterIdx * 3 + vvAF[ bRow ][ bCol ];
         uiToAnnoFilter = uiAnnotationFilterIdx * 3 + vvAT[ bRow ][ bCol ];
-        std::cout << "uiFromAnnoFilter: " << uiFromAnnoFilter << " uiToAnnoFilter: " << uiToAnnoFilter
-                  << " bCoords ? sCoordAnno : sFilterAnno:" << ( bCoords ? sCoordAnno : sFilterAnno )
-                  << " uiAnnotationFilterIdx: " << uiAnnotationFilterIdx << std::endl;
     }
     else
     {
@@ -855,7 +856,10 @@ template <typename out_t, typename in_t> const out_t makeSymBin( const in_t& xX,
                                 /*.uiScreenH =*/xY.uiScreenSize,
 
                                 /*.uiIndexW =*/xX.uiIndexSize,
-                                /*.uiIndexH =*/xY.uiIndexSize } };
+                                /*.uiIndexH =*/xY.uiIndexSize,
+
+                                /*.uiXAxisIdx =*/xX.uiIdx,
+                                /*.uiYAxisIdx =*/xY.uiIdx } };
 }
 
 template <typename out_t, typename in_t> const out_t makeAsymBin( const in_t& xX, const in_t& xY )
@@ -873,7 +877,10 @@ template <typename out_t, typename in_t> const out_t makeAsymBin( const in_t& xX
                                 /*.uiScreenH =*/xY.uiScreenSize,
 
                                 /*.uiIndexW =*/xY.uiIndexSize,
-                                /*.uiIndexH =*/xX.uiIndexSize } };
+                                /*.uiIndexH =*/xX.uiIndexSize,
+
+                                /*.uiXAxisIdx =*/xY.uiIdx,
+                                /*.uiYAxisIdx =*/xX.uiIdx } };
 }
 
 template <typename out_t, typename in_t>

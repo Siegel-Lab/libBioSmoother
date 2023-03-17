@@ -46,6 +46,7 @@ struct AxisCoord : IndexCoord
     size_t uiScreenPos;
     size_t uiScreenSize;
     size_t uiRegionIdx;
+    size_t uiIdx;
 };
 
 struct DecayCoord
@@ -83,6 +84,7 @@ struct BinCoordBase
     size_t uiIndexX, uiIndexY;
     size_t uiScreenW, uiScreenH;
     size_t uiIndexW, uiIndexH;
+    size_t uiXAxisIdx, uiYAxisIdx;
 };
 
 struct BinCoord : BinCoordBase

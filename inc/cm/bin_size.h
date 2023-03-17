@@ -128,10 +128,16 @@ template <typename CharT> struct Sep : public std::numpunct<CharT>
 
 std::string putCommas( size_t uiBp )
 {
-    std::stringstream ss;
-    ss.imbue( std::locale( std::cout.getloc( ), new Sep<char>( ) ) );
-    ss << uiBp;
-    return ss.str( );
+    std::string sNum = std::to_string(uiBp);
+    std::string sRet = "";
+    for(size_t uiI = 0; uiI < sNum.size(); uiI++)
+    {
+        if(uiI % 3 == 0 && uiI > 0)
+            sRet += ",";
+        sRet += sNum[sNum.size() - uiI - 1];
+    }
+    std::reverse(sRet.begin(), sRet.end());
+    return sRet;
 }
 
 std::string PartialQuarry::readableBp( size_t uiBp )

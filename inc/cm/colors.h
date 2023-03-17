@@ -232,6 +232,26 @@ const std::array<double, 4> PartialQuarry::getPaletteTicks( const std::function<
 
 bool PartialQuarry::setHeatmapCDS( )
 {
+    std::array<std::vector<std::string>, 2> vShortChrNames;
+    for(size_t uiI = 0; uiI < 2; uiI++)
+    {
+        vShortChrNames[uiI].reserve(vActiveChromosomes[ uiI ].size());
+        for(const auto& xChr : vActiveChromosomes[ uiI ])
+            vShortChrNames[uiI].push_back(substringChr( xChr.sName ));
+    }
+    std::array<std::array<std::vector<std::string>, 2>, 2> vBinCoordsReadable;
+    size_t uiDividend = getValue<size_t>( { "dividend" } );
+    for(size_t uiI = 0; uiI < 2; uiI++)
+    {
+        vBinCoordsReadable[uiI][0].reserve(vAxisCords[uiI].size());
+        vBinCoordsReadable[uiI][1].reserve(vAxisCords[uiI].size());
+        for(const auto& rAxis : vAxisCords[uiI])
+        {
+            vBinCoordsReadable[uiI][0].push_back( readableBp( rAxis.uiIndexPos * uiDividend ) );
+            vBinCoordsReadable[uiI][1].push_back( readableBp( (rAxis.uiIndexPos + rAxis.uiIndexSize) * uiDividend ) );
+        }
+    }
+
     using namespace pybind11::literals;
     pybind11::gil_scoped_acquire acquire;
 
@@ -262,7 +282,6 @@ bool PartialQuarry::setHeatmapCDS( )
     pybind11::list vScoreB;
     pybind11::list vZero;
 
-    size_t uiDividend = getValue<size_t>( { "dividend" } );
 
     for( size_t uiI = 0; uiI < vColored.size( ); uiI++ )
     {
@@ -278,33 +297,21 @@ bool PartialQuarry::setHeatmapCDS( )
             vColor.append( vColored[ uiI ] );
 
 
-            std::string sChromNameX =
-                substringChr( vActiveChromosomes[ 0 ][ vBinCoords[ uiI ][ 0 ].uiChromosomeX ].sName );
-            std::string sChromNameY =
-                substringChr( vActiveChromosomes[ 1 ][ vBinCoords[ uiI ][ 0 ].uiChromosomeY ].sName );
-            vChrX.append( sChromNameX );
-            vChrY.append( sChromNameY );
-            vIndexLeft.append( readableBp( vBinCoords[ uiI ][ 0 ].uiIndexX * uiDividend ) );
-            vIndexRight.append(
-                readableBp( ( vBinCoords[ uiI ][ 0 ].uiIndexX + vBinCoords[ uiI ][ 0 ].uiIndexW ) * uiDividend ) );
-            vIndexBottom.append( readableBp( vBinCoords[ uiI ][ 0 ].uiIndexY * uiDividend ) );
-            vIndexTop.append(
-                readableBp( ( vBinCoords[ uiI ][ 0 ].uiIndexY + vBinCoords[ uiI ][ 0 ].uiIndexH ) * uiDividend ) );
+            vChrX.append( vShortChrNames[0][vBinCoords[ uiI ][ 0 ].uiChromosomeX] );
+            vChrY.append( vShortChrNames[1][vBinCoords[ uiI ][ 0 ].uiChromosomeY] );
+            vIndexLeft.append( vBinCoordsReadable[0][0][vBinCoords[ uiI ][ 0 ].uiXAxisIdx] );
+            vIndexRight.append( vBinCoordsReadable[0][1][vBinCoords[ uiI ][ 0 ].uiXAxisIdx] );
+            vIndexBottom.append( vBinCoordsReadable[1][0][vBinCoords[ uiI ][ 0 ].uiYAxisIdx] );
+            vIndexTop.append( vBinCoordsReadable[1][1][vBinCoords[ uiI ][ 0 ].uiYAxisIdx] );
 
             if( vBinCoords[ uiI ][ 1 ].uiChromosomeX != std::numeric_limits<size_t>::max( ) )
             {
-                std::string sChromNameX =
-                    substringChr( vActiveChromosomes[ 0 ][ vBinCoords[ uiI ][ 1 ].uiChromosomeX ].sName );
-                std::string sChromNameY =
-                    substringChr( vActiveChromosomes[ 1 ][ vBinCoords[ uiI ][ 1 ].uiChromosomeY ].sName );
-                vChrXSym.append( sChromNameX );
-                vChrYSym.append( sChromNameY );
-                vIndexSymLeft.append( readableBp( vBinCoords[ uiI ][ 1 ].uiIndexX * uiDividend ) );
-                vIndexSymRight.append(
-                    readableBp( ( vBinCoords[ uiI ][ 1 ].uiIndexX + vBinCoords[ uiI ][ 1 ].uiIndexW ) * uiDividend ) );
-                vIndexSymBottom.append( readableBp( vBinCoords[ uiI ][ 1 ].uiIndexY * uiDividend ) );
-                vIndexSymTop.append(
-                    readableBp( ( vBinCoords[ uiI ][ 1 ].uiIndexY + vBinCoords[ uiI ][ 1 ].uiIndexH ) * uiDividend ) );
+                vChrXSym.append( vShortChrNames[0][vBinCoords[ uiI ][ 1 ].uiChromosomeX] );
+                vChrYSym.append( vShortChrNames[1][vBinCoords[ uiI ][ 1 ].uiChromosomeY] );
+                vIndexSymLeft.append( vBinCoordsReadable[0][0][vBinCoords[ uiI ][ 1 ].uiXAxisIdx] );
+                vIndexSymRight.append( vBinCoordsReadable[0][1][vBinCoords[ uiI ][ 1 ].uiXAxisIdx] );
+                vIndexSymBottom.append( vBinCoordsReadable[1][0][vBinCoords[ uiI ][ 1 ].uiYAxisIdx] );
+                vIndexSymTop.append( vBinCoordsReadable[1][1][vBinCoords[ uiI ][ 1 ].uiYAxisIdx] );
             }
             else
             {
