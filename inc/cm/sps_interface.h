@@ -97,7 +97,7 @@ template <bool CACHED> class SpsInterface : public HasSession
     std::shared_ptr<index_t> pIndex;
 
   public:
-    using coordinate_t = index_t::coordinate_t;
+    using coordinate_t = typename index_t::coordinate_t;
 
     SpsInterface( std::string sFilePrefix, bool bWrite )
         : HasSession( sFilePrefix ), //
