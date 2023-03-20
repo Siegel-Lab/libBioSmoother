@@ -17,7 +17,7 @@ elseif (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
 elseif (CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
     set(WITH_STXXL_DEFAULT OFF)
 else()
-    set(WITH_STXXL_DEFAULT ON)
+    set(WITH_STXXL_DEFAULT OFF)
 endif()
 
 option(WITH_STXXL "Use stxxl to build the cached forms of the index" ${WITH_STXXL_DEFAULT})
