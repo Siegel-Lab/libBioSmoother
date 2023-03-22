@@ -225,6 +225,7 @@ class PartialQuarry : public HasSession
         RadiclSeqSamples,
         DatasetIdPerRepl,
         ActiveChromLength,
+        V4cCoords,
         // ICESamples,
         SIZE
     };
@@ -648,6 +649,7 @@ class PartialQuarry : public HasSession
 
     std::array<std::vector<ChromDesc>, 2> vActiveChromosomes;
     std::array<std::vector<AxisCoord>, 2> vAxisCords;
+    std::array<std::vector<AxisCoord>, 2> vV4cCoords;
     std::vector<std::array<DecayCoord, 2>> vDistDepDecCoords;
     std::array<std::vector<AxisRegion>, 2> vAxisRegions;
     std::vector<AxisCoord> vGridSeqCoords;
@@ -717,6 +719,7 @@ class PartialQuarry : public HasSession
     std::array<pybind11::dict, 2> xContigTicksCDS;
     std::array<pybind11::dict, 2> xTracksCDS;
     std::array<pybind11::list, 2> vTickLists;
+    std::array<pybind11::list, 2> vContigStartList;
     std::array<size_t, 2> vCanvasSize;
     std::array<std::array<double, 2>, 2> vvMinMaxTracks;
     double fMax, fMin;
@@ -803,6 +806,8 @@ class PartialQuarry : public HasSession
     bool setTicks( );
     // coords.h
     bool setCanvasSize( );
+    // coords.h
+    bool setV4cCoords( );
 
     // coords.h
     void regCoords( );
@@ -1068,6 +1073,8 @@ class PartialQuarry : public HasSession
 
     // colors.h
     const pybind11::list getTickList( bool, const std::function<void( const std::string& )>& );
+    // colors.h
+    const pybind11::list getContigStartList( bool, const std::function<void( const std::string& )>& );
 
     // coords.h
     const std::vector<AxisCoord>& getAxisCoords( bool, const std::function<void( const std::string& )>& );
@@ -1164,7 +1171,7 @@ class PartialQuarry : public HasSession
     }
 
   public:
-    const pybind11::int_ interpretName( std::string sName, bool bXAxis, bool bBottom )
+    const pybind11::int_ interpretName( std::string sName, bool bXAxis, bool bBottom, bool bGenomicCoords )
     {
         if( ( bBottom && sName == "*" ) || sName.size( ) == 0 || to_lower( sName ) == "start" )
             return pybind11::int_( 0 );
@@ -1176,7 +1183,7 @@ class PartialQuarry : public HasSession
         const bool bSqueeze =
             this->xSession[ "settings" ][ "filters" ][ "anno_in_multiple_bins" ].get<std::string>( ) == "squeeze";
         std::string sCoords = getValue<std::string>( { "contigs", "annotation_coordinates" } );
-        const bool bFullGenome =
+        const bool bFullGenome = bGenomicCoords || 
             !getValue<bool>( { "settings", "filters", bXAxis ? "anno_coords_col" : "anno_coords_row" } );
         size_t uiRunningPos = 0;
         for( auto xChr : vActiveChromosomes[ bXAxis ? 0 : 1 ] )
@@ -1302,8 +1309,8 @@ class PartialQuarry : public HasSession
                 sJoined += "<br/>";
             }
             for( const NodeNames& rIncoming : rNode.vIncomingFunctions )
-                if(vGraph[rIncoming].bHidden)
-                    sJoined += "<i>[" + vGraph[rIncoming].sNodeName + "]</i><br/>";
+                if( vGraph[ rIncoming ].bHidden )
+                    sJoined += "<i>[" + vGraph[ rIncoming ].sNodeName + "]</i><br/>";
             if( sJoined.size( ) > 0 )
             {
                 sRet += "\t" + rNode.sNodeName + "_in [shape=box, label=<" + sJoined + ">];\n";
@@ -1312,7 +1319,7 @@ class PartialQuarry : public HasSession
             if( rNodeData.bTerminal )
                 sRet += "\t" + rNode.sNodeName + " [shape=hexagon];\n";
             for( const NodeNames& rIncoming : rNode.vIncomingFunctions )
-                if(!vGraph[rIncoming].bHidden)
+                if( !vGraph[ rIncoming ].bHidden )
                     sRet += "\t" + vGraph[ rIncoming ].sNodeName + " -> " + rNode.sNodeName + ";\n";
         }
         return sRet + "}";

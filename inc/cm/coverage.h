@@ -680,7 +680,7 @@ void PartialQuarry::regCoverage( )
                                  { "settings", "normalization", "normalize_by" },
                                  { "coverage", "list" },
                                  { "replicates", "list" } },
-                               /*.vSessionsIncomingInPrevious =*/{},
+                               /*.vSessionsIncomingInPrevious =*/{ },
                                /*bHidden =*/false } );
 
     registerNode( NodeNames::CoverageValues,
@@ -733,7 +733,7 @@ void PartialQuarry::regCoverage( )
             /*.vIncomingSession =*/{ },
             /*.vSessionsIncomingInPrevious =*/
             { { "annotation", "by_name" }, { "settings", "normalization", "grid_seq_annotation" }, { "dividend" } },
-                               /*bHidden =*/false } );
+            /*bHidden =*/false } );
 }
 
 

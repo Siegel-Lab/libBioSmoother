@@ -128,15 +128,15 @@ template <typename CharT> struct Sep : public std::numpunct<CharT>
 
 std::string putCommas( size_t uiBp )
 {
-    std::string sNum = std::to_string(uiBp);
+    std::string sNum = std::to_string( uiBp );
     std::string sRet = "";
-    for(size_t uiI = 0; uiI < sNum.size(); uiI++)
+    for( size_t uiI = 0; uiI < sNum.size( ); uiI++ )
     {
-        if(uiI % 3 == 0 && uiI > 0)
+        if( uiI % 3 == 0 && uiI > 0 )
             sRet += ",";
-        sRet += sNum[sNum.size() - uiI - 1];
+        sRet += sNum[ sNum.size( ) - uiI - 1 ];
     }
-    std::reverse(sRet.begin(), sRet.end());
+    std::reverse( sRet.begin( ), sRet.end( ) );
     return sRet;
 }
 
@@ -170,7 +170,7 @@ void PartialQuarry::regBinSize( )
                                  { "settings", "interface", "fixed_num_bins_y", "val" },
                                  { "dividend" },
                                  { "area" } },
-                               /*.vSessionsIncomingInPrevious =*/{},
+                               /*.vSessionsIncomingInPrevious =*/{ },
                                /*bHidden =*/false } );
 
     registerNode( NodeNames::RenderArea,

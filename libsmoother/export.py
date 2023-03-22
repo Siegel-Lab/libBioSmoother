@@ -751,12 +751,20 @@ def __draw_coordinates(session, d, sizes, print_callback=lambda s: None):
         contig_starts_x = session.get_tick_list(True, print_callback)
         contig_starts_y = session.get_tick_list(False, print_callback)
 
-        def to_readable_pos(x):
+        def to_readable_pos_x(x):
             return __to_readable_pos(
                 x,
                 session.get_value(["dividend"]),
                 contig_starts_x[-1],
                 contig_starts_x[:-1],
+            )
+
+        def to_readable_pos_y(x):
+            return __to_readable_pos(
+                x,
+                session.get_value(["dividend"]),
+                contig_starts_y[-1],
+                contig_starts_y[:-1],
             )
 
         __adaptive_ticker(
@@ -765,7 +773,7 @@ def __draw_coordinates(session, d, sizes, print_callback=lambda s: None):
             offset,
             offset + sizes["coords"],
             True,
-            to_readable_pos=to_readable_pos,
+            to_readable_pos=to_readable_pos_x,
             label_major=True,
         )
         __adaptive_ticker(
@@ -774,7 +782,7 @@ def __draw_coordinates(session, d, sizes, print_callback=lambda s: None):
             offset,
             offset + sizes["coords"],
             False,
-            to_readable_pos=to_readable_pos,
+            to_readable_pos=to_readable_pos_y,
             label_major=True,
         )
         d.append(

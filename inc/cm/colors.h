@@ -233,22 +233,23 @@ const std::array<double, 4> PartialQuarry::getPaletteTicks( const std::function<
 bool PartialQuarry::setHeatmapCDS( )
 {
     std::array<std::vector<std::string>, 2> vShortChrNames;
-    for(size_t uiI = 0; uiI < 2; uiI++)
+    for( size_t uiI = 0; uiI < 2; uiI++ )
     {
-        vShortChrNames[uiI].reserve(vActiveChromosomes[ uiI ].size());
-        for(const auto& xChr : vActiveChromosomes[ uiI ])
-            vShortChrNames[uiI].push_back(substringChr( xChr.sName ));
+        vShortChrNames[ uiI ].reserve( vActiveChromosomes[ uiI ].size( ) );
+        for( const auto& xChr : vActiveChromosomes[ uiI ] )
+            vShortChrNames[ uiI ].push_back( substringChr( xChr.sName ) );
     }
     std::array<std::array<std::vector<std::string>, 2>, 2> vBinCoordsReadable;
     size_t uiDividend = getValue<size_t>( { "dividend" } );
-    for(size_t uiI = 0; uiI < 2; uiI++)
+    for( size_t uiI = 0; uiI < 2; uiI++ )
     {
-        vBinCoordsReadable[uiI][0].reserve(vAxisCords[uiI].size());
-        vBinCoordsReadable[uiI][1].reserve(vAxisCords[uiI].size());
-        for(const auto& rAxis : vAxisCords[uiI])
+        vBinCoordsReadable[ uiI ][ 0 ].reserve( vAxisCords[ uiI ].size( ) );
+        vBinCoordsReadable[ uiI ][ 1 ].reserve( vAxisCords[ uiI ].size( ) );
+        for( const auto& rAxis : vAxisCords[ uiI ] )
         {
-            vBinCoordsReadable[uiI][0].push_back( readableBp( rAxis.uiIndexPos * uiDividend ) );
-            vBinCoordsReadable[uiI][1].push_back( readableBp( (rAxis.uiIndexPos + rAxis.uiIndexSize) * uiDividend ) );
+            vBinCoordsReadable[ uiI ][ 0 ].push_back( readableBp( rAxis.uiIndexPos * uiDividend ) );
+            vBinCoordsReadable[ uiI ][ 1 ].push_back(
+                readableBp( ( rAxis.uiIndexPos + rAxis.uiIndexSize ) * uiDividend ) );
         }
     }
 
@@ -297,21 +298,21 @@ bool PartialQuarry::setHeatmapCDS( )
             vColor.append( vColored[ uiI ] );
 
 
-            vChrX.append( vShortChrNames[0][vBinCoords[ uiI ][ 0 ].uiChromosomeX] );
-            vChrY.append( vShortChrNames[1][vBinCoords[ uiI ][ 0 ].uiChromosomeY] );
-            vIndexLeft.append( vBinCoordsReadable[0][0][vBinCoords[ uiI ][ 0 ].uiXAxisIdx] );
-            vIndexRight.append( vBinCoordsReadable[0][1][vBinCoords[ uiI ][ 0 ].uiXAxisIdx] );
-            vIndexBottom.append( vBinCoordsReadable[1][0][vBinCoords[ uiI ][ 0 ].uiYAxisIdx] );
-            vIndexTop.append( vBinCoordsReadable[1][1][vBinCoords[ uiI ][ 0 ].uiYAxisIdx] );
+            vChrX.append( vShortChrNames[ 0 ][ vBinCoords[ uiI ][ 0 ].uiChromosomeX ] );
+            vChrY.append( vShortChrNames[ 1 ][ vBinCoords[ uiI ][ 0 ].uiChromosomeY ] );
+            vIndexLeft.append( vBinCoordsReadable[ 0 ][ 0 ][ vBinCoords[ uiI ][ 0 ].uiXAxisIdx ] );
+            vIndexRight.append( vBinCoordsReadable[ 0 ][ 1 ][ vBinCoords[ uiI ][ 0 ].uiXAxisIdx ] );
+            vIndexBottom.append( vBinCoordsReadable[ 1 ][ 0 ][ vBinCoords[ uiI ][ 0 ].uiYAxisIdx ] );
+            vIndexTop.append( vBinCoordsReadable[ 1 ][ 1 ][ vBinCoords[ uiI ][ 0 ].uiYAxisIdx ] );
 
             if( vBinCoords[ uiI ][ 1 ].uiChromosomeX != std::numeric_limits<size_t>::max( ) )
             {
-                vChrXSym.append( vShortChrNames[0][vBinCoords[ uiI ][ 1 ].uiChromosomeX] );
-                vChrYSym.append( vShortChrNames[1][vBinCoords[ uiI ][ 1 ].uiChromosomeY] );
-                vIndexSymLeft.append( vBinCoordsReadable[0][0][vBinCoords[ uiI ][ 1 ].uiXAxisIdx] );
-                vIndexSymRight.append( vBinCoordsReadable[0][1][vBinCoords[ uiI ][ 1 ].uiXAxisIdx] );
-                vIndexSymBottom.append( vBinCoordsReadable[1][0][vBinCoords[ uiI ][ 1 ].uiYAxisIdx] );
-                vIndexSymTop.append( vBinCoordsReadable[1][1][vBinCoords[ uiI ][ 1 ].uiYAxisIdx] );
+                vChrXSym.append( vShortChrNames[ 0 ][ vBinCoords[ uiI ][ 1 ].uiChromosomeX ] );
+                vChrYSym.append( vShortChrNames[ 1 ][ vBinCoords[ uiI ][ 1 ].uiChromosomeY ] );
+                vIndexSymLeft.append( vBinCoordsReadable[ 0 ][ 0 ][ vBinCoords[ uiI ][ 1 ].uiXAxisIdx ] );
+                vIndexSymRight.append( vBinCoordsReadable[ 0 ][ 1 ][ vBinCoords[ uiI ][ 1 ].uiXAxisIdx ] );
+                vIndexSymBottom.append( vBinCoordsReadable[ 1 ][ 0 ][ vBinCoords[ uiI ][ 1 ].uiYAxisIdx ] );
+                vIndexSymTop.append( vBinCoordsReadable[ 1 ][ 1 ][ vBinCoords[ uiI ][ 1 ].uiYAxisIdx ] );
             }
             else
             {
@@ -412,7 +413,7 @@ void PartialQuarry::regColors( )
                                  { "settings", "interface", "color_low" },
                                  { "settings", "interface", "color_high" },
                                  { "settings", "normalization", "log_base", "val" } },
-                               /*.vSessionsIncomingInPrevious =*/{},
+                               /*.vSessionsIncomingInPrevious =*/{ },
                                /*bHidden =*/true } );
 
     registerNode( NodeNames::AnnotationColors,
@@ -422,16 +423,15 @@ void PartialQuarry::regColors( )
                                /*.vIncomingSession =*/
                                { { "settings", "interface", "annotation_color_palette" },
                                  { "settings", "interface", "annotation_color_palette_dark" } },
-                               /*.vSessionsIncomingInPrevious =*/{},
+                               /*.vSessionsIncomingInPrevious =*/{ },
                                /*bHidden =*/true } );
 
     registerNode( NodeNames::Combined,
                   ComputeNode{ /*.sNodeName =*/"combined_bins",
                                /*.fFunc =*/&PartialQuarry::setCombined,
-                               /*.vIncomingFunctions =*/{ NodeNames::DistDepDecayRemoved,  
-                                                          NodeNames::BetweenGroup },
+                               /*.vIncomingFunctions =*/{ NodeNames::DistDepDecayRemoved, NodeNames::BetweenGroup },
                                /*.vIncomingSession =*/{ },
-                               /*.vSessionsIncomingInPrevious =*/{},
+                               /*.vSessionsIncomingInPrevious =*/{ },
                                /*bHidden =*/false } );
 
     registerNode( NodeNames::Scaled,
@@ -439,18 +439,17 @@ void PartialQuarry::regColors( )
                                /*.fFunc =*/&PartialQuarry::setScaled,
                                /*.vIncomingFunctions =*/{ NodeNames::Divided },
                                /*.vIncomingSession =*/{ { "settings", "normalization", "scale" } },
-                               /*.vSessionsIncomingInPrevious =*/{},
+                               /*.vSessionsIncomingInPrevious =*/{ },
                                /*bHidden =*/false } );
 
-    registerNode(
-        NodeNames::Colored,
-        ComputeNode{ /*.sNodeName =*/"colored_bins",
-                     /*.fFunc =*/&PartialQuarry::setColored,
-                     /*.vIncomingFunctions =*/{ NodeNames::Colors, NodeNames::Scaled },
-                     /*.vIncomingSession =*/
-                     { { "settings", "normalization", "color_range", "val_max" },
-                       { "settings", "normalization", "color_range", "val_min" } },
-                     /*.vSessionsIncomingInPrevious =*/{ { "settings", "normalization", "log_base", "val" } },
+    registerNode( NodeNames::Colored,
+                  ComputeNode{ /*.sNodeName =*/"colored_bins",
+                               /*.fFunc =*/&PartialQuarry::setColored,
+                               /*.vIncomingFunctions =*/{ NodeNames::Colors, NodeNames::Scaled },
+                               /*.vIncomingSession =*/
+                               { { "settings", "normalization", "color_range", "val_max" },
+                                 { "settings", "normalization", "color_range", "val_min" } },
+                               /*.vSessionsIncomingInPrevious =*/{ { "settings", "normalization", "log_base", "val" } },
                                /*bHidden =*/false } );
 
     registerNode( NodeNames::HeatmapCDS,
@@ -469,15 +468,14 @@ void PartialQuarry::regColors( )
                                /*.vSessionsIncomingInPrevious =*/{ { "dividend" } },
                                /*bHidden =*/false } );
 
-    registerNode(
-        NodeNames::Palette,
-        ComputeNode{ /*.sNodeName =*/"rendered_palette",
-                     /*.fFunc =*/&PartialQuarry::setPalette,
-                     /*.vIncomingFunctions =*/{ NodeNames::Scaled, NodeNames::Colors },
-                     /*.vIncomingSession =*/
-                     { { "settings", "normalization", "color_range", "val_max" },
-                       { "settings", "normalization", "color_range", "val_min" } },
-                     /*.vSessionsIncomingInPrevious =*/{ { "settings", "normalization", "log_base", "val" } },
+    registerNode( NodeNames::Palette,
+                  ComputeNode{ /*.sNodeName =*/"rendered_palette",
+                               /*.fFunc =*/&PartialQuarry::setPalette,
+                               /*.vIncomingFunctions =*/{ NodeNames::Scaled, NodeNames::Colors },
+                               /*.vIncomingSession =*/
+                               { { "settings", "normalization", "color_range", "val_max" },
+                                 { "settings", "normalization", "color_range", "val_min" } },
+                               /*.vSessionsIncomingInPrevious =*/{ { "settings", "normalization", "log_base", "val" } },
                                /*bHidden =*/false } );
 }
 

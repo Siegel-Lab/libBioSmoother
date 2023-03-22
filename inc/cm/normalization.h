@@ -859,7 +859,7 @@ void PartialQuarry::regNormalization( )
                        { "settings", "normalization", "grid_seq_axis_is_column" },
                        { "settings", "normalization", "radicl_seq_samples", "val" },
                        { "settings", "normalization", "radicl_seq_axis_is_column" } },
-                               /*bHidden =*/false } );
+                     /*bHidden =*/false } );
 
     registerNode( NodeNames::GridSeqSamples,
                   ComputeNode{ /*.sNodeName =*/"grid_seq_samples",
@@ -872,7 +872,7 @@ void PartialQuarry::regNormalization( )
                                  { "settings", "normalization", "grid_seq_annotation" },
                                  { "settings", "normalization", "grid_seq_samples", "val" },
                                  { "settings", "normalization", "grid_seq_axis_is_column" } },
-                               /*.vSessionsIncomingInPrevious =*/{},
+                               /*.vSessionsIncomingInPrevious =*/{ },
                                /*bHidden =*/false } );
 
     registerNode( NodeNames::RadiclSeqSamples,
@@ -884,7 +884,7 @@ void PartialQuarry::regNormalization( )
                                  { "settings", "normalization", "normalize_by" },
                                  { "settings", "normalization", "radicl_seq_samples", "val" },
                                  { "settings", "normalization", "radicl_seq_axis_is_column" } },
-                               /*.vSessionsIncomingInPrevious =*/{},
+                               /*.vSessionsIncomingInPrevious =*/{ },
                                /*bHidden =*/false } );
     // registerNode( NodeNames::ICESamples,
     //               ComputeNode{ /*.sNodeName =*/ "ice_samples",
@@ -917,30 +917,28 @@ void PartialQuarry::regNormalization( )
                                /*bHidden =*/false } );
     registerNode(
         NodeNames::RadiclSeqCoverage,
-        ComputeNode{
-            /*.sNodeName =*/"radicl_coverage",
-            /*.fFunc =*/&PartialQuarry::setRadiclSeqCoverage,
-            /*.vIncomingFunctions =*/
-            { NodeNames::ActiveReplicates, NodeNames::MappingQuality, NodeNames::AxisCoords,
-              NodeNames::RadiclSeqSamples, NodeNames::IntersectionType, NodeNames::Directionality },
-            /*.vIncomingSession =*/
-            { { "replicates", "by_name" },
-              { "settings", "normalization", "normalize_by" },
-              { "settings", "normalization", "min_interactions", "val" } },
-            /*.vSessionsIncomingInPrevious =*/{ { "settings", "normalization", "radicl_seq_axis_is_column" } },
-                               /*bHidden =*/false } );
-
-    registerNode(
-        NodeNames::RnaAssociatedGenesFilter,
-        ComputeNode{ /*.sNodeName =*/"rna_associated_genes_filter",
-                     /*.fFunc =*/&PartialQuarry::setRnaAssociatedGenesFilter,
-                     /*.vIncomingFunctions =*/{ NodeNames::GridSeqCoverage },
+        ComputeNode{ /*.sNodeName =*/"radicl_coverage",
+                     /*.fFunc =*/&PartialQuarry::setRadiclSeqCoverage,
+                     /*.vIncomingFunctions =*/
+                     { NodeNames::ActiveReplicates, NodeNames::MappingQuality, NodeNames::AxisCoords,
+                       NodeNames::RadiclSeqSamples, NodeNames::IntersectionType, NodeNames::Directionality },
                      /*.vIncomingSession =*/
-                     { { "settings", "normalization", "grid_seq_rna_filter", "val_min" },
-                       { "settings", "normalization", "grid_seq_rna_filter", "val_max" },
-                       { "settings", "normalization", "grid_seq_dna_filter", "val_min" },
-                       { "settings", "normalization", "grid_seq_dna_filter", "val_max" } },
-                     /*.vSessionsIncomingInPrevious =*/{ { "settings", "normalization", "normalize_by" } },
+                     { { "replicates", "by_name" },
+                       { "settings", "normalization", "normalize_by" },
+                       { "settings", "normalization", "min_interactions", "val" } },
+                     /*.vSessionsIncomingInPrevious =*/{ { "settings", "normalization", "radicl_seq_axis_is_column" } },
+                     /*bHidden =*/false } );
+
+    registerNode( NodeNames::RnaAssociatedGenesFilter,
+                  ComputeNode{ /*.sNodeName =*/"rna_associated_genes_filter",
+                               /*.fFunc =*/&PartialQuarry::setRnaAssociatedGenesFilter,
+                               /*.vIncomingFunctions =*/{ NodeNames::GridSeqCoverage },
+                               /*.vIncomingSession =*/
+                               { { "settings", "normalization", "grid_seq_rna_filter", "val_min" },
+                                 { "settings", "normalization", "grid_seq_rna_filter", "val_max" },
+                                 { "settings", "normalization", "grid_seq_dna_filter", "val_min" },
+                                 { "settings", "normalization", "grid_seq_dna_filter", "val_max" } },
+                               /*.vSessionsIncomingInPrevious =*/{ { "settings", "normalization", "normalize_by" } },
                                /*bHidden =*/false } );
 
     registerNode( NodeNames::RnaAssociatedBackground,
@@ -973,7 +971,7 @@ void PartialQuarry::regNormalization( )
                                { { "settings", "normalization", "divide_by_column_coverage" },
                                  { "settings", "normalization", "divide_by_row_coverage" },
                                  { "coverage", "list" } },
-                               /*.vSessionsIncomingInPrevious =*/{},
+                               /*.vSessionsIncomingInPrevious =*/{ },
                                /*bHidden =*/false } );
 }
 
