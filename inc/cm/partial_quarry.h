@@ -1175,8 +1175,10 @@ class PartialQuarry : public HasSession
     {
         if( ( bBottom && sName == "*" ) || sName.size( ) == 0 || to_lower( sName ) == "start" )
             return pybind11::int_( 0 );
-        if( ( !bBottom && sName == "*" ) || sName.size( ) == 0 || to_lower( sName ) == "end" )
+        if( !bGenomicCoords && (( !bBottom && sName == "*" ) || sName.size( ) == 0 || to_lower( sName ) == "end") )
             return pybind11::int_( vCanvasSize[ bXAxis ? 0 : 1 ] );
+        else if( bGenomicCoords && (( !bBottom && sName == "*" ) || sName.size( ) == 0 || to_lower( sName ) == "end") )
+            return pybind11::int_( getValue<size_t>( { "contigs", "genome_size" } ) );
 
         std::regex xName( to_lower( sName ) );
         size_t uiMaxPos = 0;
