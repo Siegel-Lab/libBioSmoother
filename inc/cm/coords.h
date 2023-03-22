@@ -953,7 +953,6 @@ bool PartialQuarry::setBinCoords( )
         for( const AxisCoord& xY : vAxisCords[ 1 ] )
         {
             CANCEL_RETURN;
-            // @todo move filters to after the queries
             if( xX.uiChromosome != xY.uiChromosome ||
                 (size_t)std::abs( (int64_t)xX.uiIndexPos - (int64_t)xY.uiIndexPos ) >= uiManhattenDist )
                 vBinCoords.push_back( binObjFromCoords<BinCoord, AxisCoord>( xX, xY ) );
@@ -1064,7 +1063,8 @@ void PartialQuarry::regCoords( )
                                /*.fFunc =*/&PartialQuarry::setLCS,
                                /*.vIncomingFunctions =*/{ },
                                /*.vIncomingSession =*/{ { "contigs", "list" } },
-                               /*.vSessionsIncomingInPrevious =*/{} } );
+                               /*.vSessionsIncomingInPrevious =*/{},
+                               /*bHidden =*/true } );
 
     registerNode(
         NodeNames::ActiveChrom,
@@ -1073,7 +1073,8 @@ void PartialQuarry::regCoords( )
                      /*.vIncomingFunctions =*/{ },
                      /*.vIncomingSession =*/
                      { { "contigs", "displayed_on_x" }, { "contigs", "displayed_on_y" }, { "contigs", "lengths" } },
-                     /*.vSessionsIncomingInPrevious =*/{} } );
+                     /*.vSessionsIncomingInPrevious =*/{},
+                    /*bHidden =*/true } );
 
     registerNode( NodeNames::ActiveChromLength,
                   ComputeNode{ /*.sNodeName =*/"active_chroms_length",
@@ -1084,7 +1085,8 @@ void PartialQuarry::regCoords( )
                                  { "contigs", "annotation_coordinates" },
                                  { "settings", "filters", "anno_coords_row" },
                                  { "settings", "filters", "anno_coords_col" } },
-                               /*.vSessionsIncomingInPrevious =*/{} } );
+                               /*.vSessionsIncomingInPrevious =*/{},
+                               /*bHidden =*/true } );
 
     registerNode(
         NodeNames::Ticks,
@@ -1098,7 +1100,8 @@ void PartialQuarry::regCoords( )
                        { "settings", "filters", "anno_coords_col" },
                        { "settings", "filters", "anno_in_multiple_bins" },
                        { "annotation", "by_name" },
-                       { "dividend" } } } );
+                       { "dividend" } },
+                               /*bHidden =*/false } );
 
     registerNode( NodeNames::CanvasSize,
                   ComputeNode{ /*.sNodeName =*/"canvas_size",
@@ -1110,7 +1113,8 @@ void PartialQuarry::regCoords( )
                                  { "settings", "filters", "anno_coords_col" },
                                  { "settings", "filters", "anno_in_multiple_bins" },
                                  { "annotation", "by_name" } },
-                               /*.vSessionsIncomingInPrevious =*/{} } );
+                               /*.vSessionsIncomingInPrevious =*/{},
+                               /*bHidden =*/true } );
 
     registerNode( NodeNames::AxisCoords,
                   ComputeNode{ /*.sNodeName =*/"axis_coords",
@@ -1124,13 +1128,15 @@ void PartialQuarry::regCoords( )
                                  { "settings", "filters", "anno_coords_row" },
                                  { "settings", "filters", "anno_coords_col" },
                                  { "annotation", "by_name" } },
-                               /*.vSessionsIncomingInPrevious =*/{} } );
+                               /*.vSessionsIncomingInPrevious =*/{},
+                               /*bHidden =*/false } );
 
     registerNode( NodeNames::Symmetry, ComputeNode{ /*.sNodeName =*/"symmetry_setting",
                                                     /*.fFunc =*/&PartialQuarry::setSymmetry,
                                                     /*.vIncomingFunctions =*/{ },
                                                     /*.vIncomingSession =*/{ { "settings", "filters", "symmetry" } },
-                                                    /*.vSessionsIncomingInPrevious =*/{} } );
+                                                    /*.vSessionsIncomingInPrevious =*/{},
+                               /*bHidden =*/true } );
 
     registerNode( NodeNames::MappingQuality,
                   ComputeNode{ /*.sNodeName =*/"mapping_quality_setting",
@@ -1140,14 +1146,16 @@ void PartialQuarry::regCoords( )
                                { { "settings", "filters", "mapping_q", "val_min" },
                                  { "settings", "filters", "mapping_q", "val_max" },
                                  { "settings", "filters", "incomplete_alignments" } },
-                               /*.vSessionsIncomingInPrevious =*/{} } );
+                               /*.vSessionsIncomingInPrevious =*/{},
+                               /*bHidden =*/true } );
 
     registerNode( NodeNames::Directionality,
                   ComputeNode{ /*.sNodeName =*/"directionality_setting",
                                /*.fFunc =*/&PartialQuarry::setDirectionality,
                                /*.vIncomingFunctions =*/{ },
                                /*.vIncomingSession =*/{ { "settings", "filters", "directionality" } },
-                               /*.vSessionsIncomingInPrevious =*/{} } );
+                               /*.vSessionsIncomingInPrevious =*/{},
+                               /*bHidden =*/true } );
 
     registerNode( NodeNames::BinCoords,
                   ComputeNode{ /*.sNodeName =*/"bin_coords",
@@ -1156,7 +1164,8 @@ void PartialQuarry::regCoords( )
                                { NodeNames::AxisCoords, NodeNames::AnnoFilters, NodeNames::IntersectionType,
                                  NodeNames::Symmetry },
                                /*.vIncomingSession =*/{ { "settings", "filters", "min_diag_dist", "val" } },
-                               /*.vSessionsIncomingInPrevious =*/{ { "dividend" } } } );
+                               /*.vSessionsIncomingInPrevious =*/{ { "dividend" } },
+                               /*bHidden =*/false } );
 
     registerNode( NodeNames::AnnoFilters,
                   ComputeNode{ /*.sNodeName =*/"anno_filters",
@@ -1170,7 +1179,8 @@ void PartialQuarry::regCoords( )
                                  { "settings", "filters", "anno_coords_row" },
                                  { "settings", "filters", "anno_coords_col" },
                                  { "annotation", "list" } },
-                               /*.vSessionsIncomingInPrevious =*/{} } );
+                               /*.vSessionsIncomingInPrevious =*/{},
+                               /*bHidden =*/false } );
 
     registerNode( NodeNames::DecayCoords,
                   ComputeNode{ /*.sNodeName =*/"decay_coords",
@@ -1178,7 +1188,8 @@ void PartialQuarry::regCoords( )
                                /*.vIncomingFunctions =*/{ NodeNames::BinCoords },
                                /*.vIncomingSession =*/
                                { { "settings", "normalization", "ddd" }, { "settings", "normalization", "ddd_show" } },
-                               /*.vSessionsIncomingInPrevious =*/{} } );
+                               /*.vSessionsIncomingInPrevious =*/{},
+                               /*bHidden =*/false } );
 
     registerNode( NodeNames::GridSeqCoords,
                   ComputeNode{ /*.sNodeName =*/"grid_seq_coords",
@@ -1189,7 +1200,8 @@ void PartialQuarry::regCoords( )
                                  { "settings", "normalization", "grid_seq_anno_type" },
                                  { "annotation", "by_name" },
                                  { "settings", "normalization", "normalize_by" } },
-                               /*.vSessionsIncomingInPrevious =*/{} } );
+                               /*.vSessionsIncomingInPrevious =*/{},
+                               /*bHidden =*/false } );
 }
 
 } // namespace cm

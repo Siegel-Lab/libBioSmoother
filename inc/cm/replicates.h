@@ -573,26 +573,29 @@ void PartialQuarry::regReplicates( )
 {
     registerNode(
         NodeNames::ActiveReplicates,
-        ComputeNode{ /*.sNodeName =*/"active_replicates",
+        ComputeNode{ /*.sNodeName =*/"active_replicates_setting",
                      /*.fFunc=*/&PartialQuarry::setActiveReplicates,
                      /*.vIncomingFunctions =*/{ },
                      /*.vIncomingSession =*/
                      { { "replicates", "in_group_a" }, { "replicates", "in_group_b" }, { "replicates", "list" } },
-                     /*.vSessionsIncomingInPrevious =*/{} } );
+                     /*.vSessionsIncomingInPrevious =*/{},
+                               /*bHidden =*/true } );
 
     registerNode( NodeNames::DatasetIdPerRepl,
                   ComputeNode{ /*.sNodeName =*/"dataset_id_per_repl",
                                /*.fFunc=*/&PartialQuarry::setDatasetIdPerRepl,
                                /*.vIncomingFunctions =*/{ NodeNames::ActiveReplicates, NodeNames::ActiveChrom },
                                /*.vIncomingSession =*/{ { "replicates", "by_name" } },
-                               /*.vSessionsIncomingInPrevious =*/{} } );
+                               /*.vSessionsIncomingInPrevious =*/{},
+                               /*bHidden =*/true } );
 
     registerNode( NodeNames::IntersectionType,
-                  ComputeNode{ /*.sNodeName =*/"intersection_type",
+                  ComputeNode{ /*.sNodeName =*/"intersection_type_setting",
                                /*.fFunc=*/&PartialQuarry::setIntersectionType,
                                /*.vIncomingFunctions =*/{ },
                                /*.vIncomingSession =*/{ { "settings", "filters", "ambiguous_mapping" } },
-                               /*.vSessionsIncomingInPrevious =*/{} } );
+                               /*.vSessionsIncomingInPrevious =*/{},
+                               /*bHidden =*/true } );
 
     registerNode(
         NodeNames::BinValues,
@@ -604,7 +607,8 @@ void PartialQuarry::regReplicates( )
             /*.vIncomingSession =*/
             { { "settings", "normalization", "min_interactions", "val" }, { "replicates", "by_name" } },
             /*.vSessionsIncomingInPrevious =*/
-            {} } );
+            {},
+                               /*bHidden =*/false } );
 
     registerNode( NodeNames::DecayValues,
                   ComputeNode{ /*.sNodeName =*/"decay_values",
@@ -617,42 +621,48 @@ void PartialQuarry::regReplicates( )
                                  { "settings", "normalization", "ddd_samples", "val_max" },
                                  { "settings", "normalization", "ddd_quantile", "val" },
                                  { "settings", "normalization", "min_interactions", "val" } },
-                               /*.vSessionsIncomingInPrevious =*/{} } );
+                               /*.vSessionsIncomingInPrevious =*/{},
+                               /*bHidden =*/false } );
 
     registerNode( NodeNames::InGroup,
                   ComputeNode{ /*.sNodeName =*/"in_group_setting",
                                /*.fFunc=*/&PartialQuarry::setInGroup,
                                /*.vIncomingFunctions =*/{ },
                                /*.vIncomingSession =*/{ { "settings", "replicates", "in_group" } },
-                               /*.vSessionsIncomingInPrevious =*/{} } );
+                               /*.vSessionsIncomingInPrevious =*/{},
+                               /*bHidden =*/true } );
 
     registerNode( NodeNames::BetweenGroup,
                   ComputeNode{ /*.sNodeName =*/"between_group_setting",
                                /*.fFunc=*/&PartialQuarry::setBetweenGroup,
                                /*.vIncomingFunctions =*/{ },
                                /*.vIncomingSession =*/{ { "settings", "replicates", "between_group" } },
-                               /*.vSessionsIncomingInPrevious =*/{} } );
+                               /*.vSessionsIncomingInPrevious =*/{},
+                               /*bHidden =*/true } );
 
     registerNode( NodeNames::FlatValues,
                   ComputeNode{ /*.sNodeName =*/"flat_bins",
                                /*.fFunc=*/&PartialQuarry::setFlatValues,
                                /*.vIncomingFunctions =*/{ NodeNames::BinValues, NodeNames::InGroup },
                                /*.vIncomingSession =*/{ },
-                               /*.vSessionsIncomingInPrevious =*/{} } );
+                               /*.vSessionsIncomingInPrevious =*/{},
+                               /*bHidden =*/false } );
 
     registerNode( NodeNames::FlatDecay,
                   ComputeNode{ /*.sNodeName =*/"flat_decay",
                                /*.fFunc=*/&PartialQuarry::setFlatDecay,
                                /*.vIncomingFunctions =*/{ NodeNames::DecayValues },
                                /*.vIncomingSession =*/{ },
-                               /*.vSessionsIncomingInPrevious =*/{} } );
+                               /*.vSessionsIncomingInPrevious =*/{},
+                               /*bHidden =*/false } );
 
     registerNode( NodeNames::DecayCDS,
                   ComputeNode{ /*.sNodeName =*/"decay_cds",
                                /*.fFunc=*/&PartialQuarry::setDecayCDS,
                                /*.vIncomingFunctions =*/{ NodeNames::FlatDecay, NodeNames::AnnotationColors },
                                /*.vIncomingSession =*/{ },
-                               /*.vSessionsIncomingInPrevious =*/{ { "dividend" } } } );
+                               /*.vSessionsIncomingInPrevious =*/{ { "dividend" } },
+                               /*bHidden =*/false } );
 }
 
 } // namespace cm

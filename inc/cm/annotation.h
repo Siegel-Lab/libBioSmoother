@@ -278,6 +278,15 @@ bool PartialQuarry::setAnnotationCDS( )
                 vDesc.append( sDesc );
             }
         }
+        for(size_t uiI = 0; uiI < 2; uiI++)
+            if(getValue<bool>( { "settings", "interface", "v4c", uiI == 0 ? "do_col" : "do_row" } ))
+            {
+                size_t uiFrom = getValue<size_t>( { "settings", "interface", "v4c", 
+                                                    uiI == 0 ? "col_from" : "row_from" } );
+                size_t uiTo = getValue<size_t>( { "settings", "interface", "v4c", uiI == 0 ? "col_to" : "row_to" } );
+
+                
+            }
 
         vAnnotationCDS[ uiX ] = pybind11::dict( "chr"_a = vChr,
                                                 "index_start"_a = vIndexStart,
@@ -317,13 +326,21 @@ void PartialQuarry::regAnnotation( )
                                /*.fFunc =*/&PartialQuarry::setActivateAnnotation,
                                /*.vIncomingFunctions =*/{ },
                                /*.vIncomingSession =*/{ { "annotation", "visible_x" }, { "annotation", "visible_y" } },
-                               /*.vSessionsIncomingInPrevious =*/{} } );
+                               /*.vSessionsIncomingInPrevious =*/{},
+                               /*bHidden =*/false } );
 
     registerNode( NodeNames::AnnotationValues,
                   ComputeNode{ /*.sNodeName =*/"annotation_values",
                                /*.fFunc =*/&PartialQuarry::setAnnotationValues,
                                /*.vIncomingFunctions =*/{ NodeNames::ActivateAnnotation, NodeNames::AxisCoords },
-                               /*.vIncomingSession =*/{ { "settings", "interface", "max_detailed_anno_display" } },
+                                /*.vIncomingSession =*/{ { "settings", "interface", "max_detailed_anno_display" }, 
+                                                         {"settings", "interface", "v4c", "do_col"},
+                                                         {"settings", "interface", "v4c", "do_row"} ,
+                                                         {"settings", "interface", "v4c", "col_from"},
+                                                         {"settings", "interface", "v4c", "col_to"},
+                                                         {"settings", "interface", "v4c", "row_from"},
+                                                         {"settings", "interface", "v4c", "row_to"}
+                                                       },
                                /*.vSessionsIncomingInPrevious =*/
                                {
                                    { "settings", "filters", "anno_in_multiple_bins" },
@@ -331,21 +348,24 @@ void PartialQuarry::regAnnotation( )
                                    { "annotation", "by_name" },
                                    { "settings", "filters", "anno_coords_row" },
                                    { "settings", "filters", "anno_coords_col" },
-                               } } );
+                               },
+                               /*bHidden =*/false } );
 
     registerNode( NodeNames::AnnotationCDS,
                   ComputeNode{ /*.sNodeName =*/"annotation_cds",
                                /*.fFunc =*/&PartialQuarry::setAnnotationCDS,
                                /*.vIncomingFunctions =*/{ NodeNames::AnnotationValues, NodeNames::AnnotationColors },
                                /*.vIncomingSession =*/{ { "settings", "interface", "min_anno_dist" } },
-                               /*.vSessionsIncomingInPrevious =*/{ { "dividend" } } } );
+                               /*.vSessionsIncomingInPrevious =*/{ { "dividend" } },
+                               /*bHidden =*/false } );
 
     registerNode( NodeNames::ActivateAnnotationCDS,
                   ComputeNode{ /*.sNodeName =*/"active_annotation_cds",
                                /*.fFunc =*/&PartialQuarry::setActivateAnnotationCDS,
                                /*.vIncomingFunctions =*/{ NodeNames::ActivateAnnotation },
                                /*.vIncomingSession =*/{ },
-                               /*.vSessionsIncomingInPrevious =*/{} } );
+                               /*.vSessionsIncomingInPrevious =*/{},
+                               /*bHidden =*/false } );
 }
 
 } // namespace cm

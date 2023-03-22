@@ -235,6 +235,7 @@ class PartialQuarry : public HasSession
         std::vector<NodeNames> vIncomingFunctions;
         std::vector<std::vector<std::string>> vIncomingSession;
         std::vector<std::vector<std::string>> vSessionsIncomingInPrevious;
+        bool bHidden = false;
     };
 
     struct ComputeNodeData
@@ -1300,6 +1301,9 @@ class PartialQuarry : public HasSession
                 }
                 sJoined += "<br/>";
             }
+            for( const NodeNames& rIncoming : rNode.vIncomingFunctions )
+                if(vGraph[rIncoming].bHidden)
+                    sJoined += "<i>[" + vGraph[rIncoming].sNodeName + "]</i><br/>";
             if( sJoined.size( ) > 0 )
             {
                 sRet += "\t" + rNode.sNodeName + "_in [shape=box, label=<" + sJoined + ">];\n";
@@ -1308,7 +1312,8 @@ class PartialQuarry : public HasSession
             if( rNodeData.bTerminal )
                 sRet += "\t" + rNode.sNodeName + " [shape=hexagon];\n";
             for( const NodeNames& rIncoming : rNode.vIncomingFunctions )
-                sRet += "\t" + vGraph[ rIncoming ].sNodeName + " -> " + rNode.sNodeName + ";\n";
+                if(!vGraph[rIncoming].bHidden)
+                    sRet += "\t" + vGraph[ rIncoming ].sNodeName + " -> " + rNode.sNodeName + ";\n";
         }
         return sRet + "}";
     }

@@ -170,7 +170,8 @@ void PartialQuarry::regBinSize( )
                                  { "settings", "interface", "fixed_num_bins_y", "val" },
                                  { "dividend" },
                                  { "area" } },
-                               /*.vSessionsIncomingInPrevious =*/{} } );
+                               /*.vSessionsIncomingInPrevious =*/{},
+                               /*bHidden =*/false } );
 
     registerNode( NodeNames::RenderArea,
                   ComputeNode{ /*.sNodeName =*/"render_area",
@@ -182,7 +183,8 @@ void PartialQuarry::regBinSize( )
                                    { "settings", "contigs", "genome_size" },
                                    { "settings", "interface", "add_draw_area", "val" },
                                },
-                               /*.vSessionsIncomingInPrevious =*/{ { "area" } } } );
+                               /*.vSessionsIncomingInPrevious =*/{ { "area" } },
+                               /*bHidden =*/true } );
 }
 
 

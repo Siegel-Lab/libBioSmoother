@@ -858,7 +858,8 @@ void PartialQuarry::regNormalization( )
                      { { "settings", "normalization", "normalize_by" },
                        { "settings", "normalization", "grid_seq_axis_is_column" },
                        { "settings", "normalization", "radicl_seq_samples", "val" },
-                       { "settings", "normalization", "radicl_seq_axis_is_column" } } } );
+                       { "settings", "normalization", "radicl_seq_axis_is_column" } },
+                               /*bHidden =*/false } );
 
     registerNode( NodeNames::GridSeqSamples,
                   ComputeNode{ /*.sNodeName =*/"grid_seq_samples",
@@ -871,7 +872,8 @@ void PartialQuarry::regNormalization( )
                                  { "settings", "normalization", "grid_seq_annotation" },
                                  { "settings", "normalization", "grid_seq_samples", "val" },
                                  { "settings", "normalization", "grid_seq_axis_is_column" } },
-                               /*.vSessionsIncomingInPrevious =*/{} } );
+                               /*.vSessionsIncomingInPrevious =*/{},
+                               /*bHidden =*/false } );
 
     registerNode( NodeNames::RadiclSeqSamples,
                   ComputeNode{ /*.sNodeName =*/"radicl_seq_samples",
@@ -882,7 +884,8 @@ void PartialQuarry::regNormalization( )
                                  { "settings", "normalization", "normalize_by" },
                                  { "settings", "normalization", "radicl_seq_samples", "val" },
                                  { "settings", "normalization", "radicl_seq_axis_is_column" } },
-                               /*.vSessionsIncomingInPrevious =*/{} } );
+                               /*.vSessionsIncomingInPrevious =*/{},
+                               /*bHidden =*/false } );
     // registerNode( NodeNames::ICESamples,
     //               ComputeNode{ /*.sNodeName =*/ "ice_samples",
     //                            /*.fFunc=*/ &PartialQuarry::setICESamples,
@@ -890,7 +893,8 @@ void PartialQuarry::regNormalization( )
     //                            /*.vIncomingSession =*/ { { "dividend" },
     //                                                  { "settings", "normalization", "normalize_by" },
     //                                                  { "settings", "normalization", "hi_c_samples", "val" } },
-    //                            /*.vSessionsIncomingInPrevious =*/ {} } );
+    //                            /*.vSessionsIncomingInPrevious =*/ {},
+    //                           /*bHidden =*/false } );
 
     registerNode( NodeNames::GridSeqCoverage,
                   ComputeNode{ /*.sNodeName =*/"grid_seq_coverage",
@@ -909,7 +913,8 @@ void PartialQuarry::regNormalization( )
                                  { "settings", "normalization", "grid_seq_annotation" },
                                  { "settings", "normalization", "grid_seq_samples", "val" },
                                  { "annotation", "by_name" },
-                                 { "dividend" } } } );
+                                 { "dividend" } },
+                               /*bHidden =*/false } );
     registerNode(
         NodeNames::RadiclSeqCoverage,
         ComputeNode{
@@ -922,7 +927,8 @@ void PartialQuarry::regNormalization( )
             { { "replicates", "by_name" },
               { "settings", "normalization", "normalize_by" },
               { "settings", "normalization", "min_interactions", "val" } },
-            /*.vSessionsIncomingInPrevious =*/{ { "settings", "normalization", "radicl_seq_axis_is_column" } } } );
+            /*.vSessionsIncomingInPrevious =*/{ { "settings", "normalization", "radicl_seq_axis_is_column" } },
+                               /*bHidden =*/false } );
 
     registerNode(
         NodeNames::RnaAssociatedGenesFilter,
@@ -934,7 +940,8 @@ void PartialQuarry::regNormalization( )
                        { "settings", "normalization", "grid_seq_rna_filter", "val_max" },
                        { "settings", "normalization", "grid_seq_dna_filter", "val_min" },
                        { "settings", "normalization", "grid_seq_dna_filter", "val_max" } },
-                     /*.vSessionsIncomingInPrevious =*/{ { "settings", "normalization", "normalize_by" } } } );
+                     /*.vSessionsIncomingInPrevious =*/{ { "settings", "normalization", "normalize_by" } },
+                               /*bHidden =*/false } );
 
     registerNode( NodeNames::RnaAssociatedBackground,
                   ComputeNode{ /*.sNodeName =*/"rna_associated_background",
@@ -947,14 +954,16 @@ void PartialQuarry::regNormalization( )
                                  { "settings", "normalization", "grid_seq_annotation" },
                                  { "annotation", "by_name" },
                                  { "replicates", "by_name" },
-                                 { "dividend" } } } );
+                                 { "dividend" } },
+                               /*bHidden =*/false } );
 
     registerNode( NodeNames::DistDepDecayRemoved,
                   ComputeNode{ /*.sNodeName =*/"dist_dep_dec_normalized_bins",
                                /*.fFunc =*/&PartialQuarry::setDistDepDecayRemoved,
                                /*.vIncomingFunctions =*/{ NodeNames::Normalized, NodeNames::FlatDecay },
                                /*.vIncomingSession =*/{ },
-                               /*.vSessionsIncomingInPrevious =*/{ { "settings", "normalization", "ddd" } } } );
+                               /*.vSessionsIncomingInPrevious =*/{ { "settings", "normalization", "ddd" } },
+                               /*bHidden =*/false } );
 
     registerNode( NodeNames::Divided,
                   ComputeNode{ /*.sNodeName =*/"divided_by_tracks",
@@ -964,7 +973,8 @@ void PartialQuarry::regNormalization( )
                                { { "settings", "normalization", "divide_by_column_coverage" },
                                  { "settings", "normalization", "divide_by_row_coverage" },
                                  { "coverage", "list" } },
-                               /*.vSessionsIncomingInPrevious =*/{} } );
+                               /*.vSessionsIncomingInPrevious =*/{},
+                               /*bHidden =*/false } );
 }
 
 } // namespace cm

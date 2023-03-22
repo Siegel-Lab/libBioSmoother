@@ -680,7 +680,8 @@ void PartialQuarry::regCoverage( )
                                  { "settings", "normalization", "normalize_by" },
                                  { "coverage", "list" },
                                  { "replicates", "list" } },
-                               /*.vSessionsIncomingInPrevious =*/{} } );
+                               /*.vSessionsIncomingInPrevious =*/{},
+                               /*bHidden =*/false } );
 
     registerNode( NodeNames::CoverageValues,
                   ComputeNode{ /*.sNodeName =*/"coverage_values",
@@ -695,7 +696,8 @@ void PartialQuarry::regCoverage( )
                                  { "coverage", "by_name" },
                                  { "replicates", "by_name" } },
                                /*.vSessionsIncomingInPrevious =*/
-                               { { "settings", "filters", "incomplete_alignments" }, { "dividend" } } } );
+                               { { "settings", "filters", "incomplete_alignments" }, { "dividend" } },
+                               /*bHidden =*/false } );
 
     registerNode( NodeNames::Tracks,
                   ComputeNode{ /*.sNodeName =*/"coverage_tracks",
@@ -711,14 +713,16 @@ void PartialQuarry::regCoverage( )
                                { { "dividend" },
                                  { "settings", "normalization", "grid_seq_axis_is_column" },
                                  { "settings", "normalization", "radicl_seq_axis_is_column" },
-                                 { "settings", "normalization", "normalize_by" } } } );
+                                 { "settings", "normalization", "normalize_by" } },
+                               /*bHidden =*/false } );
 
     registerNode( NodeNames::TrackExport,
                   ComputeNode{ /*.sNodeName =*/"track_export",
                                /*.fFunc =*/&PartialQuarry::setTrackExport,
                                /*.vIncomingFunctions =*/{ NodeNames::Tracks },
                                /*.vIncomingSession =*/{ },
-                               /*.vSessionsIncomingInPrevious =*/{ { "dividend" } } } );
+                               /*.vSessionsIncomingInPrevious =*/{ { "dividend" } },
+                               /*bHidden =*/false } );
 
     registerNode(
         NodeNames::RankedSlicesCDS,
@@ -728,7 +732,8 @@ void PartialQuarry::regCoverage( )
             /*.vIncomingFunctions =*/{ NodeNames::RnaAssociatedGenesFilter },
             /*.vIncomingSession =*/{ },
             /*.vSessionsIncomingInPrevious =*/
-            { { "annotation", "by_name" }, { "settings", "normalization", "grid_seq_annotation" }, { "dividend" } } } );
+            { { "annotation", "by_name" }, { "settings", "normalization", "grid_seq_annotation" }, { "dividend" } },
+                               /*bHidden =*/false } );
 }
 
 

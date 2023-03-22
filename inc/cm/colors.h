@@ -412,7 +412,8 @@ void PartialQuarry::regColors( )
                                  { "settings", "interface", "color_low" },
                                  { "settings", "interface", "color_high" },
                                  { "settings", "normalization", "log_base", "val" } },
-                               /*.vSessionsIncomingInPrevious =*/{} } );
+                               /*.vSessionsIncomingInPrevious =*/{},
+                               /*bHidden =*/true } );
 
     registerNode( NodeNames::AnnotationColors,
                   ComputeNode{ /*.sNodeName =*/"annotation_color_palette",
@@ -421,21 +422,25 @@ void PartialQuarry::regColors( )
                                /*.vIncomingSession =*/
                                { { "settings", "interface", "annotation_color_palette" },
                                  { "settings", "interface", "annotation_color_palette_dark" } },
-                               /*.vSessionsIncomingInPrevious =*/{} } );
+                               /*.vSessionsIncomingInPrevious =*/{},
+                               /*bHidden =*/true } );
 
     registerNode( NodeNames::Combined,
                   ComputeNode{ /*.sNodeName =*/"combined_bins",
                                /*.fFunc =*/&PartialQuarry::setCombined,
-                               /*.vIncomingFunctions =*/{ NodeNames::DistDepDecayRemoved },
+                               /*.vIncomingFunctions =*/{ NodeNames::DistDepDecayRemoved,  
+                                                          NodeNames::BetweenGroup },
                                /*.vIncomingSession =*/{ },
-                               /*.vSessionsIncomingInPrevious =*/{} } );
+                               /*.vSessionsIncomingInPrevious =*/{},
+                               /*bHidden =*/false } );
 
     registerNode( NodeNames::Scaled,
                   ComputeNode{ /*.sNodeName =*/"scaled_bins",
                                /*.fFunc =*/&PartialQuarry::setScaled,
                                /*.vIncomingFunctions =*/{ NodeNames::Divided },
                                /*.vIncomingSession =*/{ { "settings", "normalization", "scale" } },
-                               /*.vSessionsIncomingInPrevious =*/{} } );
+                               /*.vSessionsIncomingInPrevious =*/{},
+                               /*bHidden =*/false } );
 
     registerNode(
         NodeNames::Colored,
@@ -445,21 +450,24 @@ void PartialQuarry::regColors( )
                      /*.vIncomingSession =*/
                      { { "settings", "normalization", "color_range", "val_max" },
                        { "settings", "normalization", "color_range", "val_min" } },
-                     /*.vSessionsIncomingInPrevious =*/{ { "settings", "normalization", "log_base", "val" } } } );
+                     /*.vSessionsIncomingInPrevious =*/{ { "settings", "normalization", "log_base", "val" } },
+                               /*bHidden =*/false } );
 
     registerNode( NodeNames::HeatmapCDS,
                   ComputeNode{ /*.sNodeName =*/"heatmap_cds",
                                /*.fFunc =*/&PartialQuarry::setHeatmapCDS,
                                /*.vIncomingFunctions =*/{ NodeNames::Colored },
                                /*.vIncomingSession =*/{ },
-                               /*.vSessionsIncomingInPrevious =*/{ { "dividend" } } } );
+                               /*.vSessionsIncomingInPrevious =*/{ { "dividend" } },
+                               /*bHidden =*/false } );
 
     registerNode( NodeNames::HeatmapExport,
                   ComputeNode{ /*.sNodeName =*/"heatmap_export",
                                /*.fFunc =*/&PartialQuarry::setHeatmapExport,
                                /*.vIncomingFunctions =*/{ NodeNames::Scaled },
                                /*.vIncomingSession =*/{ },
-                               /*.vSessionsIncomingInPrevious =*/{ { "dividend" } } } );
+                               /*.vSessionsIncomingInPrevious =*/{ { "dividend" } },
+                               /*bHidden =*/false } );
 
     registerNode(
         NodeNames::Palette,
@@ -469,7 +477,8 @@ void PartialQuarry::regColors( )
                      /*.vIncomingSession =*/
                      { { "settings", "normalization", "color_range", "val_max" },
                        { "settings", "normalization", "color_range", "val_min" } },
-                     /*.vSessionsIncomingInPrevious =*/{ { "settings", "normalization", "log_base", "val" } } } );
+                     /*.vSessionsIncomingInPrevious =*/{ { "settings", "normalization", "log_base", "val" } },
+                               /*bHidden =*/false } );
 }
 
 } // namespace cm
