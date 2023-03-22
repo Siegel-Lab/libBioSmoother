@@ -644,7 +644,69 @@ class PartialQuarry : public HasSession
     using coordinate_t = interface_t::coordinate_t;
 
   private:
-    size_t uiBinWidth, uiBinHeight;
+    /**
+     * @brief Dependency Declared Access
+     *
+     * will throw warnings in DEBUG mode if accessed without declaration in the comp graph.
+     *
+     * @tparam T
+     */
+    template <typename T> class DepDec
+    {
+      private:
+        T xData;
+#ifndef NDEBUG
+        PartialQuarry* rQ;
+        std::string sName;
+        std::set<NodeNames> vWriteAccess;
+        std::set<NodeNames> vReadAccess;
+#endif
+
+      public:
+        DepDec( PartialQuarry* rQ, const std::string& sName )
+#ifndef NDEBUG
+            : rQ( rQ ), sName( sName )
+#endif
+        {}
+
+
+        const T& r( ) const
+        {
+#ifndef NDEBUG
+            if( rQ->xCurrNodeName != NodeNames::SIZE && vReadAccess.count( rQ->xCurrNodeName ) == 0 &&
+                vWriteAccess.count( rQ->xCurrNodeName ) == 0 )
+                std::cout << "undeclared data dependency warning: " << rQ->vGraph[ rQ->xCurrNodeName ].sNodeName
+                          << " reads from " << sName << " but does not declare this." << std::endl;
+#endif
+            return xData;
+        }
+
+        T& w( )
+        {
+#ifndef NDEBUG
+            if( rQ->xCurrNodeName != NodeNames::SIZE && vWriteAccess.count( rQ->xCurrNodeName ) == 0 )
+                std::cout << "undeclared data dependency warning: " << rQ->vGraph[ rQ->xCurrNodeName ].sNodeName
+                          << " writes to " << sName << " but does not declare this." << std::endl;
+#endif
+            return xData;
+        }
+
+        void registerWrite( const NodeNames& xNode )
+        {
+#ifndef NDEBUG
+            vWriteAccess.insert( xNode );
+#endif
+        }
+
+        void registerRead( const NodeNames& xNode )
+        {
+#ifndef NDEBUG
+            vReadAccess.insert( xNode );
+#endif
+        }
+    };
+
+    DepDec<size_t> uiBinWidth, uiBinHeight;
     int64_t iStartX, iStartY, iEndX, iEndY;
 
     std::array<std::vector<ChromDesc>, 2> vActiveChromosomes;
@@ -1027,24 +1089,35 @@ class PartialQuarry : public HasSession
     }
 
   public:
-    PartialQuarry( ) : HasSession( ), uiCurrTime( 1 ), vGraph( NodeNames::SIZE ), vGraphData( NodeNames::SIZE )
-    {
-        registerAll( );
-        ++uiCurrTime;
-    }
-
-    PartialQuarry( std::shared_ptr<SpsInterface<false>> pIndex )
-        : HasSession( *pIndex ),
+    PartialQuarry( std::shared_ptr<interface_t> pIndex )
+        : HasSession( pIndex ),
           uiCurrTime( 1 ),
           vGraph( NodeNames::SIZE ),
           vGraphData( NodeNames::SIZE ),
-          pIndices( pIndex )
+          pIndices( pIndex ),
+          uiBinWidth( this, "uiBinWidth" ),
+          uiBinHeight( this, "uiBinHeight" )
     {
         registerAll( );
         ++uiCurrTime;
+
+        // @todo-low-prio these should be declared while registering the nodes
+        // also every member variable should be wrapped with DepDec.
+        uiBinWidth.registerWrite(NodeNames::BinSize);
+        uiBinWidth.registerRead(NodeNames::ActiveChromLength);
+        uiBinWidth.registerRead(NodeNames::RenderArea);
+        uiBinWidth.registerRead(NodeNames::AxisCoords);
+
+        uiBinHeight.registerWrite(NodeNames::BinSize);
+        uiBinHeight.registerRead(NodeNames::ActiveChromLength);
+        uiBinHeight.registerRead(NodeNames::RenderArea);
+        uiBinHeight.registerRead(NodeNames::AxisCoords);
     }
 
-    PartialQuarry( std::string sPrefix ) : PartialQuarry( std::make_shared<SpsInterface<false>>( sPrefix ) )
+    PartialQuarry( ) : PartialQuarry( std::shared_ptr<interface_t>{} )
+    {}
+
+    PartialQuarry( std::string sPrefix ) : PartialQuarry( std::make_shared<interface_t>( sPrefix ) )
     {}
 
     void copyFrom( const PartialQuarry& rOther )
@@ -1175,9 +1248,10 @@ class PartialQuarry : public HasSession
     {
         if( ( bBottom && sName == "*" ) || sName.size( ) == 0 || to_lower( sName ) == "start" )
             return pybind11::int_( 0 );
-        if( !bGenomicCoords && (( !bBottom && sName == "*" ) || sName.size( ) == 0 || to_lower( sName ) == "end") )
+        if( !bGenomicCoords && ( ( !bBottom && sName == "*" ) || sName.size( ) == 0 || to_lower( sName ) == "end" ) )
             return pybind11::int_( vCanvasSize[ bXAxis ? 0 : 1 ] );
-        else if( bGenomicCoords && (( !bBottom && sName == "*" ) || sName.size( ) == 0 || to_lower( sName ) == "end") )
+        else if( bGenomicCoords &&
+                 ( ( !bBottom && sName == "*" ) || sName.size( ) == 0 || to_lower( sName ) == "end" ) )
             return pybind11::int_( getValue<size_t>( { "contigs", "genome_size" } ) );
 
         std::regex xName( to_lower( sName ) );

@@ -34,7 +34,7 @@ bool PartialQuarry::normalizeBinominalTest( )
 {
     const bool bIsCol = getValue<bool>( { "settings", "normalization", "radicl_seq_axis_is_column" } );
     const size_t uiNumBinsInRowTotal =
-        ( vCanvasSize[ bIsCol ? 1 : 0 ] - 1 ) / ( bIsCol ? uiBinHeight : uiBinWidth ) + 1;
+        ( vCanvasSize[ bIsCol ? 1 : 0 ] - 1 ) / ( bIsCol ? uiBinHeight.r() : uiBinWidth.r() ) + 1;
     const size_t uiNumSaples = getValue<size_t>( { "settings", "normalization", "radicl_seq_samples", "val" } );
     vvNormalized = normalizeBinominalTestTrampoline(
         vvFlatValues, vRadiclSeqCoverage, vRadiclSeqNumNonEmptyBins, uiNumSaples, uiNumBinsInRowTotal,
@@ -310,8 +310,8 @@ bool PartialQuarry::setRadiclSeqSamples( )
     const bool bAxisIsCol = getValue<bool>( { "settings", "normalization", "radicl_seq_axis_is_column" } );
     const size_t uiRadiclSeqSamples = getValue<size_t>( { "settings", "normalization", "radicl_seq_samples", "val" } );
 
-    getSamples( GetSamplesMode::Bins, uiRadiclSeqSamples, "", bAxisIsCol ? uiBinHeight : uiBinWidth, bAxisIsCol, false,
-                vRadiclSeqSamples );
+    getSamples( GetSamplesMode::Bins, uiRadiclSeqSamples, "", bAxisIsCol ? uiBinHeight.r() : uiBinWidth.r(), bAxisIsCol,
+                false, vRadiclSeqSamples );
     // then this cancel_return is necessary to catch the cancelled getSamples
     CANCEL_RETURN;
 
@@ -330,7 +330,7 @@ bool PartialQuarry::setICESamples( )
 
     for( size_t uiI = 0; uiI < 2; uiI++ )
     {
-        getSamples( GetSamplesMode::Bins, uiICESamples, "", uiI == 0 ? uiBinHeight : uiBinWidth, uiI == 0, false,
+        getSamples( GetSamplesMode::Bins, uiICESamples, "", uiI == 0 ? uiBinHeight.r() : uiBinWidth.r(), uiI == 0, false,
                     vICESamples[ uiI ] );
         // then this cancel_return is necessary to catch the cancelled getSamples
         CANCEL_RETURN;

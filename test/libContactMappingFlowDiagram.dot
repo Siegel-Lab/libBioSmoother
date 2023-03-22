@@ -1,11 +1,12 @@
 digraph libContactMappingFlowDiagram {
         bin_size_in [shape=box, label=<settings.interface.snap_bin_size<br/>settings.interface.snap_factors<br/>settings.interface.min_bin_size.val<br/>settings.interface.max_num_bins.val<br/>settings.interface.max_num_bins_factor<br/>settings.interface.squared_bins<br/>settings.interface.fixed_number_of_bins<br/>settings.interface.fixed_num_bins_x.val<br/>settings.interface.fixed_num_bins_y.val<br/>dividend<br/>area<br/>>];
         bin_size_in -> bin_size;
-        render_area_in [shape=box, label=<settings.export.do_export_full<br/>settings.contigs.genome_size<br/>settings.interface.add_draw_area.val<br/><i>[bin_size]</i><br/>>];
+        render_area_in [shape=box, label=<settings.export.do_export_full<br/>settings.contigs.genome_size<br/>settings.interface.add_draw_area.val<br/>>];
         render_area_in -> render_area;
+        bin_size -> render_area;
         active_chroms_in [shape=box, label=<contigs.displayed_on_x<br/>contigs.displayed_on_y<br/>contigs.lengths<br/>>];
         active_chroms_in -> active_chroms;
-        axis_coords_in [shape=box, label=<settings.filters.cut_off_bin<br/>settings.filters.multiple_annos_in_bin<br/>settings.filters.anno_in_multiple_bins<br/>contigs.annotation_coordinates<br/>settings.filters.anno_coords_row<br/>settings.filters.anno_coords_col<br/>annotation.by_name<br/><i>[active_chroms_length]</i><br/><i>[render_area]</i><br/>>];
+        axis_coords_in [shape=box, label=<settings.filters.multiple_annos_in_bin<br/>settings.filters.anno_in_multiple_bins<br/>annotation.by_name<br/><i>[active_chroms_length]</i><br/><i>[render_area]</i><br/>>];
         axis_coords_in -> axis_coords;
         symmetry_setting_in [shape=box, label=<settings.filters.symmetry<br/>>];
         symmetry_setting_in -> symmetry_setting;
@@ -23,11 +24,11 @@ digraph libContactMappingFlowDiagram {
         active_replicates_setting_in -> active_replicates_setting;
         active_coverage_in [shape=box, label=<coverage.in_column<br/>coverage.in_row<br/>coverage.cov_column_a<br/>coverage.cov_column_b<br/>coverage.cov_row_a<br/>coverage.cov_row_b<br/>replicates.in_column<br/>replicates.in_row<br/>replicates.cov_column_a<br/>replicates.cov_column_b<br/>replicates.cov_row_a<br/>replicates.cov_row_b<br/>settings.normalization.normalize_by<br/>coverage.list<br/>replicates.list<br/>>];
         active_coverage_in -> active_coverage;
-        coverage_values_in [shape=box, label=<settings.replicates.coverage_get_max_col<br/>settings.replicates.coverage_get_max_row<br/>settings.replicates.coverage_get_max_bin_size.val<br/>coverage.by_name<br/>replicates.by_name<br/><i>[intersection_type_setting]</i><br/><i>[symmetry_setting]</i><br/><i>[mapping_quality_setting]</i><br/><i>[directionality_setting]</i><br/>>];
+        coverage_values_in [shape=box, label=<settings.replicates.coverage_get_max_col<br/>settings.replicates.coverage_get_max_row<br/>settings.replicates.coverage_get_max_bin_size.val<br/>settings.normalization.min_interactions.val<br/>coverage.by_name<br/>replicates.by_name<br/><i>[intersection_type_setting]</i><br/><i>[symmetry_setting]</i><br/><i>[mapping_quality_setting]</i><br/><i>[directionality_setting]</i><br/>>];
         coverage_values_in -> coverage_values;
         active_coverage -> coverage_values;
         axis_coords -> coverage_values;
-        bin_values_in [shape=box, label=<settings.normalization.min_interactions.val<br/>replicates.by_name<br/><i>[dataset_id_per_repl]</i><br/><i>[mapping_quality_setting]</i><br/><i>[directionality_setting]</i><br/>>];
+        bin_values_in [shape=box, label=<settings.normalization.min_interactions.val<br/><i>[dataset_id_per_repl]</i><br/><i>[mapping_quality_setting]</i><br/><i>[directionality_setting]</i><br/>>];
         bin_values_in -> bin_values;
         bin_coords -> bin_values;
         decay_values_in [shape=box, label=<settings.normalization.ddd_samples.val_min<br/>settings.normalization.ddd_samples.val_max<br/>settings.normalization.ddd_quantile.val<br/>settings.normalization.min_interactions.val<br/><i>[dataset_id_per_repl]</i><br/><i>[mapping_quality_setting]</i><br/><i>[directionality_setting]</i><br/>>];
@@ -61,7 +62,7 @@ digraph libContactMappingFlowDiagram {
         scaled_bins -> colored_bins;
         active_annotation_in [shape=box, label=<annotation.visible_x<br/>annotation.visible_y<br/>>];
         active_annotation_in -> active_annotation;
-        annotation_values_in [shape=box, label=<settings.interface.max_detailed_anno_display<br/>settings.interface.v4c.do_col<br/>settings.interface.v4c.do_row<br/>settings.interface.v4c.col_from<br/>settings.interface.v4c.col_to<br/>settings.interface.v4c.row_from<br/>settings.interface.v4c.row_to<br/>>];
+        annotation_values_in [shape=box, label=<settings.interface.max_detailed_anno_display<br/>>];
         annotation_values_in -> annotation_values;
         active_annotation -> annotation_values;
         axis_coords -> annotation_values;
@@ -69,8 +70,11 @@ digraph libContactMappingFlowDiagram {
         annotation_cds_in -> annotation_cds;
         annotation_cds [shape=hexagon];
         annotation_values -> annotation_cds;
+        virtual4c_coords -> annotation_cds;
         annotation_color_palette_in [shape=box, label=<settings.interface.annotation_color_palette<br/>settings.interface.annotation_color_palette_dark<br/>>];
         annotation_color_palette_in -> annotation_color_palette;
+        active_annotation_cds_in [shape=box, label=<settings.interface.v4c.do_col<br/>settings.interface.v4c.do_row<br/>>];
+        active_annotation_cds_in -> active_annotation_cds;
         active_annotation_cds [shape=hexagon];
         active_annotation -> active_annotation_cds;
         heatmap_cds [shape=hexagon];
@@ -98,11 +102,11 @@ digraph libContactMappingFlowDiagram {
         rendered_palette_in -> rendered_palette;
         rendered_palette [shape=hexagon];
         scaled_bins -> rendered_palette;
-        anno_filters_in [shape=box, label=<annotation.filter<br/>settings.filters.anno_filter_row<br/>settings.filters.anno_filter_col<br/>contigs.annotation_coordinates<br/>settings.filters.anno_coords_row<br/>settings.filters.anno_coords_col<br/>annotation.list<br/><i>[active_chroms_length]</i><br/>>];
+        anno_filters_in [shape=box, label=<annotation.filter<br/>settings.filters.anno_filter_row<br/>settings.filters.anno_filter_col<br/>annotation.list<br/><i>[active_chroms_length]</i><br/>>];
         anno_filters_in -> anno_filters;
         longest_common_substring_in [shape=box, label=<contigs.list<br/>>];
         longest_common_substring_in -> longest_common_substring;
-        canvas_size_in [shape=box, label=<contigs.annotation_coordinates<br/>settings.filters.anno_coords_row<br/>settings.filters.anno_coords_col<br/>settings.filters.anno_in_multiple_bins<br/>annotation.by_name<br/><i>[active_chroms_length]</i><br/>>];
+        canvas_size_in [shape=box, label=<settings.filters.anno_in_multiple_bins<br/>annotation.by_name<br/><i>[active_chroms_length]</i><br/>>];
         canvas_size_in -> canvas_size;
         grid_seq_coords_in [shape=box, label=<settings.normalization.grid_seq_slice_samples<br/>settings.normalization.grid_seq_anno_type<br/>annotation.by_name<br/>settings.normalization.normalize_by<br/><i>[active_chroms_length]</i><br/>>];
         grid_seq_coords_in -> grid_seq_coords;
@@ -117,7 +121,7 @@ digraph libContactMappingFlowDiagram {
         grid_seq_coverage_in -> grid_seq_coverage;
         grid_seq_samples -> grid_seq_coverage;
         axis_coords -> grid_seq_coverage;
-        radicl_coverage_in [shape=box, label=<replicates.by_name<br/>settings.normalization.normalize_by<br/>settings.normalization.min_interactions.val<br/><i>[active_replicates_setting]</i><br/><i>[mapping_quality_setting]</i><br/><i>[intersection_type_setting]</i><br/><i>[directionality_setting]</i><br/>>];
+        radicl_coverage_in [shape=box, label=<replicates.by_name<br/>settings.normalization.min_interactions.val<br/><i>[active_replicates_setting]</i><br/><i>[mapping_quality_setting]</i><br/><i>[intersection_type_setting]</i><br/><i>[directionality_setting]</i><br/>>];
         radicl_coverage_in -> radicl_coverage;
         axis_coords -> radicl_coverage;
         radicl_seq_samples -> radicl_coverage;
@@ -125,12 +129,16 @@ digraph libContactMappingFlowDiagram {
         rna_associated_genes_filter_in -> rna_associated_genes_filter;
         grid_seq_coverage -> rna_associated_genes_filter;
         rna_associated_genes_filter -> rna_associated_background;
-        grid_seq_samples_in [shape=box, label=<annotation.by_name<br/>dividend<br/>settings.normalization.normalize_by<br/>settings.normalization.grid_seq_annotation<br/>settings.normalization.grid_seq_samples.val<br/>settings.normalization.grid_seq_axis_is_column<br/><i>[active_chroms_length]</i><br/>>];
+        grid_seq_samples_in [shape=box, label=<annotation.by_name<br/>settings.normalization.normalize_by<br/>settings.normalization.grid_seq_annotation<br/>settings.normalization.grid_seq_samples.val<br/>settings.normalization.grid_seq_axis_is_column<br/><i>[active_chroms_length]</i><br/>>];
         grid_seq_samples_in -> grid_seq_samples;
-        radicl_seq_samples_in [shape=box, label=<dividend<br/>settings.normalization.normalize_by<br/>settings.normalization.radicl_seq_samples.val<br/>settings.normalization.radicl_seq_axis_is_column<br/><i>[active_chroms_length]</i><br/>>];
+        radicl_seq_samples_in [shape=box, label=<settings.normalization.normalize_by<br/>settings.normalization.radicl_seq_samples.val<br/>settings.normalization.radicl_seq_axis_is_column<br/><i>[active_chroms_length]</i><br/>>];
         radicl_seq_samples_in -> radicl_seq_samples;
         dataset_id_per_repl_in [shape=box, label=<replicates.by_name<br/><i>[active_replicates_setting]</i><br/><i>[active_chroms]</i><br/>>];
         dataset_id_per_repl_in -> dataset_id_per_repl;
-        active_chroms_length_in [shape=box, label=<settings.filters.cut_off_bin<br/>contigs.annotation_coordinates<br/>settings.filters.anno_coords_row<br/>settings.filters.anno_coords_col<br/><i>[active_chroms]</i><br/><i>[bin_size]</i><br/>>];
+        active_chroms_length_in [shape=box, label=<settings.filters.cut_off_bin<br/>contigs.annotation_coordinates<br/>settings.filters.anno_coords_row<br/>settings.filters.anno_coords_col<br/><i>[active_chroms]</i><br/>>];
         active_chroms_length_in -> active_chroms_length;
+        bin_size -> active_chroms_length;
+        virtual4c_coords_in [shape=box, label=<settings.interface.v4c.do_col<br/>settings.interface.v4c.do_row<br/>settings.interface.v4c.col_from<br/>settings.interface.v4c.col_to<br/>settings.interface.v4c.row_from<br/>settings.interface.v4c.row_to<br/><i>[canvas_size]</i><br/>>];
+        virtual4c_coords_in -> virtual4c_coords;
+        axis_coords -> virtual4c_coords;
 }

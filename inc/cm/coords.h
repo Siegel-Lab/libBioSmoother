@@ -629,7 +629,7 @@ bool PartialQuarry::setActiveChromLength( )
     {
         const bool bGenomeCoords =
             !getValue<bool>( { "settings", "filters", bX ? "anno_coords_col" : "anno_coords_row" } );
-        const size_t uiBinSize = bX ? uiBinWidth : uiBinHeight;
+        const size_t uiBinSize = bX ? uiBinWidth.r() : uiBinHeight.r();
         for( auto& rChr : this->vActiveChromosomes[ bX ? 0 : 1 ] )
             if( uiSmallerVal == 4 && bGenomeCoords ) // fit_chrom_smaller
                 rChr.uiLength = uiBinSize * ( rChr.uiUnadjustedLength / uiBinSize );
@@ -651,7 +651,7 @@ bool PartialQuarry::setAxisCoords( )
         std::pair<std::vector<AxisCoord>, std::vector<AxisRegion>> xRet;
         if( !bAnnoCoords )
             xRet = axisCoordsHelper(
-                bX ? this->uiBinWidth : this->uiBinHeight,
+                bX ? uiBinWidth.r() : uiBinHeight.r(),
                 bX ? std::max( (int64_t)0, this->iStartX ) : std::max( (int64_t)0, this->iStartY ),
                 bX ? std::max( (int64_t)0, this->iEndX ) : std::max( (int64_t)0, this->iEndY ),
                 smaller_bin_to_num( getValue<std::string>( { "settings", "filters", "cut_off_bin" } ) ),
@@ -659,7 +659,7 @@ bool PartialQuarry::setAxisCoords( )
                 this->bCancel );
         else
             xRet = annoCoordsHelper<SpsInterface<false>::anno_t>(
-                bX ? this->uiBinWidth : this->uiBinHeight,
+                bX ? uiBinWidth.r() : uiBinHeight.r(),
                 bX ? std::max( (int64_t)0, this->iStartX ) : std::max( (int64_t)0, this->iStartY ),
                 bX ? std::max( (int64_t)0, this->iEndX ) : std::max( (int64_t)0, this->iEndY ),
                 smaller_bin_to_num( getValue<std::string>( { "settings", "filters", "cut_off_bin" } ) ),

@@ -39,7 +39,9 @@ class HasSession
         : sFilePrefix( sFilePrefix ), xSession( json::parse( std::ifstream( sFilePrefix + "/session.json" ) ) )
     {}
 
-    HasSession( const HasSession& rOther ) : sFilePrefix( rOther.sFilePrefix ), xSession( rOther.copySession( ) )
+    HasSession( const std::shared_ptr<HasSession> rOther )
+        : sFilePrefix( rOther != nullptr ? rOther->sFilePrefix : std::string("") ),
+          xSession( rOther != nullptr ? rOther->copySession( ) : json::parse("{}") )
     {}
 
     template <typename T> T getSessionValue( std::vector<std::string> vKeys )
