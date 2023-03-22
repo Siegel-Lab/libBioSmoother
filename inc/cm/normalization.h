@@ -867,12 +867,11 @@ void PartialQuarry::regNormalization( )
                                /*.vIncomingFunctions =*/{ NodeNames::ActiveChromLength },
                                /*.vIncomingSession =*/
                                { { "annotation", "by_name" },
-                                 { "dividend" },
                                  { "settings", "normalization", "normalize_by" },
                                  { "settings", "normalization", "grid_seq_annotation" },
                                  { "settings", "normalization", "grid_seq_samples", "val" },
                                  { "settings", "normalization", "grid_seq_axis_is_column" } },
-                               /*.vSessionsIncomingInPrevious =*/{ },
+                               /*.vSessionsIncomingInPrevious =*/{ { "dividend" } },
                                /*bHidden =*/false } );
 
     registerNode( NodeNames::RadiclSeqSamples,
@@ -880,11 +879,10 @@ void PartialQuarry::regNormalization( )
                                /*.fFunc =*/&PartialQuarry::setRadiclSeqSamples,
                                /*.vIncomingFunctions =*/{ NodeNames::ActiveChromLength },
                                /*.vIncomingSession =*/
-                               { { "dividend" },
-                                 { "settings", "normalization", "normalize_by" },
+                               { { "settings", "normalization", "normalize_by" },
                                  { "settings", "normalization", "radicl_seq_samples", "val" },
                                  { "settings", "normalization", "radicl_seq_axis_is_column" } },
-                               /*.vSessionsIncomingInPrevious =*/{ },
+                               /*.vSessionsIncomingInPrevious =*/{ { "dividend" } },
                                /*bHidden =*/false } );
     // registerNode( NodeNames::ICESamples,
     //               ComputeNode{ /*.sNodeName =*/ "ice_samples",
@@ -915,19 +913,20 @@ void PartialQuarry::regNormalization( )
                                  { "annotation", "by_name" },
                                  { "dividend" } },
                                /*bHidden =*/false } );
-    registerNode(
-        NodeNames::RadiclSeqCoverage,
-        ComputeNode{ /*.sNodeName =*/"radicl_coverage",
-                     /*.fFunc =*/&PartialQuarry::setRadiclSeqCoverage,
-                     /*.vIncomingFunctions =*/
-                     { NodeNames::ActiveReplicates, NodeNames::MappingQuality, NodeNames::AxisCoords,
-                       NodeNames::RadiclSeqSamples, NodeNames::IntersectionType, NodeNames::Directionality },
-                     /*.vIncomingSession =*/
-                     { { "replicates", "by_name" },
-                       { "settings", "normalization", "normalize_by" },
-                       { "settings", "normalization", "min_interactions", "val" } },
-                     /*.vSessionsIncomingInPrevious =*/{ { "settings", "normalization", "radicl_seq_axis_is_column" } },
-                     /*bHidden =*/false } );
+    registerNode( NodeNames::RadiclSeqCoverage,
+                  ComputeNode{ /*.sNodeName =*/"radicl_coverage",
+                               /*.fFunc =*/&PartialQuarry::setRadiclSeqCoverage,
+                               /*.vIncomingFunctions =*/
+                               { NodeNames::ActiveReplicates, NodeNames::MappingQuality, NodeNames::AxisCoords,
+                                 NodeNames::RadiclSeqSamples, NodeNames::IntersectionType, NodeNames::Directionality },
+                               /*.vIncomingSession =*/
+                               { { "replicates", "by_name" },
+
+                                 { "settings", "normalization", "min_interactions", "val" } },
+                               /*.vSessionsIncomingInPrevious =*/
+                               { { "settings", "normalization", "normalize_by" },
+                                 { "settings", "normalization", "radicl_seq_axis_is_column" } },
+                               /*bHidden =*/false } );
 
     registerNode( NodeNames::RnaAssociatedGenesFilter,
                   ComputeNode{ /*.sNodeName =*/"rna_associated_genes_filter",

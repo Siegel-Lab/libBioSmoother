@@ -693,6 +693,7 @@ void PartialQuarry::regCoverage( )
                                { { "settings", "replicates", "coverage_get_max_col" },
                                  { "settings", "replicates", "coverage_get_max_row" },
                                  { "settings", "replicates", "coverage_get_max_bin_size", "val" },
+                                 { "settings", "normalization", "min_interactions", "val" },
                                  { "coverage", "by_name" },
                                  { "replicates", "by_name" } },
                                /*.vSessionsIncomingInPrevious =*/

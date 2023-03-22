@@ -340,28 +340,28 @@ void PartialQuarry::regAnnotation( )
                                /*.vSessionsIncomingInPrevious =*/{ },
                                /*bHidden =*/false } );
 
-    registerNode(
-        NodeNames::AnnotationValues,
-        ComputeNode{
-            /*.sNodeName =*/"annotation_values",
-            /*.fFunc =*/&PartialQuarry::setAnnotationValues,
-            /*.vIncomingFunctions =*/{ NodeNames::ActivateAnnotation, NodeNames::AxisCoords },
-            /*.vIncomingSession =*/{ { "settings", "interface", "max_detailed_anno_display" } },
-            /*.vSessionsIncomingInPrevious =*/
-            { { "settings", "filters", "anno_in_multiple_bins" },
-              { "dividend" },
-              { "annotation", "by_name" },
-              { "settings", "filters", "anno_coords_row" },
-              { "settings", "filters", "anno_coords_col" } },
-            /*bHidden =*/false } );
-
-    registerNode( NodeNames::AnnotationCDS,
-                  ComputeNode{ /*.sNodeName =*/"annotation_cds",
-                               /*.fFunc =*/&PartialQuarry::setAnnotationCDS,
-                               /*.vIncomingFunctions =*/{ NodeNames::AnnotationValues, NodeNames::AnnotationColors, NodeNames::V4cCoords },
-                               /*.vIncomingSession =*/{ { "settings", "interface", "min_anno_dist" } },
-                               /*.vSessionsIncomingInPrevious =*/{ { "dividend" } },
+    registerNode( NodeNames::AnnotationValues,
+                  ComputeNode{ /*.sNodeName =*/"annotation_values",
+                               /*.fFunc =*/&PartialQuarry::setAnnotationValues,
+                               /*.vIncomingFunctions =*/{ NodeNames::ActivateAnnotation, NodeNames::AxisCoords },
+                               /*.vIncomingSession =*/{ { "settings", "interface", "max_detailed_anno_display" } },
+                               /*.vSessionsIncomingInPrevious =*/
+                               { { "settings", "filters", "anno_in_multiple_bins" },
+                                 { "dividend" },
+                                 { "annotation", "by_name" },
+                                 { "settings", "filters", "anno_coords_row" },
+                                 { "settings", "filters", "anno_coords_col" } },
                                /*bHidden =*/false } );
+
+    registerNode(
+        NodeNames::AnnotationCDS,
+        ComputeNode{
+            /*.sNodeName =*/"annotation_cds",
+            /*.fFunc =*/&PartialQuarry::setAnnotationCDS,
+            /*.vIncomingFunctions =*/{ NodeNames::AnnotationValues, NodeNames::AnnotationColors, NodeNames::V4cCoords },
+            /*.vIncomingSession =*/{ { "settings", "interface", "min_anno_dist" } },
+            /*.vSessionsIncomingInPrevious =*/{ { "dividend" } },
+            /*bHidden =*/false } );
 
     registerNode( NodeNames::ActivateAnnotationCDS,
                   ComputeNode{ /*.sNodeName =*/"active_annotation_cds",

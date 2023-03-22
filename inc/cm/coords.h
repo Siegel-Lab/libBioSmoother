@@ -981,7 +981,7 @@ bool PartialQuarry::setV4cCoords( )
                 CANCEL_RETURN;
                 const size_t uiL = this->vActiveChromosomes[ uiI ][ uiX ].uiLength;
                 size_t uiL2 = 0;
-                
+
                 if( !bAnnoCoords )
                     uiL2 = this->vActiveChromosomes[ uiI ][ uiX ].uiLength;
                 else
@@ -1008,21 +1008,21 @@ bool PartialQuarry::setV4cCoords( )
                         CANCEL_RETURN;
                         if( xReg.uiChromosome == uiX && xReg.uiIndexPos <= uiIndexFromCtg &&
                             uiIndexFromCtg <= xReg.uiIndexPos + xReg.uiIndexSize )
-                            uiScreenFromCtg = std::min( (uiIndexFromCtg - xReg.uiIndexPos) + xReg.uiScreenPos, 
-                                                       xReg.uiScreenPos + xReg.uiScreenSize);
-                        else if(xReg.uiChromosome == uiX && uiIndexFromCtg > xReg.uiIndexPos + xReg.uiIndexSize)
-                            uiScreenFromCtg = std::max(uiScreenFromCtg, xReg.uiScreenPos + xReg.uiScreenSize);
-                        else if(xReg.uiChromosome == uiX && uiIndexFromCtg < xReg.uiIndexPos)
-                            uiScreenFromCtg = std::min(uiScreenFromCtg, xReg.uiScreenPos);
+                            uiScreenFromCtg = std::min( ( uiIndexFromCtg - xReg.uiIndexPos ) + xReg.uiScreenPos,
+                                                        xReg.uiScreenPos + xReg.uiScreenSize );
+                        else if( xReg.uiChromosome == uiX && uiIndexFromCtg > xReg.uiIndexPos + xReg.uiIndexSize )
+                            uiScreenFromCtg = std::max( uiScreenFromCtg, xReg.uiScreenPos + xReg.uiScreenSize );
+                        else if( xReg.uiChromosome == uiX && uiIndexFromCtg < xReg.uiIndexPos )
+                            uiScreenFromCtg = std::min( uiScreenFromCtg, xReg.uiScreenPos );
 
                         if( xReg.uiChromosome == uiX && xReg.uiIndexPos <= uiIndexToCtg &&
                             uiIndexToCtg <= xReg.uiIndexPos + xReg.uiIndexSize )
-                            uiScreenToCtg = std::min( (uiIndexToCtg - xReg.uiIndexPos) + xReg.uiScreenPos, 
-                                                     xReg.uiScreenPos + xReg.uiScreenSize);
-                        else if(xReg.uiChromosome == uiX && uiIndexToCtg > xReg.uiIndexPos + xReg.uiIndexSize)
-                            uiScreenToCtg = std::max(uiScreenToCtg, xReg.uiScreenPos + xReg.uiScreenSize);
-                        else if(xReg.uiChromosome == uiX && uiIndexToCtg < xReg.uiIndexPos)
-                            uiScreenToCtg = std::min(uiScreenToCtg, xReg.uiScreenPos);
+                            uiScreenToCtg = std::min( ( uiIndexToCtg - xReg.uiIndexPos ) + xReg.uiScreenPos,
+                                                      xReg.uiScreenPos + xReg.uiScreenSize );
+                        else if( xReg.uiChromosome == uiX && uiIndexToCtg > xReg.uiIndexPos + xReg.uiIndexSize )
+                            uiScreenToCtg = std::max( uiScreenToCtg, xReg.uiScreenPos + xReg.uiScreenSize );
+                        else if( xReg.uiChromosome == uiX && uiIndexToCtg < xReg.uiIndexPos )
+                            uiScreenToCtg = std::min( uiScreenToCtg, xReg.uiScreenPos );
                     }
                     /*
 
@@ -1223,12 +1223,11 @@ void PartialQuarry::regCoords( )
                                /*.fFunc =*/&PartialQuarry::setCanvasSize,
                                /*.vIncomingFunctions =*/{ NodeNames::ActiveChromLength },
                                /*.vIncomingSession =*/
+                               { { "settings", "filters", "anno_in_multiple_bins" }, { "annotation", "by_name" } },
+                               /*.vSessionsIncomingInPrevious =*/
                                { { "contigs", "annotation_coordinates" },
                                  { "settings", "filters", "anno_coords_row" },
-                                 { "settings", "filters", "anno_coords_col" },
-                                 { "settings", "filters", "anno_in_multiple_bins" },
-                                 { "annotation", "by_name" } },
-                               /*.vSessionsIncomingInPrevious =*/{ },
+                                 { "settings", "filters", "anno_coords_col" } },
                                /*bHidden =*/true } );
 
     registerNode( NodeNames::AxisCoords,
@@ -1236,18 +1235,21 @@ void PartialQuarry::regCoords( )
                                /*.fFunc =*/&PartialQuarry::setAxisCoords,
                                /*.vIncomingFunctions =*/{ NodeNames::ActiveChromLength, NodeNames::RenderArea },
                                /*.vIncomingSession =*/
-                               { { "settings", "filters", "cut_off_bin" },
-                                 { "settings", "filters", "multiple_annos_in_bin" },
+                               { { "settings", "filters", "multiple_annos_in_bin" },
                                  { "settings", "filters", "anno_in_multiple_bins" },
-                                 { "contigs", "annotation_coordinates" },
-                                 { "settings", "filters", "anno_coords_row" },
-                                 { "settings", "filters", "anno_coords_col" },
+
                                  { "annotation", "by_name" } },
-                               /*.vSessionsIncomingInPrevious =*/{ },
+                               /*.vSessionsIncomingInPrevious =*/
+                               {
+                                   { "settings", "filters", "cut_off_bin" },
+                                   { "contigs", "annotation_coordinates" },
+                                   { "settings", "filters", "anno_coords_row" },
+                                   { "settings", "filters", "anno_coords_col" },
+                               },
                                /*bHidden =*/false } );
 
     registerNode( NodeNames::V4cCoords,
-                  ComputeNode{ /*.sNodeName =*/"axis_coords",
+                  ComputeNode{ /*.sNodeName =*/"virtual4c_coords",
                                /*.fFunc =*/&PartialQuarry::setV4cCoords,
                                /*.vIncomingFunctions =*/{ NodeNames::CanvasSize, NodeNames::AxisCoords },
                                /*.vIncomingSession =*/
@@ -1257,7 +1259,14 @@ void PartialQuarry::regCoords( )
                                  { "settings", "interface", "v4c", "col_to" },
                                  { "settings", "interface", "v4c", "row_from" },
                                  { "settings", "interface", "v4c", "row_to" } },
-                               /*.vSessionsIncomingInPrevious =*/{ },
+                               /*.vSessionsIncomingInPrevious =*/
+                               {
+                                   { "contigs", "annotation_coordinates" },
+                                   { "settings", "filters", "anno_coords_row" },
+                                   { "settings", "filters", "anno_coords_col" },
+                                   { "annotation", "by_name" },
+                                   { "settings", "filters", "anno_in_multiple_bins" },
+                               },
                                /*bHidden =*/false } );
 
     registerNode( NodeNames::Symmetry, ComputeNode{ /*.sNodeName =*/"symmetry_setting",
@@ -1304,11 +1313,11 @@ void PartialQuarry::regCoords( )
                                { { "annotation", "filter" },
                                  { "settings", "filters", "anno_filter_row" },
                                  { "settings", "filters", "anno_filter_col" },
-                                 { "contigs", "annotation_coordinates" },
-                                 { "settings", "filters", "anno_coords_row" },
-                                 { "settings", "filters", "anno_coords_col" },
                                  { "annotation", "list" } },
-                               /*.vSessionsIncomingInPrevious =*/{ },
+                               /*.vSessionsIncomingInPrevious =*/
+                               { { "contigs", "annotation_coordinates" },
+                                 { "settings", "filters", "anno_coords_row" },
+                                 { "settings", "filters", "anno_coords_col" } },
                                /*bHidden =*/false } );
 
     registerNode( NodeNames::DecayCoords,

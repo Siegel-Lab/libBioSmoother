@@ -597,18 +597,17 @@ void PartialQuarry::regReplicates( )
                                /*.vSessionsIncomingInPrevious =*/{ },
                                /*bHidden =*/true } );
 
-    registerNode(
-        NodeNames::BinValues,
-        ComputeNode{
-            /*.sNodeName =*/"bin_values",
-            /*.fFunc=*/&PartialQuarry::setBinValues,
-            /*.vIncomingFunctions =*/
-            { NodeNames::BinCoords, NodeNames::DatasetIdPerRepl, NodeNames::MappingQuality, NodeNames::Directionality },
-            /*.vIncomingSession =*/
-            { { "settings", "normalization", "min_interactions", "val" }, { "replicates", "by_name" } },
-            /*.vSessionsIncomingInPrevious =*/
-            { },
-            /*bHidden =*/false } );
+    registerNode( NodeNames::BinValues,
+                  ComputeNode{ /*.sNodeName =*/"bin_values",
+                               /*.fFunc=*/&PartialQuarry::setBinValues,
+                               /*.vIncomingFunctions =*/
+                               { NodeNames::BinCoords, NodeNames::DatasetIdPerRepl, NodeNames::MappingQuality,
+                                 NodeNames::Directionality },
+                               /*.vIncomingSession =*/
+                               { { "settings", "normalization", "min_interactions", "val" } },
+                               /*.vSessionsIncomingInPrevious =*/
+                               { { "replicates", "by_name" } },
+                               /*bHidden =*/false } );
 
     registerNode( NodeNames::DecayValues,
                   ComputeNode{ /*.sNodeName =*/"decay_values",

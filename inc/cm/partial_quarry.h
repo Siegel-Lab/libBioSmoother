@@ -1183,7 +1183,8 @@ class PartialQuarry : public HasSession
         const bool bSqueeze =
             this->xSession[ "settings" ][ "filters" ][ "anno_in_multiple_bins" ].get<std::string>( ) == "squeeze";
         std::string sCoords = getValue<std::string>( { "contigs", "annotation_coordinates" } );
-        const bool bFullGenome = bGenomicCoords || 
+        const bool bFullGenome =
+            bGenomicCoords ||
             !getValue<bool>( { "settings", "filters", bXAxis ? "anno_coords_col" : "anno_coords_row" } );
         size_t uiRunningPos = 0;
         for( auto xChr : vActiveChromosomes[ bXAxis ? 0 : 1 ] )
