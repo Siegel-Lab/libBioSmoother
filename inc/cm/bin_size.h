@@ -34,32 +34,32 @@ bool PartialQuarry::setBinSize( )
     {
         size_t uiNumX = getValue<size_t>( { "settings", "interface", "fixed_num_bins_x", "val" } );
         size_t uiNumY = getValue<size_t>( { "settings", "interface", "fixed_num_bins_y", "val" } );
-        uiBinHeight.w() = ( getValue<double>( { "area", "y_end" } ) - getValue<double>( { "area", "y_start" } ) ) /
-                       static_cast<double>( uiNumY );
-        uiBinWidth.w() = ( getValue<double>( { "area", "x_end" } ) - getValue<double>( { "area", "x_start" } ) ) /
-                      static_cast<double>( uiNumX );
+        uiBinHeight.w( ) = ( getValue<double>( { "area", "y_end" } ) - getValue<double>( { "area", "y_start" } ) ) /
+                           static_cast<double>( uiNumY );
+        uiBinWidth.w( ) = ( getValue<double>( { "area", "x_end" } ) - getValue<double>( { "area", "x_start" } ) ) /
+                          static_cast<double>( uiNumX );
     }
     else if( !getValue<bool>( { "settings", "interface", "squared_bins" } ) )
     {
-        uiBinHeight.w() =
+        uiBinHeight.w( ) =
             nextEvenNumber( ( getValue<double>( { "area", "y_end" } ) - getValue<double>( { "area", "y_start" } ) ) /
                             std::sqrt( uiMaxNumBins ) );
-        uiBinHeight.w() = std::max( uiBinHeight.r(), uiMinBinSize );
+        uiBinHeight.w( ) = std::max( uiBinHeight.r( ), uiMinBinSize );
 
-        uiBinWidth.w() =
+        uiBinWidth.w( ) =
             nextEvenNumber( ( getValue<double>( { "area", "x_end" } ) - getValue<double>( { "area", "x_start" } ) ) /
                             std::sqrt( uiMaxNumBins ) );
-        uiBinWidth.w() = std::max( uiBinWidth.r(), uiMinBinSize );
+        uiBinWidth.w( ) = std::max( uiBinWidth.r( ), uiMinBinSize );
     }
     else
     {
         size_t uiArea = ( getValue<size_t>( { "area", "x_end" } ) - getValue<size_t>( { "area", "x_start" } ) ) *
                         ( getValue<size_t>( { "area", "y_end" } ) - getValue<size_t>( { "area", "y_start" } ) ) /
                         uiMaxNumBins;
-        uiBinHeight.w() = nextEvenNumber( std::sqrt( uiArea ) );
-        uiBinHeight.w() = std::max( uiBinHeight.r(), uiMinBinSize );
+        uiBinHeight.w( ) = nextEvenNumber( std::sqrt( uiArea ) );
+        uiBinHeight.w( ) = std::max( uiBinHeight.r( ), uiMinBinSize );
 
-        uiBinWidth.w() = uiBinHeight.r();
+        uiBinWidth.w( ) = uiBinHeight.r( );
     }
     END_RETURN;
 }
@@ -94,11 +94,11 @@ bool PartialQuarry::setRenderArea( )
         uiB -= uiH * fScale;
         uiT += uiH * fScale;
 
-        iStartX = uiL - ( uiL % uiBinWidth.r() );
-        iStartY = uiB - ( uiB % uiBinHeight.r() );
+        iStartX = uiL - ( uiL % uiBinWidth.r( ) );
+        iStartY = uiB - ( uiB % uiBinHeight.r( ) );
 
-        iEndX = uiR + uiBinWidth.r() - ( uiR % uiBinWidth.r() );
-        iEndY = uiT + uiBinHeight.r() - ( uiT % uiBinHeight.r() );
+        iEndX = uiR + uiBinWidth.r( ) - ( uiR % uiBinWidth.r( ) );
+        iEndY = uiT + uiBinHeight.r( ) - ( uiT % uiBinHeight.r( ) );
     }
     END_RETURN;
 }
@@ -114,7 +114,7 @@ const std::array<size_t, 2> PartialQuarry::getBinSize( const std::function<void(
 {
     update( NodeNames::BinSize, fPyPrint );
     size_t uiD = getValue<size_t>( { "dividend" } );
-    return std::array<size_t, 2>{ uiBinWidth.r() * uiD, uiBinHeight.r() * uiD };
+    return std::array<size_t, 2>{ uiBinWidth.r( ) * uiD, uiBinHeight.r( ) * uiD };
 }
 
 

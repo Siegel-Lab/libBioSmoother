@@ -34,7 +34,7 @@ bool PartialQuarry::normalizeBinominalTest( )
 {
     const bool bIsCol = getValue<bool>( { "settings", "normalization", "radicl_seq_axis_is_column" } );
     const size_t uiNumBinsInRowTotal =
-        ( vCanvasSize[ bIsCol ? 1 : 0 ] - 1 ) / ( bIsCol ? uiBinHeight.r() : uiBinWidth.r() ) + 1;
+        ( vCanvasSize[ bIsCol ? 1 : 0 ] - 1 ) / ( bIsCol ? uiBinHeight.r( ) : uiBinWidth.r( ) ) + 1;
     const size_t uiNumSaples = getValue<size_t>( { "settings", "normalization", "radicl_seq_samples", "val" } );
     vvNormalized = normalizeBinominalTestTrampoline(
         vvFlatValues, vRadiclSeqCoverage, vRadiclSeqNumNonEmptyBins, uiNumSaples, uiNumBinsInRowTotal,
@@ -310,8 +310,8 @@ bool PartialQuarry::setRadiclSeqSamples( )
     const bool bAxisIsCol = getValue<bool>( { "settings", "normalization", "radicl_seq_axis_is_column" } );
     const size_t uiRadiclSeqSamples = getValue<size_t>( { "settings", "normalization", "radicl_seq_samples", "val" } );
 
-    getSamples( GetSamplesMode::Bins, uiRadiclSeqSamples, "", bAxisIsCol ? uiBinHeight.r() : uiBinWidth.r(), bAxisIsCol,
-                false, vRadiclSeqSamples );
+    getSamples( GetSamplesMode::Bins, uiRadiclSeqSamples, "", bAxisIsCol ? uiBinHeight.r( ) : uiBinWidth.r( ),
+                bAxisIsCol, false, vRadiclSeqSamples );
     // then this cancel_return is necessary to catch the cancelled getSamples
     CANCEL_RETURN;
 
@@ -330,8 +330,8 @@ bool PartialQuarry::setICESamples( )
 
     for( size_t uiI = 0; uiI < 2; uiI++ )
     {
-        getSamples( GetSamplesMode::Bins, uiICESamples, "", uiI == 0 ? uiBinHeight.r() : uiBinWidth.r(), uiI == 0, false,
-                    vICESamples[ uiI ] );
+        getSamples( GetSamplesMode::Bins, uiICESamples, "", uiI == 0 ? uiBinHeight.r( ) : uiBinWidth.r( ), uiI == 0,
+                    false, vICESamples[ uiI ] );
         // then this cancel_return is necessary to catch the cancelled getSamples
         CANCEL_RETURN;
     }
@@ -776,11 +776,12 @@ bool PartialQuarry::setDistDepDecayRemoved( )
     if( getValue<bool>( { "settings", "normalization", "ddd" } ) )
         for( size_t uiI = 0; uiI < vvNormalized.size( ); uiI++ )
             for( size_t uiJ = 0; uiJ < 2; uiJ++ )
-                if( vBinCoords[ uiI ][ uiJ ].uiDecayCoordIndex != std::numeric_limits<size_t>::max( ) )
+                if( vBinCoords[ 0 ][ uiI ][ uiJ ].uiDecayCoordIndex != std::numeric_limits<size_t>::max( ) )
                 {
                     CANCEL_RETURN;
-                    if( vvFlatDecay[ vBinCoords[ uiI ][ uiJ ].uiDecayCoordIndex ][ uiJ ] > 0 )
-                        vvNormalized[ uiI ][ uiJ ] /= vvFlatDecay[ vBinCoords[ uiI ][ uiJ ].uiDecayCoordIndex ][ uiJ ];
+                    if( vvFlatDecay[ vBinCoords[ 0 ][ uiI ][ uiJ ].uiDecayCoordIndex ][ uiJ ] > 0 )
+                        vvNormalized[ uiI ][ uiJ ] /=
+                            vvFlatDecay[ vBinCoords[ 0 ][ uiI ][ uiJ ].uiDecayCoordIndex ][ uiJ ];
                     else
                         vvNormalized[ uiI ][ uiJ ] = 0;
                 }

@@ -118,11 +118,11 @@ bool PartialQuarry::setBinValues( )
     for( size_t uiRepl = 0; uiRepl < vActiveReplicates.size( ); uiRepl++ )
     {
         vvBinValues.emplace_back( );
-        vvBinValues.back( ).reserve( vBinCoords.size( ) );
+        vvBinValues.back( ).reserve( vBinCoords[ 0 ].size( ) );
 
 
 #if USE_GRID_QUERIES
-        vvBinValues.back( ).resize( vBinCoords.size( ) );
+        vvBinValues.back( ).resize( vBinCoords[ 0 ].size( ) );
         std::array<std::vector<uint64_t>, 6> vGridQuery{
             std::vector<uint64_t>{ },
             std::vector<uint64_t>{ },
@@ -132,7 +132,7 @@ bool PartialQuarry::setBinValues( )
             std::vector<uint64_t>{ uiFromYStrandFilter, uiToYStrandFilter } };
         vGridQuery[ 0 ].reserve( vAxisCords[ 0 ].size( ) );
         vGridQuery[ 1 ].reserve( vAxisCords[ 1 ].size( ) );
-        for( const std::array<BinCoordRegion, 2>& vCoords : vBinRegions )
+        for( const std::array<BinCoordRegion, 2>& vCoords : vBinRegions[ 0 ] )
         {
             std::array<std::vector<uint32_t>, 2> vRet;
             for( size_t uiI = 0; uiI < 2; uiI++ )
@@ -188,7 +188,7 @@ bool PartialQuarry::setBinValues( )
             }
         }
 #else
-        for( const std::array<BinCoord, 2>& vCoords : vBinCoords )
+        for( const std::array<BinCoord, 2>& vCoords : vBinCoords[ 0 ] )
         {
             std::array<size_t, 2> vVals;
             CANCEL_RETURN;
@@ -243,9 +243,9 @@ bool PartialQuarry::setDecayValues( )
     for( size_t uiRepl = 0; uiRepl < vActiveReplicates.size( ); uiRepl++ )
     {
         vvDecayValues.emplace_back( );
-        vvDecayValues.back( ).reserve( vDistDepDecCoords.size( ) );
+        vvDecayValues.back( ).reserve( vDistDepDecCoords[ 0 ].size( ) );
 
-        for( std::array<DecayCoord, 2>& vCoords : vDistDepDecCoords )
+        for( std::array<DecayCoord, 2>& vCoords : vDistDepDecCoords[ 0 ] )
         {
             CANCEL_RETURN;
             std::array<double, 2> vVals;
@@ -452,7 +452,7 @@ bool PartialQuarry::setFlatValues( )
     {
         vvFlatValues.reserve( vvBinValues[ 0 ].size( ) );
 
-        for( size_t uiI = 0; uiI < vBinCoords.size( ); uiI++ )
+        for( size_t uiI = 0; uiI < vBinCoords[ 0 ].size( ); uiI++ )
         {
             vvFlatValues.push_back( { 0, 0 } );
             for( size_t uiJ = 0; uiJ < 2; uiJ++ )
@@ -493,7 +493,7 @@ bool PartialQuarry::setFlatDecay( )
     {
         vvFlatDecay.reserve( vvDecayValues[ 0 ].size( ) );
 
-        for( size_t uiI = 0; uiI < vDistDepDecCoords.size( ); uiI++ )
+        for( size_t uiI = 0; uiI < vDistDepDecCoords[ 0 ].size( ); uiI++ )
         {
             vvFlatDecay.push_back( { 0, 0 } );
             for( size_t uiJ = 0; uiJ < 2; uiJ++ )
@@ -528,14 +528,14 @@ bool PartialQuarry::setDecayCDS( )
     for( size_t uiJ = 0; uiJ < 2; uiJ++ )
     {
         std::map<std::pair<size_t, size_t>, size_t> xColors;
-        for( size_t uiI = 0; uiI < vDistDepDecCoords.size( ); uiI++ )
+        for( size_t uiI = 0; uiI < vDistDepDecCoords[ 0 ].size( ); uiI++ )
         {
-            std::pair<size_t, size_t> xuiChrCurr = std::make_pair( vDistDepDecCoords[ uiI ][ uiJ ].uiChromosomeX,
-                                                                   vDistDepDecCoords[ uiI ][ uiJ ].uiChromosomeY );
+            std::pair<size_t, size_t> xuiChrCurr = std::make_pair( vDistDepDecCoords[ 0 ][ uiI ][ uiJ ].uiChromosomeX,
+                                                                   vDistDepDecCoords[ 0 ][ uiI ][ uiJ ].uiChromosomeY );
             pybind11::list vX;
             pybind11::list vY;
-            int64_t iF = vDistDepDecCoords[ uiI ][ uiJ ].iFrom * (int64_t)uiDividend;
-            int64_t iT = vDistDepDecCoords[ uiI ][ uiJ ].iTo * (int64_t)uiDividend;
+            int64_t iF = vDistDepDecCoords[ 0 ][ uiI ][ uiJ ].iFrom * (int64_t)uiDividend;
+            int64_t iT = vDistDepDecCoords[ 0 ][ uiI ][ uiJ ].iTo * (int64_t)uiDividend;
             double fVal = 1000.0 * 1000.0 * vvFlatDecay[ uiI ][ uiJ ] / (double)( ( iT - iF ) * ( iT - iF ) );
             vX.append( iF );
             vY.append( fVal );
@@ -543,8 +543,10 @@ bool PartialQuarry::setDecayCDS( )
             vX.append( iT );
             vY.append( fVal );
 
-            std::string sChromNameX = vActiveChromosomes[ uiJ ][ vDistDepDecCoords[ uiI ][ uiJ ].uiChromosomeX ].sName;
-            std::string sChromNameY = vActiveChromosomes[ uiJ ][ vDistDepDecCoords[ uiI ][ uiJ ].uiChromosomeY ].sName;
+            std::string sChromNameX =
+                vActiveChromosomes[ uiJ ][ vDistDepDecCoords[ 0 ][ uiI ][ uiJ ].uiChromosomeX ].sName;
+            std::string sChromNameY =
+                vActiveChromosomes[ uiJ ][ vDistDepDecCoords[ 0 ][ uiI ][ uiJ ].uiChromosomeY ].sName;
             vChrs.append( substringChr( sChromNameX ) + " - " + substringChr( sChromNameY ) +
                           ( uiJ == 0 ? ", Group A" : ", Group B" ) );
             vXs.append( vX );

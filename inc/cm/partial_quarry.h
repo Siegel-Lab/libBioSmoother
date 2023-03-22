@@ -712,7 +712,8 @@ class PartialQuarry : public HasSession
     std::array<std::vector<ChromDesc>, 2> vActiveChromosomes;
     std::array<std::vector<AxisCoord>, 2> vAxisCords;
     std::array<std::vector<AxisCoord>, 2> vV4cCoords;
-    std::vector<std::array<DecayCoord, 2>> vDistDepDecCoords;
+    std::array<std::vector<AxisRegion>, 2> vV4cRegions;
+    std::array<std::vector<std::array<DecayCoord, 2>>, 3> vDistDepDecCoords;
     std::array<std::vector<AxisRegion>, 2> vAxisRegions;
     std::vector<AxisCoord> vGridSeqCoords;
     std::vector<AxisRegion> vGridSeqRegions;
@@ -724,8 +725,8 @@ class PartialQuarry : public HasSession
 
     sps::IntersectionType xIntersect;
 
-    std::vector<std::array<BinCoord, 2>> vBinCoords;
-    std::vector<std::array<BinCoordRegion, 2>> vBinRegions;
+    std::array<std::vector<std::array<BinCoord, 2>>, 3> vBinCoords;
+    std::array<std::vector<std::array<BinCoordRegion, 2>>, 3> vBinRegions;
 
     std::array<std::vector<std::string>, 2> vActiveCoverage;
 
@@ -1103,18 +1104,18 @@ class PartialQuarry : public HasSession
 
         // @todo-low-prio these should be declared while registering the nodes
         // also every member variable should be wrapped with DepDec.
-        uiBinWidth.registerWrite(NodeNames::BinSize);
-        uiBinWidth.registerRead(NodeNames::ActiveChromLength);
-        uiBinWidth.registerRead(NodeNames::RenderArea);
-        uiBinWidth.registerRead(NodeNames::AxisCoords);
+        uiBinWidth.registerWrite( NodeNames::BinSize );
+        uiBinWidth.registerRead( NodeNames::ActiveChromLength );
+        uiBinWidth.registerRead( NodeNames::RenderArea );
+        uiBinWidth.registerRead( NodeNames::AxisCoords );
 
-        uiBinHeight.registerWrite(NodeNames::BinSize);
-        uiBinHeight.registerRead(NodeNames::ActiveChromLength);
-        uiBinHeight.registerRead(NodeNames::RenderArea);
-        uiBinHeight.registerRead(NodeNames::AxisCoords);
+        uiBinHeight.registerWrite( NodeNames::BinSize );
+        uiBinHeight.registerRead( NodeNames::ActiveChromLength );
+        uiBinHeight.registerRead( NodeNames::RenderArea );
+        uiBinHeight.registerRead( NodeNames::AxisCoords );
     }
 
-    PartialQuarry( ) : PartialQuarry( std::shared_ptr<interface_t>{} )
+    PartialQuarry( ) : PartialQuarry( std::shared_ptr<interface_t>{ } )
     {}
 
     PartialQuarry( std::string sPrefix ) : PartialQuarry( std::make_shared<interface_t>( sPrefix ) )
@@ -1325,7 +1326,7 @@ class PartialQuarry : public HasSession
 
     void printSizes( )
     {
-        std::cout << "vBinCoords " << vBinCoords.size( ) << std::endl;
+        std::cout << "vBinCoords " << vBinCoords[ 0 ].size( ) << std::endl;
         std::cout << "vvBinValues " << vvBinValues.size( ) << std::endl;
         std::cout << "vvFlatValues " << vvFlatValues.size( ) << std::endl;
         std::cout << "vvNormalized " << vvNormalized.size( ) << std::endl;

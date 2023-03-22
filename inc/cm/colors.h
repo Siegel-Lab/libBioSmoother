@@ -290,29 +290,29 @@ bool PartialQuarry::setHeatmapCDS( )
 
         if( vColored[ uiI ] != sBackgroundColor || true )
         {
-            vScreenBottom.append( vBinCoords[ uiI ][ 0 ].uiScreenY );
-            vScreenLeft.append( vBinCoords[ uiI ][ 0 ].uiScreenX );
-            vScreenTop.append( vBinCoords[ uiI ][ 0 ].uiScreenY + vBinCoords[ uiI ][ 0 ].uiScreenH );
-            vScreenRight.append( vBinCoords[ uiI ][ 0 ].uiScreenX + vBinCoords[ uiI ][ 0 ].uiScreenW );
+            vScreenBottom.append( vBinCoords[ 0 ][ uiI ][ 0 ].uiScreenY );
+            vScreenLeft.append( vBinCoords[ 0 ][ uiI ][ 0 ].uiScreenX );
+            vScreenTop.append( vBinCoords[ 0 ][ uiI ][ 0 ].uiScreenY + vBinCoords[ 0 ][ uiI ][ 0 ].uiScreenH );
+            vScreenRight.append( vBinCoords[ 0 ][ uiI ][ 0 ].uiScreenX + vBinCoords[ 0 ][ uiI ][ 0 ].uiScreenW );
 
             vColor.append( vColored[ uiI ] );
 
 
-            vChrX.append( vShortChrNames[ 0 ][ vBinCoords[ uiI ][ 0 ].uiChromosomeX ] );
-            vChrY.append( vShortChrNames[ 1 ][ vBinCoords[ uiI ][ 0 ].uiChromosomeY ] );
-            vIndexLeft.append( vBinCoordsReadable[ 0 ][ 0 ][ vBinCoords[ uiI ][ 0 ].uiXAxisIdx ] );
-            vIndexRight.append( vBinCoordsReadable[ 0 ][ 1 ][ vBinCoords[ uiI ][ 0 ].uiXAxisIdx ] );
-            vIndexBottom.append( vBinCoordsReadable[ 1 ][ 0 ][ vBinCoords[ uiI ][ 0 ].uiYAxisIdx ] );
-            vIndexTop.append( vBinCoordsReadable[ 1 ][ 1 ][ vBinCoords[ uiI ][ 0 ].uiYAxisIdx ] );
+            vChrX.append( vShortChrNames[ 0 ][ vBinCoords[ 0 ][ uiI ][ 0 ].uiChromosomeX ] );
+            vChrY.append( vShortChrNames[ 1 ][ vBinCoords[ 0 ][ uiI ][ 0 ].uiChromosomeY ] );
+            vIndexLeft.append( vBinCoordsReadable[ 0 ][ 0 ][ vBinCoords[ 0 ][ uiI ][ 0 ].uiXAxisIdx ] );
+            vIndexRight.append( vBinCoordsReadable[ 0 ][ 1 ][ vBinCoords[ 0 ][ uiI ][ 0 ].uiXAxisIdx ] );
+            vIndexBottom.append( vBinCoordsReadable[ 1 ][ 0 ][ vBinCoords[ 0 ][ uiI ][ 0 ].uiYAxisIdx ] );
+            vIndexTop.append( vBinCoordsReadable[ 1 ][ 1 ][ vBinCoords[ 0 ][ uiI ][ 0 ].uiYAxisIdx ] );
 
-            if( vBinCoords[ uiI ][ 1 ].uiChromosomeX != std::numeric_limits<size_t>::max( ) )
+            if( vBinCoords[ 0 ][ uiI ][ 1 ].uiChromosomeX != std::numeric_limits<size_t>::max( ) )
             {
-                vChrXSym.append( vShortChrNames[ 0 ][ vBinCoords[ uiI ][ 1 ].uiChromosomeX ] );
-                vChrYSym.append( vShortChrNames[ 1 ][ vBinCoords[ uiI ][ 1 ].uiChromosomeY ] );
-                vIndexSymLeft.append( vBinCoordsReadable[ 0 ][ 0 ][ vBinCoords[ uiI ][ 1 ].uiXAxisIdx ] );
-                vIndexSymRight.append( vBinCoordsReadable[ 0 ][ 1 ][ vBinCoords[ uiI ][ 1 ].uiXAxisIdx ] );
-                vIndexSymBottom.append( vBinCoordsReadable[ 1 ][ 0 ][ vBinCoords[ uiI ][ 1 ].uiYAxisIdx ] );
-                vIndexSymTop.append( vBinCoordsReadable[ 1 ][ 1 ][ vBinCoords[ uiI ][ 1 ].uiYAxisIdx ] );
+                vChrXSym.append( vShortChrNames[ 0 ][ vBinCoords[ 0 ][ uiI ][ 1 ].uiChromosomeX ] );
+                vChrYSym.append( vShortChrNames[ 1 ][ vBinCoords[ 0 ][ uiI ][ 1 ].uiChromosomeY ] );
+                vIndexSymLeft.append( vBinCoordsReadable[ 0 ][ 0 ][ vBinCoords[ 0 ][ uiI ][ 1 ].uiXAxisIdx ] );
+                vIndexSymRight.append( vBinCoordsReadable[ 0 ][ 1 ][ vBinCoords[ 0 ][ uiI ][ 1 ].uiXAxisIdx ] );
+                vIndexSymBottom.append( vBinCoordsReadable[ 1 ][ 0 ][ vBinCoords[ 0 ][ uiI ][ 1 ].uiYAxisIdx ] );
+                vIndexSymTop.append( vBinCoordsReadable[ 1 ][ 1 ][ vBinCoords[ 0 ][ uiI ][ 1 ].uiYAxisIdx ] );
             }
             else
             {
@@ -370,15 +370,16 @@ bool PartialQuarry::setHeatmapExport( )
     for( size_t uiI = 0; uiI < vScaled.size( ); uiI++ )
     {
         CANCEL_RETURN;
-        std::string sChromNameX = vActiveChromosomes[ 0 ][ vBinCoords[ uiI ][ 0 ].uiChromosomeX ].sName;
-        std::string sChromNameY = vActiveChromosomes[ 1 ][ vBinCoords[ uiI ][ 0 ].uiChromosomeY ].sName;
-        vHeatmapExport.emplace_back( sChromNameX,
-                                     vBinCoords[ uiI ][ 0 ].uiIndexX * uiDividend,
-                                     ( vBinCoords[ uiI ][ 0 ].uiIndexX + vBinCoords[ uiI ][ 0 ].uiIndexW ) * uiDividend,
-                                     sChromNameY,
-                                     vBinCoords[ uiI ][ 0 ].uiIndexY * uiDividend,
-                                     ( vBinCoords[ uiI ][ 0 ].uiIndexY + vBinCoords[ uiI ][ 0 ].uiIndexH ) * uiDividend,
-                                     vScaled[ uiI ] );
+        std::string sChromNameX = vActiveChromosomes[ 0 ][ vBinCoords[ 0 ][ uiI ][ 0 ].uiChromosomeX ].sName;
+        std::string sChromNameY = vActiveChromosomes[ 1 ][ vBinCoords[ 0 ][ uiI ][ 0 ].uiChromosomeY ].sName;
+        vHeatmapExport.emplace_back(
+            sChromNameX,
+            vBinCoords[ 0 ][ uiI ][ 0 ].uiIndexX * uiDividend,
+            ( vBinCoords[ 0 ][ uiI ][ 0 ].uiIndexX + vBinCoords[ 0 ][ uiI ][ 0 ].uiIndexW ) * uiDividend,
+            sChromNameY,
+            vBinCoords[ 0 ][ uiI ][ 0 ].uiIndexY * uiDividend,
+            ( vBinCoords[ 0 ][ uiI ][ 0 ].uiIndexY + vBinCoords[ 0 ][ uiI ][ 0 ].uiIndexH ) * uiDividend,
+            vScaled[ uiI ] );
     }
     END_RETURN;
 }
