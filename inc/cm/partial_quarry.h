@@ -733,13 +733,13 @@ class PartialQuarry : public HasSession
     size_t uiSymmetry;
     size_t iInGroupSetting, iBetweenGroupSetting;
 
-    std::vector<std::vector<size_t>> vvBinValues;
-    std::vector<std::vector<double>> vvDecayValues;
-    std::vector<std::array<size_t, 2>> vvFlatValues;
-    std::vector<std::array<double, 2>> vvFlatDecay;
-    std::array<size_t, 2> vvFlatTotal;
-    std::vector<std::array<double, 2>> vvNormalized;
-    std::vector<double> vCombined;
+    std::array<std::vector<std::vector<size_t>>, 3> vvBinValues;
+    std::array<std::vector<std::vector<double>>, 3> vvDecayValues;
+    std::array<std::vector<std::array<size_t, 2>>, 3> vvFlatValues;
+    std::array<std::vector<std::array<double, 2>>, 3> vvFlatDecay;
+    std::array<std::array<size_t, 2>, 3> vvFlatTotal;
+    std::array<std::vector<std::array<double, 2>>, 3> vvNormalized;
+    std::array<std::vector<double>, 3> vCombined;
     std::vector<double> vDivided;
     std::vector<double> vScaled;
     std::vector<double> vRanged;
@@ -969,8 +969,6 @@ class PartialQuarry : public HasSession
     // normalization.h
     bool doNotNormalize( );
     // normalization.h
-    bool setDivided( );
-    // normalization.h
     bool normalizeSize( size_t );
     // normalization.h
     bool normalizeBinominalTest( );
@@ -995,13 +993,13 @@ class PartialQuarry : public HasSession
     };
 
     // normalization.h
-    size_t iceGetCount( IceData&, size_t, size_t, bool );
+    size_t iceGetCount( IceData&, size_t, size_t, size_t, bool );
     // normalization.h
-    void icePreFilter( IceData&, bool, size_t, size_t, bool );
+    void icePreFilter( IceData&, bool, size_t, size_t, size_t, bool );
     // normalization.h
     void iceFilter( IceData&, size_t, size_t );
     // normalization.h
-    void iceTimesOuterProduct( IceData&, bool, size_t, size_t );
+    void iceTimesOuterProduct( IceData&, bool, size_t, size_t, size_t );
     // normalization.h
     void iceMarginalize( IceData&, bool, size_t, size_t );
     // normalization.h
@@ -1011,7 +1009,7 @@ class PartialQuarry : public HasSession
     // normalization.h
     void iceDivByMargin( IceData&, bool, double, size_t, size_t );
     // normalization.h
-    void iceApplyBias( IceData&, bool, size_t, size_t );
+    void iceApplyBias( IceData&, bool, size_t, size_t, size_t );
     // normalization.h
     double iceMaxBias( IceData&, bool );
     // normalization.h
@@ -1327,9 +1325,9 @@ class PartialQuarry : public HasSession
     void printSizes( )
     {
         std::cout << "vBinCoords " << vBinCoords[ 0 ].size( ) << std::endl;
-        std::cout << "vvBinValues " << vvBinValues.size( ) << std::endl;
-        std::cout << "vvFlatValues " << vvFlatValues.size( ) << std::endl;
-        std::cout << "vvNormalized " << vvNormalized.size( ) << std::endl;
+        std::cout << "vvBinValues " << vvBinValues[ 0 ].size( ) << std::endl;
+        std::cout << "vvFlatValues " << vvFlatValues[ 0 ].size( ) << std::endl;
+        std::cout << "vvNormalized " << vvNormalized[ 0 ].size( ) << std::endl;
         std::cout << "vCombined " << vCombined.size( ) << std::endl;
         std::cout << "vColored " << vColored.size( ) << std::endl;
     }

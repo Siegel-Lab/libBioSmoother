@@ -9,23 +9,26 @@ namespace cm
 
 bool PartialQuarry::normalizeSize( size_t uiSize )
 {
-    for( auto& vVal : vvFlatValues )
-    {
-        CANCEL_RETURN;
-        vvNormalized.push_back( std::array<double, 2>{
-            vvFlatTotal[ 0 ] == 0 ? 0 : (double)uiSize * (double)vVal[ 0 ] / (double)vvFlatTotal[ 0 ],
-            vvFlatTotal[ 1 ] == 0 ? 0 : (double)uiSize * (double)vVal[ 1 ] / (double)vvFlatTotal[ 1 ] } );
-    }
+    for( size_t uiY = 0; uiY < 3; uiY++ )
+        for( auto& vVal : vvFlatValues[ uiY ] )
+        {
+            CANCEL_RETURN;
+            vvNormalized[ uiY ].push_back( std::array<double, 2>{
+                vvFlatTotal[ uiY ][ 0 ] == 0 ? 0 : (double)uiSize * (double)vVal[ 0 ] / (double)vvFlatTotal[ uiY ][ 0 ],
+                vvFlatTotal[ uiY ][ 1 ] == 0 ? 0
+                                             : (double)uiSize * (double)vVal[ 1 ] / (double)vvFlatTotal[ uiY ][ 1 ] } );
+        }
     END_RETURN;
 }
 
 bool PartialQuarry::doNotNormalize( )
 {
-    for( auto& vVal : vvFlatValues )
-    {
-        CANCEL_RETURN;
-        vvNormalized.push_back( std::array<double, 2>{ (double)vVal[ 0 ], (double)vVal[ 1 ] } );
-    }
+    for( size_t uiY = 0; uiY < 3; uiY++ )
+        for( auto& vVal : vvFlatValues[ uiY ] )
+        {
+            CANCEL_RETURN;
+            vvNormalized[ uiY ].push_back( std::array<double, 2>{ (double)vVal[ 0 ], (double)vVal[ 1 ] } );
+        }
     END_RETURN;
 }
 
@@ -36,9 +39,11 @@ bool PartialQuarry::normalizeBinominalTest( )
     const size_t uiNumBinsInRowTotal =
         ( vCanvasSize[ bIsCol ? 1 : 0 ] - 1 ) / ( bIsCol ? uiBinHeight.r( ) : uiBinWidth.r( ) ) + 1;
     const size_t uiNumSaples = getValue<size_t>( { "settings", "normalization", "radicl_seq_samples", "val" } );
-    vvNormalized = normalizeBinominalTestTrampoline(
-        vvFlatValues, vRadiclSeqCoverage, vRadiclSeqNumNonEmptyBins, uiNumSaples, uiNumBinsInRowTotal,
-        getValue<double>( { "settings", "normalization", "p_accept", "val" } ), bIsCol, vAxisCords[ 1 ].size( ) );
+    for( size_t uiY = 0; uiY < 3; uiY++ )
+        vvNormalized[ uiY ] = normalizeBinominalTestTrampoline(
+            vvFlatValues[ uiY ], vRadiclSeqCoverage, vRadiclSeqNumNonEmptyBins, uiNumSaples, uiNumBinsInRowTotal,
+            getValue<double>( { "settings", "normalization", "p_accept", "val" } ), bIsCol,
+            uiY == 2 ? vV4cCoords[ 1 ].size( ) : vAxisCords[ 1 ].size( ) );
     CANCEL_RETURN;
     END_RETURN;
 }
@@ -51,19 +56,20 @@ original ICing implementation:
 */
 
 
-size_t PartialQuarry::iceGetCount( IceData& rIceData, size_t uiX, size_t uiY, bool bA )
+size_t PartialQuarry::iceGetCount( IceData& rIceData, size_t uiX, size_t uiY, size_t uiY_, bool bA )
 {
     assert( uiX < rIceData.vSliceBias[ 0 ].size( ) );
     assert( uiY < rIceData.vSliceBias[ 1 ].size( ) );
     size_t uiIdx = uiY + uiX * ( rIceData.vSliceBias[ 1 ].size( ) );
-    assert( uiIdx < vvFlatValues.size( ) ); // @todo this assert triggered with max coverage per bin columns active
-    return vvFlatValues[ uiIdx ][ bA ? 0 : 1 ];
+    assert( uiIdx <
+            vvFlatValues[ uiY_ ].size( ) ); // @todo this assert triggered with max coverage per bin columns active
+    return vvFlatValues[ uiY_ ][ uiIdx ][ bA ? 0 : 1 ];
 }
 
 void PartialQuarry::iceFilter( IceData& /*rIceData*/, size_t /*uiFrom*/, size_t /*uiTo*/ )
 {}
 
-void PartialQuarry::icePreFilter( IceData& rIceData, bool bCol, size_t uiFrom, size_t uiTo, bool bA )
+void PartialQuarry::icePreFilter( IceData& rIceData, bool bCol, size_t uiFrom, size_t uiTo, size_t uiY, bool bA )
 {
     // filter out rows and columns that have less than 1/4 of their cells filled
     double fFilter = getValue<double>( { "settings", "normalization", "ice_sparse_slice_filter", "val" } ) / 100.0;
@@ -74,7 +80,7 @@ void PartialQuarry::icePreFilter( IceData& rIceData, bool bCol, size_t uiFrom, s
         {
             size_t uiCnt = 0;
             for( size_t uiJ = 0; uiJ < uiWSlice; uiJ++ )
-                if( iceGetCount( rIceData, bCol ? uiI : uiJ, bCol ? uiJ : uiI, bA ) > 0 )
+                if( iceGetCount( rIceData, bCol ? uiI : uiJ, bCol ? uiJ : uiI, uiY, bA ) > 0 )
                     ++uiCnt;
             if( (double)uiCnt <= uiWSlice * fFilter )
                 rIceData.vSliceBias[ bCol ? 0 : 1 ][ uiI ] = 0;
@@ -83,7 +89,7 @@ void PartialQuarry::icePreFilter( IceData& rIceData, bool bCol, size_t uiFrom, s
 }
 
 
-void PartialQuarry::iceTimesOuterProduct( IceData& rIceData, bool bA, size_t uiFrom, size_t uiTo )
+void PartialQuarry::iceTimesOuterProduct( IceData& rIceData, bool bA, size_t uiFrom, size_t uiTo, size_t uiY )
 {
     const size_t uiH = rIceData.vSliceBias[ 1 ].size( );
     for( size_t uiI = uiFrom; uiI < uiTo; uiI++ )
@@ -92,7 +98,7 @@ void PartialQuarry::iceTimesOuterProduct( IceData& rIceData, bool bA, size_t uiF
         assert( uiI % uiH < rIceData.vSliceBias[ 1 ].size( ) );
         assert( uiI < rIceData.vBiases.size( ) );
         rIceData.vBiases[ uiI ] = rIceData.vSliceBias[ 0 ][ uiI / uiH ] * rIceData.vSliceBias[ 1 ][ uiI % uiH ] *
-                                  iceGetCount( rIceData, uiI / uiH, uiI % uiH, bA );
+                                  iceGetCount( rIceData, uiI / uiH, uiI % uiH, uiY, bA );
     }
 }
 
@@ -612,31 +618,36 @@ bool PartialQuarry::normalizeGridSeq( )
 {
     const bool bAxisIsCol = getValue<bool>( { "settings", "normalization", "grid_seq_axis_is_column" } );
 
-    for( size_t uiI = 0; uiI < vvFlatValues.size( ); uiI++ )
+    for( size_t uiY = 0; uiY < 3; uiY++ )
     {
-        CANCEL_RETURN;
-        std::array<double, 2> vdVal = { (double)vvFlatValues[ uiI ][ 0 ], (double)vvFlatValues[ uiI ][ 1 ] };
-        for( size_t uiK = 0; uiK < 2; uiK++ )
-            vdVal[ uiK ] /= (double)std::max(
-                (size_t)1,
-                vBackgroundGridSeq[ bAxisIsCol ? uiI / vAxisCords[ 1 ].size( ) : uiI % vAxisCords[ 1 ].size( ) ] );
+        const auto& rYCoords = uiY == 2 ? vV4cCoords[ 1 ] : vAxisCords[ 1 ];
+        for( size_t uiI = 0; uiI < vvFlatValues[ uiY ].size( ); uiI++ )
+        {
+            CANCEL_RETURN;
+            std::array<double, 2> vdVal = { (double)vvFlatValues[ uiY ][ uiI ][ 0 ],
+                                            (double)vvFlatValues[ uiY ][ uiI ][ 1 ] };
 
-        vvNormalized.push_back( vdVal );
+            for( size_t uiK = 0; uiK < 2; uiK++ )
+                vdVal[ uiK ] /= (double)std::max(
+                    (size_t)1, vBackgroundGridSeq[ bAxisIsCol ? uiI / rYCoords.size( ) : uiI % rYCoords.size( ) ] );
+
+            vvNormalized[ uiY ].push_back( vdVal );
+        }
     }
     END_RETURN;
 }
 
 
-void PartialQuarry::iceApplyBias( IceData& rIceData, bool bA, size_t uiFrom, size_t uiTo )
+void PartialQuarry::iceApplyBias( IceData& rIceData, bool bA, size_t uiFrom, size_t uiTo, size_t uiY )
 {
     const size_t uiH = rIceData.vSliceBias[ 1 ].size( );
     for( size_t uiI = uiFrom; uiI < uiTo; uiI++ )
     {
-        assert( uiI < vvNormalized.size( ) );
+        assert( uiI < vvNormalized[ uiY ].size( ) );
 
-        vvNormalized[ uiI ][ bA ? 0 : 1 ] = rIceData.vSliceBias[ 0 ][ uiI / uiH ] //
-                                            * rIceData.vSliceBias[ 1 ][ uiI % uiH ] //
-                                            * iceGetCount( rIceData, uiI / uiH, uiI % uiH, bA );
+        vvNormalized[ uiY ][ uiI ][ bA ? 0 : 1 ] = rIceData.vSliceBias[ 0 ][ uiI / uiH ] //
+                                                   * rIceData.vSliceBias[ 1 ][ uiI % uiH ] //
+                                                   * iceGetCount( rIceData, uiI / uiH, uiI % uiH, uiY, bA );
     }
 }
 
@@ -654,15 +665,25 @@ bool PartialQuarry::normalizeCoolIC( )
         doNotNormalize( );
     else
     {
-        vvNormalized.resize( vvFlatValues.size( ) );
+        vvNormalized[ 0 ].resize( vvFlatValues[ 0 ].size( ) );
         for( size_t uiI = 0; uiI < 2; uiI++ )
         {
             std::vector<size_t> vCnt;
-            for( auto& rFlat : vvFlatValues )
+            for( auto& rFlat : vvFlatValues[ 0 ] )
                 vCnt.push_back( rFlat[ uiI ] );
             auto vRet = normalizeCoolerTrampoline( vCnt, vAxisCords[ 0 ].size( ) );
             for( size_t uiX = 0; uiX < vRet.size( ); uiX++ )
-                vvNormalized[ uiX ][ uiI ] = vRet[ uiX ];
+                vvNormalized[ 0 ][ uiX ][ uiI ] = vRet[ uiX ];
+        }
+
+        for( size_t uiY = 1; uiY < 3; uiY++ )
+        {
+            vvNormalized[ uiY ].resize(vvFlatValues[ uiY ].size());
+            for( auto& vVal : vvFlatValues[ uiY ] )
+            {
+                CANCEL_RETURN;
+                vvNormalized[ uiY ].push_back( std::array<double, 2>{ (double)vVal[ 0 ], (double)vVal[ 1 ] } );
+            }
         }
     }
     CANCEL_RETURN;
@@ -671,76 +692,82 @@ bool PartialQuarry::normalizeCoolIC( )
 
 bool PartialQuarry::normalizeIC( )
 {
-    vvNormalized.resize( vvFlatValues.size( ) );
-
-    size_t uiW = vAxisCords[ 0 ].size( );
-    size_t uiH = vAxisCords[ 1 ].size( );
-
-    const size_t uiMaxIters = 200;
-    const double fTol = 1e-5;
-    for( size_t uiI = 0; uiI < 2; uiI++ )
+    for( size_t uiY = 0; uiY < 3; uiY++ )
     {
-        CANCEL_RETURN;
-        IceData xData = { /*.vSliceBias =*/
-                          std::array<std::vector<double>, 2>{
-                              std::vector<double>( uiW, 1.0 ),
-                              std::vector<double>( uiH, 1.0 ),
-                          },
-                          /*.vSliceMargin =*/
-                          std::array<std::vector<double>, 2>{
-                              std::vector<double>( uiW, 0.0 ),
-                              std::vector<double>( uiH, 0.0 ),
-                          },
-                          /*.vBiases =*/std::vector<double>( uiW * uiH, 1.0 ) };
-        std::array<double, 2> vVar{ 0, 0 };
-        std::array<double, 2> vMean{ 0, 0 };
-        for( bool bCol : { true, false } )
-            icePreFilter( xData, bCol, 0, xData.vSliceBias[ bCol ? 0 : 1 ].size( ), uiI == 0 );
-        for( size_t uiItr = 0; uiItr < uiMaxIters; uiItr++ )
+        vvNormalized[ uiY ].resize( vvFlatValues[ uiY ].size( ) );
+
+        const auto& rXCoords = uiY == 1 ? vV4cCoords[ 0 ] : vAxisCords[ 0 ];
+        const auto& rYCoords = uiY == 2 ? vV4cCoords[ 1 ] : vAxisCords[ 1 ];
+
+        size_t uiW = rXCoords.size( );
+        size_t uiH = rYCoords.size( );
+
+        const size_t uiMaxIters = 200;
+        const double fTol = 1e-5;
+        for( size_t uiI = 0; uiI < 2; uiI++ )
         {
             CANCEL_RETURN;
-            iceFilter( xData, 0, xData.vBiases.size( ) );
-            iceTimesOuterProduct( xData, uiI == 0, 0, xData.vBiases.size( ) );
+            IceData xData = { /*.vSliceBias =*/
+                              std::array<std::vector<double>, 2>{
+                                  std::vector<double>( uiW, 1.0 ),
+                                  std::vector<double>( uiH, 1.0 ),
+                              },
+                              /*.vSliceMargin =*/
+                              std::array<std::vector<double>, 2>{
+                                  std::vector<double>( uiW, 0.0 ),
+                                  std::vector<double>( uiH, 0.0 ),
+                              },
+                              /*.vBiases =*/std::vector<double>( uiW * uiH, 1.0 ) };
+            std::array<double, 2> vVar{ 0, 0 };
+            std::array<double, 2> vMean{ 0, 0 };
             for( bool bCol : { true, false } )
+                icePreFilter( xData, bCol, 0, xData.vSliceBias[ bCol ? 0 : 1 ].size( ), uiY, uiI == 0 );
+            for( size_t uiItr = 0; uiItr < uiMaxIters; uiItr++ )
             {
                 CANCEL_RETURN;
-                iceMarginalize( xData, bCol, 0, xData.vSliceBias[ bCol ? 0 : 1 ].size( ) );
-                double fMean = iceNonZeroMarginMean( xData, bCol );
-                iceDivByMargin( xData, bCol, fMean, 0, xData.vSliceBias[ bCol ? 0 : 1 ].size( ) );
-                vVar[ bCol ? 0 : 1 ] = iceNonZeroMarginVariance( xData, bCol, fMean );
-                vMean[ bCol ? 0 : 1 ] = fMean;
-            }
-
-            if( vVar[ 0 ] < fTol && vVar[ 1 ] < fTol )
-                break;
-        }
-        CANCEL_RETURN;
-        size_t uiMaxFlat = 0;
-        for( size_t uiJ = 0; uiJ < vvFlatValues.size( ); uiJ++ )
-        {
-            CANCEL_RETURN;
-            uiMaxFlat = std::max( uiMaxFlat, vvFlatValues[ uiJ ][ uiI ] );
-        }
-        if( uiMaxFlat > 0 )
-        {
-            if( vVar[ 0 ] >= fTol || vVar[ 1 ] >= fTol )
-            {
-                setError( "iterative correction did not converge (var=" + std::to_string( vVar[ 0 ] ) + ", " +
-                          std::to_string( vVar[ 1 ] ) + " mean=" + std::to_string( vMean[ 0 ] ) + ", " +
-                          std::to_string( vMean[ 1 ] ) + "), showing data anyways" );
-                iceApplyBias( xData, uiI == 0, 0, vvNormalized.size( ) );
-            }
-            else if( iceMaxBias( xData, true ) == 0 || iceMaxBias( xData, false ) == 0 )
-            {
-                setError( "iterative correction converged to zero, showing un-normalized data" );
-                for( size_t uiJ = 0; uiJ < vvFlatValues.size( ); uiJ++ )
+                iceFilter( xData, 0, xData.vBiases.size( ) );
+                iceTimesOuterProduct( xData, uiI == 0, 0, xData.vBiases.size( ), uiY );
+                for( bool bCol : { true, false } )
                 {
                     CANCEL_RETURN;
-                    vvNormalized[ uiJ ][ uiI ] = vvFlatValues[ uiJ ][ uiI ];
+                    iceMarginalize( xData, bCol, 0, xData.vSliceBias[ bCol ? 0 : 1 ].size( ) );
+                    double fMean = iceNonZeroMarginMean( xData, bCol );
+                    iceDivByMargin( xData, bCol, fMean, 0, xData.vSliceBias[ bCol ? 0 : 1 ].size( ) );
+                    vVar[ bCol ? 0 : 1 ] = iceNonZeroMarginVariance( xData, bCol, fMean );
+                    vMean[ bCol ? 0 : 1 ] = fMean;
                 }
+
+                if( vVar[ 0 ] < fTol && vVar[ 1 ] < fTol )
+                    break;
             }
-            else
-                iceApplyBias( xData, uiI == 0, 0, vvNormalized.size( ) );
+            CANCEL_RETURN;
+            size_t uiMaxFlat = 0;
+            for( size_t uiJ = 0; uiJ < vvFlatValues[ uiY ].size( ); uiJ++ )
+            {
+                CANCEL_RETURN;
+                uiMaxFlat = std::max( uiMaxFlat, vvFlatValues[ uiY ][ uiJ ][ uiI ] );
+            }
+            if( uiMaxFlat > 0 )
+            {
+                if( vVar[ 0 ] >= fTol || vVar[ 1 ] >= fTol )
+                {
+                    setError( "iterative correction did not converge (var=" + std::to_string( vVar[ 0 ] ) + ", " +
+                              std::to_string( vVar[ 1 ] ) + " mean=" + std::to_string( vMean[ 0 ] ) + ", " +
+                              std::to_string( vMean[ 1 ] ) + "), showing data anyways" );
+                    iceApplyBias( xData, uiI == 0, 0, vvNormalized[ uiY ].size( ), uiY );
+                }
+                else if( iceMaxBias( xData, true ) == 0 || iceMaxBias( xData, false ) == 0 )
+                {
+                    setError( "iterative correction converged to zero, showing un-normalized data" );
+                    for( size_t uiJ = 0; uiJ < vvFlatValues[ uiY ].size( ); uiJ++ )
+                    {
+                        CANCEL_RETURN;
+                        vvNormalized[ uiY ][ uiJ ][ uiI ] = vvFlatValues[ uiY ][ uiJ ][ uiI ];
+                    }
+                }
+                else
+                    iceApplyBias( xData, uiI == 0, 0, vvNormalized[ uiY ].size( ), uiY );
+            }
         }
     }
     END_RETURN;
@@ -748,8 +775,11 @@ bool PartialQuarry::normalizeIC( )
 
 bool PartialQuarry::setNormalized( )
 {
-    vvNormalized.clear( );
-    vvNormalized.reserve( vvFlatValues.size( ) );
+    for( size_t uiY = 0; uiY < 3; uiY++ )
+    {
+        vvNormalized[ uiY ].clear( );
+        vvNormalized[ uiY ].reserve( vvFlatValues[ uiY ].size( ) );
+    }
 
     const std::string sNorm = getValue<std::string>( { "settings", "normalization", "normalize_by" } );
 
@@ -774,67 +804,21 @@ bool PartialQuarry::setNormalized( )
 bool PartialQuarry::setDistDepDecayRemoved( )
 {
     if( getValue<bool>( { "settings", "normalization", "ddd" } ) )
-        for( size_t uiI = 0; uiI < vvNormalized.size( ); uiI++ )
-            for( size_t uiJ = 0; uiJ < 2; uiJ++ )
-                if( vBinCoords[ 0 ][ uiI ][ uiJ ].uiDecayCoordIndex != std::numeric_limits<size_t>::max( ) )
-                {
-                    CANCEL_RETURN;
-                    if( vvFlatDecay[ vBinCoords[ 0 ][ uiI ][ uiJ ].uiDecayCoordIndex ][ uiJ ] > 0 )
-                        vvNormalized[ uiI ][ uiJ ] /=
-                            vvFlatDecay[ vBinCoords[ 0 ][ uiI ][ uiJ ].uiDecayCoordIndex ][ uiJ ];
-                    else
-                        vvNormalized[ uiI ][ uiJ ] = 0;
-                }
+        for( size_t uiY = 0; uiY < 3; uiY++ )
+            for( size_t uiI = 0; uiI < vvNormalized[ uiY ].size( ); uiI++ )
+                for( size_t uiJ = 0; uiJ < 2; uiJ++ )
+                    if( vBinCoords[ uiY ][ uiI ][ uiJ ].uiDecayCoordIndex != std::numeric_limits<size_t>::max( ) )
+                    {
+                        CANCEL_RETURN;
+                        if( vvFlatDecay[ uiY ][ vBinCoords[ 0 ][ uiI ][ uiJ ].uiDecayCoordIndex ][ uiJ ] > 0 )
+                            vvNormalized[ uiY ][ uiI ][ uiJ ] /=
+                                vvFlatDecay[ uiY ][ vBinCoords[ 0 ][ uiI ][ uiJ ].uiDecayCoordIndex ][ uiJ ];
+                        else
+                            vvNormalized[ uiY ][ uiI ][ uiJ ] = 0;
+                    }
     END_RETURN;
 }
 
-bool PartialQuarry::setDivided( )
-{
-    vDivided.clear( );
-    vDivided.reserve( vCombined.size( ) );
-
-    const json& rJson = getValue<json>( { "coverage", "list" } );
-    const std::string sByCol = getValue<std::string>( { "settings", "normalization", "divide_by_column_coverage" } );
-    const size_t uiByCol =
-        ( sByCol == "dont" ? std::numeric_limits<size_t>::max( ) : ( rJson.find( sByCol ) - rJson.begin( ) ) );
-    const std::string sByRow = getValue<std::string>( { "settings", "normalization", "divide_by_row_coverage" } );
-    const size_t uiByRow =
-        ( sByRow == "dont" ? std::numeric_limits<size_t>::max( ) : ( rJson.find( sByRow ) - rJson.begin( ) ) );
-
-
-    for( size_t uiI = 0; uiI < vCombined.size( ); uiI++ )
-    {
-        CANCEL_RETURN;
-
-        double fVal = vCombined[ uiI ];
-
-        if( uiByCol != std::numeric_limits<size_t>::max( ) )
-        {
-            if( vvCoverageValues[ 0 ][ uiByCol ][ uiI / vAxisCords[ 1 ].size( ) ] == 0 )
-                fVal = std::numeric_limits<double>::quiet_NaN( );
-            else
-                fVal /= vvCoverageValues[ 0 ][ uiByCol ][ uiI / vAxisCords[ 1 ].size( ) ];
-        }
-        if( uiByRow != std::numeric_limits<size_t>::max( ) )
-        {
-            if( vvCoverageValues[ 1 ][ uiByRow ][ uiI % vAxisCords[ 1 ].size( ) ] == 0 || std::isnan( fVal ) )
-                fVal = std::numeric_limits<double>::quiet_NaN( );
-            else
-                fVal /= vvCoverageValues[ 1 ][ uiByRow ][ uiI % vAxisCords[ 1 ].size( ) ];
-        }
-
-        vDivided.push_back( fVal );
-    }
-
-    END_RETURN;
-}
-
-const decltype( PartialQuarry::vDivided )
-PartialQuarry::getDivided( const std::function<void( const std::string& )>& fPyPrint )
-{
-    update( NodeNames::Divided, fPyPrint );
-    return vDivided;
-}
 
 const decltype( PartialQuarry::vScaled )
 PartialQuarry::getScaled( const std::function<void( const std::string& )>& fPyPrint )
@@ -961,17 +945,6 @@ void PartialQuarry::regNormalization( )
                                /*.vIncomingFunctions =*/{ NodeNames::Normalized, NodeNames::FlatDecay },
                                /*.vIncomingSession =*/{ },
                                /*.vSessionsIncomingInPrevious =*/{ { "settings", "normalization", "ddd" } },
-                               /*bHidden =*/false } );
-
-    registerNode( NodeNames::Divided,
-                  ComputeNode{ /*.sNodeName =*/"divided_by_tracks",
-                               /*.fFunc =*/&PartialQuarry::setDivided,
-                               /*.vIncomingFunctions =*/{ NodeNames::Combined },
-                               /*.vIncomingSession =*/
-                               { { "settings", "normalization", "divide_by_column_coverage" },
-                                 { "settings", "normalization", "divide_by_row_coverage" },
-                                 { "coverage", "list" } },
-                               /*.vSessionsIncomingInPrevious =*/{ },
                                /*bHidden =*/false } );
 }
 

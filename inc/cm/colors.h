@@ -45,26 +45,28 @@ bool PartialQuarry::setAnnotationColors( )
 
 bool PartialQuarry::setCombined( )
 {
-    vCombined.clear( );
-    vCombined.reserve( vvNormalized.size( ) );
-
-    for( auto& vArr : vvNormalized )
+    for( size_t uiY = 0; uiY < 3; uiY++ )
     {
-        CANCEL_RETURN;
-        vCombined.push_back( getMixedValue( vArr[ 0 ], vArr[ 1 ] ) );
-    }
+        vCombined[ uiY ].clear( );
+        vCombined[ uiY ].reserve( vvNormalized[ uiY ].size( ) );
 
+        for( auto& vArr : vvNormalized[ uiY ] )
+        {
+            CANCEL_RETURN;
+            vCombined[ uiY ].push_back( getMixedValue( vArr[ 0 ], vArr[ 1 ] ) );
+        }
+    }
     END_RETURN;
 }
 
 bool PartialQuarry::setScaled( )
 {
     vScaled.clear( );
-    vScaled.reserve( vDivided.size( ) );
+    vScaled.reserve( vCombined[ 0 ].size( ) );
 
     fMax = std::numeric_limits<double>::min( );
     fMin = std::numeric_limits<double>::max( );
-    for( double fVal : vDivided )
+    for( double fVal : vCombined[ 0 ] )
     {
         CANCEL_RETURN;
         if( !std::isnan( fVal ) )
@@ -76,7 +78,7 @@ bool PartialQuarry::setScaled( )
 
     if( getValue<std::string>( { "settings", "normalization", "scale" } ) == "minmax" )
     {
-        for( double fVal : vDivided )
+        for( double fVal : vCombined[ 0 ] )
         {
             CANCEL_RETURN;
             if( std::isnan( fVal ) )
@@ -90,7 +92,7 @@ bool PartialQuarry::setScaled( )
     else if( getValue<std::string>( { "settings", "normalization", "scale" } ) == "abs" )
     {
         double fAbs = std::max( std::abs( fMax ), std::abs( fMin ) );
-        for( double fVal : vDivided )
+        for( double fVal : vCombined[ 0 ] )
         {
             CANCEL_RETURN;
             if( std::isnan( fVal ) )
@@ -103,7 +105,7 @@ bool PartialQuarry::setScaled( )
     }
     else if( getValue<std::string>( { "settings", "normalization", "scale" } ) == "max" )
     {
-        for( double fVal : vDivided )
+        for( double fVal : vCombined[ 0 ] )
         {
             CANCEL_RETURN;
             if( std::isnan( fVal ) )
@@ -115,7 +117,7 @@ bool PartialQuarry::setScaled( )
     }
     else if( getValue<std::string>( { "settings", "normalization", "scale" } ) == "dont" )
     {
-        for( double fVal : vDivided )
+        for( double fVal : vCombined[ 0 ] )
         {
             CANCEL_RETURN;
             vScaled.push_back( fVal );
@@ -326,8 +328,8 @@ bool PartialQuarry::setHeatmapCDS( )
 
             vScoreTotal.append( vScaled[ uiI ] );
             vRangedOut.append( vRanged[ uiI ] );
-            vScoreA.append( vvNormalized[ uiI ][ 0 ] );
-            vScoreB.append( vvNormalized[ uiI ][ 1 ] );
+            vScoreA.append( vvNormalized[0][ uiI ][ 0 ] );
+            vScoreB.append( vvNormalized[0][ uiI ][ 1 ] );
             vZero.append( 0 );
         }
     }
@@ -438,7 +440,7 @@ void PartialQuarry::regColors( )
     registerNode( NodeNames::Scaled,
                   ComputeNode{ /*.sNodeName =*/"scaled_bins",
                                /*.fFunc =*/&PartialQuarry::setScaled,
-                               /*.vIncomingFunctions =*/{ NodeNames::Divided },
+                               /*.vIncomingFunctions =*/{ NodeNames::Combined },
                                /*.vIncomingSession =*/{ { "settings", "normalization", "scale" } },
                                /*.vSessionsIncomingInPrevious =*/{ },
                                /*bHidden =*/false } );
