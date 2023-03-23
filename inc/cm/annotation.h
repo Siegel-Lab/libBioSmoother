@@ -358,7 +358,7 @@ void PartialQuarry::regAnnotation( )
         ComputeNode{
             /*.sNodeName =*/"annotation_cds",
             /*.fFunc =*/&PartialQuarry::setAnnotationCDS,
-            /*.vIncomingFunctions =*/{ NodeNames::AnnotationValues, NodeNames::AnnotationColors, NodeNames::V4cCoords },
+            /*.vIncomingFunctions =*/{ NodeNames::AnnotationValues, NodeNames::AnnotationColors },
             /*.vIncomingSession =*/{ { "settings", "interface", "min_anno_dist" } },
             /*.vSessionsIncomingInPrevious =*/{ { "dividend" } },
             /*bHidden =*/false } );

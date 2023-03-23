@@ -226,6 +226,7 @@ class PartialQuarry : public HasSession
         DatasetIdPerRepl,
         ActiveChromLength,
         V4cCoords,
+        Flat4C,
         // ICESamples,
         SIZE
     };
@@ -740,6 +741,7 @@ class PartialQuarry : public HasSession
     std::array<std::array<size_t, 2>, 3> vvFlatTotal;
     std::array<std::vector<std::array<double, 2>>, 3> vvNormalized;
     std::array<std::vector<double>, 3> vCombined;
+    std::array<std::vector<double>, 2> vFlat4C;
     std::vector<double> vDivided;
     std::vector<double> vScaled;
     std::vector<double> vRanged;
@@ -1021,6 +1023,8 @@ class PartialQuarry : public HasSession
     bool setAnnotationColors( );
     // colors.h
     bool setCombined( );
+    // colors.h
+    bool setFlat4C( );
     // colors.h
     bool setScaled( );
     // colors.h

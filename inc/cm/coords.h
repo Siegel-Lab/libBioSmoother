@@ -1327,7 +1327,7 @@ void PartialQuarry::regCoords( )
                                /*.fFunc =*/&PartialQuarry::setBinCoords,
                                /*.vIncomingFunctions =*/
                                { NodeNames::AxisCoords, NodeNames::AnnoFilters, NodeNames::IntersectionType,
-                                 NodeNames::Symmetry },
+                                 NodeNames::Symmetry, NodeNames::V4cCoords },
                                /*.vIncomingSession =*/{ { "settings", "filters", "min_diag_dist", "val" } },
                                /*.vSessionsIncomingInPrevious =*/{ { "dividend" } },
                                /*bHidden =*/false } );

@@ -59,6 +59,33 @@ bool PartialQuarry::setCombined( )
     END_RETURN;
 }
 
+bool PartialQuarry::setFlat4C( )
+{
+    for( size_t uiY = 1; uiY < 3; uiY++ )
+    {
+        const auto& rXCoords = uiY == 1 ? vV4cCoords[ 0 ] : vAxisCords[ 0 ];
+        const auto& rYCoords = uiY == 2 ? vV4cCoords[ 1 ] : vAxisCords[ 1 ];
+
+        vFlat4C[ uiY - 1 ].clear( );
+        if(rXCoords.size() > 0 && rYCoords.size() > 0)
+        {
+            vFlat4C[ uiY - 1 ].reserve( uiY == 1 ? rYCoords.size() : rXCoords.size() );
+
+            for(size_t uiI = 0; uiI < (uiY == 1 ? rYCoords.size() : rXCoords.size()); uiI++ )
+            {
+                vFlat4C[ uiY - 1 ].push_back(0);
+                for(size_t uiJ = 0; uiJ < (uiY == 1 ? rXCoords.size() : rYCoords.size()); uiJ++ )
+                {
+                    CANCEL_RETURN;
+                    const size_t uiIdx = (uiY == 1 ? uiJ : uiI) * rYCoords.size() + (uiY == 1 ? uiI : uiJ);
+                    vFlat4C[ uiY - 1 ].back() += vCombined[ uiY ][uiIdx];
+                }
+            }
+        }
+    }
+    END_RETURN;
+}
+
 bool PartialQuarry::setScaled( )
 {
     vScaled.clear( );
@@ -433,6 +460,14 @@ void PartialQuarry::regColors( )
                   ComputeNode{ /*.sNodeName =*/"combined_bins",
                                /*.fFunc =*/&PartialQuarry::setCombined,
                                /*.vIncomingFunctions =*/{ NodeNames::DistDepDecayRemoved, NodeNames::BetweenGroup },
+                               /*.vIncomingSession =*/{ },
+                               /*.vSessionsIncomingInPrevious =*/{ },
+                               /*bHidden =*/false } );
+
+    registerNode( NodeNames::Flat4C,
+                  ComputeNode{ /*.sNodeName =*/"flat_4c",
+                               /*.fFunc =*/&PartialQuarry::setFlat4C,
+                               /*.vIncomingFunctions =*/{ NodeNames::Combined },
                                /*.vIncomingSession =*/{ },
                                /*.vSessionsIncomingInPrevious =*/{ },
                                /*bHidden =*/false } );
