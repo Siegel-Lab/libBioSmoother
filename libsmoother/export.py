@@ -528,22 +528,6 @@ def __draw_annotation(session, d, sizes, print_callback=lambda s: None):
                     stroke_width=2,
                 )
             )
-            d.append(
-                drawSvg.Text(
-                    "Anno.",
-                    14,
-                    offset_x - sizes["axis"],
-                    offset + sizes["annotation"] / 2,
-                    font_family="Consolas, sans-serif",
-                    transform="rotate(-90,"
-                    + str(offset_x - sizes["axis"])
-                    + ","
-                    + str(-(offset + sizes["annotation"] / 2))
-                    + ")",
-                    text_anchor="middle",
-                    dominant_baseline="hanging",
-                )
-            )
 
             __draw_tick_lines(
                 d,
@@ -562,17 +546,6 @@ def __draw_annotation(session, d, sizes, print_callback=lambda s: None):
                     offset_x,
                     stroke="black",
                     stroke_width=2,
-                )
-            )
-            d.append(
-                drawSvg.Text(
-                    "Anno.",
-                    14,
-                    offset + sizes["annotation"] / 2,
-                    offset_x - sizes["axis"],
-                    font_family="Consolas, sans-serif",
-                    text_anchor="middle",
-                    dominant_baseline="bottom",
                 )
             )
 
@@ -679,22 +652,6 @@ def __draw_secondary(session, d, sizes, print_callback=lambda s: None):
                     stroke_width=2,
                 )
             )
-            d.append(
-                drawSvg.Text(
-                    "Cov.",
-                    14,
-                    offset_x - sizes["axis"],
-                    offset + sizes["annotation"] / 2,
-                    font_family="Consolas, sans-serif",
-                    transform="rotate(-90,"
-                    + str(offset_x - sizes["axis"])
-                    + ","
-                    + str(-(offset + sizes["annotation"] / 2))
-                    + ")",
-                    text_anchor="middle",
-                    dominant_baseline="hanging",
-                )
-            )
 
             __adaptive_ticker(
                 d,
@@ -712,17 +669,6 @@ def __draw_secondary(session, d, sizes, print_callback=lambda s: None):
                     offset_x,
                     stroke="black",
                     stroke_width=2,
-                )
-            )
-            d.append(
-                drawSvg.Text(
-                    "Cov.",
-                    14,
-                    offset + sizes["annotation"] / 2,
-                    offset_x - sizes["axis"],
-                    font_family="Consolas, sans-serif",
-                    text_anchor="middle",
-                    dominant_baseline="bottom",
                 )
             )
 
