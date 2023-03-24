@@ -353,15 +353,13 @@ void PartialQuarry::regAnnotation( )
                                  { "settings", "filters", "anno_coords_col" } },
                                /*bHidden =*/false } );
 
-    registerNode(
-        NodeNames::AnnotationCDS,
-        ComputeNode{
-            /*.sNodeName =*/"annotation_cds",
-            /*.fFunc =*/&PartialQuarry::setAnnotationCDS,
-            /*.vIncomingFunctions =*/{ NodeNames::AnnotationValues, NodeNames::AnnotationColors },
-            /*.vIncomingSession =*/{ { "settings", "interface", "min_anno_dist" } },
-            /*.vSessionsIncomingInPrevious =*/{ { "dividend" } },
-            /*bHidden =*/false } );
+    registerNode( NodeNames::AnnotationCDS,
+                  ComputeNode{ /*.sNodeName =*/"annotation_cds",
+                               /*.fFunc =*/&PartialQuarry::setAnnotationCDS,
+                               /*.vIncomingFunctions =*/{ NodeNames::AnnotationValues, NodeNames::AnnotationColors },
+                               /*.vIncomingSession =*/{ { "settings", "interface", "min_anno_dist" } },
+                               /*.vSessionsIncomingInPrevious =*/{ { "dividend" } },
+                               /*bHidden =*/false } );
 
     registerNode( NodeNames::ActivateAnnotationCDS,
                   ComputeNode{ /*.sNodeName =*/"active_annotation_cds",

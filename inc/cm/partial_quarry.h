@@ -2,7 +2,6 @@
 #include <cctype>
 #include <memory>
 #include <mutex>
-#include <regex>
 
 #pragma once
 
@@ -644,6 +643,11 @@ class PartialQuarry : public HasSession
 
     using coordinate_t = interface_t::coordinate_t;
 
+    const std::string getFilePrefix( )
+    {
+        return pIndices->getFilePrefix( );
+    }
+
   private:
     /**
      * @brief Dependency Declared Access
@@ -664,7 +668,7 @@ class PartialQuarry : public HasSession
 #endif
 
       public:
-        DepDec( PartialQuarry* rQ, const std::string& sName )
+        DepDec( [[maybe_unused]] PartialQuarry* rQ, [[maybe_unused]] const std::string& sName )
 #ifndef NDEBUG
             : rQ( rQ ), sName( sName )
 #endif
@@ -692,14 +696,14 @@ class PartialQuarry : public HasSession
             return xData;
         }
 
-        void registerWrite( const NodeNames& xNode )
+        void registerWrite( [[maybe_unused]] const NodeNames& xNode )
         {
 #ifndef NDEBUG
             vWriteAccess.insert( xNode );
 #endif
         }
 
-        void registerRead( const NodeNames& xNode )
+        void registerRead( [[maybe_unused]] const NodeNames& xNode )
         {
 #ifndef NDEBUG
             vReadAccess.insert( xNode );
@@ -803,6 +807,7 @@ class PartialQuarry : public HasSession
     std::vector<std::array<size_t, 2>> vRadiclSeqNumNonEmptyBins;
 
     std::vector<std::vector<size_t>> vvDatasetIdsPerReplAndChr;
+    std::array<std::array<std::array<std::vector<double>, 2>, 2>, 3> vIceSliceBias;
 
     size_t getDatasetIdfromReplAndChr( size_t uiRepl, size_t uiChrX, size_t uiChrY )
     {
@@ -1179,6 +1184,9 @@ class PartialQuarry : public HasSession
     // normalization.h
     const decltype( vScaled ) getScaled( const std::function<void( const std::string& )>& );
 
+    // normalization.h
+    const std::vector<double> getSliceBias( size_t, size_t, size_t, const std::function<void( const std::string& )>& );
+
     // bin_size.h
     const std::array<int64_t, 4> getDrawingArea( const std::function<void( const std::string& )>& );
 
@@ -1249,15 +1257,14 @@ class PartialQuarry : public HasSession
   public:
     const pybind11::int_ interpretName( std::string sName, bool bXAxis, bool bBottom, bool bGenomicCoords )
     {
-        if( ( bBottom && sName == "*" ) || sName.size( ) == 0 || to_lower( sName ) == "start" )
+        sName = to_lower( sName );
+        if( ( bBottom && sName == "*" ) || sName.size( ) == 0 || sName == "start" )
             return pybind11::int_( 0 );
-        if( !bGenomicCoords && ( ( !bBottom && sName == "*" ) || sName.size( ) == 0 || to_lower( sName ) == "end" ) )
+        if( !bGenomicCoords && ( ( !bBottom && sName == "*" ) || sName.size( ) == 0 || sName == "end" ) )
             return pybind11::int_( vCanvasSize[ bXAxis ? 0 : 1 ] );
-        else if( bGenomicCoords &&
-                 ( ( !bBottom && sName == "*" ) || sName.size( ) == 0 || to_lower( sName ) == "end" ) )
+        else if( bGenomicCoords && ( ( !bBottom && sName == "*" ) || sName.size( ) == 0 || sName == "end" ) )
             return pybind11::int_( getValue<size_t>( { "contigs", "genome_size" } ) );
 
-        std::regex xName( to_lower( sName ) );
         size_t uiMaxPos = 0;
         const bool bSqueeze =
             this->xSession[ "settings" ][ "filters" ][ "anno_in_multiple_bins" ].get<std::string>( ) == "squeeze";
@@ -1268,7 +1275,7 @@ class PartialQuarry : public HasSession
         size_t uiRunningPos = 0;
         for( auto xChr : vActiveChromosomes[ bXAxis ? 0 : 1 ] )
         {
-            bool bMatch = std::regex_search( to_lower( xChr.sName ), xName );
+            bool bMatch = to_lower( xChr.sName ).find( sName ) != std::string::npos;
             size_t uiLen = 0;
             if( bFullGenome )
                 uiLen = xChr.uiLength;
@@ -1294,35 +1301,6 @@ class PartialQuarry : public HasSession
             uiRunningPos += uiLen;
         }
 
-
-        // for( std::string sAnno : vActiveAnnotation[ bX ? 0 : 1 ] )
-        // {
-        //     auto& rJson = this->xSession[ "annotation" ][ "by_name" ][ sAnno ];
-        //     for( auto xChr : vActiveChromosomes[ bX ? 0 : 1 ] )
-        //         if( rJson.contains( xChr.sName ) )
-        //         {
-        //             int64_t iDataSetId = rJson[ xChr.sName ].get<int64_t>( );
-        //             pIndices->vAnno.iterate(
-        //                 iDataSetId,
-        //                 [ & ]( std::tuple<size_t, size_t, std::string, bool> xTup ) {
-        //                     std::string sSearch = sAnno + "=" + std::get<2>( xTup );
-        //                     size_t uiEq = stringCompare( sName, sSearch );
-        //                     if( uiEq > uiMaxEquality ||
-        //                         ( uiEq == uiMaxEquality && std::get<2>( xTup ).size( ) < uiMinRefSize ) )
-        //                     {
-        //                         uiMaxEquality = uiEq;
-        //                         uiMinRefSize = std::get<2>( xTup ).size( );
-        //                         if( bBottom )
-        //                             uiMaxPos = std::get<0>( xTup );
-        //                         else
-        //                             uiMaxPos = std::get<1>( xTup );
-        //                     }
-
-        //                     return true;
-        //                 },
-        //                 !bFullGenome && !bSqueeze, !bFullGenome && bSqueeze );
-        //         }
-        // }
         return pybind11::int_( uiMaxPos );
     }
 

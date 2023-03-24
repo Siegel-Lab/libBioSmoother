@@ -11,6 +11,7 @@ import os
 import copy
 import time
 from importlib.metadata import version
+from .quarry import Quarry
 
 MAP_Q_MAX = 255
 
@@ -193,6 +194,11 @@ class Indexer:
         touch(self.prefix + "/sps.overlays")
         touch(self.prefix + "/sps.prefix_sums")
 
+        touch(self.prefix + "/bias.coords")
+        touch(self.prefix + "/bias.datsets")
+        touch(self.prefix + "/bias.overlays")
+        touch(self.prefix + "/bias.prefix_sums")
+
         self.save_session()
         self.try_load_index()
 
@@ -303,10 +309,13 @@ class Indexer:
                 + "Use the <list> command to see all datasets."
             )
 
-        self.progress_print("generating replicate.", force_print=True)
+        self.progress_print("generating replicate...", force_print=True)
 
         self.append_session(["replicates", "list"], name)
-        self.set_session(["replicates", "by_name", name], {"ids": {}, "path": path})
+        self.set_session(
+            ["replicates", "by_name", name],
+            {"ids": {}, "path": path, "ice_col": {}, "ice_row": {}},
+        )
         if group in ["a", "both"]:
             self.append_session(["replicates", "in_group_a"], name)
         if group in ["b", "both"]:
@@ -443,6 +452,35 @@ class Indexer:
 
         if not keep_points:
             self.indices.clear_points_and_desc()
+
+        self.progress_print("computing IC biases...", force_print=True)
+
+        biases_x, coords_x, biases_y, coords_y = Quarry(self.indices).compute_biases(name, 
+                                                        self.session_default,
+                                                        lambda *x: self.progress_print(*x, force_print=True))
+
+        for biases, coords, col in [
+            [biases_x, coords_x, True],
+            [biases_y, coords_y, False],
+        ]:
+            last_chr = None
+            for b, c in zip(biases + [None], coords + [None]):
+                if not c is None and c.chr_idx != last_chr and last_chr != None:
+                    self.set_session(
+                        [
+                            "replicates",
+                            "by_name",
+                            name,
+                            "ice_col" if col else "ice_row",
+                            self.session_default["contigs"]["list"][last_chr],
+                        ],
+                        self.indices.generate_bias(
+                            fac=-2 if shekelyan else -1, verbosity=GENERATE_VERBOSITY
+                        ),
+                    )
+                if b != None:
+                    last_chr = c.chr_idx
+                    self.indices.insert_bias([c.idx_pos], b)
 
         self.save_session()
 

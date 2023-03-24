@@ -239,8 +239,8 @@ bool PartialQuarry::setTracks( )
                                       (double)vRadiclSeqNumNonEmptyBins[ uiX ][ uiI ] );
                 vvMinMaxTracks[ uiI ][ 1 ] = std::max( vvMinMaxTracks[ uiI ][ 1 ], uiVal );
             }
-            
-            if(vFlat4C[ 1 - uiI ].size() > 0)
+
+            if( vFlat4C[ 1 - uiI ].size( ) > 0 )
             {
                 auto uiVal = (double)vFlat4C[ 1 - uiI ][ uiX ];
                 vvMinMaxTracks[ uiI ][ 0 ] = std::min( vvMinMaxTracks[ uiI ][ 0 ], uiVal );
@@ -507,8 +507,8 @@ bool PartialQuarry::setTracks( )
             ++uiCnt;
         }
 
-        
-        if(vFlat4C[ 1 - uiI ].size() > 0)
+
+        if( vFlat4C[ 1 - uiI ].size( ) > 0 )
         {
             pybind11::list vScreenPos;
             pybind11::list vIndexStart;

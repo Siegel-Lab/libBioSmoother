@@ -678,7 +678,7 @@ bool PartialQuarry::normalizeCoolIC( )
 
         for( size_t uiY = 1; uiY < 3; uiY++ )
         {
-            vvNormalized[ uiY ].resize(vvFlatValues[ uiY ].size());
+            vvNormalized[ uiY ].resize( vvFlatValues[ uiY ].size( ) );
             for( auto& vVal : vvFlatValues[ uiY ] )
             {
                 CANCEL_RETURN;
@@ -768,6 +768,8 @@ bool PartialQuarry::normalizeIC( )
                 else
                     iceApplyBias( xData, uiI == 0, 0, vvNormalized[ uiY ].size( ), uiY );
             }
+            vIceSliceBias[ uiY ][ uiI ][ 0 ].swap( xData.vSliceBias[ 0 ] );
+            vIceSliceBias[ uiY ][ uiI ][ 1 ].swap( xData.vSliceBias[ 1 ] );
         }
     }
     END_RETURN;
@@ -791,9 +793,11 @@ bool PartialQuarry::setNormalized( )
         return normalizeSize( 1000000 );
     else if( sNorm == "rpk" )
         return normalizeSize( 1000 );
-    else if( sNorm == "hi-c" )
+    else if( sNorm == "ice-local" )
         return normalizeIC( );
-    else if( sNorm == "cool-hi-c" )
+    else if( sNorm == "ice-precomp" )
+        return doNotNormalize( );
+    else if( sNorm == "cool-ice" )
         return normalizeCoolIC( );
     else if( sNorm == "grid-seq" )
         return normalizeGridSeq( );
@@ -825,6 +829,13 @@ PartialQuarry::getScaled( const std::function<void( const std::string& )>& fPyPr
 {
     update( NodeNames::Scaled, fPyPrint );
     return vScaled;
+}
+
+const std::vector<double> PartialQuarry::getSliceBias( size_t uiY, size_t uiI, size_t uiX,
+                                                       const std::function<void( const std::string& )>& fPyPrint )
+{
+    update( NodeNames::Normalized, fPyPrint );
+    return vIceSliceBias[ uiY ][ uiI ][ uiX ];
 }
 
 void PartialQuarry::regNormalization( )

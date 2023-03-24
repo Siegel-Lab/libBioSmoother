@@ -67,18 +67,18 @@ bool PartialQuarry::setFlat4C( )
         const auto& rYCoords = uiY == 2 ? vV4cCoords[ 1 ] : vAxisCords[ 1 ];
 
         vFlat4C[ uiY - 1 ].clear( );
-        if(rXCoords.size() > 0 && rYCoords.size() > 0)
+        if( rXCoords.size( ) > 0 && rYCoords.size( ) > 0 )
         {
-            vFlat4C[ uiY - 1 ].reserve( uiY == 1 ? rYCoords.size() : rXCoords.size() );
+            vFlat4C[ uiY - 1 ].reserve( uiY == 1 ? rYCoords.size( ) : rXCoords.size( ) );
 
-            for(size_t uiI = 0; uiI < (uiY == 1 ? rYCoords.size() : rXCoords.size()); uiI++ )
+            for( size_t uiI = 0; uiI < ( uiY == 1 ? rYCoords.size( ) : rXCoords.size( ) ); uiI++ )
             {
-                vFlat4C[ uiY - 1 ].push_back(0);
-                for(size_t uiJ = 0; uiJ < (uiY == 1 ? rXCoords.size() : rYCoords.size()); uiJ++ )
+                vFlat4C[ uiY - 1 ].push_back( 0 );
+                for( size_t uiJ = 0; uiJ < ( uiY == 1 ? rXCoords.size( ) : rYCoords.size( ) ); uiJ++ )
                 {
                     CANCEL_RETURN;
-                    const size_t uiIdx = (uiY == 1 ? uiJ : uiI) * rYCoords.size() + (uiY == 1 ? uiI : uiJ);
-                    vFlat4C[ uiY - 1 ].back() += vCombined[ uiY ][uiIdx];
+                    const size_t uiIdx = ( uiY == 1 ? uiJ : uiI ) * rYCoords.size( ) + ( uiY == 1 ? uiI : uiJ );
+                    vFlat4C[ uiY - 1 ].back( ) += vCombined[ uiY ][ uiIdx ];
                 }
             }
         }
@@ -355,8 +355,8 @@ bool PartialQuarry::setHeatmapCDS( )
 
             vScoreTotal.append( vScaled[ uiI ] );
             vRangedOut.append( vRanged[ uiI ] );
-            vScoreA.append( vvNormalized[0][ uiI ][ 0 ] );
-            vScoreB.append( vvNormalized[0][ uiI ][ 1 ] );
+            vScoreA.append( vvNormalized[ 0 ][ uiI ][ 0 ] );
+            vScoreB.append( vvNormalized[ 0 ][ uiI ][ 1 ] );
             vZero.append( 0 );
         }
     }

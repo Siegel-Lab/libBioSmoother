@@ -31,6 +31,13 @@ from ._import_lib_smoother_cpp import (
     LIB_SMOOTHER_CPP_VERSION,
 )
 
+try:
+    import importlib.resources as pkg_resources
+except ImportError:
+    # Try backported to PY<37 `importlib_resources`.
+    import importlib_resources as pkg_resources
+import json
+
 
 class Quarry(PartialQuarry):
     def __init__(self, *args):
@@ -163,6 +170,31 @@ class Quarry(PartialQuarry):
                     )
                     for x in range(256)
                 ]
+
+    def compute_biases(self, dataset_name, default_session, progress_print):
+        # set session as needed
+        ## reset to default session
+        self.set_session(default_session)
+        ## set default settings
+        with (pkg_resources.files("libsmoother") / "default.json").open("r") as f:
+            self.set_value(["settings"], json.load(f))
+        ## modify parameters as needed
+        self.set_value(["replicates", "in_group_a"], [dataset_name])
+        self.set_value(["replicates", "in_group_b"], [])
+
+        self.set_value(["settings", "export", "do_export_full"], True)
+        self.set_value(["settings", "interface", "fixed_number_of_bins"], True)
+        genome_size = self.get_value([ "contigs", "genome_size" ])
+        self.set_value(["settings", "interface", "fixed_num_bins_x", "val"], genome_size)
+        self.set_value(["settings", "interface", "fixed_num_bins_y", "val"], genome_size)
+
+        biases_x = self.get_slice_bias(0, 0, 0, progress_print)
+        biases_y = self.get_slice_bias(0, 0, 1, progress_print)
+        
+        coords_x = self.get_axis_coords(True, progress_print)
+        coords_y = self.get_axis_coords(False, progress_print)
+
+        return biases_x, coords_x, biases_y, coords_y
 
     def copy(self):
         # trigger the cpp copy constructor
