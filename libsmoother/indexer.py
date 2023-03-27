@@ -453,11 +453,14 @@ class Indexer:
         if not keep_points:
             self.indices.clear_points_and_desc()
 
-        self.progress_print("computing IC biases...", force_print=True)
+        self.progress_print("computing Iterative Correction biases...", force_print=True)
 
-        biases_x, coords_x, biases_y, coords_y = Quarry(self.indices).compute_biases(name, 
-                                                        self.session_default,
-                                                        lambda *x: self.progress_print(*x, force_print=True))
+        biases_x, coords_x, biases_y, coords_y = Quarry(self.indices).compute_biases(
+            name,
+            self.session_default,
+            lambda *x: self.progress_print(*x, force_print=True),
+        )
+        print(len(biases_x), len(coords_x), len(biases_y), len(coords_y))
 
         for biases, coords, col in [
             [biases_x, coords_x, True],
@@ -465,7 +468,7 @@ class Indexer:
         ]:
             last_chr = None
             for b, c in zip(biases + [None], coords + [None]):
-                if not c is None and c.chr_idx != last_chr and last_chr != None:
+                if (c is None or c.chr_idx != last_chr) and not last_chr is None:
                     self.set_session(
                         [
                             "replicates",
@@ -478,7 +481,7 @@ class Indexer:
                             fac=-2 if shekelyan else -1, verbosity=GENERATE_VERBOSITY
                         ),
                     )
-                if b != None:
+                if not b is None:
                     last_chr = c.chr_idx
                     self.indices.insert_bias([c.idx_pos], b)
 

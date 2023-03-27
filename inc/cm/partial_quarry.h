@@ -207,7 +207,6 @@ class PartialQuarry : public HasSession
         Scaled,
         Ticks,
         Tracks,
-        Divided,
         Palette,
         AnnoFilters,
         LCS,
@@ -226,6 +225,8 @@ class PartialQuarry : public HasSession
         ActiveChromLength,
         V4cCoords,
         Flat4C,
+        QueriedBiases,
+        FlatBias,
         // ICESamples,
         SIZE
     };
@@ -807,11 +808,19 @@ class PartialQuarry : public HasSession
     std::vector<std::array<size_t, 2>> vRadiclSeqNumNonEmptyBins;
 
     std::vector<std::vector<size_t>> vvDatasetIdsPerReplAndChr;
+    std::array<std::vector<std::vector<size_t>>, 2> vBiasIdPerReplAndChr;
     std::array<std::array<std::array<std::vector<double>, 2>, 2>, 3> vIceSliceBias;
+    std::array<std::array<std::vector<std::vector<double>>, 2>, 3> vQueriedBiases;
+    std::array<std::array<std::vector<std::array<double, 2>>, 2>, 3> vFlatBiases;
 
     size_t getDatasetIdfromReplAndChr( size_t uiRepl, size_t uiChrX, size_t uiChrY )
     {
         return vvDatasetIdsPerReplAndChr[ uiRepl ][ uiChrY + uiChrX * vActiveChromosomes[ 1 ].size( ) ];
+    }
+
+    size_t getBiasIdfromReplAndChr( size_t uiRepl, size_t uiI, size_t uiChr )
+    {
+        return vBiasIdPerReplAndChr[ uiI ][ uiRepl ][ uiChr ];
     }
 
     bool bCancel = false;
@@ -930,6 +939,8 @@ class PartialQuarry : public HasSession
     // replicates.h
     bool setBinValues( );
     // replicates.h
+    bool setQueriedBiases( );
+    // replicates.h
     bool setDecayValues( );
 
     // replicates.h
@@ -939,6 +950,8 @@ class PartialQuarry : public HasSession
 
     // replicates.h
     bool setFlatValues( );
+    // replicates.h
+    bool setFlatBias( );
     // replicates.h
     bool setFlatDecay( );
     // replicates.h
@@ -975,6 +988,8 @@ class PartialQuarry : public HasSession
     bool setRnaAssociatedBackground( );
     // normalization.h
     bool doNotNormalize( );
+    // normalization.h
+    bool normalizeIceGlobal( );
     // normalization.h
     bool normalizeSize( size_t );
     // normalization.h

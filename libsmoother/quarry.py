@@ -182,15 +182,20 @@ class Quarry(PartialQuarry):
         self.set_value(["replicates", "in_group_a"], [dataset_name])
         self.set_value(["replicates", "in_group_b"], [])
 
+        self.set_value(["settings", "normalization", "normalize_by"], "ice-local")
         self.set_value(["settings", "export", "do_export_full"], True)
         self.set_value(["settings", "interface", "fixed_number_of_bins"], True)
-        genome_size = self.get_value([ "contigs", "genome_size" ])
-        self.set_value(["settings", "interface", "fixed_num_bins_x", "val"], genome_size)
-        self.set_value(["settings", "interface", "fixed_num_bins_y", "val"], genome_size)
+        genome_size = self.get_value(["contigs", "genome_size"])
+        self.set_value(
+            ["settings", "interface", "fixed_num_bins_x", "val"], genome_size
+        )
+        self.set_value(
+            ["settings", "interface", "fixed_num_bins_y", "val"], genome_size
+        )
 
         biases_x = self.get_slice_bias(0, 0, 0, progress_print)
         biases_y = self.get_slice_bias(0, 0, 1, progress_print)
-        
+
         coords_x = self.get_axis_coords(True, progress_print)
         coords_y = self.get_axis_coords(False, progress_print)
 

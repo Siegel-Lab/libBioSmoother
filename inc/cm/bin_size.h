@@ -34,10 +34,14 @@ bool PartialQuarry::setBinSize( )
     {
         size_t uiNumX = getValue<size_t>( { "settings", "interface", "fixed_num_bins_x", "val" } );
         size_t uiNumY = getValue<size_t>( { "settings", "interface", "fixed_num_bins_y", "val" } );
-        uiBinHeight.w( ) = ( getValue<double>( { "area", "y_end" } ) - getValue<double>( { "area", "y_start" } ) ) /
-                           static_cast<double>( uiNumY );
-        uiBinWidth.w( ) = ( getValue<double>( { "area", "x_end" } ) - getValue<double>( { "area", "x_start" } ) ) /
-                          static_cast<double>( uiNumX );
+        uiBinHeight.w( ) = std::max(
+            (size_t)1,
+            (size_t)( ( getValue<double>( { "area", "y_end" } ) - getValue<double>( { "area", "y_start" } ) ) /
+                      static_cast<double>( uiNumY ) ) );
+        uiBinWidth.w( ) = std::max(
+            (size_t)1,
+            (size_t)( ( getValue<double>( { "area", "x_end" } ) - getValue<double>( { "area", "x_start" } ) ) /
+                      static_cast<double>( uiNumX ) ) );
     }
     else if( !getValue<bool>( { "settings", "interface", "squared_bins" } ) )
     {

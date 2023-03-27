@@ -32,6 +32,27 @@ bool PartialQuarry::doNotNormalize( )
     END_RETURN;
 }
 
+bool PartialQuarry::normalizeIceGlobal( )
+{
+    for( size_t uiJ = 0; uiJ < 3; uiJ++ )
+        for( size_t uiI = 0; uiI < vvFlatValues[ uiJ ].size(); uiI++ )
+        {
+            CANCEL_RETURN;
+            const auto& rYCoords = uiJ == 2 ? vV4cCoords[ 1 ] : vAxisCords[ 1 ];
+            const size_t uiY = uiI % rYCoords.size( );
+            const size_t uiX = uiI / rYCoords.size( );
+
+            vvNormalized[ uiJ ].push_back( { 0.0, 0.0 } );
+            for( size_t uiK = 0; uiK < 2; uiK++ )
+            {
+                const double fBias = vFlatBiases[ uiJ ][ 0 ][ uiX ][ uiK ] * vFlatBiases[ uiJ ][ 1 ][ uiY ][ uiK ];
+                if(fBias != 0)
+                    vvNormalized[ uiJ ].back( )[ uiK ] = (double)vvFlatValues[ uiJ ][ uiI ][ uiK ] * fBias;
+            }
+        }
+    END_RETURN;
+}
+
 
 bool PartialQuarry::normalizeBinominalTest( )
 {
@@ -796,7 +817,7 @@ bool PartialQuarry::setNormalized( )
     else if( sNorm == "ice-local" )
         return normalizeIC( );
     else if( sNorm == "ice-precomp" )
-        return doNotNormalize( );
+        return normalizeIceGlobal( );
     else if( sNorm == "cool-ice" )
         return normalizeCoolIC( );
     else if( sNorm == "grid-seq" )
@@ -845,7 +866,8 @@ void PartialQuarry::regNormalization( )
         ComputeNode{ /*.sNodeName =*/"normalized_bins",
                      /*.fFunc =*/&PartialQuarry::setNormalized,
                      /*.vIncomingFunctions =*/
-                     { NodeNames::FlatValues, NodeNames::RnaAssociatedBackground, NodeNames::RadiclSeqCoverage },
+                     { NodeNames::FlatValues, NodeNames::RnaAssociatedBackground, NodeNames::RadiclSeqCoverage, 
+                       NodeNames::FlatBias },
                      /*.vIncomingSession =*/
                      { { "settings", "normalization", "p_accept", "val" },
                        { "settings", "normalization", "ice_sparse_slice_filter", "val" },

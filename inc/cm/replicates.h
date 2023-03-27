@@ -60,6 +60,26 @@ bool PartialQuarry::setDatasetIdPerRepl( )
                     vvDatasetIdsPerReplAndChr.back( ).push_back( std::numeric_limits<size_t>::max( ) );
             }
     }
+
+    for( size_t uiI = 0; uiI < 2; uiI++ )
+    {
+        vBiasIdPerReplAndChr[ uiI ].clear( );
+        vBiasIdPerReplAndChr[ uiI ].reserve( vActiveReplicates.size( ) );
+        for( const std::string& sRep : vActiveReplicates )
+        {
+            vBiasIdPerReplAndChr[ uiI ].emplace_back( );
+            vBiasIdPerReplAndChr[ uiI ].back( ).reserve( vActiveChromosomes[ uiI ].size( ) );
+            for( const ChromDesc& xChrom : vActiveChromosomes[ uiI ] )
+            {
+                CANCEL_RETURN;
+                if( hasValue( { "replicates", "by_name", sRep, uiI == 0 ? "ice_col" : "ice_row", xChrom.sName } ) )
+                    vBiasIdPerReplAndChr[ uiI ].back( ).push_back( getValue<size_t>(
+                        { "replicates", "by_name", sRep, uiI == 0 ? "ice_col" : "ice_row", xChrom.sName } ) );
+                else
+                    vBiasIdPerReplAndChr[ uiI ].back( ).push_back( std::numeric_limits<size_t>::max( ) );
+            }
+        }
+    }
     END_RETURN;
 }
 
@@ -227,6 +247,44 @@ bool PartialQuarry::setBinValues( )
             const size_t uiTot =
                 getValue<size_t>( { "replicates", "by_name", vActiveReplicates[ uiRepl ], "total_reads" } );
             vActiveReplicatesTotal.push_back( symmetry( uiTot, uiTot ) );
+        }
+    }
+    END_RETURN;
+}
+
+bool PartialQuarry::setQueriedBiases( )
+{
+    for( size_t uiY = 0; uiY < 3; uiY++ )
+    {
+        for( size_t uiI = 0; uiI < 2; uiI++ )
+        {
+            vQueriedBiases[ uiY ][ uiI ].clear( );
+            vQueriedBiases[ uiY ][ uiI ].reserve( vActiveReplicates.size( ) );
+            for( size_t uiRepl = 0; uiRepl < vActiveReplicates.size( ); uiRepl++ )
+            {
+                vQueriedBiases[ uiY ][ uiI ].emplace_back( );
+                
+                const auto& rCoords = uiY == 0 ? (uiY == 1 ? vV4cCoords[ 0 ] : vAxisCords[ 0 ])
+                                               : (uiY == 2 ? vV4cCoords[ 1 ] : vAxisCords[ 1 ]);
+                vQueriedBiases[ uiY ][ uiI ].back( ).reserve( rCoords.size( ) );
+                for( const AxisCoord& vCoords : rCoords )
+                {
+                    CANCEL_RETURN;
+                    double uiVal = 1;
+                    if( vCoords.uiChromosome != std::numeric_limits<size_t>::max( ) )
+                    {
+                        size_t iDataSetId = getBiasIdfromReplAndChr( uiRepl, uiI, vCoords.uiChromosome );
+                        if( iDataSetId != std::numeric_limits<size_t>::max( ) )
+                            uiVal = pIndices->countBias( iDataSetId,
+                                                         { vCoords.uiIndexPos },
+                                                         { vCoords.uiIndexPos + vCoords.uiIndexSize },
+                                                         sps::IntersectionType::enclosed,
+                                                         0 );
+                    }
+
+                    vQueriedBiases[ uiY ][ uiI ].back( ).push_back( uiVal );
+                }
+            }
         }
     }
     END_RETURN;
@@ -459,6 +517,7 @@ bool PartialQuarry::setFlatValues( )
 
         if( vvBinValues[ uiY ].size( ) > 0 )
         {
+            // take size from fst replicate (sizes are equal anyways)
             vvFlatValues[ uiY ].reserve( vvBinValues[ uiY ][ 0 ].size( ) );
 
             for( size_t uiI = 0; uiI < vBinCoords[ uiY ].size( ); uiI++ )
@@ -489,6 +548,54 @@ bool PartialQuarry::setFlatValues( )
                 }
 
                 vvFlatTotal[ uiY ][ uiJ ] = getFlatValue( vCollected );
+            }
+        }
+    }
+    END_RETURN;
+}
+
+bool PartialQuarry::setFlatBias( )
+{
+    for( size_t uiY = 0; uiY < 3; uiY++ )
+    {
+        for( size_t uiI = 0; uiI < 2; uiI++ )
+        {
+            vFlatBiases[ uiY ][ uiI ].clear( );
+
+            if( vQueriedBiases[ uiY ][ uiI ].size( ) > 0 )
+            {
+                // take size from fst replicate (sizes are equal anyways)
+                vFlatBiases[ uiY ][ uiI ].reserve( vQueriedBiases[ uiY ][ uiI ][ 0 ].size( ) );
+
+                for( size_t uiK = 0; uiK < vQueriedBiases[ uiY ][ uiI ][ 0 ].size( ); uiK++ )
+                {
+                    vFlatBiases[ uiY ][ uiI ].push_back( { 0, 0 } );
+                    for( size_t uiJ = 0; uiJ < 2; uiJ++ )
+                    {
+                        std::vector<double> vCollected;
+                        vCollected.reserve( vInGroup[ uiJ ].size( ) );
+                        for( size_t uiX : vInGroup[ uiJ ] )
+                        {
+                            CANCEL_RETURN;
+                            vCollected.push_back( vQueriedBiases[ uiY ][ uiI ][ uiX ][ uiK ] );
+                        }
+
+                        vFlatBiases[ uiY ][ uiI ].back( )[ uiJ ] = getFlatValue( vCollected );
+                    }
+                }
+
+                for( size_t uiJ = 0; uiJ < 2; uiJ++ )
+                {
+                    std::vector<size_t> vCollected;
+                    vCollected.reserve( vInGroup[ uiJ ].size( ) );
+                    for( size_t uiX : vInGroup[ uiJ ] )
+                    {
+                        CANCEL_RETURN;
+                        vCollected.push_back( vActiveReplicatesTotal[ uiX ] );
+                    }
+
+                    vvFlatTotal[ uiY ][ uiJ ] = getFlatValue( vCollected );
+                }
             }
         }
     }
@@ -624,6 +731,18 @@ void PartialQuarry::regReplicates( )
                                { { "replicates", "by_name" } },
                                /*bHidden =*/false } );
 
+    registerNode( NodeNames::QueriedBiases,
+                  ComputeNode{ /*.sNodeName =*/"bias_values",
+                               /*.fFunc=*/&PartialQuarry::setQueriedBiases,
+                               /*.vIncomingFunctions =*/
+                               { NodeNames::BinCoords, NodeNames::DatasetIdPerRepl, NodeNames::MappingQuality,
+                                 NodeNames::Directionality },
+                               /*.vIncomingSession =*/
+                               { },
+                               /*.vSessionsIncomingInPrevious =*/
+                               { },
+                               /*bHidden =*/false } );
+
     registerNode( NodeNames::DecayValues,
                   ComputeNode{ /*.sNodeName =*/"decay_values",
                                /*.fFunc=*/&PartialQuarry::setDecayValues,
@@ -658,6 +777,14 @@ void PartialQuarry::regReplicates( )
                   ComputeNode{ /*.sNodeName =*/"flat_bins",
                                /*.fFunc=*/&PartialQuarry::setFlatValues,
                                /*.vIncomingFunctions =*/{ NodeNames::BinValues, NodeNames::InGroup },
+                               /*.vIncomingSession =*/{ },
+                               /*.vSessionsIncomingInPrevious =*/{ },
+                               /*bHidden =*/false } );
+
+    registerNode( NodeNames::FlatBias,
+                  ComputeNode{ /*.sNodeName =*/"flat_bias",
+                               /*.fFunc=*/&PartialQuarry::setFlatBias,
+                               /*.vIncomingFunctions =*/{ NodeNames::QueriedBiases, NodeNames::InGroup },
                                /*.vIncomingSession =*/{ },
                                /*.vSessionsIncomingInPrevious =*/{ },
                                /*bHidden =*/false } );
