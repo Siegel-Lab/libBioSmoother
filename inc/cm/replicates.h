@@ -72,9 +72,9 @@ bool PartialQuarry::setDatasetIdPerRepl( )
             for( const ChromDesc& xChrom : vActiveChromosomes[ uiI ] )
             {
                 CANCEL_RETURN;
-                if( hasValue( { "replicates", "by_name", sRep, uiI == 0 ? "ice_col" : "ice_row", xChrom.sName } ) )
+                if( hasValue( { "replicates", "by_name", sRep, uiI == 1 ? "ice_row" : "ice_col", xChrom.sName } ) )
                     vBiasIdPerReplAndChr[ uiI ].back( ).push_back( getValue<size_t>(
-                        { "replicates", "by_name", sRep, uiI == 0 ? "ice_col" : "ice_row", xChrom.sName } ) );
+                        { "replicates", "by_name", sRep, uiI == 1 ? "ice_row" : "ice_col", xChrom.sName } ) );
                 else
                     vBiasIdPerReplAndChr[ uiI ].back( ).push_back( std::numeric_limits<size_t>::max( ) );
             }
@@ -259,30 +259,33 @@ bool PartialQuarry::setQueriedBiases( )
         for( size_t uiI = 0; uiI < 2; uiI++ )
         {
             vQueriedBiases[ uiY ][ uiI ].clear( );
-            vQueriedBiases[ uiY ][ uiI ].reserve( vActiveReplicates.size( ) );
-            for( size_t uiRepl = 0; uiRepl < vActiveReplicates.size( ); uiRepl++ )
+            if( getValue<std::string>( { "settings", "normalization", "normalize_by" } ) == "ice-precomp" )
             {
-                vQueriedBiases[ uiY ][ uiI ].emplace_back( );
-                
-                const auto& rCoords = uiY == 0 ? (uiY == 1 ? vV4cCoords[ 0 ] : vAxisCords[ 0 ])
-                                               : (uiY == 2 ? vV4cCoords[ 1 ] : vAxisCords[ 1 ]);
-                vQueriedBiases[ uiY ][ uiI ].back( ).reserve( rCoords.size( ) );
-                for( const AxisCoord& vCoords : rCoords )
+                vQueriedBiases[ uiY ][ uiI ].reserve( vActiveReplicates.size( ) );
+                for( size_t uiRepl = 0; uiRepl < vActiveReplicates.size( ); uiRepl++ )
                 {
-                    CANCEL_RETURN;
-                    double uiVal = 1;
-                    if( vCoords.uiChromosome != std::numeric_limits<size_t>::max( ) )
-                    {
-                        size_t iDataSetId = getBiasIdfromReplAndChr( uiRepl, uiI, vCoords.uiChromosome );
-                        if( iDataSetId != std::numeric_limits<size_t>::max( ) )
-                            uiVal = pIndices->countBias( iDataSetId,
-                                                         { vCoords.uiIndexPos },
-                                                         { vCoords.uiIndexPos + vCoords.uiIndexSize },
-                                                         sps::IntersectionType::enclosed,
-                                                         0 );
-                    }
+                    vQueriedBiases[ uiY ][ uiI ].emplace_back( );
 
-                    vQueriedBiases[ uiY ][ uiI ].back( ).push_back( uiVal );
+                    const auto& rCoords = uiY == 0 ? ( uiY == 1 ? vV4cCoords[ 0 ] : vAxisCords[ 0 ] )
+                                                   : ( uiY == 2 ? vV4cCoords[ 1 ] : vAxisCords[ 1 ] );
+                    vQueriedBiases[ uiY ][ uiI ].back( ).reserve( rCoords.size( ) );
+                    for( const AxisCoord& vCoords : rCoords )
+                    {
+                        CANCEL_RETURN;
+                        double uiVal = 0;
+                        if( vCoords.uiChromosome != std::numeric_limits<size_t>::max( ) )
+                        {
+                            size_t iDataSetId = getBiasIdfromReplAndChr( uiRepl, uiI, vCoords.uiChromosome );
+                            if( iDataSetId != std::numeric_limits<size_t>::max( ) )
+                                uiVal = pIndices->countBias( iDataSetId,
+                                                             { vCoords.uiIndexPos },
+                                                             { vCoords.uiIndexPos + vCoords.uiIndexSize },
+                                                             sps::IntersectionType::enclosed,
+                                                             0 );
+                        }
+
+                        vQueriedBiases[ uiY ][ uiI ].back( ).push_back( uiVal );
+                    }
                 }
             }
         }
@@ -561,40 +564,29 @@ bool PartialQuarry::setFlatBias( )
         for( size_t uiI = 0; uiI < 2; uiI++ )
         {
             vFlatBiases[ uiY ][ uiI ].clear( );
-
-            if( vQueriedBiases[ uiY ][ uiI ].size( ) > 0 )
+            if( getValue<std::string>( { "settings", "normalization", "normalize_by" } ) == "ice-precomp" )
             {
-                // take size from fst replicate (sizes are equal anyways)
-                vFlatBiases[ uiY ][ uiI ].reserve( vQueriedBiases[ uiY ][ uiI ][ 0 ].size( ) );
-
-                for( size_t uiK = 0; uiK < vQueriedBiases[ uiY ][ uiI ][ 0 ].size( ); uiK++ )
+                if( vQueriedBiases[ uiY ][ uiI ].size( ) > 0 )
                 {
-                    vFlatBiases[ uiY ][ uiI ].push_back( { 0, 0 } );
-                    for( size_t uiJ = 0; uiJ < 2; uiJ++ )
+                    // take size from fst replicate (sizes are equal anyways)
+                    vFlatBiases[ uiY ][ uiI ].reserve( vQueriedBiases[ uiY ][ uiI ][ 0 ].size( ) );
+
+                    for( size_t uiK = 0; uiK < vQueriedBiases[ uiY ][ uiI ][ 0 ].size( ); uiK++ )
                     {
-                        std::vector<double> vCollected;
-                        vCollected.reserve( vInGroup[ uiJ ].size( ) );
-                        for( size_t uiX : vInGroup[ uiJ ] )
+                        vFlatBiases[ uiY ][ uiI ].push_back( { 0, 0 } );
+                        for( size_t uiJ = 0; uiJ < 2; uiJ++ )
                         {
-                            CANCEL_RETURN;
-                            vCollected.push_back( vQueriedBiases[ uiY ][ uiI ][ uiX ][ uiK ] );
+                            std::vector<double> vCollected;
+                            vCollected.reserve( vInGroup[ uiJ ].size( ) );
+                            for( size_t uiX : vInGroup[ uiJ ] )
+                            {
+                                CANCEL_RETURN;
+                                vCollected.push_back( vQueriedBiases[ uiY ][ uiI ][ uiX ][ uiK ] );
+                            }
+
+                            vFlatBiases[ uiY ][ uiI ].back( )[ uiJ ] = getFlatValue( vCollected );
                         }
-
-                        vFlatBiases[ uiY ][ uiI ].back( )[ uiJ ] = getFlatValue( vCollected );
                     }
-                }
-
-                for( size_t uiJ = 0; uiJ < 2; uiJ++ )
-                {
-                    std::vector<size_t> vCollected;
-                    vCollected.reserve( vInGroup[ uiJ ].size( ) );
-                    for( size_t uiX : vInGroup[ uiJ ] )
-                    {
-                        CANCEL_RETURN;
-                        vCollected.push_back( vActiveReplicatesTotal[ uiX ] );
-                    }
-
-                    vvFlatTotal[ uiY ][ uiJ ] = getFlatValue( vCollected );
                 }
             }
         }
@@ -738,7 +730,7 @@ void PartialQuarry::regReplicates( )
                                { NodeNames::BinCoords, NodeNames::DatasetIdPerRepl, NodeNames::MappingQuality,
                                  NodeNames::Directionality },
                                /*.vIncomingSession =*/
-                               { },
+                               { { "settings", "normalization", "normalize_by" } },
                                /*.vSessionsIncomingInPrevious =*/
                                { },
                                /*bHidden =*/false } );
@@ -786,7 +778,7 @@ void PartialQuarry::regReplicates( )
                                /*.fFunc=*/&PartialQuarry::setFlatBias,
                                /*.vIncomingFunctions =*/{ NodeNames::QueriedBiases, NodeNames::InGroup },
                                /*.vIncomingSession =*/{ },
-                               /*.vSessionsIncomingInPrevious =*/{ },
+                               /*.vSessionsIncomingInPrevious =*/{ { "settings", "normalization", "normalize_by" } },
                                /*bHidden =*/false } );
 
     registerNode( NodeNames::FlatDecay,

@@ -38,6 +38,8 @@ except ImportError:
     import importlib_resources as pkg_resources
 import json
 
+def open_default_json():
+    return (pkg_resources.files("libsmoother") / "default.json").open("r")
 
 class Quarry(PartialQuarry):
     def __init__(self, *args):
@@ -176,22 +178,28 @@ class Quarry(PartialQuarry):
         ## reset to default session
         self.set_session(default_session)
         ## set default settings
-        with (pkg_resources.files("libsmoother") / "default.json").open("r") as f:
+        with open_default_json() as f:
             self.set_value(["settings"], json.load(f))
         ## modify parameters as needed
+
+        # pick the relevant dataset
         self.set_value(["replicates", "in_group_a"], [dataset_name])
         self.set_value(["replicates", "in_group_b"], [])
 
+        # never skip a region -> if the user decides to display that region the biases might be missing
+        self.set_value(["settings", "filters", "cut_off_bin"], "smaller")
+
+        # activate the local balancing but render the whole heatmap
         self.set_value(["settings", "normalization", "normalize_by"], "ice-local")
+
+        # render whole heatmap
         self.set_value(["settings", "export", "do_export_full"], True)
-        self.set_value(["settings", "interface", "fixed_number_of_bins"], True)
-        genome_size = self.get_value(["contigs", "genome_size"])
-        self.set_value(
-            ["settings", "interface", "fixed_num_bins_x", "val"], genome_size
-        )
-        self.set_value(
-            ["settings", "interface", "fixed_num_bins_y", "val"], genome_size
-        )
+
+        # fix the bin size
+        self.set_value(["settings", "interface", "fixed_bin_size"], True)
+        ice_resolution = max(1, 50000 // self.get_value(["dividend"]))
+        self.set_value(["settings", "interface", "fixed_bin_size_x", "val"], ice_resolution)
+        self.set_value(["settings", "interface", "fixed_bin_size_y", "val"], ice_resolution)
 
         biases_x = self.get_slice_bias(0, 0, 0, progress_print)
         biases_y = self.get_slice_bias(0, 0, 1, progress_print)

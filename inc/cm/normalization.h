@@ -35,7 +35,7 @@ bool PartialQuarry::doNotNormalize( )
 bool PartialQuarry::normalizeIceGlobal( )
 {
     for( size_t uiJ = 0; uiJ < 3; uiJ++ )
-        for( size_t uiI = 0; uiI < vvFlatValues[ uiJ ].size(); uiI++ )
+        for( size_t uiI = 0; uiI < vvFlatValues[ uiJ ].size( ); uiI++ )
         {
             CANCEL_RETURN;
             const auto& rYCoords = uiJ == 2 ? vV4cCoords[ 1 ] : vAxisCords[ 1 ];
@@ -44,11 +44,9 @@ bool PartialQuarry::normalizeIceGlobal( )
 
             vvNormalized[ uiJ ].push_back( { 0.0, 0.0 } );
             for( size_t uiK = 0; uiK < 2; uiK++ )
-            {
-                const double fBias = vFlatBiases[ uiJ ][ 0 ][ uiX ][ uiK ] * vFlatBiases[ uiJ ][ 1 ][ uiY ][ uiK ];
-                if(fBias != 0)
-                    vvNormalized[ uiJ ].back( )[ uiK ] = (double)vvFlatValues[ uiJ ][ uiI ][ uiK ] * fBias;
-            }
+                vvNormalized[ uiJ ].back( )[ uiK ] = (double)vvFlatValues[ uiJ ][ uiI ][ uiK ] *
+                                                     vFlatBiases[ uiJ ][ 0 ][ uiX ][ uiK ] *
+                                                     vFlatBiases[ uiJ ][ 1 ][ uiY ][ uiK ];
         }
     END_RETURN;
 }
@@ -802,6 +800,9 @@ bool PartialQuarry::setNormalized( )
     {
         vvNormalized[ uiY ].clear( );
         vvNormalized[ uiY ].reserve( vvFlatValues[ uiY ].size( ) );
+        for( size_t uiI = 0; uiI < 2; uiI++ )
+            for( size_t uiJ = 0; uiJ < 2; uiJ++ )
+                vIceSliceBias[ uiY ][ uiI ][ uiJ ].clear( );
     }
 
     const std::string sNorm = getValue<std::string>( { "settings", "normalization", "normalize_by" } );
@@ -861,23 +862,22 @@ const std::vector<double> PartialQuarry::getSliceBias( size_t uiY, size_t uiI, s
 
 void PartialQuarry::regNormalization( )
 {
-    registerNode(
-        NodeNames::Normalized,
-        ComputeNode{ /*.sNodeName =*/"normalized_bins",
-                     /*.fFunc =*/&PartialQuarry::setNormalized,
-                     /*.vIncomingFunctions =*/
-                     { NodeNames::FlatValues, NodeNames::RnaAssociatedBackground, NodeNames::RadiclSeqCoverage, 
-                       NodeNames::FlatBias },
-                     /*.vIncomingSession =*/
-                     { { "settings", "normalization", "p_accept", "val" },
-                       { "settings", "normalization", "ice_sparse_slice_filter", "val" },
-                       { "contigs", "genome_size" } },
-                     /*.vSessionsIncomingInPrevious =*/
-                     { { "settings", "normalization", "normalize_by" },
-                       { "settings", "normalization", "grid_seq_axis_is_column" },
-                       { "settings", "normalization", "radicl_seq_samples", "val" },
-                       { "settings", "normalization", "radicl_seq_axis_is_column" } },
-                     /*bHidden =*/false } );
+    registerNode( NodeNames::Normalized,
+                  ComputeNode{ /*.sNodeName =*/"normalized_bins",
+                               /*.fFunc =*/&PartialQuarry::setNormalized,
+                               /*.vIncomingFunctions =*/
+                               { NodeNames::FlatValues, NodeNames::RnaAssociatedBackground,
+                                 NodeNames::RadiclSeqCoverage, NodeNames::FlatBias },
+                               /*.vIncomingSession =*/
+                               { { "settings", "normalization", "p_accept", "val" },
+                                 { "settings", "normalization", "ice_sparse_slice_filter", "val" },
+                                 { "contigs", "genome_size" } },
+                               /*.vSessionsIncomingInPrevious =*/
+                               { { "settings", "normalization", "normalize_by" },
+                                 { "settings", "normalization", "grid_seq_axis_is_column" },
+                                 { "settings", "normalization", "radicl_seq_samples", "val" },
+                                 { "settings", "normalization", "radicl_seq_axis_is_column" } },
+                               /*bHidden =*/false } );
 
     registerNode( NodeNames::GridSeqSamples,
                   ComputeNode{ /*.sNodeName =*/"grid_seq_samples",

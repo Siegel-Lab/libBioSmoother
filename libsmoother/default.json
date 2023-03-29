@@ -87,6 +87,8 @@
         "grid_seq_filter_intersection": true,
         "grid_seq_display_background": true,
         "radicl_seq_display_coverage": true,
+        "ice_show_bias": false,
+        "ice_show_local_bias": false,
         "grid_seq_max_bin_size": {
             "min": 1000,
             "max": 100000,
@@ -211,6 +213,23 @@
             "min": 0,
             "val": 256,
             "step": 1,
+            "spinner_min_restricted": true,
+            "spinner_max_restricted": false
+        },
+        "fixed_bin_size": false,
+        "fixed_bin_size_x": {
+            "max": 10000,
+            "min": 1,
+            "val": 100,
+            "step": 100,
+            "spinner_min_restricted": true,
+            "spinner_max_restricted": false
+        },
+        "fixed_bin_size_y": {
+            "max": 10000,
+            "min": 1,
+            "val": 100,
+            "step": 100,
             "spinner_min_restricted": true,
             "spinner_max_restricted": false
         },

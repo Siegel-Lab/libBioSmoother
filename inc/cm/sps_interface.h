@@ -90,14 +90,15 @@ template <bool CACHED> class SpsInterface : public HasSession
     static const bool BIN_SEARCH_SPARSE = false;
     static const size_t D = 8;
     static const size_t O = 2;
+    static const size_t uiBiasAccuracy = 1000000;
 #ifdef WITH_STXXL
     using index_t = sps::Index<typename std::conditional<CACHED, CachedTypeDef<D, O, BIN_SEARCH_SPARSE>,
                                                          DiskTypeDef<D, O, BIN_SEARCH_SPARSE>>::type>;
-    using bias_index_t = sps::Index<typename std::conditional<CACHED, ValCachedTypeDef<1, 0, BIN_SEARCH_SPARSE, double>,
-                                                              ValDiskTypeDef<1, 0, BIN_SEARCH_SPARSE, double>>::type>;
+    using bias_index_t = sps::Index<typename std::conditional<CACHED, CachedTypeDef<1, 0, BIN_SEARCH_SPARSE>,
+                                                              DiskTypeDef<1, 0, BIN_SEARCH_SPARSE>>::type>;
 #else
     using index_t = sps::Index<DiskTypeDef<D, O, BIN_SEARCH_SPARSE>>;
-    using bias_index_t = sps::Index<ValDiskTypeDef<1, 0, BIN_SEARCH_SPARSE, double>>;
+    using bias_index_t = sps::Index<DiskTypeDef<1, 0, BIN_SEARCH_SPARSE>>;
 #endif
     std::shared_ptr<index_t> pIndex;
     std::shared_ptr<bias_index_t> pBiasIndex;
@@ -147,7 +148,7 @@ template <bool CACHED> class SpsInterface : public HasSession
 
     void insertBias( std::array<uint64_t, 1> vStart, double iValue )
     {
-        pBiasIndex->addPoint( vStart, iValue );
+        pBiasIndex->addPoint( vStart, (size_t)( iValue * uiBiasAccuracy ) );
     }
 
     void insertBias( std::vector<uint64_t> vStart, double iValue )
@@ -171,10 +172,12 @@ template <bool CACHED> class SpsInterface : public HasSession
         return pIndex->count( iDataSetId, vFrom, vTo, xIntersect, uiVerbosity );
     }
 
-    size_t countBias( size_t iDataSetId, std::array<coordinate_t, 1> vFrom, std::array<coordinate_t, 1> vTo,
+    double countBias( size_t iDataSetId, std::array<coordinate_t, 1> vFrom, std::array<coordinate_t, 1> vTo,
                       sps::IntersectionType xIntersect, size_t uiVerbosity = 1 )
     {
-        return pBiasIndex->count( iDataSetId, vFrom, vTo, xIntersect, uiVerbosity );
+        const double dRet =
+            (double)pBiasIndex->count( iDataSetId, vFrom, vTo, xIntersect, uiVerbosity ) / (double)uiBiasAccuracy;
+        return dRet;
     }
 
     size_t generate( double fFac = -1, size_t uiVerbosity = 1 )
