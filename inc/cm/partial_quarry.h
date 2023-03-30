@@ -498,7 +498,7 @@ class PartialQuarry : public HasSession
         do
         {
             bContinue = false;
-            for( auto& rNode : { HeatmapCDS, Tracks, AnnotationCDS, ActivateAnnotationCDS, Ticks, Tracks, Palette,
+            for( auto& rNode : { HeatmapCDS, Tracks, AnnotationCDS, ActivateAnnotationCDS, Ticks, Palette,
                                  DecayCDS, RankedSlicesCDS } )
                 if( !update_no_throw( rNode, fPyPrint ) )
                 {
