@@ -695,13 +695,9 @@ bool PartialQuarry::setGridSeqCoords( )
                               getValue<std::string>( { "settings", "normalization", "grid_seq_anno_type" } ) } ),
             pIndices->vAnno );
         vGridSeqCoords = xRet.first;
-        vGridSeqRegions = xRet.second;
     }
     else
-    {
         vGridSeqCoords.clear( );
-        vGridSeqRegions.clear( );
-    }
     CANCEL_RETURN;
     END_RETURN;
 }
@@ -966,7 +962,6 @@ bool PartialQuarry::setV4cCoords( )
 
 
         vV4cCoords[ uiI ].clear( );
-        vV4cRegions[ uiI ].clear( );
         if( getValue<bool>( { "settings", "interface", "v4c", uiI == 0 ? "do_row" : "do_col" } ) )
         {
             const size_t uiFrom =
@@ -1049,22 +1044,6 @@ bool PartialQuarry::setV4cCoords( )
                         /*.uiRegionIdx =*/0, //
                         /*.uiIdx =*/vV4cCoords[ uiI ].size( ) //
                     } );
-
-                    vV4cRegions[ uiI ].push_back( AxisRegion{
-                        /*{*/
-                        // {
-                        /*  .uiChromosome =*/uiX, //
-                        /*  .uiIndexPos =*/uiIndexFromCtg, //
-                        /*  .uiIndexSize =*/uiIndexToCtg - uiIndexFromCtg, //
-                        // },
-                        /* .uiScreenPos =*/uiScreenFromCtg, //
-                        /* .uiScreenSize =*/uiScreenToCtg - uiScreenFromCtg, //
-                        /* .uiRegionIdx =*/0, //
-                        /* .uiIdx =*/vV4cCoords[ uiI ].size( ), //
-                        /*},*/
-                        /*.uiCoordStartIdx =*/vV4cCoords[ uiI ].size( ) - 1, //
-                        /*.uiNumCoords =*/1 //
-                    } );
                 }
                 uiRunningPos += uiL;
                 uiRunningPos2 += uiL2;
@@ -1074,16 +1053,42 @@ bool PartialQuarry::setV4cCoords( )
     END_RETURN;
 }
 
+const std::vector<AxisCoord>& PartialQuarry::pickXCoords(const size_t uiI)
+{
+    switch(uiI){
+        case 1:
+            return vV4cCoords[ 0 ];
+        case 3:
+            return vIceCoords[ 0 ];
+        case 5:
+            return vV4cCoords[ 0 ];
+        default:
+            return vAxisCords[ 0 ];
+    }
+}
+
+const std::vector<AxisCoord>& PartialQuarry::pickYCoords(const size_t uiI)
+{
+    switch(uiI){
+        case 2:
+            return vV4cCoords[ 1 ];
+        case 4:
+            return vIceCoords[ 1 ];
+        case 5:
+            return vIceCoords[ 1 ];
+        default:
+            return vAxisCords[ 1 ];
+    }
+}
+
 bool PartialQuarry::setBinCoords( )
 {
     size_t uiManhattenDist = 1000 * getValue<size_t>( { "settings", "filters", "min_diag_dist", "val" } ) /
                              getValue<size_t>( { "dividend" } );
-    for( size_t uiI = 0; uiI < 3; uiI++ )
+    for( size_t uiI = 0; uiI < 5; uiI++ )
     {
-        const auto& rXCoords = uiI == 1 ? vV4cCoords[ 0 ] : vAxisCords[ 0 ];
-        const auto& rYCoords = uiI == 2 ? vV4cCoords[ 1 ] : vAxisCords[ 1 ];
-        const auto& rXRegions = uiI == 1 ? vV4cRegions[ 0 ] : vAxisRegions[ 0 ];
-        const auto& rYRegions = uiI == 2 ? vV4cRegions[ 1 ] : vAxisRegions[ 1 ];
+        const auto& rXCoords = pickXCoords(uiI);
+        const auto& rYCoords = pickYCoords(uiI);
         vBinCoords[ uiI ].clear( );
         vBinCoords[ uiI ].reserve( rXCoords.size( ) * rYCoords.size( ) );
         for( const AxisCoord& xX : rXCoords )
@@ -1096,15 +1101,6 @@ bool PartialQuarry::setBinCoords( )
                 else
                     vBinCoords[ uiI ].push_back( { BinCoord{ }, BinCoord{} } );
             }
-
-        vBinRegions[ uiI ].clear( );
-        vBinRegions[ uiI ].reserve( rXRegions.size( ) * rYRegions.size( ) );
-        for( const AxisRegion& xX : rXRegions )
-            for( const AxisRegion& xY : rYRegions )
-            {
-                CANCEL_RETURN;
-                vBinRegions[ uiI ].push_back( binRegionObjFromCoords( xX, xY ) );
-            }
     }
     END_RETURN;
 }
@@ -1116,7 +1112,7 @@ bool PartialQuarry::setDecayCoords( )
     if( getValue<bool>( { "settings", "normalization", "ddd" } ) ||
         getValue<bool>( { "settings", "normalization", "ddd_show" } ) )
     {
-        for( size_t uiY = 0; uiY < 3; uiY++ )
+        for( size_t uiY = 0; uiY < 5; uiY++ )
         {
             vDistDepDecCoords[ uiY ].reserve( vBinCoords[ uiY ].size( ) );
 
@@ -1157,6 +1153,57 @@ bool PartialQuarry::setDecayCoords( )
                 vCoords[ 0 ].uiDecayCoordIndex = vPtr[ vKey ];
                 vCoords[ 1 ].uiDecayCoordIndex = vCoords[ 0 ].uiDecayCoordIndex;
             }
+        }
+    }
+
+    END_RETURN;
+}
+
+bool PartialQuarry::setIceCoords( ) // @todo there is a proper getSamples function for this
+{
+    for( size_t uiI = 0; uiI < 2; uiI++ )
+        vIceCoords[ uiI ].clear( );
+    
+    if( getValue<std::string>( { "settings", "normalization", "normalize_by" } ) != "ice-local" )
+        END_RETURN;
+
+    size_t uiNumCoords = getValue<size_t>( { "settings", "normalization", "num_ice_bins", "val" } );
+
+    for( size_t uiI = 0; uiI < 2; uiI++ )
+    {
+        vIceCoords[ uiI ].reserve( uiNumCoords );
+
+        const size_t uiSize = uiI == 0 ? uiBinWidth.r() : uiBinHeight.r();
+        
+        size_t uiGenomeSize = 0;
+        for( size_t uiX = 0; uiX < this->vActiveChromosomes[ uiI ].size( ); uiX++ )
+            uiGenomeSize += this->vActiveChromosomes[ uiI ][ uiX ].uiLength;
+
+        size_t uiNextPos = 0;
+        size_t uiGenomeStart = 0;
+        for( size_t uiX = 0; uiX < this->vActiveChromosomes[ uiI ].size( ); uiX++ )
+        {
+            const size_t uiGenomeLength = this->vActiveChromosomes[ uiI ][ uiX ].uiLength;
+            while(uiNextPos + uiSize <= uiGenomeStart + uiGenomeLength && uiNextPos >= uiGenomeStart)
+            {
+                vIceCoords[ uiI ].push_back( AxisCoord{
+                    //{
+                    /* .uiChromosome =*/uiX, //
+                    /* .uiIndexPos =*/uiNextPos - uiGenomeStart, //
+                    /* .uiIndexSize =*/uiSize, //
+                    //},
+                    /*.uiScreenPos =*/uiNextPos, //
+                    /*.uiScreenSize =*/uiSize, //
+                    /*.uiRegionIdx =*/0, //
+                    /*.uiIdx =*/vIceCoords[ uiI ].size( ) //
+                } );
+                uiNextPos += std::max(uiSize, uiGenomeSize / uiNumCoords);
+            }
+
+            if(uiNextPos < uiGenomeStart + uiGenomeLength)
+                uiNextPos = uiGenomeStart + uiGenomeLength;
+
+            uiGenomeStart += uiGenomeLength;
         }
     }
 
@@ -1322,12 +1369,22 @@ void PartialQuarry::regCoords( )
                                /*.vSessionsIncomingInPrevious =*/{ },
                                /*bHidden =*/true } );
 
+    registerNode( NodeNames::IceCoords,
+                  ComputeNode{ /*.sNodeName =*/"ice_coords",
+                               /*.fFunc =*/&PartialQuarry::setIceCoords,
+                               /*.vIncomingFunctions =*/
+                               { NodeNames::CanvasSize, NodeNames::AxisCoords },
+                               /*.vIncomingSession =*/{ { "settings", "normalization", "normalize_by" },
+                                                        { "settings", "normalization", "num_ice_bins", "val" } },
+                               /*.vSessionsIncomingInPrevious =*/{ },
+                               /*bHidden =*/false } );
+
     registerNode( NodeNames::BinCoords,
                   ComputeNode{ /*.sNodeName =*/"bin_coords",
                                /*.fFunc =*/&PartialQuarry::setBinCoords,
                                /*.vIncomingFunctions =*/
                                { NodeNames::AxisCoords, NodeNames::AnnoFilters, NodeNames::IntersectionType,
-                                 NodeNames::Symmetry, NodeNames::V4cCoords },
+                                 NodeNames::Symmetry, NodeNames::V4cCoords, NodeNames::IceCoords },
                                /*.vIncomingSession =*/{ { "settings", "filters", "min_diag_dist", "val" } },
                                /*.vSessionsIncomingInPrevious =*/{ { "dividend" } },
                                /*bHidden =*/false } );

@@ -227,7 +227,7 @@ class PartialQuarry : public HasSession
         Flat4C,
         QueriedBiases,
         FlatBias,
-        // ICESamples,
+        IceCoords,
         SIZE
     };
     struct ComputeNode
@@ -718,11 +718,10 @@ class PartialQuarry : public HasSession
     std::array<std::vector<ChromDesc>, 2> vActiveChromosomes;
     std::array<std::vector<AxisCoord>, 2> vAxisCords;
     std::array<std::vector<AxisCoord>, 2> vV4cCoords;
-    std::array<std::vector<AxisRegion>, 2> vV4cRegions;
-    std::array<std::vector<std::array<DecayCoord, 2>>, 3> vDistDepDecCoords;
+    std::array<std::vector<AxisCoord>, 2> vIceCoords;
+    std::array<std::vector<std::array<DecayCoord, 2>>, 5> vDistDepDecCoords;
     std::array<std::vector<AxisRegion>, 2> vAxisRegions;
     std::vector<AxisCoord> vGridSeqCoords;
-    std::vector<AxisRegion> vGridSeqRegions;
     std::array<std::vector<std::vector<size_t>>, 2> vvGridSeqCoverageValues;
 
     std::vector<std::string> vActiveReplicates;
@@ -731,19 +730,18 @@ class PartialQuarry : public HasSession
 
     sps::IntersectionType xIntersect;
 
-    std::array<std::vector<std::array<BinCoord, 2>>, 3> vBinCoords;
-    std::array<std::vector<std::array<BinCoordRegion, 2>>, 3> vBinRegions;
+    std::array<std::vector<std::array<BinCoord, 2>>, 5> vBinCoords;
 
     std::array<std::vector<std::string>, 2> vActiveCoverage;
 
     size_t uiSymmetry;
     size_t iInGroupSetting, iBetweenGroupSetting;
 
-    std::array<std::vector<std::vector<size_t>>, 3> vvBinValues;
-    std::array<std::vector<std::vector<double>>, 3> vvDecayValues;
-    std::array<std::vector<std::array<size_t, 2>>, 3> vvFlatValues;
-    std::array<std::vector<std::array<double, 2>>, 3> vvFlatDecay;
-    std::array<std::array<size_t, 2>, 3> vvFlatTotal;
+    std::array<std::vector<std::vector<size_t>>, 5> vvBinValues;
+    std::array<std::vector<std::vector<double>>, 5> vvDecayValues;
+    std::array<std::vector<std::array<size_t, 2>>, 5> vvFlatValues;
+    std::array<std::vector<std::array<double, 2>>, 5> vvFlatDecay;
+    std::array<std::array<size_t, 2>, 5> vvFlatTotal;
     std::array<std::vector<std::array<double, 2>>, 3> vvNormalized;
     std::array<std::vector<double>, 3> vCombined;
     std::array<std::vector<double>, 2> vFlat4C;
@@ -876,9 +874,15 @@ class PartialQuarry : public HasSession
     // coords.h
     bool setDirectionality( );
     // coords.h
+    const std::vector<AxisCoord>& pickXCoords(const size_t);
+    // coords.h
+    const std::vector<AxisCoord>& pickYCoords(const size_t);
+    // coords.h
     bool setBinCoords( );
     // coords.h
     bool setDecayCoords( );
+    // coords.h
+    bool setIceCoords( );
     // coords.h
     bool setLCS( );
     // coords.h

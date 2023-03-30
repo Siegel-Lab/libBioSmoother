@@ -128,7 +128,7 @@ template <typename v_t> v_t PartialQuarry::symmetry( v_t uiA, v_t uiB )
 
 bool PartialQuarry::setBinValues( )
 {
-    for( size_t uiY = 0; uiY < 3; uiY++ )
+    for( size_t uiY = 0; uiY < 5; uiY++ )
     {
         vvBinValues[ uiY ].clear( );
         vvBinValues[ uiY ].reserve( vActiveReplicates.size( ) );
@@ -142,74 +142,6 @@ bool PartialQuarry::setBinValues( )
             vvBinValues[ uiY ].emplace_back( );
             vvBinValues[ uiY ].back( ).reserve( vBinCoords[ uiY ].size( ) );
 
-
-#if USE_GRID_QUERIES
-            vvBinValues[ uiY ].back( ).resize( vBinCoords[ uiY ].size( ) );
-            std::array<std::vector<uint64_t>, 6> vGridQuery{
-                std::vector<uint64_t>{ },
-                std::vector<uint64_t>{ },
-                std::vector<uint64_t>{ uiMapQMin, uiMapQMax },
-                std::vector<uint64_t>{ uiFromAnnoFilter, uiToAnnoFilter },
-                std::vector<uint64_t>{ uiFromSameStrandFilter, uiToSameStrandFilter },
-                std::vector<uint64_t>{ uiFromYStrandFilter, uiToYStrandFilter } };
-            vGridQuery[ 0 ].reserve( vAxisCords[ 0 ].size( ) );
-            vGridQuery[ 1 ].reserve( vAxisCords[ 1 ].size( ) );
-            for( const std::array<BinCoordRegion, 2>& vCoords : vBinRegions[ 0 ] )
-            {
-                std::array<std::vector<uint32_t>, 2> vRet;
-                for( size_t uiI = 0; uiI < 2; uiI++ )
-                {
-                    if( vCoords[ uiI ].uiChromosomeX != std::numeric_limits<size_t>::max( ) )
-                    {
-                        vGridQuery[ 0 ].clear( );
-                        vGridQuery[ 1 ].clear( );
-                        vGridQuery[ 0 ].push_back( vAxisCords[ 0 ][ vCoords[ uiI ].uiCoordStartIdxX ].uiIndexPos );
-                        for( size_t uiX = vCoords[ uiI ].uiCoordStartIdxX;
-                             uiX < vCoords[ uiI ].uiNumCoordsX + vCoords[ uiI ].uiCoordStartIdxX;
-                             uiX++ )
-                        {
-                            assert( vAxisCords[ 0 ][ uiX ].uiIndexPos == vGridQuery[ 0 ].back( ) );
-                            vGridQuery[ 0 ].push_back( vAxisCords[ 0 ][ uiX ].uiIndexPos +
-                                                       vAxisCords[ 0 ][ uiX ].uiIndexSize );
-                        }
-                        vGridQuery[ 1 ].push_back( vAxisCords[ 1 ][ vCoords[ uiI ].uiCoordStartIdxY ].uiIndexPos );
-                        for( size_t uiX = vCoords[ uiI ].uiCoordStartIdxY;
-                             uiX < vCoords[ uiI ].uiNumCoordsY + vCoords[ uiI ].uiCoordStartIdxY;
-                             uiX++ )
-                        {
-                            assert( vAxisCords[ 1 ][ uiX ].uiIndexPos == vGridQuery[ 1 ].back( ) );
-                            vGridQuery[ 1 ].push_back( vAxisCords[ 1 ][ uiX ].uiIndexPos +
-                                                       vAxisCords[ 1 ][ uiX ].uiIndexSize );
-                        }
-
-                        size_t iDataSetId = getDatasetIdfromReplAndChr( uiRepl, vCoords[ uiI ].uiChromosomeX,
-                                                                        vCoords[ uiI ].uiChromosomeY );
-                        if( iDataSetId != std::numeric_limits<size_t>::max( ) )
-                        {
-                            vRet[ uiI ] = pIndices->gridCount( iDataSetId, vGridQuery, xIntersect, 0 );
-
-                            for( uint32_t& uiVal : vRet[ uiI ] )
-                                // @todo-low-prio this is an expensive if instruction
-                                uiVal = uiVal > uiMinuend ? uiVal - uiMinuend : 0;
-                        }
-                        else
-                            vRet[ uiI ].resize( vCoords[ 0 ].uiNumCoordsX * vCoords[ 0 ].uiNumCoordsY, 0 );
-                    }
-                    else
-                        vRet[ uiI ].resize( vCoords[ 0 ].uiNumCoordsX * vCoords[ 0 ].uiNumCoordsY, 0 );
-
-                    assert( vRet[ uiI ].size( ) == vCoords[ 0 ].uiNumCoordsX * vCoords[ 0 ].uiNumCoordsY );
-                }
-                for( size_t uiI = 0; uiI < vCoords[ 0 ].uiNumCoordsX * vCoords[ 0 ].uiNumCoordsY; uiI++ )
-                {
-                    const size_t uiRegionX = uiI % vCoords[ 0 ].uiNumCoordsX;
-                    const size_t uiRegionY = uiI / vCoords[ 0 ].uiNumCoordsX;
-                    const size_t uiBinPos = ( uiRegionX + vCoords[ 0 ].uiCoordStartIdxX ) * vAxisCords[ 1 ].size( ) +
-                                            ( uiRegionY + vCoords[ 0 ].uiCoordStartIdxY );
-                    vvBinValues[ uiY ].back( )[ uiBinPos ] = symmetry( vRet[ 0 ][ uiI ], vRet[ 1 ][ uiI ] );
-                }
-            }
-#else
             for( const std::array<BinCoord, 2>& vCoords : vBinCoords[ uiY ] )
             {
                 std::array<size_t, 2> vVals;
@@ -242,7 +174,6 @@ bool PartialQuarry::setBinValues( )
                 }
                 vvBinValues[ uiY ].back( ).push_back( symmetry( vVals[ 0 ], vVals[ 1 ] ) );
             }
-#endif
 
             const size_t uiTot =
                 getValue<size_t>( { "replicates", "by_name", vActiveReplicates[ uiRepl ], "total_reads" } );
@@ -295,7 +226,7 @@ bool PartialQuarry::setQueriedBiases( )
 
 bool PartialQuarry::setDecayValues( )
 {
-    for( size_t uiY = 0; uiY < 3; uiY++ )
+    for( size_t uiY = 0; uiY < 5; uiY++ )
     {
         vvDecayValues[ uiY ].clear( );
         vvDecayValues[ uiY ].reserve( vActiveReplicates.size( ) );
@@ -514,7 +445,7 @@ double PartialQuarry::getMixedValue( double uiA, double uiB )
 
 bool PartialQuarry::setFlatValues( )
 {
-    for( size_t uiY = 0; uiY < 3; uiY++ )
+    for( size_t uiY = 0; uiY < 5; uiY++ )
     {
         vvFlatValues[ uiY ].clear( );
 
@@ -596,7 +527,7 @@ bool PartialQuarry::setFlatBias( )
 
 bool PartialQuarry::setFlatDecay( )
 {
-    for( size_t uiY = 0; uiY < 3; uiY++ )
+    for( size_t uiY = 0; uiY < 5; uiY++ )
     {
         vvFlatDecay[ uiY ].clear( );
 
