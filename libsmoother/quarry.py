@@ -38,8 +38,10 @@ except ImportError:
     import importlib_resources as pkg_resources
 import json
 
+
 def open_default_json():
     return (pkg_resources.files("libsmoother") / "default.json").open("r")
+
 
 class Quarry(PartialQuarry):
     def __init__(self, *args):
@@ -173,7 +175,9 @@ class Quarry(PartialQuarry):
                     for x in range(256)
                 ]
 
-    def compute_biases(self, dataset_name, default_session, progress_print):
+    def compute_biases(
+        self, dataset_name, default_session, progress_print, ice_resolution=50000
+    ):
         # set session as needed
         ## reset to default session
         self.set_session(default_session)
@@ -197,9 +201,13 @@ class Quarry(PartialQuarry):
 
         # fix the bin size
         self.set_value(["settings", "interface", "fixed_bin_size"], True)
-        ice_resolution = max(1, 50000 // self.get_value(["dividend"]))
-        self.set_value(["settings", "interface", "fixed_bin_size_x", "val"], ice_resolution)
-        self.set_value(["settings", "interface", "fixed_bin_size_y", "val"], ice_resolution)
+        div_resolution = max(1, ice_resolution // self.get_value(["dividend"]))
+        self.set_value(
+            ["settings", "interface", "fixed_bin_size_x", "val"], div_resolution
+        )
+        self.set_value(
+            ["settings", "interface", "fixed_bin_size_y", "val"], div_resolution
+        )
 
         biases_x = self.get_slice_bias(0, 0, 0, progress_print)
         biases_y = self.get_slice_bias(0, 0, 1, progress_print)

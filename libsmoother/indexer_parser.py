@@ -35,6 +35,7 @@ def repl(args):
         args.no_strand,
         args.shekelyan,
         args.force_upper_triangle,
+        args.ice_resolution,
     )
 
 
@@ -79,6 +80,44 @@ def export_smoother(args):
             export_png(session)
 
 
+def set_smoother(args):
+    for possible in [args.index_prefix, args.index_prefix + ".smoother_index"]:
+        if os.path.exists(possible) and os.path.isdir(possible):
+            with open(possible + "/session.json", "r") as in_file:
+                json_file = json.load(in_file)
+                tmp = json_file
+                keys = args.name.split(".")
+                for key in keys[:-1]:
+                    tmp = tmp[key]
+                if isinstance(tmp[keys[-1]], bool):
+                    tmp[keys[-1]] = bool(args.val)
+                elif isinstance(tmp[keys[-1]], float):
+                    tmp[keys[-1]] = float(args.val)
+                elif isinstance(tmp[keys[-1]], int):
+                    tmp[keys[-1]] = int(args.val)
+                elif isinstance(tmp[keys[-1]], str):
+                    tmp[keys[-1]] = str(args.val)
+                else:
+                    print("Error: can only set string, int, bool and float values.")
+            with open(possible + "/session.json", "w") as out_file:
+                json.dump(json_file, out_file)
+                return
+    raise RuntimeError("the given index", args.index_prefix, "does not exist.")
+
+
+def get_smoother(args):
+    for possible in [args.index_prefix, args.index_prefix + ".smoother_index"]:
+        if os.path.exists(possible) and os.path.isdir(possible):
+            with open(possible + "/session.json", "r") as in_file:
+                json_file = json.load(in_file)
+                tmp = json_file
+                for key in args.name.split("."):
+                    tmp = tmp[key]
+                print(tmp)
+                return
+    raise RuntimeError("the given index", args.index_prefix, "does not exist.")
+
+
 def add_parsers(main_parser):
     init_parser = main_parser.add_parser("init", help="Create a new index.")
     init_parser.add_argument(
@@ -90,7 +129,10 @@ def add_parsers(main_parser):
         help="Path to a file that contains the length (in nucleotides) of all chromosomes. The file shall contain 2 tab seperated columns columns: The chromosome names and their size in nucleotides. The order of chromosomes in this files will be used as the display order in the viewer.",
     )
     init_parser.add_argument(
-        "anno_path", help="Path to a file that contains the annotations.", default=None
+        "anno_path",
+        help="Path to a file that contains the annotations",
+        nargs="?",
+        default="",
     )
     init_parser.add_argument(
         "--order_path",
@@ -101,7 +143,7 @@ def add_parsers(main_parser):
         "--dividend",
         type=int,
         default=10000,
-        help="Divide all coordinates by this number. Larger numbers will reduce the index size and preprocessing time. However, bins with a size below this given number cannot be displayed.",
+        help="Divide all coordinates by this number. Larger numbers will reduce the index size and preprocessing time. However, bins with a size below this given number cannot be displayed. (default: %(default)s)",
     )
     init_parser.set_defaults(func=init)
     init_parser.add_argument("--test", help=argparse.SUPPRESS, action="store_true")
@@ -159,6 +201,13 @@ def add_parsers(main_parser):
         "-u",
         "--force_upper_triangle",
         action="store_true",
+        help="Mirror all interactions to the upper triangle. (default: off)",
+    )
+    repl_parser.add_argument(
+        "-r",
+        "--ice_resolution",
+        type=int,
+        default=50000,
         help="Mirror all interactions to the upper triangle. (default: off)",
     )
     repl_parser.set_defaults(func=repl)
@@ -256,6 +305,32 @@ def add_parsers(main_parser):
         help="The size of the heatmap to be exported",
     )
     export_parser.set_defaults(func=export_smoother)
+
+    set_parser = main_parser.add_parser("set", help="Set a parameter to a value.")
+    set_parser.add_argument(
+        "index_prefix",
+        help="Prefix that was used to create the index (see the init subcommand).",
+    )
+    set_parser.add_argument(
+        "name",
+        help="The name of the parameter to set.",
+    )
+    set_parser.add_argument(
+        "val",
+        help="The value to set.",
+    )
+    set_parser.set_defaults(func=set_smoother)
+
+    get_parser = main_parser.add_parser("get", help="Get the value of a parameter.")
+    get_parser.add_argument(
+        "index_prefix",
+        help="Prefix that was used to create the index (see the init subcommand).",
+    )
+    get_parser.add_argument(
+        "name",
+        help="The name of the parameter to get.",
+    )
+    get_parser.set_defaults(func=get_smoother)
 
 
 def make_main_parser():

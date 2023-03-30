@@ -790,8 +790,17 @@ bool PartialQuarry::setTrackExport( )
         vTrackExportNames[ uiI ].clear( );
         vTrackExportNames[ uiI ].reserve( vvCoverageValues[ uiI ].size( ) );
 
+        const bool bICEBias =
+            getValue<bool>( { "settings", "normalization", "ice_show_bias" } ) && vFlatBiases[ 0 ][ uiI ].size( ) > 0;
+        const bool bLocalICEBias = getValue<bool>( { "settings", "normalization", "ice_show_local_bias" } ) &&
+                                   vIceSliceBias[ 0 ][ 0 ][ uiI ].size( ) > 0;
+
         for( size_t uiId = 0; uiId < vvCoverageValues[ uiI ].size( ); uiI++ )
             vTrackExportNames[ uiI ].push_back( vActiveCoverage[ uiI ][ uiId ] );
+        if( bICEBias )
+            vTrackExportNames[ uiI ].push_back( "ICE Bias" );
+        if( bLocalICEBias )
+            vTrackExportNames[ uiI ].push_back( "Local ICE Bias" );
 
         for( size_t uiX = 0; uiX < vAxisCords[ uiI ].size( ); uiX++ )
         {
@@ -799,6 +808,12 @@ bool PartialQuarry::setTrackExport( )
             std::vector<double> vValues;
             for( size_t uiId = 0; uiId < vvCoverageValues[ uiI ].size( ); uiI++ )
                 vValues.push_back( vvCoverageValues[ uiI ][ uiId ][ uiX ] );
+            if( bICEBias )
+                vValues.push_back(
+                    getMixedValue( vFlatBiases[ 0 ][ uiI ][ uiX ][ 0 ], vFlatBiases[ 0 ][ uiI ][ uiX ][ 1 ] ) );
+            if( bLocalICEBias )
+                vValues.push_back(
+                    getMixedValue( vIceSliceBias[ 0 ][ 0 ][ uiI ][ uiX ], vIceSliceBias[ 0 ][ 1 ][ uiI ][ uiX ] ) );
 
             auto& xCoord = vAxisCords[ uiI ][ uiX ];
             std::string sChromName = vActiveChromosomes[ uiI ][ xCoord.uiChromosome ].sName;

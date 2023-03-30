@@ -101,7 +101,7 @@ std::pair<std::vector<AxisCoord>, std::vector<AxisRegion>> axisCoordsHelper( siz
                     /*.uiScreenPos =*/uiCurrScreenPos, //
                     /*.uiScreenSize =*/uiCurrBinSize, //
                     /*.uiRegionIdx =*/uiChr, //
-                    /*.uiIdx =*/vRet.size( ) //
+                    /*.uiIdx =*/vRet.size( )
                 } );
             bool bIncScreenPos;
             switch( iSmallerBins )
@@ -344,7 +344,7 @@ annoCoordsHelper( size_t uiBinSize, size_t uiScreenStartPos, size_t uiScreenEndP
                         /*.uiScreenPos =*/uiCurrScreenPos, //
                         /*.uiScreenSize =*/uiCurrScreenSize, //
                         /*.uiRegionIdx =*/uiChr, //
-                        /*.uiIdx =*/vRet.size( ) //
+                        /*.uiIdx =*/vRet.size( ), //
                     } );
                     if( iAnnoInMultipleBins != 2 && vRet2.size( ) > 0 && vRet2.back( ).uiChromosome == uiI &&
                         vRet2.back( ).uiIndexPos + vRet2.back( ).uiIndexSize == uiIndexPos )

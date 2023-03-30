@@ -234,6 +234,7 @@
             "spinner_max_restricted": false
         },
         "snap_bin_size": false,
+        "do_redraw": true,
         "max_detailed_anno_display": 1000,
         "min_anno_dist": 0.05,
         "snap_factors": [
