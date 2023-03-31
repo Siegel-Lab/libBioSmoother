@@ -272,7 +272,7 @@
         ],
         "color_low": "#000000",
         "color_high": "#ffffff",
-        "axis_lables": "RNA_DNA",
+        "axis_lables": "DNA_RNA",
         "v4c": {
             "do_col": false,
             "col_from": 0,
@@ -306,7 +306,8 @@
         "multiple_annos_in_bin": "combine",
         "anno_in_multiple_bins": "stretch",
         "ambiguous_mapping": "enclosed",
-        "cut_off_bin": "smaller_if_fullsized_exists",
+        "cut_off_bin": "larger",
+        "show_contig_smaller_than_bin": false,
         "anno_coords_col": false,
         "anno_coords_row": false,
         "anno_filter_row": false,
@@ -314,14 +315,6 @@
     },
     "export": {
         "prefix": "export",
-        "selection": [
-            "Heatmap"
-        ],
-        "list": [
-            "Heatmap",
-            "Column Coverage",
-            "Row Coverage"
-        ],
         "do_export_full": false,
         "size": {
             "max": 5000,

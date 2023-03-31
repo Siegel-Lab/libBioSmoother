@@ -40,7 +40,7 @@ import json
 
 
 def open_default_json():
-    return (pkg_resources.files("libsmoother") / "default.json").open("r")
+    return (pkg_resources.files("libsmoother") / "conf" / "default.json").open("r")
 
 
 class Quarry(PartialQuarry):

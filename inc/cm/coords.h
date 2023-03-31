@@ -27,6 +27,7 @@ namespace cm
  */
 std::pair<std::vector<AxisCoord>, std::vector<AxisRegion>> axisCoordsHelper( size_t uiBinSize, size_t uiScreenStartPos,
                                                                              size_t uiScreenEndPos, size_t iSmallerBins,
+                                                                             bool bContigSmallerThanOneBin,
                                                                              std::vector<ChromDesc> vChromosomes,
                                                                              bool& bCancel )
 {
@@ -43,6 +44,7 @@ std::pair<std::vector<AxisCoord>, std::vector<AxisRegion>> axisCoordsHelper( siz
         size_t uiStartIdx = vRet.size( );
         size_t uiStartScreenPos = uiCurrScreenPos;
         size_t uiStartChromPos = uiCurrScreenPos >= uiChromosomeStartPos ? uiCurrScreenPos - uiChromosomeStartPos : 0;
+        bool bWasLargerStart = uiCurrScreenPos >= uiChromosomeStartPos; // @todo @continue_here
         while( uiCurrScreenPos >= uiChromosomeStartPos && uiCurrScreenPos < uiItrEndPos )
         {
             if( bCancel )
@@ -52,7 +54,7 @@ std::pair<std::vector<AxisCoord>, std::vector<AxisRegion>> axisCoordsHelper( siz
             switch( iSmallerBins )
             {
                 case 0:
-                case 1:
+                //case 1:
                     assert( vChromosomes[ uiI ].uiLength >= uiIndexPos );
                     uiCurrBinSize = std::min( uiBinSize, vChromosomes[ uiI ].uiLength - uiIndexPos );
                     break;
@@ -79,10 +81,7 @@ std::pair<std::vector<AxisCoord>, std::vector<AxisRegion>> axisCoordsHelper( siz
                 case 2:
                 case 5:
                 case 6:
-                    bAddBin = true;
-                    break;
-                case 1:
-                    bAddBin = uiCurrBinSize == uiBinSize || uiIndexPos > 0;
+                    bAddBin = uiIndexPos > 0 || bContigSmallerThanOneBin || uiCurrBinSize >= uiBinSize;
                     break;
                 case 3:
                 case 4:
@@ -107,7 +106,7 @@ std::pair<std::vector<AxisCoord>, std::vector<AxisRegion>> axisCoordsHelper( siz
             switch( iSmallerBins )
             {
                 case 0:
-                case 1:
+                //case 1:
                 case 2:
                 case 3:
                 case 5:
@@ -146,7 +145,7 @@ std::pair<std::vector<AxisCoord>, std::vector<AxisRegion>> axisCoordsHelper( siz
         }
 
         // when making contig ends larger don't skip the beginning of the next contig because of it
-        if( iSmallerBins == 5 && uiCurrScreenPos >= uiChromosomeStartPos && uiCurrScreenPos > uiChromosomeEndPos )
+        if( iSmallerBins != 6 && bWasLargerStart && uiCurrScreenPos > uiChromosomeEndPos )
             uiCurrScreenPos = uiChromosomeEndPos;
 
         uiChromosomeStartPos = uiChromosomeEndPos;
@@ -163,8 +162,6 @@ size_t smaller_bin_to_num( std::string sVal )
 {
     if( sVal == "smaller" )
         return 0;
-    if( sVal == "smaller_if_fullsized_exists" )
-        return 1;
     if( sVal == "larger" )
         return 2;
     if( sVal == "skip" )
@@ -655,6 +652,7 @@ bool PartialQuarry::setAxisCoords( )
                 bX ? std::max( (int64_t)0, this->iStartX ) : std::max( (int64_t)0, this->iStartY ),
                 bX ? std::max( (int64_t)0, this->iEndX ) : std::max( (int64_t)0, this->iEndY ),
                 smaller_bin_to_num( getValue<std::string>( { "settings", "filters", "cut_off_bin" } ) ),
+                getValue<bool>( { "settings", "filters", "show_contig_smaller_than_bin" } ),
                 this->vActiveChromosomes[ bX ? 0 : 1 ],
                 this->bCancel );
         else
@@ -1309,6 +1307,7 @@ void PartialQuarry::regCoords( )
                                /*.vIncomingSession =*/
                                { { "settings", "filters", "multiple_annos_in_bin" },
                                  { "settings", "filters", "anno_in_multiple_bins" },
+                                   { "settings", "filters", "show_contig_smaller_than_bin" },
 
                                  { "annotation", "by_name" } },
                                /*.vSessionsIncomingInPrevious =*/

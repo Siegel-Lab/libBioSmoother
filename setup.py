@@ -138,7 +138,7 @@ setup(
     long_description="",
     packages=["libsmoother"],
     ext_modules=[CMakeExtension("libsmoothercpp")],
-    data_files=[("libsmoother", ["libsmoother/default.json"])],
+    data_files=[("libsmoother", ["libsmoother/conf/default.json", "libsmoother/conf/valid.json"])],
     cmdclass={"build_ext": CMakeBuild},
     extras_require={"test": "pytest"},
     zip_safe=False,
