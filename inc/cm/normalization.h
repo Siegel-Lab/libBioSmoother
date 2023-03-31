@@ -32,25 +32,6 @@ bool PartialQuarry::doNotNormalize( )
     END_RETURN;
 }
 
-bool PartialQuarry::normalizeIceGlobal( )
-{
-    for( size_t uiJ = 0; uiJ < 3; uiJ++ )
-        for( size_t uiI = 0; uiI < vvFlatValues[ uiJ ].size( ); uiI++ )
-        {
-            CANCEL_RETURN;
-            const auto& rYCoords = uiJ == 2 ? vV4cCoords[ 1 ] : vAxisCords[ 1 ];
-            const size_t uiY = uiI % rYCoords.size( );
-            const size_t uiX = uiI / rYCoords.size( );
-
-            vvNormalized[ uiJ ].push_back( { 0.0, 0.0 } );
-            for( size_t uiK = 0; uiK < 2; uiK++ )
-                vvNormalized[ uiJ ].back( )[ uiK ] = (double)vvFlatValues[ uiJ ][ uiI ][ uiK ] *
-                                                     vFlatBiases[ uiJ ][ 0 ][ uiX ][ uiK ] *
-                                                     vFlatBiases[ uiJ ][ 1 ][ uiY ][ uiK ];
-        }
-    END_RETURN;
-}
-
 
 bool PartialQuarry::normalizeBinominalTest( )
 {
@@ -203,6 +184,7 @@ size_t PartialQuarry::getChromIdxForAnnoIdx( size_t uiAnnoIdx )
     return ( rIt - 1 )->second;
 }
 
+// @todo-low-prio ICe samples could also be computed using this...
 bool PartialQuarry::getSamples( const GetSamplesMode& rMode, const size_t uiNumSamples, const std::string& sAnno,
                                 const size_t uiBinSize, const bool bAxisIsCol, const bool bOnlyChromsOnBothAxes,
                                 std::vector<AnnoCoord>& rOut )
@@ -340,26 +322,6 @@ bool PartialQuarry::setRadiclSeqSamples( )
     // then this cancel_return is necessary to catch the cancelled getSamples
     CANCEL_RETURN;
 
-
-    END_RETURN;
-}
-
-bool PartialQuarry::setICESamples( ) // @todo
-{
-    const std::string sNorm = getValue<std::string>( { "settings", "normalization", "normalize_by" } );
-    if( sNorm != "hi-c" )
-        END_RETURN;
-
-
-    const size_t uiICESamples = getValue<size_t>( { "settings", "normalization", "hi_c_samples", "val" } );
-
-    for( size_t uiI = 0; uiI < 2; uiI++ )
-    {
-        getSamples( GetSamplesMode::Bins, uiICESamples, "", uiI == 0 ? uiBinHeight.r( ) : uiBinWidth.r( ), uiI == 0,
-                    false, vICESamples[ uiI ] );
-        // then this cancel_return is necessary to catch the cancelled getSamples
-        CANCEL_RETURN;
-    }
 
     END_RETURN;
 }
@@ -797,7 +759,6 @@ bool PartialQuarry::normalizeIC( )
 
     for( size_t uiY = 0; uiY < 3; uiY++ )
     {
-        const auto& rXCoords = pickXCoords(uiY);
         const auto& rYCoords = pickYCoords(uiY);
         size_t uiH = rYCoords.size( );
         vvNormalized[ uiY ].resize( vvFlatValues[ uiY ].size( ) );
@@ -816,9 +777,6 @@ bool PartialQuarry::setNormalized( )
     {
         vvNormalized[ uiY ].clear( );
         vvNormalized[ uiY ].reserve( vvFlatValues[ uiY ].size( ) );
-        for( size_t uiI = 0; uiI < 2; uiI++ )
-            for( size_t uiJ = 0; uiJ < 2; uiJ++ )
-                vIceSliceBias[ uiY ][ uiI ][ uiJ ].clear( );
     }
 
     const std::string sNorm = getValue<std::string>( { "settings", "normalization", "normalize_by" } );
@@ -831,10 +789,8 @@ bool PartialQuarry::setNormalized( )
         return normalizeSize( 1000000 );
     else if( sNorm == "rpk" )
         return normalizeSize( 1000 );
-    else if( sNorm == "ice-local" )
+    else if( sNorm == "ice" )
         return normalizeIC( );
-    else if( sNorm == "ice-precomp" )
-        return normalizeIceGlobal( );
     else if( sNorm == "cool-ice" )
         return normalizeCoolIC( );
     else if( sNorm == "grid-seq" )
@@ -869,13 +825,6 @@ PartialQuarry::getScaled( const std::function<void( const std::string& )>& fPyPr
     return vScaled;
 }
 
-const std::vector<double> PartialQuarry::getSliceBias( size_t uiY, size_t uiI, size_t uiX,
-                                                       const std::function<void( const std::string& )>& fPyPrint )
-{
-    update( NodeNames::Normalized, fPyPrint );
-    return vIceSliceBias[ uiY ][ uiI ][ uiX ];
-}
-
 void PartialQuarry::regNormalization( )
 {
     registerNode( NodeNames::Normalized,
@@ -883,7 +832,7 @@ void PartialQuarry::regNormalization( )
                                /*.fFunc =*/&PartialQuarry::setNormalized,
                                /*.vIncomingFunctions =*/
                                { NodeNames::FlatValues, NodeNames::RnaAssociatedBackground,
-                                 NodeNames::RadiclSeqCoverage, NodeNames::FlatBias },
+                                 NodeNames::RadiclSeqCoverage },
                                /*.vIncomingSession =*/
                                { { "settings", "normalization", "p_accept", "val" },
                                  { "settings", "normalization", "ice_sparse_slice_filter", "val" },

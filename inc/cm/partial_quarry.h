@@ -225,8 +225,6 @@ class PartialQuarry : public HasSession
         ActiveChromLength,
         V4cCoords,
         Flat4C,
-        QueriedBiases,
-        FlatBias,
         IceCoords,
         SIZE
     };
@@ -801,15 +799,11 @@ class PartialQuarry : public HasSession
 
     std::vector<AnnoCoord> vGridSeqSamples;
     std::vector<AnnoCoord> vRadiclSeqSamples;
-    std::array<std::vector<AnnoCoord>, 2> vICESamples;
     std::vector<std::array<size_t, 2>> vRadiclSeqCoverage;
     std::vector<std::array<size_t, 2>> vRadiclSeqNumNonEmptyBins;
 
     std::vector<std::vector<size_t>> vvDatasetIdsPerReplAndChr;
     std::array<std::vector<std::vector<size_t>>, 2> vBiasIdPerReplAndChr;
-    std::array<std::array<std::array<std::vector<double>, 2>, 2>, 3> vIceSliceBias;
-    std::array<std::array<std::vector<std::vector<double>>, 2>, 3> vQueriedBiases;
-    std::array<std::array<std::vector<std::array<double, 2>>, 2>, 3> vFlatBiases;
 
     size_t getDatasetIdfromReplAndChr( size_t uiRepl, size_t uiChrX, size_t uiChrY )
     {
@@ -943,8 +937,6 @@ class PartialQuarry : public HasSession
     // replicates.h
     bool setBinValues( );
     // replicates.h
-    bool setQueriedBiases( );
-    // replicates.h
     bool setDecayValues( );
 
     // replicates.h
@@ -954,8 +946,6 @@ class PartialQuarry : public HasSession
 
     // replicates.h
     bool setFlatValues( );
-    // replicates.h
-    bool setFlatBias( );
     // replicates.h
     bool setFlatDecay( );
     // replicates.h
@@ -992,8 +982,6 @@ class PartialQuarry : public HasSession
     bool setRnaAssociatedBackground( );
     // normalization.h
     bool doNotNormalize( );
-    // normalization.h
-    bool normalizeIceGlobal( );
     // normalization.h
     bool normalizeSize( size_t );
     // normalization.h
@@ -1202,9 +1190,6 @@ class PartialQuarry : public HasSession
 
     // normalization.h
     const decltype( vScaled ) getScaled( const std::function<void( const std::string& )>& );
-
-    // normalization.h
-    const std::vector<double> getSliceBias( size_t, size_t, size_t, const std::function<void( const std::string& )>& );
 
     // bin_size.h
     const std::array<int64_t, 4> getDrawingArea( const std::function<void( const std::string& )>& );

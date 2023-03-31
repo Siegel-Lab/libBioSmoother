@@ -1159,12 +1159,12 @@ bool PartialQuarry::setDecayCoords( )
     END_RETURN;
 }
 
-bool PartialQuarry::setIceCoords( ) // @todo there is a proper getSamples function for this
+bool PartialQuarry::setIceCoords( )
 {
     for( size_t uiI = 0; uiI < 2; uiI++ )
         vIceCoords[ uiI ].clear( );
     
-    if( getValue<std::string>( { "settings", "normalization", "normalize_by" } ) != "ice-local" )
+    if( getValue<std::string>( { "settings", "normalization", "normalize_by" } ) != "ice" )
         END_RETURN;
 
     size_t uiNumCoords = getValue<size_t>( { "settings", "normalization", "num_ice_bins", "val" } );
@@ -1179,20 +1179,20 @@ bool PartialQuarry::setIceCoords( ) // @todo there is a proper getSamples functi
         for( size_t uiX = 0; uiX < this->vActiveChromosomes[ uiI ].size( ); uiX++ )
             uiGenomeSize += this->vActiveChromosomes[ uiI ][ uiX ].uiLength;
 
-        size_t uiNextPos = 0;
         size_t uiGenomeStart = 0;
         for( size_t uiX = 0; uiX < this->vActiveChromosomes[ uiI ].size( ); uiX++ )
         {
             const size_t uiGenomeLength = this->vActiveChromosomes[ uiI ][ uiX ].uiLength;
-            while(uiNextPos + uiSize <= uiGenomeStart + uiGenomeLength && uiNextPos >= uiGenomeStart)
+            size_t uiNextPos = 0;
+            while(uiNextPos < uiGenomeLength)
             {
                 vIceCoords[ uiI ].push_back( AxisCoord{
                     //{
                     /* .uiChromosome =*/uiX, //
-                    /* .uiIndexPos =*/uiNextPos - uiGenomeStart, //
+                    /* .uiIndexPos =*/uiNextPos, //
                     /* .uiIndexSize =*/uiSize, //
                     //},
-                    /*.uiScreenPos =*/uiNextPos, //
+                    /*.uiScreenPos =*/uiNextPos + uiGenomeStart, //
                     /*.uiScreenSize =*/uiSize, //
                     /*.uiRegionIdx =*/0, //
                     /*.uiIdx =*/vIceCoords[ uiI ].size( ) //
@@ -1200,8 +1200,6 @@ bool PartialQuarry::setIceCoords( ) // @todo there is a proper getSamples functi
                 uiNextPos += std::max(uiSize, uiGenomeSize / uiNumCoords);
             }
 
-            if(uiNextPos < uiGenomeStart + uiGenomeLength)
-                uiNextPos = uiGenomeStart + uiGenomeLength;
 
             uiGenomeStart += uiGenomeLength;
         }
