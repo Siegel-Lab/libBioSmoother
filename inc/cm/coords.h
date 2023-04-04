@@ -44,7 +44,7 @@ std::pair<std::vector<AxisCoord>, std::vector<AxisRegion>> axisCoordsHelper( siz
         size_t uiStartIdx = vRet.size( );
         size_t uiStartScreenPos = uiCurrScreenPos;
         size_t uiStartChromPos = uiCurrScreenPos >= uiChromosomeStartPos ? uiCurrScreenPos - uiChromosomeStartPos : 0;
-        bool bWasLargerStart = uiCurrScreenPos >= uiChromosomeStartPos; // @todo @continue_here
+        bool bWasInsideOnStart = uiCurrScreenPos >= uiChromosomeStartPos && uiCurrScreenPos < uiChromosomeEndPos;
         while( uiCurrScreenPos >= uiChromosomeStartPos && uiCurrScreenPos < uiItrEndPos )
         {
             if( bCancel )
@@ -145,7 +145,7 @@ std::pair<std::vector<AxisCoord>, std::vector<AxisRegion>> axisCoordsHelper( siz
         }
 
         // when making contig ends larger don't skip the beginning of the next contig because of it
-        if( iSmallerBins != 6 && bWasLargerStart && uiCurrScreenPos > uiChromosomeEndPos )
+        if( iSmallerBins != 6 && bWasInsideOnStart && uiCurrScreenPos > uiChromosomeEndPos )
             uiCurrScreenPos = uiChromosomeEndPos;
 
         uiChromosomeStartPos = uiChromosomeEndPos;
