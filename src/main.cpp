@@ -261,6 +261,8 @@ PYBIND11_MODULE( libsmoothercpp, m )
         .def( "cancel", &cm::PartialQuarry::cancel ) //
         .def( "get_error", &cm::PartialQuarry::getError ) //
         .def( "update_cds", &cm::PartialQuarry::updateCDS ) //
+        .def( "clear_cache", &cm::PartialQuarry::clearCache ) //
+        .def( "update_all", &cm::PartialQuarry::updateAll ) //
         .def( "save_session", &cm::PartialQuarry::saveSession ) //
 
         .def( "normalizeBinominalTestTrampoline", &cm::ContectMappingPublicist::normalizeBinominalTestTrampoline ) //

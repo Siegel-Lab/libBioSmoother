@@ -506,6 +506,19 @@ class PartialQuarry : public HasSession
         } while( bContinue );
     }
 
+    void clearCache( )
+    {
+        ++uiCurrTime;
+        for(auto& rX : xSessionTime)
+            rX.second = uiCurrTime;
+    }
+
+    void updateAll( const std::function<void( const std::string& )>& fPyPrint )
+    {
+        for( size_t uiNodeName = 0; uiNodeName < NodeNames::SIZE; uiNodeName++ )
+            update_helper( (NodeNames)uiNodeName, fPyPrint );
+    }
+
     void setSession( const json& xSession )
     {
         ++uiCurrTime;

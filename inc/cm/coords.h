@@ -686,11 +686,11 @@ bool PartialQuarry::setGridSeqCoords( )
         }
 
         auto xRet = annoCoordsHelper<SpsInterface<false>::anno_t>(
-            uiGenomeSize / getValue<size_t>( { "settings", "normalization", "grid_seq_slice_samples" } ), 0,
+            uiGenomeSize / getValue<size_t>( { "settings", "normalization", "grid_seq_samples", "val" } ), 0,
             uiGenomeSize, 0 /*<- unused */, 1 /* use first annotation in bin */,
             1 /* stretch bin over entire annotation*/, this->vActiveChromosomes[ 0 ], this->bCancel,
             getValue<json>( { "annotation", "by_name",
-                              getValue<std::string>( { "settings", "normalization", "grid_seq_anno_type" } ) } ),
+                              getValue<std::string>( { "settings", "normalization", "grid_seq_annotation" } ) } ),
             pIndices->vAnno );
         vGridSeqCoords = xRet.first;
     }
@@ -1415,8 +1415,8 @@ void PartialQuarry::regCoords( )
                                /*.fFunc =*/&PartialQuarry::setGridSeqCoords,
                                /*.vIncomingFunctions =*/{ NodeNames::ActiveChromLength },
                                /*.vIncomingSession =*/
-                               { { "settings", "normalization", "grid_seq_slice_samples" },
-                                 { "settings", "normalization", "grid_seq_anno_type" },
+                               { { "settings", "normalization", "grid_seq_samples", "val" },
+                                 { "settings", "normalization", "grid_seq_annotation" },
                                  { "annotation", "by_name" },
                                  { "settings", "normalization", "normalize_by" } },
                                /*.vSessionsIncomingInPrevious =*/{ },

@@ -102,6 +102,8 @@ class Quarry(PartialQuarry):
 
         psx = bin_test(0)
         psy = bin_test(1)
+        if len(psx) == 0 or len(psy) == 0:
+            return []
         return [
             (1 if x < p_accept else 0, 1 if y < p_accept else 0)
             for x, y in zip(

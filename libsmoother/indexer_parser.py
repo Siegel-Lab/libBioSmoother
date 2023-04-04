@@ -4,7 +4,8 @@ from .export import export_tsv, export_png, export_svg
 import argparse
 import os
 import shutil
-
+from .parameters import list_parameters, values_for_parameter, open_valid_json
+from .test import test
 
 def init(args):
     Indexer(args.index_prefix, strict=True).create_session(
@@ -117,6 +118,20 @@ def get_smoother(args):
                 return
     raise RuntimeError("the given index", args.index_prefix, "does not exist.")
 
+def info_smoother(args):
+    with open_valid_json() as valid_file:
+        valid_json = json.load(valid_file)
+        for possible in [args.index_prefix, args.index_prefix + ".smoother_index"]:
+            if os.path.exists(possible) and os.path.isdir(possible):
+                with open(possible + "/session.json", "r") as in_file:
+                    json_file = json.load(in_file)
+                    for p in list_parameters(json_file, valid_json):
+                        print(".".join(p), values_for_parameter(p, json_file, valid_json), sep="\t")
+                    return
+    raise RuntimeError("the given index", args.index_prefix, "does not exist.")
+
+def test_smoother(args):
+    test(Quarry(args.index_prefix), args.seed, args.skip_first)
 
 def add_parsers(main_parser):
     init_parser = main_parser.add_parser("init", help="Create a new index.")
@@ -331,6 +346,39 @@ def add_parsers(main_parser):
         help="The name of the parameter to get.",
     )
     get_parser.set_defaults(func=get_smoother)
+
+    info_parser = main_parser.add_parser("par_info", help=argparse.SUPPRESS)
+    info_parser.add_argument(
+        "index_prefix",
+        help="Prefix that was used to create the index (see the init subcommand).",
+    )
+    info_parser.add_argument(
+        "-n",
+        "--name",
+        help="The name of the parameter to get.",
+    )
+    info_parser.set_defaults(func=info_smoother)
+
+    test_parser = main_parser.add_parser("test", help=argparse.SUPPRESS)
+    test_parser.add_argument(
+        "index_prefix",
+        help="Prefix that was used to create the index (see the init subcommand).",
+    )
+    test_parser.add_argument(
+        "-S",
+        "--seed",
+        help="Seed for random configurations.",
+        default=None,
+        type=int
+    )
+    test_parser.add_argument(
+        "-s",
+        "--skip_first",
+        help="Skip the first x many test",
+        default=0,
+        type=int
+    )
+    test_parser.set_defaults(func=test_smoother)
 
 
 def make_main_parser():
