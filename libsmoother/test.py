@@ -31,9 +31,13 @@ def __list_configurations():
         (default_json["display_name"], default_json), 
     ]
 
-def __vary_params_one_by_one(quarry, default_json, valid_json, idx, skip_first):
+def __vary_params_one_by_one(quarry, default_json, valid_json, idx, skip_first, some_random_ones=False):
     print("- Varied parameters -")
-    for p in list_parameters(default_json, valid_json):
+    param_list = list(list_parameters(default_json, valid_json))
+    if some_random_ones:
+        random.shuffle(param_list)
+        param_list = param_list[:5]
+    for p in param_list:
         default_val = quarry.get_value(p)
         for v in values_for_parameter(p, default_json, valid_json):
             if idx >= skip_first:
@@ -63,8 +67,20 @@ def __test_default_configs(quarry, default_json, valid_json, idx, skip_first):
 def __config_randomly(quarry, default_json, valid_json):
     __configure(quarry, default_json)
     for p in list_parameters(default_json, valid_json):
-        if p == ["interface", "max_num_bins"]: # this will slow down rendering unnecessarily
+        # these will slow down rendering unnecessarily
+        if p == ["interface", "max_num_bins"]: 
             continue
+        if p == ["interface", "fixed_bin_size"]:
+            continue
+        if p == ["interface", "fixed_number_of_bins"]:
+            continue
+        if p == ["normalization", "ddd_samples"]:
+            continue
+        if p == ["normalization", "grid_seq_samples"]:
+            continue
+        if p == ["normalization", "radicl_seq_samples"]:
+            continue
+
         d = json_get(p, default_json)
         if is_spinner(d):
             min_, max_ = json_get(p + ["min"], default_json), json_get(p + ["max"], default_json)
@@ -97,7 +113,7 @@ def __test_random_configs(quarry, default_json, valid_json, idx, skip_first, see
         print("- Random configuration", s ,"-")
         __config_randomly(quarry, default_json, valid_json)
         idx = __test_config(quarry, "Default run", idx, skip_first)
-        idx = __vary_params_one_by_one(quarry, default_json, valid_json, idx, skip_first)
+        idx = __vary_params_one_by_one(quarry, default_json, valid_json, idx, skip_first, some_random_ones=True)
     return idx
 
 
