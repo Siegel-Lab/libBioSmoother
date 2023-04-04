@@ -13,9 +13,6 @@ def __test_config(quarry, name, idx, skip_first):
             quarry.update_all(lambda s: None)
         except Exception:
             traceback.print_exc()
-    else:
-        pass
-        #print("[" + str(idx) + "]", name, "- skipped")
 
     return idx + 1
 
