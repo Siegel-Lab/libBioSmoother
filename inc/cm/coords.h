@@ -182,6 +182,7 @@ annoCoordsHelper( size_t uiBinSize, size_t uiScreenStartPos, size_t uiScreenEndP
                   size_t iMultipleAnnosInBin, size_t iAnnoInMultipleBins, std::vector<ChromDesc> vChromosomes,
                   bool& bCancel, const json rJson, anno_t& rAnno )
 {
+    uiBinSize = std::max((size_t)1, uiBinSize);
     std::vector<AxisCoord> vRet;
     std::vector<AxisRegion> vRet2;
     vRet.reserve( 2 * ( uiScreenEndPos - uiScreenStartPos ) / uiBinSize );
@@ -1380,7 +1381,7 @@ void PartialQuarry::regCoords( )
                   ComputeNode{ /*.sNodeName =*/"bin_coords",
                                /*.fFunc =*/&PartialQuarry::setBinCoords,
                                /*.vIncomingFunctions =*/
-                               { NodeNames::AxisCoords, NodeNames::AnnoFilters, NodeNames::IntersectionType,
+                               { NodeNames::AnnoFilters, NodeNames::IntersectionType,
                                  NodeNames::Symmetry, NodeNames::V4cCoords, NodeNames::IceCoords },
                                /*.vIncomingSession =*/{ { "settings", "filters", "min_diag_dist", "val" } },
                                /*.vSessionsIncomingInPrevious =*/{ { "dividend" } },

@@ -1135,11 +1135,17 @@ class PartialQuarry : public HasSession
         uiBinWidth.registerRead( NodeNames::ActiveChromLength );
         uiBinWidth.registerRead( NodeNames::RenderArea );
         uiBinWidth.registerRead( NodeNames::AxisCoords );
+        uiBinWidth.registerRead( NodeNames::IceCoords );
+        uiBinWidth.registerRead( NodeNames::RadiclSeqSamples );
+        uiBinWidth.registerRead( NodeNames::Normalized );
 
         uiBinHeight.registerWrite( NodeNames::BinSize );
         uiBinHeight.registerRead( NodeNames::ActiveChromLength );
         uiBinHeight.registerRead( NodeNames::RenderArea );
         uiBinHeight.registerRead( NodeNames::AxisCoords );
+        uiBinHeight.registerRead( NodeNames::IceCoords );
+        uiBinHeight.registerRead( NodeNames::RadiclSeqSamples );
+        uiBinHeight.registerRead( NodeNames::Normalized );
     }
 
     PartialQuarry( ) : PartialQuarry( std::shared_ptr<interface_t>{ } )

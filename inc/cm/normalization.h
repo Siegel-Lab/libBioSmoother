@@ -835,10 +835,9 @@ void PartialQuarry::regNormalization( )
                                  NodeNames::RadiclSeqCoverage },
                                /*.vIncomingSession =*/
                                { { "settings", "normalization", "p_accept", "val" },
-                                 { "settings", "normalization", "ice_sparse_slice_filter", "val" },
-                                 { "contigs", "genome_size" } },
+                                 { "settings", "normalization", "ice_sparse_slice_filter", "val" } },
                                /*.vSessionsIncomingInPrevious =*/
-                               { { "settings", "normalization", "normalize_by" },
+                               { { "contigs", "genome_size" }, { "settings", "normalization", "normalize_by" },
                                  { "settings", "normalization", "grid_seq_axis_is_column" },
                                  { "settings", "normalization", "radicl_seq_samples", "val" },
                                  { "settings", "normalization", "radicl_seq_axis_is_column" } },

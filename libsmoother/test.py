@@ -14,7 +14,8 @@ def __test_config(quarry, name, idx, skip_first):
         except Exception:
             traceback.print_exc()
     else:
-        print("[" + str(idx) + "]", name, "- skipped")
+        pass
+        #print("[" + str(idx) + "]", name, "- skipped")
 
     return idx + 1
 
@@ -35,17 +36,20 @@ def __vary_params_one_by_one(quarry, default_json, valid_json, idx, skip_first):
     for p in list_parameters(default_json, valid_json):
         default_val = quarry.get_value(p)
         for v in values_for_parameter(p, default_json, valid_json):
-            if v == default_val:
-                continue
-            if is_spinner(json_get(p, default_json)):
-                quarry.set_value(["settings"] + p + ["val"], v)
-            elif is_range_spinner(json_get(p, default_json)):
-                quarry.set_value(["settings"] + p + ["val_min"], v[0])
-                quarry.set_value(["settings"] + p + ["val_max"], v[1])
-            else:
-                quarry.set_value(["settings"] + p, v)
+            if idx >= skip_first:
+                if v == default_val:
+                    continue
+                if is_spinner(json_get(p, default_json)):
+                    quarry.set_value(["settings"] + p + ["val"], v)
+                elif is_range_spinner(json_get(p, default_json)):
+                    quarry.set_value(["settings"] + p + ["val_min"], v[0])
+                    quarry.set_value(["settings"] + p + ["val_max"], v[1])
+                else:
+                    quarry.set_value(["settings"] + p, v)
             idx = __test_config(quarry, " ".join(["set", ".".join(p), "to", str(v)]), idx, skip_first)
-        quarry.set_value(p, default_val)
+        if idx >= skip_first:
+            quarry.set_value(p, default_val)
+    return idx
 
 def __test_default_configs(quarry, default_json, valid_json, idx, skip_first):
     for name, conf in __list_configurations():
@@ -59,6 +63,8 @@ def __test_default_configs(quarry, default_json, valid_json, idx, skip_first):
 def __config_randomly(quarry, default_json, valid_json):
     __configure(quarry, default_json)
     for p in list_parameters(default_json, valid_json):
+        if p == ["interface", "max_num_bins"]: # this will slow down rendering unnecessarily
+            continue
         d = json_get(p, default_json)
         if is_spinner(d):
             min_, max_ = json_get(p + ["min"], default_json), json_get(p + ["max"], default_json)
@@ -83,14 +89,14 @@ def __config_randomly(quarry, default_json, valid_json):
 def __test_random_configs(quarry, default_json, valid_json, idx, skip_first, seed=None):
     if seed is None:
         seed = random.randrange(sys.maxsize)
+    print("-- Random configurations --")
     print("Seed set to: ", seed)
-    conf_seeds = [random.seed(seed) for _ in range(5)]
+    random.seed(seed)
 
-    for s in conf_seeds:
-        random.seed(s)
-        print("-- Random configuration --")
-        __config_randomly(quarry)
-        idx = __test_config(quarry, idx, skip_first)
+    for s in range(5):
+        print("- Random configuration", s ,"-")
+        __config_randomly(quarry, default_json, valid_json)
+        idx = __test_config(quarry, "Default run", idx, skip_first)
         idx = __vary_params_one_by_one(quarry, default_json, valid_json, idx, skip_first)
     return idx
 
@@ -104,6 +110,6 @@ def test(quarry, seed, skip_first):
     idx = 0
 
     idx = __test_default_configs(quarry, default_json, valid_json, idx, skip_first)
-    idx = __test_random_configs(quarry, default_json, valid_json, seed, idx, skip_first)
+    idx = __test_random_configs(quarry, default_json, valid_json, idx, skip_first, seed)
 
     print("Done.")

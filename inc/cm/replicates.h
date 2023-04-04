@@ -620,7 +620,7 @@ void PartialQuarry::regReplicates( )
     registerNode( NodeNames::FlatDecay,
                   ComputeNode{ /*.sNodeName =*/"flat_decay",
                                /*.fFunc=*/&PartialQuarry::setFlatDecay,
-                               /*.vIncomingFunctions =*/{ NodeNames::DecayValues },
+                               /*.vIncomingFunctions =*/{ NodeNames::DecayValues, NodeNames::InGroup },
                                /*.vIncomingSession =*/{ },
                                /*.vSessionsIncomingInPrevious =*/{ },
                                /*bHidden =*/false } );

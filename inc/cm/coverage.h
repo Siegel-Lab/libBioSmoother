@@ -793,8 +793,8 @@ void PartialQuarry::regCoverage( )
                   ComputeNode{ /*.sNodeName =*/"coverage_tracks",
                                /*.fFunc =*/&PartialQuarry::setTracks,
                                /*.vIncomingFunctions =*/
-                               { NodeNames::LCS, NodeNames::AnnotationColors, NodeNames::RnaAssociatedBackground,
-                                 NodeNames::RadiclSeqCoverage, NodeNames::CoverageValues, NodeNames::Flat4C },
+                               { NodeNames::LCS, NodeNames::AnnotationColors, NodeNames::CoverageValues, 
+                                 NodeNames::Flat4C },
                                /*.vIncomingSession =*/
                                { { "settings", "normalization", "display_ice_remainder" },
                                  { "settings", "normalization", "grid_seq_display_background" },

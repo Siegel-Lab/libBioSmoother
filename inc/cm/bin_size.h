@@ -196,6 +196,7 @@ void PartialQuarry::regBinSize( )
                                    { "settings", "export", "do_export_full" },
                                    { "settings", "contigs", "genome_size" },
                                    { "settings", "interface", "add_draw_area", "val" },
+                                   {"contigs", "genome_size"},
                                },
                                /*.vSessionsIncomingInPrevious =*/{ { "area" } },
                                /*bHidden =*/true } );
