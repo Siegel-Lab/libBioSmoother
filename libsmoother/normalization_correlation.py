@@ -4,6 +4,7 @@ import json
 import math
 import sys
 
+
 def get_correlation(a, b):
     da = {x[:-1]: x[-1] for x in a}
     c = []
@@ -16,6 +17,7 @@ def get_correlation(a, b):
                 c.append(v)
                 d.append(da[k])
     return pearsonr(c, d).statistic
+
 
 # @todo figure out why ice does not correlate properly...
 def correlate(quarry, config_sample, sample_values, window_size, n_windows=10):
@@ -42,29 +44,47 @@ def correlate(quarry, config_sample, sample_values, window_size, n_windows=10):
 def correlate_icing(quarry, sample_values, window_size):
     # use cooler implementation as default
     quarry.set_value(["settings", "normalization", "normalize_by"], "cool-ice")
+
     def conf(sample_value):
         quarry.set_value(["settings", "normalization", "normalize_by"], "ice")
-        quarry.set_value(["settings", "normalization", "num_ice_bins", "val"], sample_value)
+        quarry.set_value(
+            ["settings", "normalization", "num_ice_bins", "val"], sample_value
+        )
+
     correlate(quarry, conf, sample_values, window_size)
 
 
 def correlate_associated_slices(quarry, sample_values, window_size):
     quarry.set_value(["settings", "normalization", "normalize_by"], "grid-seq")
     # max out num samples for the default setting
-    quarry.set_value(["settings", "normalization", "grid_seq_samples", "val"], quarry.get_value([ "contigs", "genome_size" ]))
+    quarry.set_value(
+        ["settings", "normalization", "grid_seq_samples", "val"],
+        quarry.get_value(["contigs", "genome_size"]),
+    )
+
     def conf(sample_value):
-        quarry.set_value(["settings", "normalization", "grid_seq_samples", "val"], sample_value)
+        quarry.set_value(
+            ["settings", "normalization", "grid_seq_samples", "val"], sample_value
+        )
+
     correlate(quarry, conf, sample_values, window_size)
 
 
 def correlate_ddd(quarry, sample_values, window_size):
     quarry.set_value(["settings", "normalization", "ddd"], True)
     # max out num samples for the default setting
-    quarry.set_value(["settings", "normalization", "ddd_samples", "val_max"], 
-                     quarry.get_value([ "contigs", "genome_size" ]))
+    quarry.set_value(
+        ["settings", "normalization", "ddd_samples", "val_max"],
+        quarry.get_value(["contigs", "genome_size"]),
+    )
+
     def conf(sample_value):
-        quarry.set_value(["settings", "normalization", "ddd_samples", "val_max"], sample_value)
+        quarry.set_value(
+            ["settings", "normalization", "ddd_samples", "val_max"], sample_value
+        )
+
     correlate(quarry, conf, sample_values, window_size)
+
 
 def __adjust_by_dividend(quarry, v):
     div = quarry.get_value(["dividend"])
@@ -74,27 +94,34 @@ def __adjust_by_dividend(quarry, v):
         print("WARNING: dividend larger than value", file=sys.stderr)
     return max(1, v // div)
 
+
 SAMPLE_VALUES = [2**n for n in range(1, 14)]
 KBP = 1000
-MBP = 1000*KBP
-WINDOW_SIZES = [500*KBP, 1*MBP, 5*MBP]
-BIN_SIZES = [10*KBP, 50*KBP, 100*KBP]
+MBP = 1000 * KBP
+WINDOW_SIZES = [500 * KBP, 1 * MBP, 5 * MBP]
+BIN_SIZES = [10 * KBP, 50 * KBP, 100 * KBP]
 
 
-def correlate_all(quarry, sample_values=SAMPLE_VALUES, window_sizes=WINDOW_SIZES, bin_sizes=BIN_SIZES):
+def correlate_all(
+    quarry, sample_values=SAMPLE_VALUES, window_sizes=WINDOW_SIZES, bin_sizes=BIN_SIZES
+):
     with open_default_json() as default_file:
         default_json = json.load(default_file)
     print("name", "bin_size", "window_size", *sample_values, sep="\t")
     for name, func in [
         ("ICE", correlate_icing),
-        #("associated slices", correlate_associated_slices),
-        #("DDD", correlate_ddd),
+        # ("associated slices", correlate_associated_slices),
+        # ("DDD", correlate_ddd),
     ]:
         quarry.set_value(["settings"], default_json)
         quarry.set_value(["settings", "interface", "fixed_bin_size"], True)
         quarry.set_value(["settings", "interface", "add_draw_area", "val"], 0)
-        quarry.set_value(["contigs", "displayed_on_x"], [quarry.get_value(["contigs", "list"])[0]])
-        quarry.set_value(["contigs", "displayed_on_y"], [quarry.get_value(["contigs", "list"])[0]])
+        quarry.set_value(
+            ["contigs", "displayed_on_x"], [quarry.get_value(["contigs", "list"])[0]]
+        )
+        quarry.set_value(
+            ["contigs", "displayed_on_y"], [quarry.get_value(["contigs", "list"])[0]]
+        )
         for bin_size in bin_sizes:
             b = __adjust_by_dividend(quarry, bin_size)
             quarry.set_value(["settings", "interface", "fixed_bin_size_x", "val"], b)

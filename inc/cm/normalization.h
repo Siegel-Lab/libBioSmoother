@@ -619,18 +619,6 @@ bool PartialQuarry::normalizeGridSeq( )
 }
 
 
-void PartialQuarry::iceApplyBias( IceData& rIceData, bool bA, size_t uiFrom, size_t uiTo, size_t uiY )
-{
-    const size_t uiH = rIceData.vSliceBias[ 1 ].size( );
-    for( size_t uiI = uiFrom; uiI < uiTo; uiI++ )
-    {
-        assert( uiI < vvNormalized[ uiY ].size( ) );
-
-        vvNormalized[ uiY ][ uiI ][ bA ? 0 : 1 ] = rIceData.vSliceBias[ 0 ][ uiI / uiH ] //
-                                                   * rIceData.vSliceBias[ 1 ][ uiI % uiH ] //
-                                                   * iceGetCount( rIceData, uiI / uiH, uiI % uiH, uiY, bA );
-    }
-}
 
 double PartialQuarry::iceMaxBias( IceData& rIceData, bool bCol )
 {
@@ -673,11 +661,10 @@ bool PartialQuarry::normalizeCoolIC( )
 
 bool PartialQuarry::normalizeIC( )
 {
-    std::array<std::array<std::vector<double>, 2>, 2> vIceSliceBias;
-    for( size_t uiY = 3; uiY < 5; uiY++ )
+    for( size_t uiY = 3; uiY < NUM_COORD_SYSTEMS; uiY++ )
     {
-        const auto& rXCoords = pickXCoords(uiY);
-        const auto& rYCoords = pickYCoords(uiY);
+        const auto& rXCoords = pickXCoords( uiY );
+        const auto& rYCoords = pickYCoords( uiY );
 
         size_t uiW = rXCoords.size( );
         size_t uiH = rYCoords.size( );
@@ -741,7 +728,7 @@ bool PartialQuarry::normalizeIC( )
                     for( size_t uiJ = 0; uiJ < xData.vSliceBias[ 4 - uiY ].size( ); uiJ++ )
                     {
                         CANCEL_RETURN;
-                        xData.vSliceBias[ 4 - uiY ][uiJ] = 1;
+                        xData.vSliceBias[ 4 - uiY ][ uiJ ] = 1;
                     }
                 }
             }
@@ -750,23 +737,42 @@ bool PartialQuarry::normalizeIC( )
                 for( size_t uiJ = 0; uiJ < xData.vSliceBias[ 4 - uiY ].size( ); uiJ++ )
                 {
                     CANCEL_RETURN;
-                    xData.vSliceBias[ 4 - uiY ][uiJ] = 1;
+                    xData.vSliceBias[ 4 - uiY ][ uiJ ] = 1;
                 }
             }
-            vIceSliceBias[4 - uiY][uiI].swap(xData.vSliceBias[ 4 - uiY ]);
+            vIceSliceBias[ 4 - uiY ][ uiI ].swap( xData.vSliceBias[ 4 - uiY ] );
         }
     }
 
-    for( size_t uiY = 0; uiY < 3; uiY++ )
     {
-        const auto& rYCoords = pickYCoords(uiY);
+        const auto& rYCoords = pickYCoords( 0 );
         size_t uiH = rYCoords.size( );
-        vvNormalized[ uiY ].resize( vvFlatValues[ uiY ].size( ) );
-            for( size_t uiA : { 0, 1 } )
-                for( size_t uiI = 0; uiI < vvFlatValues[uiY].size(); uiI++ )
-                    vvNormalized[ uiY ][ uiI ][ uiA ] = vIceSliceBias[ 0 ][ uiA ][ uiI / uiH ] //
-                                                        * vIceSliceBias[ 1 ][ uiA ][ uiI % uiH ] //
-                                                        * (double)vvFlatValues[ uiY ][ uiI ][ uiA ];
+        vvNormalized[ 0 ].resize( vvFlatValues[ 0 ].size( ) );
+        for( size_t uiA : { 0, 1 } )
+            for( size_t uiI = 0; uiI < vvFlatValues[ 0 ].size( ); uiI++ )
+                vvNormalized[ 0 ][ uiI ][ uiA ] = vIceSliceBias[ 0 ][ uiA ][ uiI / uiH ] //
+                                                  * vIceSliceBias[ 1 ][ uiA ][ uiI % uiH ] //
+                                                  * (double)vvFlatValues[ 0 ][ uiI ][ uiA ];
+    }
+
+    {
+        const auto& rYCoords = pickYCoords( 0 );
+        size_t uiH = rYCoords.size( );
+        vvNormalized[ 1 ].resize( vvFlatValues[ 1 ].size( ) );
+        for( size_t uiA : { 0, 1 } )
+            for( size_t uiI = 0; uiI < vvFlatValues[ 1 ].size( ); uiI++ )
+                vvNormalized[ 1 ][ uiI ][ uiA ] = vIceSliceBias[ 0 ][ uiA ][ uiI / uiH ] //
+                                                  * (double)vvFlatValues[ 1 ][ uiI ][ uiA ];
+    }
+
+    {
+        const auto& rYCoords = pickYCoords( 0 );
+        size_t uiH = rYCoords.size( );
+        vvNormalized[ 2 ].resize( vvFlatValues[ 2 ].size( ) );
+        for( size_t uiA : { 0, 1 } )
+            for( size_t uiI = 0; uiI < vvFlatValues[ 2 ].size( ); uiI++ )
+                vvNormalized[ 1 ][ uiI ][ uiA ] = vIceSliceBias[ 1 ][ uiA ][ uiI % uiH ] //
+                                                  * (double)vvFlatValues[ 2 ][ uiI ][ uiA ];
     }
     END_RETURN;
 }
@@ -778,6 +784,9 @@ bool PartialQuarry::setNormalized( )
         vvNormalized[ uiY ].clear( );
         vvNormalized[ uiY ].reserve( vvFlatValues[ uiY ].size( ) );
     }
+    for( size_t uiY = 0; uiY < 2; uiY++ )
+        for( size_t uiI = 0; uiI < 2; uiI++ )
+            vIceSliceBias[ uiY ][ uiI ].clear( );
 
     const std::string sNorm = getValue<std::string>( { "settings", "normalization", "normalize_by" } );
 
@@ -827,21 +836,23 @@ PartialQuarry::getScaled( const std::function<void( const std::string& )>& fPyPr
 
 void PartialQuarry::regNormalization( )
 {
-    registerNode( NodeNames::Normalized,
-                  ComputeNode{ /*.sNodeName =*/"normalized_bins",
-                               /*.fFunc =*/&PartialQuarry::setNormalized,
-                               /*.vIncomingFunctions =*/
-                               { NodeNames::FlatValues, NodeNames::RnaAssociatedBackground,
-                                 NodeNames::RadiclSeqCoverage },
-                               /*.vIncomingSession =*/
-                               { { "settings", "normalization", "p_accept", "val" },
-                                 { "settings", "normalization", "ice_sparse_slice_filter", "val" } },
-                               /*.vSessionsIncomingInPrevious =*/
-                               { { "contigs", "genome_size" }, { "settings", "normalization", "normalize_by" },
-                                 { "settings", "normalization", "grid_seq_axis_is_column" },
-                                 { "settings", "normalization", "radicl_seq_samples", "val" },
-                                 { "settings", "normalization", "radicl_seq_axis_is_column" } },
-                               /*bHidden =*/false } );
+    registerNode(
+        NodeNames::Normalized,
+        ComputeNode{ /*.sNodeName =*/"normalized_bins",
+                     /*.fFunc =*/&PartialQuarry::setNormalized,
+                     /*.vIncomingFunctions =*/
+                     { NodeNames::FlatValues, NodeNames::RnaAssociatedBackground, NodeNames::RadiclSeqCoverage },
+                     /*.vIncomingSession =*/
+                     { { "settings", "normalization", "p_accept", "val" },
+                       { "settings", "normalization", "ice_sparse_slice_filter", "val" } },
+                     /*.vSessionsIncomingInPrevious =*/
+                     { { "contigs", "genome_size" },
+                       { "settings", "normalization", "normalize_by" },
+                       { "settings", "normalization", "grid_seq_axis_is_column" },
+                       { "settings", "normalization", "ice_local" },
+                       { "settings", "normalization", "radicl_seq_samples", "val" },
+                       { "settings", "normalization", "radicl_seq_axis_is_column" } },
+                     /*bHidden =*/false } );
 
     registerNode( NodeNames::GridSeqSamples,
                   ComputeNode{ /*.sNodeName =*/"grid_seq_samples",

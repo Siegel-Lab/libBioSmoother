@@ -496,8 +496,8 @@ class PartialQuarry : public HasSession
         do
         {
             bContinue = false;
-            for( auto& rNode : { HeatmapCDS, Tracks, AnnotationCDS, ActivateAnnotationCDS, Ticks, Palette,
-                                 DecayCDS, RankedSlicesCDS } )
+            for( auto& rNode : { HeatmapCDS, Tracks, AnnotationCDS, ActivateAnnotationCDS, Ticks, Palette, DecayCDS,
+                                 RankedSlicesCDS } )
                 if( !update_no_throw( rNode, fPyPrint ) )
                 {
                     bContinue = true;
@@ -509,7 +509,7 @@ class PartialQuarry : public HasSession
     void clearCache( )
     {
         ++uiCurrTime;
-        for(auto& rX : xSessionTime)
+        for( auto& rX : xSessionTime )
             rX.second = uiCurrTime;
     }
 
@@ -726,11 +726,13 @@ class PartialQuarry : public HasSession
     DepDec<size_t> uiBinWidth, uiBinHeight;
     int64_t iStartX, iStartY, iEndX, iEndY;
 
+    const static size_t NUM_COORD_SYSTEMS = 5;
+
     std::array<std::vector<ChromDesc>, 2> vActiveChromosomes;
     std::array<std::vector<AxisCoord>, 2> vAxisCords;
     std::array<std::vector<AxisCoord>, 2> vV4cCoords;
     std::array<std::vector<AxisCoord>, 2> vIceCoords;
-    std::array<std::vector<std::array<DecayCoord, 2>>, 5> vDistDepDecCoords;
+    std::array<std::vector<std::array<DecayCoord, 2>>, NUM_COORD_SYSTEMS> vDistDepDecCoords;
     std::array<std::vector<AxisRegion>, 2> vAxisRegions;
     std::vector<AxisCoord> vGridSeqCoords;
     std::array<std::vector<std::vector<size_t>>, 2> vvGridSeqCoverageValues;
@@ -741,18 +743,18 @@ class PartialQuarry : public HasSession
 
     sps::IntersectionType xIntersect;
 
-    std::array<std::vector<std::array<BinCoord, 2>>, 5> vBinCoords;
+    std::array<std::vector<std::array<BinCoord, 2>>, NUM_COORD_SYSTEMS> vBinCoords;
 
     std::array<std::vector<std::string>, 2> vActiveCoverage;
 
     size_t uiSymmetry;
     size_t iInGroupSetting, iBetweenGroupSetting;
 
-    std::array<std::vector<std::vector<size_t>>, 5> vvBinValues;
-    std::array<std::vector<std::vector<double>>, 5> vvDecayValues;
-    std::array<std::vector<std::array<size_t, 2>>, 5> vvFlatValues;
-    std::array<std::vector<std::array<double, 2>>, 5> vvFlatDecay;
-    std::array<std::array<size_t, 2>, 5> vvFlatTotal;
+    std::array<std::vector<std::vector<size_t>>, NUM_COORD_SYSTEMS> vvBinValues;
+    std::array<std::vector<std::vector<double>>, NUM_COORD_SYSTEMS> vvDecayValues;
+    std::array<std::vector<std::array<size_t, 2>>, NUM_COORD_SYSTEMS> vvFlatValues;
+    std::array<std::vector<std::array<double, 2>>, NUM_COORD_SYSTEMS> vvFlatDecay;
+    std::array<std::array<size_t, 2>, NUM_COORD_SYSTEMS> vvFlatTotal;
     std::array<std::vector<std::array<double, 2>>, 3> vvNormalized;
     std::array<std::vector<double>, 3> vCombined;
     std::array<std::vector<double>, 2> vFlat4C;
@@ -818,6 +820,8 @@ class PartialQuarry : public HasSession
     std::vector<std::vector<size_t>> vvDatasetIdsPerReplAndChr;
     std::array<std::vector<std::vector<size_t>>, 2> vBiasIdPerReplAndChr;
 
+    std::array<std::array<std::vector<double>, 2>, 2> vIceSliceBias;
+
     size_t getDatasetIdfromReplAndChr( size_t uiRepl, size_t uiChrX, size_t uiChrY )
     {
         return vvDatasetIdsPerReplAndChr[ uiRepl ][ uiChrY + uiChrX * vActiveChromosomes[ 1 ].size( ) ];
@@ -881,9 +885,9 @@ class PartialQuarry : public HasSession
     // coords.h
     bool setDirectionality( );
     // coords.h
-    const std::vector<AxisCoord>& pickXCoords(const size_t);
+    const std::vector<AxisCoord>& pickXCoords( const size_t );
     // coords.h
-    const std::vector<AxisCoord>& pickYCoords(const size_t);
+    const std::vector<AxisCoord>& pickYCoords( const size_t );
     // coords.h
     bool setBinCoords( );
     // coords.h
@@ -1035,8 +1039,6 @@ class PartialQuarry : public HasSession
     double iceNonZeroMarginMean( IceData&, bool );
     // normalization.h
     void iceDivByMargin( IceData&, bool, double, size_t, size_t );
-    // normalization.h
-    void iceApplyBias( IceData&, bool, size_t, size_t, size_t );
     // normalization.h
     double iceMaxBias( IceData&, bool );
     // normalization.h
@@ -1209,7 +1211,7 @@ class PartialQuarry : public HasSession
 
     // normalization.h
     const decltype( vScaled ) getScaled( const std::function<void( const std::string& )>& );
-    
+
     // colors.h
     const std::vector<double> getCombined( const std::function<void( const std::string& )>& );
 

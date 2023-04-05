@@ -10,6 +10,7 @@ from .parameters import list_parameters, values_for_parameter, open_valid_json
 from .test import test
 from .normalization_correlation import correlate_all
 
+
 def init(args):
     Indexer(args.index_prefix, strict=True).create_session(
         args.chr_len, args.dividend, args.anno_path, args.order_path, args.test
@@ -39,7 +40,6 @@ def repl(args):
         args.no_strand,
         args.shekelyan,
         args.force_upper_triangle,
-        args.ice_resolution,
     )
 
 
@@ -121,6 +121,7 @@ def get_smoother(args):
                 return
     raise RuntimeError("the given index", args.index_prefix, "does not exist.")
 
+
 def info_smoother(args):
     with open_valid_json() as valid_file:
         valid_json = json.load(valid_file)
@@ -129,12 +130,18 @@ def info_smoother(args):
                 with open(possible + "/session.json", "r") as in_file:
                     json_file = json.load(in_file)
                     for p in list_parameters(json_file, valid_json):
-                        print(".".join(p), values_for_parameter(p, json_file, valid_json), sep="\t")
+                        print(
+                            ".".join(p),
+                            values_for_parameter(p, json_file, valid_json),
+                            sep="\t",
+                        )
                     return
     raise RuntimeError("the given index", args.index_prefix, "does not exist.")
 
+
 def test_smoother(args):
     test(Quarry(args.index_prefix), args.seed, args.skip_first)
+
 
 def cor_smoother(args):
     correlate_all(Quarry(args.index_prefix))
@@ -223,13 +230,6 @@ def add_parsers(main_parser):
         "-u",
         "--force_upper_triangle",
         action="store_true",
-        help="Mirror all interactions to the upper triangle. (default: off)",
-    )
-    repl_parser.add_argument(
-        "-r",
-        "--ice_resolution",
-        type=int,
-        default=50000,
         help="Mirror all interactions to the upper triangle. (default: off)",
     )
     repl_parser.set_defaults(func=repl)
@@ -372,18 +372,10 @@ def add_parsers(main_parser):
         help="Prefix that was used to create the index (see the init subcommand).",
     )
     test_parser.add_argument(
-        "-S",
-        "--seed",
-        help="Seed for random configurations.",
-        default=None,
-        type=int
+        "-S", "--seed", help="Seed for random configurations.", default=None, type=int
     )
     test_parser.add_argument(
-        "-s",
-        "--skip_first",
-        help="Skip the first x many test",
-        default=0,
-        type=int
+        "-s", "--skip_first", help="Skip the first x many test", default=0, type=int
     )
     test_parser.set_defaults(func=test_smoother)
 
@@ -403,6 +395,7 @@ def make_main_parser():
     sub_parsers.required = True
     add_parsers(sub_parsers)
     return parser
+
 
 def main():
     parser = make_main_parser()
@@ -425,6 +418,7 @@ def main():
     args = parser.parse_args()
 
     args.func(args)
+
 
 if __name__ == "__main__":
     main()

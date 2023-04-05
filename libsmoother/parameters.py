@@ -1,15 +1,16 @@
-
 try:
     import importlib.resources as pkg_resources
 except ImportError:
     # Try backported to PY<37 `importlib_resources`.
     import importlib_resources as pkg_resources
 
+
 def json_get(keys, d):
     t = d
     for k in keys:
         t = t[k]
     return t
+
 
 def __exists(keys, d):
     t = d
@@ -19,21 +20,53 @@ def __exists(keys, d):
         t = t[k]
     return True
 
+
 def __is_checkbox(val):
     return isinstance(val, bool)
 
+
 def is_spinner(val):
-    return isinstance(val, dict) and sorted(list(val.keys())) == sorted(["min", "max", "val", "step", 
-                                            "spinner_max_restricted",  "spinner_min_restricted"])
+    return isinstance(val, dict) and sorted(list(val.keys())) == sorted(
+        [
+            "min",
+            "max",
+            "val",
+            "step",
+            "spinner_max_restricted",
+            "spinner_min_restricted",
+        ]
+    )
+
+
 def is_range_spinner(val):
-    return isinstance(val, dict) and sorted(list(val.keys())) == sorted(["min", "max", "val_max", "val_min", "step", 
-                            "spinner_max_restricted", "spinner_min_restricted"])
+    return isinstance(val, dict) and sorted(list(val.keys())) == sorted(
+        [
+            "min",
+            "max",
+            "val_max",
+            "val_min",
+            "step",
+            "spinner_max_restricted",
+            "spinner_min_restricted",
+        ]
+    )
+
 
 def __is_multi_choice(key, val, valid):
-    return isinstance(val, str) and __exists(key, valid) and isinstance(json_get(key, valid), list)
+    return (
+        isinstance(val, str)
+        and __exists(key, valid)
+        and isinstance(json_get(key, valid), list)
+    )
+
 
 def spinner_is_int(d):
-    return isinstance(d["min"], int) and isinstance(d["max"], int) and isinstance(d["step"], int)
+    return (
+        isinstance(d["min"], int)
+        and isinstance(d["max"], int)
+        and isinstance(d["step"], int)
+    )
+
 
 def __is_parameter(key, conf, valid):
     val = json_get(key, conf)
@@ -73,11 +106,11 @@ def values_for_parameter(key, conf, valid):
         if spinner_is_int(val):
             c = int(c)
         return [
-            (val["min"], val["min"]), # zero range
-            (val["min"], val["max"]), # full range
-            (val["min"], c), # below max
-            (c, val["max"]), # above min
-                ]
+            (val["min"], val["min"]),  # zero range
+            (val["min"], val["max"]),  # full range
+            (val["min"], c),  # below max
+            (c, val["max"]),  # above min
+        ]
     if __is_multi_choice(key, val, valid):
         return json_get(key, valid)
 

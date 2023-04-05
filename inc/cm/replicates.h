@@ -128,7 +128,7 @@ template <typename v_t> v_t PartialQuarry::symmetry( v_t uiA, v_t uiB )
 
 bool PartialQuarry::setBinValues( )
 {
-    for( size_t uiY = 0; uiY < 5; uiY++ )
+    for( size_t uiY = 0; uiY < NUM_COORD_SYSTEMS; uiY++ )
     {
         vvBinValues[ uiY ].clear( );
         vvBinValues[ uiY ].reserve( vActiveReplicates.size( ) );
@@ -185,7 +185,7 @@ bool PartialQuarry::setBinValues( )
 
 bool PartialQuarry::setDecayValues( )
 {
-    for( size_t uiY = 0; uiY < 5; uiY++ )
+    for( size_t uiY = 0; uiY < NUM_COORD_SYSTEMS; uiY++ )
     {
         vvDecayValues[ uiY ].clear( );
         vvDecayValues[ uiY ].reserve( vActiveReplicates.size( ) );
@@ -351,8 +351,9 @@ template <typename v_t> v_t PartialQuarry::getFlatValue( std::vector<v_t> vColle
 
     if( iInGroupSetting == 4 )
     {
-        if(vCollected.size() == 0);
-            return {};
+        if( vCollected.size( ) == 0 )
+            ;
+        return { };
         std::sort( vCollected.begin( ), vCollected.end( ) );
         return vCollected[ vCollected.size( ) / 2 ];
     }
@@ -406,7 +407,7 @@ double PartialQuarry::getMixedValue( double uiA, double uiB )
 
 bool PartialQuarry::setFlatValues( )
 {
-    for( size_t uiY = 0; uiY < 5; uiY++ )
+    for( size_t uiY = 0; uiY < NUM_COORD_SYSTEMS; uiY++ )
     {
         vvFlatValues[ uiY ].clear( );
 
@@ -451,7 +452,7 @@ bool PartialQuarry::setFlatValues( )
 
 bool PartialQuarry::setFlatDecay( )
 {
-    for( size_t uiY = 0; uiY < 5; uiY++ )
+    for( size_t uiY = 0; uiY < NUM_COORD_SYSTEMS; uiY++ )
     {
         vvFlatDecay[ uiY ].clear( );
 

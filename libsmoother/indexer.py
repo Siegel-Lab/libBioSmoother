@@ -194,11 +194,6 @@ class Indexer:
         touch(self.prefix + "/sps.overlays")
         touch(self.prefix + "/sps.prefix_sums")
 
-        touch(self.prefix + "/bias.coords")
-        touch(self.prefix + "/bias.datsets")
-        touch(self.prefix + "/bias.overlays")
-        touch(self.prefix + "/bias.prefix_sums")
-
         self.save_session()
         self.try_load_index()
 
@@ -311,7 +306,6 @@ class Indexer:
         no_strand=False,
         shekelyan=False,
         force_upper_triangle=False,
-        ice_resolution=50000,
     ):
         if not self.name_unique(name):
             raise RuntimeError(
@@ -462,50 +456,6 @@ class Indexer:
 
         if not keep_points:
             self.indices.clear_points_and_desc()
-
-        self.progress_print(
-            "computing Iterative Correction biases...", force_print=True
-        )
-
-        biases_x, coords_x, biases_y, coords_y = Quarry(self.indices).compute_biases(
-            name,
-            self.session_default,
-            lambda *x: self.progress_print(*x, force_print=True),
-            ice_resolution=ice_resolution,
-        )
-        self.set_session(
-            [
-                "replicates",
-                "by_name",
-                name,
-                "ice_res",
-            ],
-            ice_resolution,
-        )
-
-        for biases, coords, col in [
-            [biases_x, coords_x, True],
-            [biases_y, coords_y, False],
-        ]:
-            last_chr = None
-            for b, c in zip(biases + [None], coords + [None]):
-                if (c is None or c.chr_idx != last_chr) and not last_chr is None:
-                    self.set_session(
-                        [
-                            "replicates",
-                            "by_name",
-                            name,
-                            "ice_col" if col else "ice_row",
-                            self.session_default["contigs"]["list"][last_chr],
-                        ],
-                        self.indices.generate_bias(
-                            fac=-2 if shekelyan else -1, verbosity=GENERATE_VERBOSITY
-                        ),
-                    )
-                if not b is None:
-                    last_chr = c.chr_idx
-                    # for i in range(c.idx_size):
-                    self.indices.insert_bias([c.idx_pos + c.idx_size // 2], b)
 
         self.save_session()
 

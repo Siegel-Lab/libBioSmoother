@@ -207,7 +207,10 @@ bool PartialQuarry::setColored( )
     {
         CANCEL_RETURN;
         if( std::isnan( fC ) )
+        {
+            vRanged.push_back( std::nan( "" ) );
             vColored.push_back( sBackgroundColor );
+        }
         else
         {
             fDataMin = std::min( fDataMin, fC );
@@ -320,7 +323,7 @@ bool PartialQuarry::setHeatmapCDS( )
             vColor.append( vColored[ uiI ] );
 
 
-            if( vBinCoords[ 0 ][ uiI ][ 1 ].uiChromosomeX != std::numeric_limits<size_t>::max( ) )
+            if( vBinCoords[ 0 ][ uiI ][ 0 ].uiChromosomeX != std::numeric_limits<size_t>::max( ) )
             {
                 vChrX.append( vShortChrNames[ 0 ][ vBinCoords[ 0 ][ uiI ][ 0 ].uiChromosomeX ] );
                 vChrY.append( vShortChrNames[ 1 ][ vBinCoords[ 0 ][ uiI ][ 0 ].uiChromosomeY ] );
@@ -410,11 +413,10 @@ const std::string& PartialQuarry::getBackgroundColor( const std::function<void( 
     return sBackgroundColor;
 }
 
-const std::vector<double>
-PartialQuarry::getCombined( const std::function<void( const std::string& )>& fPyPrint )
+const std::vector<double> PartialQuarry::getCombined( const std::function<void( const std::string& )>& fPyPrint )
 {
     update( NodeNames::Combined, fPyPrint );
-    return vCombined[0];
+    return vCombined[ 0 ];
 }
 
 void PartialQuarry::regColors( )
