@@ -138,10 +138,11 @@ setup(
     long_description="",
     packages=["libsmoother"],
     ext_modules=[CMakeExtension("libsmoothercpp")],
+    data_files=[("libsmoother", ["libsmoother/conf/default.json", "libsmoother/conf/valid.json"])],
     cmdclass={"build_ext": CMakeBuild},
     extras_require={"test": "pytest"},
     zip_safe=False,
-    python_requires=">=3.5",
+    python_requires=">=3.9",
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Intended Audience :: Science/Research',

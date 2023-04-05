@@ -60,6 +60,26 @@ bool PartialQuarry::setDatasetIdPerRepl( )
                     vvDatasetIdsPerReplAndChr.back( ).push_back( std::numeric_limits<size_t>::max( ) );
             }
     }
+
+    for( size_t uiI = 0; uiI < 2; uiI++ )
+    {
+        vBiasIdPerReplAndChr[ uiI ].clear( );
+        vBiasIdPerReplAndChr[ uiI ].reserve( vActiveReplicates.size( ) );
+        for( const std::string& sRep : vActiveReplicates )
+        {
+            vBiasIdPerReplAndChr[ uiI ].emplace_back( );
+            vBiasIdPerReplAndChr[ uiI ].back( ).reserve( vActiveChromosomes[ uiI ].size( ) );
+            for( const ChromDesc& xChrom : vActiveChromosomes[ uiI ] )
+            {
+                CANCEL_RETURN;
+                if( hasValue( { "replicates", "by_name", sRep, uiI == 1 ? "ice_row" : "ice_col", xChrom.sName } ) )
+                    vBiasIdPerReplAndChr[ uiI ].back( ).push_back( getValue<size_t>(
+                        { "replicates", "by_name", sRep, uiI == 1 ? "ice_row" : "ice_col", xChrom.sName } ) );
+                else
+                    vBiasIdPerReplAndChr[ uiI ].back( ).push_back( std::numeric_limits<size_t>::max( ) );
+            }
+        }
+    }
     END_RETURN;
 }
 
@@ -108,220 +128,160 @@ template <typename v_t> v_t PartialQuarry::symmetry( v_t uiA, v_t uiB )
 
 bool PartialQuarry::setBinValues( )
 {
-    vvBinValues.clear( );
-    vvBinValues.reserve( vActiveReplicates.size( ) );
-    vActiveReplicatesTotal.clear( );
-    vActiveReplicatesTotal.reserve( vActiveReplicates.size( ) );
-
-    size_t uiMinuend = getValue<size_t>( { "settings", "normalization", "min_interactions", "val" } );
-
-    for( size_t uiRepl = 0; uiRepl < vActiveReplicates.size( ); uiRepl++ )
+    for( size_t uiY = 0; uiY < 5; uiY++ )
     {
-        vvBinValues.emplace_back( );
-        vvBinValues.back( ).reserve( vBinCoords.size( ) );
+        vvBinValues[ uiY ].clear( );
+        vvBinValues[ uiY ].reserve( vActiveReplicates.size( ) );
+        vActiveReplicatesTotal.clear( );
+        vActiveReplicatesTotal.reserve( vActiveReplicates.size( ) );
 
+        size_t uiMinuend = getValue<size_t>( { "settings", "normalization", "min_interactions", "val" } );
 
-#if USE_GRID_QUERIES
-        vvBinValues.back( ).resize( vBinCoords.size( ) );
-        std::array<std::vector<uint64_t>, 6> vGridQuery{
-            std::vector<uint64_t>{ },
-            std::vector<uint64_t>{ },
-            std::vector<uint64_t>{ uiMapQMin, uiMapQMax },
-            std::vector<uint64_t>{ uiFromAnnoFilter, uiToAnnoFilter },
-            std::vector<uint64_t>{ uiFromSameStrandFilter, uiToSameStrandFilter },
-            std::vector<uint64_t>{ uiFromYStrandFilter, uiToYStrandFilter } };
-        vGridQuery[ 0 ].reserve( vAxisCords[ 0 ].size( ) );
-        vGridQuery[ 1 ].reserve( vAxisCords[ 1 ].size( ) );
-        for( const std::array<BinCoordRegion, 2>& vCoords : vBinRegions )
+        for( size_t uiRepl = 0; uiRepl < vActiveReplicates.size( ); uiRepl++ )
         {
-            std::array<std::vector<uint32_t>, 2> vRet;
-            for( size_t uiI = 0; uiI < 2; uiI++ )
+            vvBinValues[ uiY ].emplace_back( );
+            vvBinValues[ uiY ].back( ).reserve( vBinCoords[ uiY ].size( ) );
+
+            for( const std::array<BinCoord, 2>& vCoords : vBinCoords[ uiY ] )
             {
-                if( vCoords[ uiI ].uiChromosomeX != std::numeric_limits<size_t>::max( ) )
+                std::array<size_t, 2> vVals;
+                CANCEL_RETURN;
+                for( size_t uiI = 0; uiI < 2; uiI++ )
                 {
-                    vGridQuery[ 0 ].clear( );
-                    vGridQuery[ 1 ].clear( );
-                    vGridQuery[ 0 ].push_back( vAxisCords[ 0 ][ vCoords[ uiI ].uiCoordStartIdxX ].uiIndexPos );
-                    for( size_t uiX = vCoords[ uiI ].uiCoordStartIdxX;
-                         uiX < vCoords[ uiI ].uiNumCoordsX + vCoords[ uiI ].uiCoordStartIdxX;
-                         uiX++ )
+                    if( vCoords[ uiI ].uiChromosomeX != std::numeric_limits<size_t>::max( ) )
                     {
-                        assert( vAxisCords[ 0 ][ uiX ].uiIndexPos == vGridQuery[ 0 ].back( ) );
-                        vGridQuery[ 0 ].push_back( vAxisCords[ 0 ][ uiX ].uiIndexPos +
-                                                   vAxisCords[ 0 ][ uiX ].uiIndexSize );
-                    }
-                    vGridQuery[ 1 ].push_back( vAxisCords[ 1 ][ vCoords[ uiI ].uiCoordStartIdxY ].uiIndexPos );
-                    for( size_t uiX = vCoords[ uiI ].uiCoordStartIdxY;
-                         uiX < vCoords[ uiI ].uiNumCoordsY + vCoords[ uiI ].uiCoordStartIdxY;
-                         uiX++ )
-                    {
-                        assert( vAxisCords[ 1 ][ uiX ].uiIndexPos == vGridQuery[ 1 ].back( ) );
-                        vGridQuery[ 1 ].push_back( vAxisCords[ 1 ][ uiX ].uiIndexPos +
-                                                   vAxisCords[ 1 ][ uiX ].uiIndexSize );
-                    }
-
-                    size_t iDataSetId = getDatasetIdfromReplAndChr( uiRepl, vCoords[ uiI ].uiChromosomeX,
-                                                                    vCoords[ uiI ].uiChromosomeY );
-                    if( iDataSetId != std::numeric_limits<size_t>::max( ) )
-                    {
-                        vRet[ uiI ] = pIndices->gridCount( iDataSetId, vGridQuery, xIntersect, 0 );
-
-                        for( uint32_t& uiVal : vRet[ uiI ] )
-                            // @todo-low-prio this is an expensive if instruction
-                            uiVal = uiVal > uiMinuend ? uiVal - uiMinuend : 0;
-                    }
-                    else
-                        vRet[ uiI ].resize( vCoords[ 0 ].uiNumCoordsX * vCoords[ 0 ].uiNumCoordsY, 0 );
-                }
-                else
-                    vRet[ uiI ].resize( vCoords[ 0 ].uiNumCoordsX * vCoords[ 0 ].uiNumCoordsY, 0 );
-
-                assert( vRet[ uiI ].size( ) == vCoords[ 0 ].uiNumCoordsX * vCoords[ 0 ].uiNumCoordsY );
-            }
-            for( size_t uiI = 0; uiI < vCoords[ 0 ].uiNumCoordsX * vCoords[ 0 ].uiNumCoordsY; uiI++ )
-            {
-                const size_t uiRegionX = uiI % vCoords[ 0 ].uiNumCoordsX;
-                const size_t uiRegionY = uiI / vCoords[ 0 ].uiNumCoordsX;
-                const size_t uiBinPos = ( uiRegionX + vCoords[ 0 ].uiCoordStartIdxX ) * vAxisCords[ 1 ].size( ) +
-                                        ( uiRegionY + vCoords[ 0 ].uiCoordStartIdxY );
-                vvBinValues.back( )[ uiBinPos ] = symmetry( vRet[ 0 ][ uiI ], vRet[ 1 ][ uiI ] );
-            }
-        }
-#else
-        for( const std::array<BinCoord, 2>& vCoords : vBinCoords )
-        {
-            std::array<size_t, 2> vVals;
-            CANCEL_RETURN;
-            for( size_t uiI = 0; uiI < 2; uiI++ )
-            {
-                if( vCoords[ uiI ].uiChromosomeX != std::numeric_limits<size_t>::max( ) )
-                {
-                    size_t iDataSetId = getDatasetIdfromReplAndChr( uiRepl, vCoords[ uiI ].uiChromosomeX,
-                                                                    vCoords[ uiI ].uiChromosomeY );
-                    if( iDataSetId != std::numeric_limits<size_t>::max( ) )
-                    {
-                        vVals[ uiI ] =
-                            pIndices->count( iDataSetId,
-                                             { vCoords[ uiI ].uiIndexY, vCoords[ uiI ].uiIndexX, uiMapQMin,
-                                               uiFromAnnoFilter, uiFromSameStrandFilter, uiFromYStrandFilter },
-                                             { vCoords[ uiI ].uiIndexY + vCoords[ uiI ].uiIndexH,
-                                               vCoords[ uiI ].uiIndexX + vCoords[ uiI ].uiIndexW, uiMapQMax,
-                                               uiToAnnoFilter, uiToSameStrandFilter, uiToYStrandFilter },
-                                             xIntersect,
-                                             0 );
+                        size_t iDataSetId = getDatasetIdfromReplAndChr( uiRepl, vCoords[ uiI ].uiChromosomeX,
+                                                                        vCoords[ uiI ].uiChromosomeY );
+                        if( iDataSetId != std::numeric_limits<size_t>::max( ) )
+                        {
+                            vVals[ uiI ] =
+                                pIndices->count( iDataSetId,
+                                                 { vCoords[ uiI ].uiIndexY, vCoords[ uiI ].uiIndexX, uiMapQMin,
+                                                   uiFromAnnoFilter, uiFromSameStrandFilter, uiFromYStrandFilter },
+                                                 { vCoords[ uiI ].uiIndexY + vCoords[ uiI ].uiIndexH,
+                                                   vCoords[ uiI ].uiIndexX + vCoords[ uiI ].uiIndexW, uiMapQMax,
+                                                   uiToAnnoFilter, uiToSameStrandFilter, uiToYStrandFilter },
+                                                 xIntersect,
+                                                 0 );
+                        }
+                        else
+                            vVals[ uiI ] = { };
                     }
                     else
                         vVals[ uiI ] = { };
+
+                    vVals[ uiI ] = vVals[ uiI ] > uiMinuend ? vVals[ uiI ] - uiMinuend : 0;
                 }
-                else
-                    vVals[ uiI ] = { };
-
-                vVals[ uiI ] = vVals[ uiI ] > uiMinuend ? vVals[ uiI ] - uiMinuend : 0;
+                vvBinValues[ uiY ].back( ).push_back( symmetry( vVals[ 0 ], vVals[ 1 ] ) );
             }
-            vvBinValues.back( ).push_back( symmetry( vVals[ 0 ], vVals[ 1 ] ) );
-        }
-#endif
 
-        const size_t uiTot =
-            getValue<size_t>( { "replicates", "by_name", vActiveReplicates[ uiRepl ], "total_reads" } );
-        vActiveReplicatesTotal.push_back( symmetry( uiTot, uiTot ) );
+            const size_t uiTot =
+                getValue<size_t>( { "replicates", "by_name", vActiveReplicates[ uiRepl ], "total_reads" } );
+            vActiveReplicatesTotal.push_back( symmetry( uiTot, uiTot ) );
+        }
     }
     END_RETURN;
 }
 
 bool PartialQuarry::setDecayValues( )
 {
-    vvDecayValues.clear( );
-    vvDecayValues.reserve( vActiveReplicates.size( ) );
-
-    size_t uiMinuend = getValue<size_t>( { "settings", "normalization", "min_interactions", "val" } );
-    size_t uiSamplesMin = getValue<size_t>( { "settings", "normalization", "ddd_samples", "val_min" } );
-    size_t uiSamplesMax = getValue<size_t>( { "settings", "normalization", "ddd_samples", "val_max" } );
-    double fQuantExcl =
-        ( 1.0 - getValue<double>( { "settings", "normalization", "ddd_quantile", "val" } ) / 100.0 ) / 2.0;
-
-    for( size_t uiRepl = 0; uiRepl < vActiveReplicates.size( ); uiRepl++ )
+    for( size_t uiY = 0; uiY < 5; uiY++ )
     {
-        vvDecayValues.emplace_back( );
-        vvDecayValues.back( ).reserve( vDistDepDecCoords.size( ) );
+        vvDecayValues[ uiY ].clear( );
+        vvDecayValues[ uiY ].reserve( vActiveReplicates.size( ) );
 
-        for( std::array<DecayCoord, 2>& vCoords : vDistDepDecCoords )
+        size_t uiMinuend = getValue<size_t>( { "settings", "normalization", "min_interactions", "val" } );
+        size_t uiSamplesMin = getValue<size_t>( { "settings", "normalization", "ddd_samples", "val_min" } );
+        size_t uiSamplesMax = getValue<size_t>( { "settings", "normalization", "ddd_samples", "val_max" } );
+        double fQuantExcl =
+            ( 1.0 - getValue<double>( { "settings", "normalization", "ddd_quantile", "val" } ) / 100.0 ) / 2.0;
+
+        for( size_t uiRepl = 0; uiRepl < vActiveReplicates.size( ); uiRepl++ )
         {
-            CANCEL_RETURN;
-            std::array<double, 2> vVals;
-            for( size_t uiI = 0; uiI < 2; uiI++ )
+            vvDecayValues[ uiY ].emplace_back( );
+            vvDecayValues[ uiY ].back( ).reserve( vDistDepDecCoords[ uiY ].size( ) );
+
+            for( std::array<DecayCoord, 2>& vCoords : vDistDepDecCoords[ uiY ] )
             {
-                if( vCoords[ uiI ].uiChromosomeX != std::numeric_limits<size_t>::max( ) &&
-                    vCoords[ uiI ].uiChromosomeY != std::numeric_limits<size_t>::max( ) )
+                CANCEL_RETURN;
+                std::array<double, 2> vVals;
+                for( size_t uiI = 0; uiI < 2; uiI++ )
                 {
-                    size_t iDataSetId = getDatasetIdfromReplAndChr( uiRepl, vCoords[ uiI ].uiChromosomeX,
-                                                                    vCoords[ uiI ].uiChromosomeY );
-
-                    if( iDataSetId != std::numeric_limits<size_t>::max( ) )
+                    if( vCoords[ uiI ].uiChromosomeX != std::numeric_limits<size_t>::max( ) &&
+                        vCoords[ uiI ].uiChromosomeY != std::numeric_limits<size_t>::max( ) )
                     {
-                        int64_t iChrX = vActiveChromosomes[ 0 ][ vCoords[ uiI ].uiChromosomeX ].uiLength;
-                        int64_t iChrY = vActiveChromosomes[ 1 ][ vCoords[ uiI ].uiChromosomeY ].uiLength;
+                        size_t iDataSetId = getDatasetIdfromReplAndChr( uiRepl, vCoords[ uiI ].uiChromosomeX,
+                                                                        vCoords[ uiI ].uiChromosomeY );
 
-                        /* The two contigs span a rectange of size cW x cH.
-                         * The bin has a bottom left corner with a distance of c form the diagonal (positive = to right,
-                         * neg = to left)
-                         *
-                         */
-
-                        int64_t iCornerPos = ( vCoords[ uiI ].iFrom + vCoords[ uiI ].iTo ) / 2;
-                        // corner pos within contig rectangle
-                        if( iCornerPos >= -iChrY && iCornerPos <= iChrX )
+                        if( iDataSetId != std::numeric_limits<size_t>::max( ) )
                         {
-                            int64_t iBot = std::abs( iCornerPos );
-                            int64_t iChrTopRightCornerPos = iChrX - iChrY;
-                            int64_t iTop = iChrX + iChrY - std::abs( iChrTopRightCornerPos - iCornerPos );
+                            int64_t iChrX = vActiveChromosomes[ 0 ][ vCoords[ uiI ].uiChromosomeX ].uiLength;
+                            int64_t iChrY = vActiveChromosomes[ 1 ][ vCoords[ uiI ].uiChromosomeY ].uiLength;
 
-                            int64_t iMyH = std::max( (int64_t)1, vCoords[ uiI ].iTo - vCoords[ uiI ].iFrom );
-                            int64_t iH = std::max( (int64_t)1, ( ( iTop - iMyH ) - iBot ) / (int64_t)uiSamplesMax );
+                            /* The two contigs span a rectange of size cW x cH.
+                             * The bin has a bottom left corner with a distance of c form the diagonal (positive = to
+                             * right, neg = to left)
+                             *
+                             */
 
-                            if( ( iTop - iMyH ) - iBot >= (int64_t)( uiSamplesMin - 1 ) * iMyH )
+                            int64_t iCornerPos = ( vCoords[ uiI ].iFrom + vCoords[ uiI ].iTo ) / 2;
+                            // corner pos within contig rectangle
+                            if( iCornerPos >= -iChrY && iCornerPos <= iChrX )
                             {
-                                std::vector<size_t> vvVals;
-                                vvVals.reserve( uiSamplesMax );
-                                for( int64_t iMyBot = iBot; iMyBot <= iTop - iMyH; iMyBot += iH )
+                                int64_t iBot = std::abs( iCornerPos );
+                                int64_t iChrTopRightCornerPos = iChrX - iChrY;
+                                int64_t iTop = iChrX + iChrY - std::abs( iChrTopRightCornerPos - iCornerPos );
+
+                                int64_t iMyH = std::max( (int64_t)1, vCoords[ uiI ].iTo - vCoords[ uiI ].iFrom );
+                                int64_t iH = std::max( (int64_t)1, ( ( iTop - iMyH ) - iBot ) / (int64_t)uiSamplesMax );
+
+                                if( ( iTop - iMyH ) - iBot >= (int64_t)( uiSamplesMin - 1 ) * iMyH )
                                 {
-                                    int64_t iMyTop = iMyBot + iMyH;
+                                    std::vector<size_t> vvVals;
+                                    vvVals.reserve( uiSamplesMax );
+                                    for( int64_t iMyBot = iBot; iMyBot <= iTop - iMyH; iMyBot += iH )
+                                    {
+                                        int64_t iMyTop = iMyBot + iMyH;
 
-                                    assert( iMyBot >= iCornerPos );
-                                    size_t uiYs = (size_t)( iMyBot + iCornerPos ) / 2;
-                                    size_t uiXs = (size_t)( iMyBot - iCornerPos ) / 2;
-                                    assert( iMyTop >= iCornerPos );
-                                    size_t uiYe = std::max( uiYs + 1, (size_t)( iMyTop + iCornerPos ) / 2 );
-                                    size_t uiXe = std::max( uiXs + 1, (size_t)( iMyTop - iCornerPos ) / 2 );
-                                    assert( uiYe <= (size_t)iChrX );
-                                    assert( uiXe <= (size_t)iChrY );
+                                        assert( iMyBot >= iCornerPos );
+                                        size_t uiYs = (size_t)( iMyBot + iCornerPos ) / 2;
+                                        size_t uiXs = (size_t)( iMyBot - iCornerPos ) / 2;
+                                        assert( iMyTop >= iCornerPos );
+                                        size_t uiYe = std::max( uiYs + 1, (size_t)( iMyTop + iCornerPos ) / 2 );
+                                        size_t uiXe = std::max( uiXs + 1, (size_t)( iMyTop - iCornerPos ) / 2 );
+                                        assert( uiYe <= (size_t)iChrX );
+                                        assert( uiXe <= (size_t)iChrY );
 
-                                    vvVals.push_back( pIndices->count( iDataSetId,
-                                                                       { uiXs, uiYs, uiMapQMin, uiFromAnnoFilter,
-                                                                         uiFromSameStrandFilter, uiFromYStrandFilter },
-                                                                       { uiXe, uiYe, uiMapQMax, uiToAnnoFilter,
-                                                                         uiToSameStrandFilter, uiToYStrandFilter },
-                                                                       xIntersect,
-                                                                       0 ) );
+                                        vvVals.push_back(
+                                            pIndices->count( iDataSetId,
+                                                             { uiXs, uiYs, uiMapQMin, uiFromAnnoFilter,
+                                                               uiFromSameStrandFilter, uiFromYStrandFilter },
+                                                             { uiXe, uiYe, uiMapQMax, uiToAnnoFilter,
+                                                               uiToSameStrandFilter, uiToYStrandFilter },
+                                                             xIntersect,
+                                                             0 ) );
 
-                                    if( vvVals.back( ) > uiMinuend )
-                                        vvVals.back( ) -= uiMinuend;
+                                        if( vvVals.back( ) > uiMinuend )
+                                            vvVals.back( ) -= uiMinuend;
+                                        else
+                                            vvVals.back( ) = 0;
+                                    }
+
+                                    std::sort( vvVals.begin( ), vvVals.end( ) );
+                                    if( fQuantExcl >= 0.5 )
+                                        vVals[ uiI ] = (double)vvVals[ vvVals.size( ) / 2 ];
                                     else
-                                        vvVals.back( ) = 0;
+                                    {
+                                        vVals[ uiI ] = 0;
+                                        for( size_t uiJ = vvVals.size( ) * fQuantExcl;
+                                             uiJ < vvVals.size( ) * ( 1 - fQuantExcl );
+                                             uiJ++ )
+                                            vVals[ uiI ] += (double)vvVals[ uiJ ];
+                                        vVals[ uiI ] /= (size_t)( (double)vvVals.size( ) * ( 1.0 - 2.0 * fQuantExcl ) );
+                                    }
                                 }
-
-                                std::sort( vvVals.begin( ), vvVals.end( ) );
-                                if( fQuantExcl >= 0.5 )
-                                    vVals[ uiI ] = (double)vvVals[ vvVals.size( ) / 2 ];
                                 else
-                                {
                                     vVals[ uiI ] = 0;
-                                    for( size_t uiJ = vvVals.size( ) * fQuantExcl;
-                                         uiJ < vvVals.size( ) * ( 1 - fQuantExcl );
-                                         uiJ++ )
-                                        vVals[ uiI ] += (double)vvVals[ uiJ ];
-                                    vVals[ uiI ] /= (size_t)( (double)vvVals.size( ) * ( 1.0 - 2.0 * fQuantExcl ) );
-                                }
                             }
                             else
                                 vVals[ uiI ] = 0;
@@ -332,11 +292,9 @@ bool PartialQuarry::setDecayValues( )
                     else
                         vVals[ uiI ] = 0;
                 }
-                else
-                    vVals[ uiI ] = 0;
-            }
 
-            vvDecayValues.back( ).push_back( symmetry( vVals[ 0 ], vVals[ 1 ] ) );
+                vvDecayValues[ uiY ].back( ).push_back( symmetry( vVals[ 0 ], vVals[ 1 ] ) );
+            }
         }
     }
     END_RETURN;
@@ -393,6 +351,8 @@ template <typename v_t> v_t PartialQuarry::getFlatValue( std::vector<v_t> vColle
 
     if( iInGroupSetting == 4 )
     {
+        if(vCollected.size() == 0);
+            return {};
         std::sort( vCollected.begin( ), vCollected.end( ) );
         return vCollected[ vCollected.size( ) / 2 ];
     }
@@ -446,15 +406,32 @@ double PartialQuarry::getMixedValue( double uiA, double uiB )
 
 bool PartialQuarry::setFlatValues( )
 {
-    vvFlatValues.clear( );
-
-    if( vvBinValues.size( ) > 0 )
+    for( size_t uiY = 0; uiY < 5; uiY++ )
     {
-        vvFlatValues.reserve( vvBinValues[ 0 ].size( ) );
+        vvFlatValues[ uiY ].clear( );
 
-        for( size_t uiI = 0; uiI < vBinCoords.size( ); uiI++ )
+        if( vvBinValues[ uiY ].size( ) > 0 )
         {
-            vvFlatValues.push_back( { 0, 0 } );
+            // take size from fst replicate (sizes are equal anyways)
+            vvFlatValues[ uiY ].reserve( vvBinValues[ uiY ][ 0 ].size( ) );
+
+            for( size_t uiI = 0; uiI < vBinCoords[ uiY ].size( ); uiI++ )
+            {
+                vvFlatValues[ uiY ].push_back( { 0, 0 } );
+                for( size_t uiJ = 0; uiJ < 2; uiJ++ )
+                {
+                    std::vector<size_t> vCollected;
+                    vCollected.reserve( vInGroup[ uiJ ].size( ) );
+                    for( size_t uiX : vInGroup[ uiJ ] )
+                    {
+                        CANCEL_RETURN;
+                        vCollected.push_back( vvBinValues[ uiY ][ uiX ][ uiI ] );
+                    }
+
+                    vvFlatValues[ uiY ].back( )[ uiJ ] = getFlatValue( vCollected );
+                }
+            }
+
             for( size_t uiJ = 0; uiJ < 2; uiJ++ )
             {
                 std::vector<size_t> vCollected;
@@ -462,24 +439,11 @@ bool PartialQuarry::setFlatValues( )
                 for( size_t uiX : vInGroup[ uiJ ] )
                 {
                     CANCEL_RETURN;
-                    vCollected.push_back( vvBinValues[ uiX ][ uiI ] );
+                    vCollected.push_back( vActiveReplicatesTotal[ uiX ] );
                 }
 
-                vvFlatValues.back( )[ uiJ ] = getFlatValue( vCollected );
+                vvFlatTotal[ uiY ][ uiJ ] = getFlatValue( vCollected );
             }
-        }
-
-        for( size_t uiJ = 0; uiJ < 2; uiJ++ )
-        {
-            std::vector<size_t> vCollected;
-            vCollected.reserve( vInGroup[ uiJ ].size( ) );
-            for( size_t uiX : vInGroup[ uiJ ] )
-            {
-                CANCEL_RETURN;
-                vCollected.push_back( vActiveReplicatesTotal[ uiX ] );
-            }
-
-            vvFlatTotal[ uiJ ] = getFlatValue( vCollected );
         }
     }
     END_RETURN;
@@ -487,26 +451,29 @@ bool PartialQuarry::setFlatValues( )
 
 bool PartialQuarry::setFlatDecay( )
 {
-    vvFlatDecay.clear( );
-
-    if( vvDecayValues.size( ) > 0 )
+    for( size_t uiY = 0; uiY < 5; uiY++ )
     {
-        vvFlatDecay.reserve( vvDecayValues[ 0 ].size( ) );
+        vvFlatDecay[ uiY ].clear( );
 
-        for( size_t uiI = 0; uiI < vDistDepDecCoords.size( ); uiI++ )
+        if( vvDecayValues[ uiY ].size( ) > 0 )
         {
-            vvFlatDecay.push_back( { 0, 0 } );
-            for( size_t uiJ = 0; uiJ < 2; uiJ++ )
-            {
-                std::vector<double> vCollected;
-                vCollected.reserve( vInGroup[ uiJ ].size( ) );
-                for( size_t uiX : vInGroup[ uiJ ] )
-                {
-                    CANCEL_RETURN;
-                    vCollected.push_back( vvDecayValues[ uiX ][ uiI ] );
-                }
+            vvFlatDecay[ uiY ].reserve( vvDecayValues[ uiY ][ 0 ].size( ) );
 
-                vvFlatDecay.back( )[ uiJ ] = getFlatValue( vCollected );
+            for( size_t uiI = 0; uiI < vDistDepDecCoords[ uiY ].size( ); uiI++ )
+            {
+                vvFlatDecay[ uiY ].push_back( { 0, 0 } );
+                for( size_t uiJ = 0; uiJ < 2; uiJ++ )
+                {
+                    std::vector<double> vCollected;
+                    vCollected.reserve( vInGroup[ uiJ ].size( ) );
+                    for( size_t uiX : vInGroup[ uiJ ] )
+                    {
+                        CANCEL_RETURN;
+                        vCollected.push_back( vvDecayValues[ uiY ][ uiX ][ uiI ] );
+                    }
+
+                    vvFlatDecay[ uiY ].back( )[ uiJ ] = getFlatValue( vCollected );
+                }
             }
         }
     }
@@ -528,23 +495,25 @@ bool PartialQuarry::setDecayCDS( )
     for( size_t uiJ = 0; uiJ < 2; uiJ++ )
     {
         std::map<std::pair<size_t, size_t>, size_t> xColors;
-        for( size_t uiI = 0; uiI < vDistDepDecCoords.size( ); uiI++ )
+        for( size_t uiI = 0; uiI < vDistDepDecCoords[ 0 ].size( ); uiI++ )
         {
-            std::pair<size_t, size_t> xuiChrCurr = std::make_pair( vDistDepDecCoords[ uiI ][ uiJ ].uiChromosomeX,
-                                                                   vDistDepDecCoords[ uiI ][ uiJ ].uiChromosomeY );
+            std::pair<size_t, size_t> xuiChrCurr = std::make_pair( vDistDepDecCoords[ 0 ][ uiI ][ uiJ ].uiChromosomeX,
+                                                                   vDistDepDecCoords[ 0 ][ uiI ][ uiJ ].uiChromosomeY );
             pybind11::list vX;
             pybind11::list vY;
-            int64_t iF = vDistDepDecCoords[ uiI ][ uiJ ].iFrom * (int64_t)uiDividend;
-            int64_t iT = vDistDepDecCoords[ uiI ][ uiJ ].iTo * (int64_t)uiDividend;
-            double fVal = 1000.0 * 1000.0 * vvFlatDecay[ uiI ][ uiJ ] / (double)( ( iT - iF ) * ( iT - iF ) );
+            int64_t iF = vDistDepDecCoords[ 0 ][ uiI ][ uiJ ].iFrom * (int64_t)uiDividend;
+            int64_t iT = vDistDepDecCoords[ 0 ][ uiI ][ uiJ ].iTo * (int64_t)uiDividend;
+            double fVal = 1000.0 * 1000.0 * vvFlatDecay[ 0 ][ uiI ][ uiJ ] / (double)( ( iT - iF ) * ( iT - iF ) );
             vX.append( iF );
             vY.append( fVal );
 
             vX.append( iT );
             vY.append( fVal );
 
-            std::string sChromNameX = vActiveChromosomes[ uiJ ][ vDistDepDecCoords[ uiI ][ uiJ ].uiChromosomeX ].sName;
-            std::string sChromNameY = vActiveChromosomes[ uiJ ][ vDistDepDecCoords[ uiI ][ uiJ ].uiChromosomeY ].sName;
+            std::string sChromNameX =
+                vActiveChromosomes[ uiJ ][ vDistDepDecCoords[ 0 ][ uiI ][ uiJ ].uiChromosomeX ].sName;
+            std::string sChromNameY =
+                vActiveChromosomes[ uiJ ][ vDistDepDecCoords[ 0 ][ uiI ][ uiJ ].uiChromosomeY ].sName;
             vChrs.append( substringChr( sChromNameX ) + " - " + substringChr( sChromNameY ) +
                           ( uiJ == 0 ? ", Group A" : ", Group B" ) );
             vXs.append( vX );
@@ -573,38 +542,42 @@ void PartialQuarry::regReplicates( )
 {
     registerNode(
         NodeNames::ActiveReplicates,
-        ComputeNode{ /*.sNodeName =*/"active_replicates",
+        ComputeNode{ /*.sNodeName =*/"active_replicates_setting",
                      /*.fFunc=*/&PartialQuarry::setActiveReplicates,
                      /*.vIncomingFunctions =*/{ },
                      /*.vIncomingSession =*/
                      { { "replicates", "in_group_a" }, { "replicates", "in_group_b" }, { "replicates", "list" } },
-                     /*.vSessionsIncomingInPrevious =*/{} } );
+                     /*.vSessionsIncomingInPrevious =*/{ },
+                     /*bHidden =*/true } );
 
     registerNode( NodeNames::DatasetIdPerRepl,
                   ComputeNode{ /*.sNodeName =*/"dataset_id_per_repl",
                                /*.fFunc=*/&PartialQuarry::setDatasetIdPerRepl,
                                /*.vIncomingFunctions =*/{ NodeNames::ActiveReplicates, NodeNames::ActiveChrom },
                                /*.vIncomingSession =*/{ { "replicates", "by_name" } },
-                               /*.vSessionsIncomingInPrevious =*/{} } );
+                               /*.vSessionsIncomingInPrevious =*/{ },
+                               /*bHidden =*/true } );
 
     registerNode( NodeNames::IntersectionType,
-                  ComputeNode{ /*.sNodeName =*/"intersection_type",
+                  ComputeNode{ /*.sNodeName =*/"intersection_type_setting",
                                /*.fFunc=*/&PartialQuarry::setIntersectionType,
                                /*.vIncomingFunctions =*/{ },
                                /*.vIncomingSession =*/{ { "settings", "filters", "ambiguous_mapping" } },
-                               /*.vSessionsIncomingInPrevious =*/{} } );
+                               /*.vSessionsIncomingInPrevious =*/{ },
+                               /*bHidden =*/true } );
 
-    registerNode(
-        NodeNames::BinValues,
-        ComputeNode{
-            /*.sNodeName =*/"bin_values",
-            /*.fFunc=*/&PartialQuarry::setBinValues,
-            /*.vIncomingFunctions =*/
-            { NodeNames::BinCoords, NodeNames::DatasetIdPerRepl, NodeNames::MappingQuality, NodeNames::Directionality },
-            /*.vIncomingSession =*/
-            { { "settings", "normalization", "min_interactions", "val" }, { "replicates", "by_name" } },
-            /*.vSessionsIncomingInPrevious =*/
-            {} } );
+    registerNode( NodeNames::BinValues,
+                  ComputeNode{ /*.sNodeName =*/"bin_values",
+                               /*.fFunc=*/&PartialQuarry::setBinValues,
+                               /*.vIncomingFunctions =*/
+                               { NodeNames::BinCoords, NodeNames::DatasetIdPerRepl, NodeNames::MappingQuality,
+                                 NodeNames::Directionality },
+                               /*.vIncomingSession =*/
+                               { { "settings", "normalization", "min_interactions", "val" } },
+                               /*.vSessionsIncomingInPrevious =*/
+                               { { "replicates", "by_name" } },
+                               /*bHidden =*/false } );
+
 
     registerNode( NodeNames::DecayValues,
                   ComputeNode{ /*.sNodeName =*/"decay_values",
@@ -617,42 +590,48 @@ void PartialQuarry::regReplicates( )
                                  { "settings", "normalization", "ddd_samples", "val_max" },
                                  { "settings", "normalization", "ddd_quantile", "val" },
                                  { "settings", "normalization", "min_interactions", "val" } },
-                               /*.vSessionsIncomingInPrevious =*/{} } );
+                               /*.vSessionsIncomingInPrevious =*/{ },
+                               /*bHidden =*/false } );
 
     registerNode( NodeNames::InGroup,
                   ComputeNode{ /*.sNodeName =*/"in_group_setting",
                                /*.fFunc=*/&PartialQuarry::setInGroup,
                                /*.vIncomingFunctions =*/{ },
                                /*.vIncomingSession =*/{ { "settings", "replicates", "in_group" } },
-                               /*.vSessionsIncomingInPrevious =*/{} } );
+                               /*.vSessionsIncomingInPrevious =*/{ },
+                               /*bHidden =*/true } );
 
     registerNode( NodeNames::BetweenGroup,
                   ComputeNode{ /*.sNodeName =*/"between_group_setting",
                                /*.fFunc=*/&PartialQuarry::setBetweenGroup,
                                /*.vIncomingFunctions =*/{ },
                                /*.vIncomingSession =*/{ { "settings", "replicates", "between_group" } },
-                               /*.vSessionsIncomingInPrevious =*/{} } );
+                               /*.vSessionsIncomingInPrevious =*/{ },
+                               /*bHidden =*/true } );
 
     registerNode( NodeNames::FlatValues,
                   ComputeNode{ /*.sNodeName =*/"flat_bins",
                                /*.fFunc=*/&PartialQuarry::setFlatValues,
                                /*.vIncomingFunctions =*/{ NodeNames::BinValues, NodeNames::InGroup },
                                /*.vIncomingSession =*/{ },
-                               /*.vSessionsIncomingInPrevious =*/{} } );
+                               /*.vSessionsIncomingInPrevious =*/{ },
+                               /*bHidden =*/false } );
 
     registerNode( NodeNames::FlatDecay,
                   ComputeNode{ /*.sNodeName =*/"flat_decay",
                                /*.fFunc=*/&PartialQuarry::setFlatDecay,
-                               /*.vIncomingFunctions =*/{ NodeNames::DecayValues },
+                               /*.vIncomingFunctions =*/{ NodeNames::DecayValues, NodeNames::InGroup },
                                /*.vIncomingSession =*/{ },
-                               /*.vSessionsIncomingInPrevious =*/{} } );
+                               /*.vSessionsIncomingInPrevious =*/{ },
+                               /*bHidden =*/false } );
 
     registerNode( NodeNames::DecayCDS,
                   ComputeNode{ /*.sNodeName =*/"decay_cds",
                                /*.fFunc=*/&PartialQuarry::setDecayCDS,
                                /*.vIncomingFunctions =*/{ NodeNames::FlatDecay, NodeNames::AnnotationColors },
                                /*.vIncomingSession =*/{ },
-                               /*.vSessionsIncomingInPrevious =*/{ { "dividend" } } } );
+                               /*.vSessionsIncomingInPrevious =*/{ { "dividend" } },
+                               /*bHidden =*/false } );
 }
 
 } // namespace cm

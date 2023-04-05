@@ -31,6 +31,17 @@ from ._import_lib_smoother_cpp import (
     LIB_SMOOTHER_CPP_VERSION,
 )
 
+try:
+    import importlib.resources as pkg_resources
+except ImportError:
+    # Try backported to PY<37 `importlib_resources`.
+    import importlib_resources as pkg_resources
+import json
+
+
+def open_default_json():
+    return (pkg_resources.files("libsmoother") / "conf" / "default.json").open("r")
+
 
 class Quarry(PartialQuarry):
     def __init__(self, *args):
@@ -91,6 +102,8 @@ class Quarry(PartialQuarry):
 
         psx = bin_test(0)
         psy = bin_test(1)
+        if len(psx) == 0 or len(psy) == 0:
+            return []
         return [
             (1 if x < p_accept else 0, 1 if y < p_accept else 0)
             for x, y in zip(
@@ -163,6 +176,48 @@ class Quarry(PartialQuarry):
                     )
                     for x in range(256)
                 ]
+
+    def compute_biases(
+        self, dataset_name, default_session, progress_print, ice_resolution=50000
+    ):
+        # set session as needed
+        ## reset to default session
+        self.set_session(default_session)
+        ## set default settings
+        with open_default_json() as f:
+            self.set_value(["settings"], json.load(f))
+        ## modify parameters as needed
+
+        # pick the relevant dataset
+        self.set_value(["replicates", "in_group_a"], [dataset_name])
+        self.set_value(["replicates", "in_group_b"], [])
+
+        # never skip a region -> if the user decides to display that region the biases might be missing
+        self.set_value(["settings", "filters", "cut_off_bin"], "smaller")
+
+        # activate the local balancing but render the whole heatmap
+        self.set_value(["settings", "normalization", "normalize_by"], "ice-local")
+
+        # render whole heatmap
+        self.set_value(["settings", "export", "do_export_full"], True)
+
+        # fix the bin size
+        self.set_value(["settings", "interface", "fixed_bin_size"], True)
+        div_resolution = max(1, ice_resolution // self.get_value(["dividend"]))
+        self.set_value(
+            ["settings", "interface", "fixed_bin_size_x", "val"], div_resolution
+        )
+        self.set_value(
+            ["settings", "interface", "fixed_bin_size_y", "val"], div_resolution
+        )
+
+        biases_x = self.get_slice_bias(0, 0, 0, progress_print)
+        biases_y = self.get_slice_bias(0, 0, 1, progress_print)
+
+        coords_x = self.get_axis_coords(True, progress_print)
+        coords_y = self.get_axis_coords(False, progress_print)
+
+        return biases_x, coords_x, biases_y, coords_y
 
     def copy(self):
         # trigger the cpp copy constructor

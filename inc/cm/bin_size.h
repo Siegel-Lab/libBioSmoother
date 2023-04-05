@@ -34,32 +34,43 @@ bool PartialQuarry::setBinSize( )
     {
         size_t uiNumX = getValue<size_t>( { "settings", "interface", "fixed_num_bins_x", "val" } );
         size_t uiNumY = getValue<size_t>( { "settings", "interface", "fixed_num_bins_y", "val" } );
-        uiBinHeight = ( getValue<double>( { "area", "y_end" } ) - getValue<double>( { "area", "y_start" } ) ) /
-                      static_cast<double>( uiNumY );
-        uiBinWidth = ( getValue<double>( { "area", "x_end" } ) - getValue<double>( { "area", "x_start" } ) ) /
-                     static_cast<double>( uiNumX );
+        uiBinHeight.w( ) = std::max(
+            (size_t)1,
+            (size_t)( ( getValue<double>( { "area", "y_end" } ) - getValue<double>( { "area", "y_start" } ) ) /
+                      static_cast<double>( uiNumY ) ) );
+        uiBinWidth.w( ) = std::max(
+            (size_t)1,
+            (size_t)( ( getValue<double>( { "area", "x_end" } ) - getValue<double>( { "area", "x_start" } ) ) /
+                      static_cast<double>( uiNumX ) ) );
+    }
+    else if( getValue<bool>( { "settings", "interface", "fixed_bin_size" } ) )
+    {
+        size_t uiNumX = getValue<size_t>( { "settings", "interface", "fixed_bin_size_x", "val" } );
+        size_t uiNumY = getValue<size_t>( { "settings", "interface", "fixed_bin_size_y", "val" } );
+        uiBinHeight.w( ) = std::max( (size_t)1, (size_t)uiNumY );
+        uiBinWidth.w( ) = std::max( (size_t)1, (size_t)uiNumX );
     }
     else if( !getValue<bool>( { "settings", "interface", "squared_bins" } ) )
     {
-        uiBinHeight =
+        uiBinHeight.w( ) =
             nextEvenNumber( ( getValue<double>( { "area", "y_end" } ) - getValue<double>( { "area", "y_start" } ) ) /
                             std::sqrt( uiMaxNumBins ) );
-        uiBinHeight = std::max( uiBinHeight, uiMinBinSize );
+        uiBinHeight.w( ) = std::max( uiBinHeight.r( ), uiMinBinSize );
 
-        uiBinWidth =
+        uiBinWidth.w( ) =
             nextEvenNumber( ( getValue<double>( { "area", "x_end" } ) - getValue<double>( { "area", "x_start" } ) ) /
                             std::sqrt( uiMaxNumBins ) );
-        uiBinWidth = std::max( uiBinWidth, uiMinBinSize );
+        uiBinWidth.w( ) = std::max( uiBinWidth.r( ), uiMinBinSize );
     }
     else
     {
         size_t uiArea = ( getValue<size_t>( { "area", "x_end" } ) - getValue<size_t>( { "area", "x_start" } ) ) *
                         ( getValue<size_t>( { "area", "y_end" } ) - getValue<size_t>( { "area", "y_start" } ) ) /
                         uiMaxNumBins;
-        uiBinHeight = nextEvenNumber( std::sqrt( uiArea ) );
-        uiBinHeight = std::max( uiBinHeight, uiMinBinSize );
+        uiBinHeight.w( ) = nextEvenNumber( std::sqrt( uiArea ) );
+        uiBinHeight.w( ) = std::max( uiBinHeight.r( ), uiMinBinSize );
 
-        uiBinWidth = uiBinHeight;
+        uiBinWidth.w( ) = uiBinHeight.r( );
     }
     END_RETURN;
 }
@@ -94,11 +105,11 @@ bool PartialQuarry::setRenderArea( )
         uiB -= uiH * fScale;
         uiT += uiH * fScale;
 
-        iStartX = uiL - ( uiL % uiBinWidth );
-        iStartY = uiB - ( uiB % uiBinHeight );
+        iStartX = uiL - ( uiL % uiBinWidth.r( ) );
+        iStartY = uiB - ( uiB % uiBinHeight.r( ) );
 
-        iEndX = uiR + uiBinWidth - ( uiR % uiBinWidth );
-        iEndY = uiT + uiBinHeight - ( uiT % uiBinHeight );
+        iEndX = uiR + uiBinWidth.r( ) - ( uiR % uiBinWidth.r( ) );
+        iEndY = uiT + uiBinHeight.r( ) - ( uiT % uiBinHeight.r( ) );
     }
     END_RETURN;
 }
@@ -114,7 +125,7 @@ const std::array<size_t, 2> PartialQuarry::getBinSize( const std::function<void(
 {
     update( NodeNames::BinSize, fPyPrint );
     size_t uiD = getValue<size_t>( { "dividend" } );
-    return std::array<size_t, 2>{ uiBinWidth * uiD, uiBinHeight * uiD };
+    return std::array<size_t, 2>{ uiBinWidth.r( ) * uiD, uiBinHeight.r( ) * uiD };
 }
 
 
@@ -128,15 +139,15 @@ template <typename CharT> struct Sep : public std::numpunct<CharT>
 
 std::string putCommas( size_t uiBp )
 {
-    std::string sNum = std::to_string(uiBp);
+    std::string sNum = std::to_string( uiBp );
     std::string sRet = "";
-    for(size_t uiI = 0; uiI < sNum.size(); uiI++)
+    for( size_t uiI = 0; uiI < sNum.size( ); uiI++ )
     {
-        if(uiI % 3 == 0 && uiI > 0)
+        if( uiI % 3 == 0 && uiI > 0 )
             sRet += ",";
-        sRet += sNum[sNum.size() - uiI - 1];
+        sRet += sNum[ sNum.size( ) - uiI - 1 ];
     }
-    std::reverse(sRet.begin(), sRet.end());
+    std::reverse( sRet.begin( ), sRet.end( ) );
     return sRet;
 }
 
@@ -168,9 +179,13 @@ void PartialQuarry::regBinSize( )
                                  { "settings", "interface", "fixed_number_of_bins" },
                                  { "settings", "interface", "fixed_num_bins_x", "val" },
                                  { "settings", "interface", "fixed_num_bins_y", "val" },
+                                 { "settings", "interface", "fixed_bin_size" },
+                                 { "settings", "interface", "fixed_bin_size_x", "val" },
+                                 { "settings", "interface", "fixed_bin_size_y", "val" },
                                  { "dividend" },
                                  { "area" } },
-                               /*.vSessionsIncomingInPrevious =*/{} } );
+                               /*.vSessionsIncomingInPrevious =*/{ },
+                               /*bHidden =*/false } );
 
     registerNode( NodeNames::RenderArea,
                   ComputeNode{ /*.sNodeName =*/"render_area",
@@ -181,8 +196,10 @@ void PartialQuarry::regBinSize( )
                                    { "settings", "export", "do_export_full" },
                                    { "settings", "contigs", "genome_size" },
                                    { "settings", "interface", "add_draw_area", "val" },
+                                   {"contigs", "genome_size"},
                                },
-                               /*.vSessionsIncomingInPrevious =*/{ { "area" } } } );
+                               /*.vSessionsIncomingInPrevious =*/{ { "area" } },
+                               /*bHidden =*/true } );
 }
 
 

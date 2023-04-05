@@ -133,7 +133,13 @@ template <bool CACHE> void exportSpsInterface( pybind11::module& m )
               static_cast<void ( cm::SpsInterface<CACHE>::* )( std::vector<uint64_t>, std::vector<uint64_t>, int )>(
                   &cm::SpsInterface<CACHE>::insert ), //
               pybind11::arg( "start" ), pybind11::arg( "end" ), pybind11::arg( "val" ) )
+        .def( "insert_bias",
+              static_cast<void ( cm::SpsInterface<CACHE>::* )( std::vector<uint64_t>, double )>(
+                  &cm::SpsInterface<CACHE>::insertBias ), //
+              pybind11::arg( "start" ), pybind11::arg( "val" ) )
         .def( "generate", &cm::SpsInterface<CACHE>::generate, //
+              pybind11::arg( "fac" ) = -1.0, pybind11::arg( "verbosity" ) = 1 )
+        .def( "generate_bias", &cm::SpsInterface<CACHE>::generateBias, //
               pybind11::arg( "fac" ) = -1.0, pybind11::arg( "verbosity" ) = 1 )
         .def_readwrite( "anno", &cm::SpsInterface<CACHE>::vAnno )
         .def( "get_value", &cm::HasSession::getSessionValue<pybind11::object> ) //
@@ -187,6 +193,12 @@ PYBIND11_MODULE( libsmoothercpp, m )
     m.def( "test_py_dict", &cm::test_py_dict );
     m.def( "test_cpp_dict", &cm::test_cpp_dict );
 
+    pybind11::class_<cm::AxisCoord>( m, "AxisCoord" ) //
+        .def_readwrite( "chr_idx", &cm::AxisCoord::uiChromosome ) //
+        .def_readwrite( "idx_pos", &cm::AxisCoord::uiIndexPos ) //
+        .def_readwrite( "idx_size", &cm::AxisCoord::uiIndexSize ) //
+        ;
+
     pybind11::class_<cm::PartialQuarry, cm::PyPartialQuarry>( m, "PartialQuarry" ) //
         .def( pybind11::init<std::string>( ) ) //
         .def( pybind11::init<std::shared_ptr<cm::SpsInterface<false>>>( ) ) //
@@ -223,13 +235,13 @@ PYBIND11_MODULE( libsmoothercpp, m )
         .def( "get_displayed_annos", &cm::PartialQuarry::getDisplayedAnnos ) //
         .def( "get_heatmap", &cm::PartialQuarry::getHeatmap ) //
         .def( "get_heatmap_export", &cm::PartialQuarry::getHeatmapExport ) //
-        .def( "get_divided", &cm::PartialQuarry::getDivided ) //
         .def( "get_scaled", &cm::PartialQuarry::getScaled ) //
         .def( "get_dot", &cm::PartialQuarry::getDOT ) //
         .def( "get_background_color", &cm::PartialQuarry::getBackgroundColor ) //
         .def( "get_ticks", &cm::PartialQuarry::getTicks ) //
         .def( "get_contig_ticks", &cm::PartialQuarry::getContigTicks ) //
         .def( "get_tick_list", &cm::PartialQuarry::getTickList ) //
+        .def( "get_contig_start_list", &cm::PartialQuarry::getContigStartList ) //
         .def( "get_canvas_size", &cm::PartialQuarry::getCanvasSize ) //
         .def( "get_tracks", &cm::PartialQuarry::getTracks ) //
         .def( "get_ranked_slices", &cm::PartialQuarry::getRankedSlices ) //
@@ -243,11 +255,14 @@ PYBIND11_MODULE( libsmoothercpp, m )
         .def( "get_palette_ticks", &cm::PartialQuarry::getPaletteTicks ) //
         .def( "get_longest_common_suffix", &cm::PartialQuarry::getLongestCommonSuffix ) //
 
+        .def( "get_file_prefix", &cm::PartialQuarry::getFilePrefix ) //
         .def( "print_num_reads_and_overlays", &cm::PartialQuarry::printNumReadsNumOverlays ) //
         .def( "print_sizes", &cm::PartialQuarry::printSizes ) //
         .def( "cancel", &cm::PartialQuarry::cancel ) //
         .def( "get_error", &cm::PartialQuarry::getError ) //
         .def( "update_cds", &cm::PartialQuarry::updateCDS ) //
+        .def( "clear_cache", &cm::PartialQuarry::clearCache ) //
+        .def( "update_all", &cm::PartialQuarry::updateAll ) //
         .def( "save_session", &cm::PartialQuarry::saveSession ) //
 
         .def( "normalizeBinominalTestTrampoline", &cm::ContectMappingPublicist::normalizeBinominalTestTrampoline ) //

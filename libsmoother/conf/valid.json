@@ -1,0 +1,28 @@
+{
+    "normalization": {
+        "normalize_by": ["rpm", "rpk", "radicl-seq", "grid-seq", "dont", "ice"],
+        "normalize_by_coverage": ["rpkb", "rpmb", "rpm", "rpk", "dont"],
+        "scale": ["abs", "max", "minmax", "dont"],
+        "grid_seq_annotation": ["gene"]
+    },
+    "replicates": {
+        "in_group": ["sum", "min", "max", "dif", "mean"],
+        "between_group": ["sum", "1st", "2nd", "sub", "div", "dif"]
+    },
+    "interface": {
+        "color_palette": ["Viridis256", "Plasma256", "Turbo256", "Fall", "LowToHigh"],
+        "axis_lables": ["DNA_RNA", "RNA_DNA", "DNA_DNA"]
+    },
+    "filters": {
+        "directionality": ["all", "same", "oppo", "forw", "rev"],
+        "symmetry": ["all", "sym", "asym", "mirror"],
+        "multiple_annos_in_bin": ["combine", "first", "max_fac_pow_two", "force_separate"],
+        "anno_in_multiple_bins": ["stretch", "separate", "squeeze"],
+        "ambiguous_mapping": ["enclosed", "overlaps", "first", "last"],
+        "cut_off_bin": ["larger", "skip", "smaller", "fit_chrom_smaller", 
+                        "fit_chrom_larger", "cover_multiple"]
+    },
+    "export": {
+        "export_format": ["tsv", "png", "svg"]
+    }
+}

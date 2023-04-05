@@ -11,6 +11,7 @@ import os
 import copy
 import time
 from importlib.metadata import version
+from .quarry import Quarry
 
 MAP_Q_MAX = 255
 
@@ -193,55 +194,69 @@ class Indexer:
         touch(self.prefix + "/sps.overlays")
         touch(self.prefix + "/sps.prefix_sums")
 
+        touch(self.prefix + "/bias.coords")
+        touch(self.prefix + "/bias.datsets")
+        touch(self.prefix + "/bias.overlays")
+        touch(self.prefix + "/bias.prefix_sums")
+
         self.save_session()
         self.try_load_index()
 
         sorted_list = {}
-        for name, chrom, start, end, info, on_forw_strnd in parse_annotations(
-            anno_path
-        ):
-            if not chrom in self.session_default["contigs"]["list"]:
-                continue
-            if name not in sorted_list:
-                sorted_list[name] = {}
-            if chrom not in sorted_list[name]:
-                sorted_list[name][chrom] = []
-            sorted_list[name][chrom].append((start, end, info, on_forw_strnd))
-        order = []
-        if annotation_order is None:
-            if "gene" in sorted_list:
-                order.append("gene")
-        else:
-            with open(annotation_order, "r") as anno_order_file:
-                for line in anno_order_file:
-                    if line in sorted_list:
-                        order.append(line)
-        for name in sorted(list(sorted_list.keys())):
-            if not name in order:
-                order.append(name)
-        if len(order) > 0:
-            self.set_session(["contigs", "annotation_coordinates"], order[0])
-            self.set_session(["annotation", "filter"], order[0])
-        for name in order:
-            chroms = sorted_list[name]
-            if name not in self.session_default["annotation"]["list"]:
-                self.append_session(["annotation", "list"], name)
-                self.append_session(["annotation", "visible_x"], name)
-                self.append_session(["annotation", "visible_y"], name)
-                self.set_session(["annotation", "by_name", name], {})
-
-                for chrom, annos in chroms.items():
-                    self.progress_print("annotating", name + "(s)", "for contig", chrom)
-                    self.set_session(
-                        ["annotation", "by_name", name, chrom],
-                        self.indices.anno.add_intervals(
-                            annos,
-                            self.session_default["dividend"],
-                            verbosity=GENERATE_VERBOSITY,
-                        ),
-                    )
+        if anno_path != "":
+            for name, chrom, start, end, info, on_forw_strnd in parse_annotations(
+                anno_path
+            ):
+                if not chrom in self.session_default["contigs"]["list"]:
+                    continue
+                if name not in sorted_list:
+                    sorted_list[name] = {}
+                if chrom not in sorted_list[name]:
+                    sorted_list[name][chrom] = []
+                sorted_list[name][chrom].append((start, end, info, on_forw_strnd))
+            order = []
+            if annotation_order is None:
+                if "gene" in sorted_list:
+                    order.append("gene")
             else:
-                raise RuntimeError("annotation with this name already exists")
+                with open(annotation_order, "r") as anno_order_file:
+                    for line in anno_order_file:
+                        if line in sorted_list:
+                            order.append(line)
+            for name in sorted(list(sorted_list.keys())):
+                if not name in order:
+                    order.append(name)
+            if len(order) > 0:
+                self.set_session(["contigs", "annotation_coordinates"], order[0])
+                self.set_session(["annotation", "filter"], order[0])
+            else:
+                self.set_session(["contigs", "annotation_coordinates"], "")
+                self.set_session(["annotation", "filter"], "")
+            for name in order:
+                chroms = sorted_list[name]
+                if name not in self.session_default["annotation"]["list"]:
+                    self.append_session(["annotation", "list"], name)
+                    self.append_session(["annotation", "visible_x"], name)
+                    self.append_session(["annotation", "visible_y"], name)
+                    self.set_session(["annotation", "by_name", name], {})
+
+                    for chrom, annos in chroms.items():
+                        self.progress_print(
+                            "annotating", name + "(s)", "for contig", chrom
+                        )
+                        self.set_session(
+                            ["annotation", "by_name", name, chrom],
+                            self.indices.anno.add_intervals(
+                                annos,
+                                self.session_default["dividend"],
+                                verbosity=GENERATE_VERBOSITY,
+                            ),
+                        )
+                else:
+                    raise RuntimeError("annotation with this name already exists")
+        else:
+            self.set_session(["contigs", "annotation_coordinates"], "")
+            self.set_session(["annotation", "filter"], "")
 
         self.save_session()
 
@@ -296,6 +311,7 @@ class Indexer:
         no_strand=False,
         shekelyan=False,
         force_upper_triangle=False,
+        ice_resolution=50000,
     ):
         if not self.name_unique(name):
             raise RuntimeError(
@@ -303,10 +319,13 @@ class Indexer:
                 + "Use the <list> command to see all datasets."
             )
 
-        self.progress_print("generating replicate.", force_print=True)
+        self.progress_print("generating replicate...", force_print=True)
 
         self.append_session(["replicates", "list"], name)
-        self.set_session(["replicates", "by_name", name], {"ids": {}, "path": path})
+        self.set_session(
+            ["replicates", "by_name", name],
+            {"ids": {}, "path": path, "ice_col": {}, "ice_row": {}},
+        )
         if group in ["a", "both"]:
             self.append_session(["replicates", "in_group_a"], name)
         if group in ["b", "both"]:
@@ -443,6 +462,50 @@ class Indexer:
 
         if not keep_points:
             self.indices.clear_points_and_desc()
+
+        self.progress_print(
+            "computing Iterative Correction biases...", force_print=True
+        )
+
+        biases_x, coords_x, biases_y, coords_y = Quarry(self.indices).compute_biases(
+            name,
+            self.session_default,
+            lambda *x: self.progress_print(*x, force_print=True),
+            ice_resolution=ice_resolution,
+        )
+        self.set_session(
+            [
+                "replicates",
+                "by_name",
+                name,
+                "ice_res",
+            ],
+            ice_resolution,
+        )
+
+        for biases, coords, col in [
+            [biases_x, coords_x, True],
+            [biases_y, coords_y, False],
+        ]:
+            last_chr = None
+            for b, c in zip(biases + [None], coords + [None]):
+                if (c is None or c.chr_idx != last_chr) and not last_chr is None:
+                    self.set_session(
+                        [
+                            "replicates",
+                            "by_name",
+                            name,
+                            "ice_col" if col else "ice_row",
+                            self.session_default["contigs"]["list"][last_chr],
+                        ],
+                        self.indices.generate_bias(
+                            fac=-2 if shekelyan else -1, verbosity=GENERATE_VERBOSITY
+                        ),
+                    )
+                if not b is None:
+                    last_chr = c.chr_idx
+                    # for i in range(c.idx_size):
+                    self.indices.insert_bias([c.idx_pos + c.idx_size // 2], b)
 
         self.save_session()
 

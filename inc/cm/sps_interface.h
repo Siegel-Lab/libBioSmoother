@@ -39,7 +39,9 @@ class HasSession
         : sFilePrefix( sFilePrefix ), xSession( json::parse( std::ifstream( sFilePrefix + "/session.json" ) ) )
     {}
 
-    HasSession( const HasSession& rOther ) : sFilePrefix( rOther.sFilePrefix ), xSession( rOther.copySession( ) )
+    HasSession( const std::shared_ptr<HasSession> rOther )
+        : sFilePrefix( rOther != nullptr ? rOther->sFilePrefix : std::string( "" ) ),
+          xSession( rOther != nullptr ? rOther->copySession( ) : json::parse( "{}" ) )
     {}
 
     template <typename T> T getSessionValue( std::vector<std::string> vKeys )
@@ -88,13 +90,19 @@ template <bool CACHED> class SpsInterface : public HasSession
     static const bool BIN_SEARCH_SPARSE = false;
     static const size_t D = 8;
     static const size_t O = 2;
+    static const size_t uiBiasAccuracy = 1000000;
 #ifdef WITH_STXXL
     using index_t = sps::Index<typename std::conditional<CACHED, CachedTypeDef<D, O, BIN_SEARCH_SPARSE>,
                                                          DiskTypeDef<D, O, BIN_SEARCH_SPARSE>>::type>;
+    using bias_index_t = sps::Index<typename std::conditional<CACHED, CachedTypeDef<1, 0, BIN_SEARCH_SPARSE>,
+                                                              DiskTypeDef<1, 0, BIN_SEARCH_SPARSE>>::type>;
 #else
     using index_t = sps::Index<DiskTypeDef<D, O, BIN_SEARCH_SPARSE>>;
+    using bias_index_t = sps::Index<DiskTypeDef<1, 0, BIN_SEARCH_SPARSE>>;
 #endif
     std::shared_ptr<index_t> pIndex;
+    std::shared_ptr<bias_index_t> pBiasIndex;
+    const std::string sFilePrefix;
 
   public:
     using coordinate_t = typename index_t::coordinate_t;
@@ -102,11 +110,18 @@ template <bool CACHED> class SpsInterface : public HasSession
     SpsInterface( std::string sFilePrefix, bool bWrite )
         : HasSession( sFilePrefix ), //
           vAnno( sFilePrefix + "/anno", bWrite ), //
-          pIndex( std::make_shared<index_t>( sFilePrefix + "/sps", bWrite ) )
+          pIndex( std::make_shared<index_t>( sFilePrefix + "/sps", bWrite ) ),
+          pBiasIndex( std::make_shared<bias_index_t>( sFilePrefix + "/bias", bWrite ) ),
+          sFilePrefix( sFilePrefix )
     {}
 
     SpsInterface( std::string sFilePrefix ) : SpsInterface( sFilePrefix, false )
     {}
+
+    const std::string getFilePrefix( ) const
+    {
+        return sFilePrefix;
+    }
 
     bool loaded( )
     {
@@ -131,6 +146,20 @@ template <bool CACHED> class SpsInterface : public HasSession
         insert( aStart, aEnd, iValue );
     }
 
+    void insertBias( std::array<uint64_t, 1> vStart, double iValue )
+    {
+        pBiasIndex->addPoint( vStart, (size_t)( iValue * uiBiasAccuracy ) );
+    }
+
+    void insertBias( std::vector<uint64_t> vStart, double iValue )
+    {
+        assert( vStart.size( ) == 1 );
+
+        std::array<uint64_t, 1> aStart = { vStart.front( ) };
+
+        insertBias( aStart, iValue );
+    }
+
     std::vector<uint32_t> gridCount( size_t iDataSetId, std::array<std::vector<coordinate_t>, D - O> vGrid,
                                      sps::IntersectionType xIntersect, size_t uiVerbosity = 1 )
     {
@@ -143,9 +172,22 @@ template <bool CACHED> class SpsInterface : public HasSession
         return pIndex->count( iDataSetId, vFrom, vTo, xIntersect, uiVerbosity );
     }
 
+    double countBias( size_t iDataSetId, std::array<coordinate_t, 1> vFrom, std::array<coordinate_t, 1> vTo,
+                      sps::IntersectionType xIntersect, size_t uiVerbosity = 1 )
+    {
+        const double dRet =
+            (double)pBiasIndex->count( iDataSetId, vFrom, vTo, xIntersect, uiVerbosity ) / (double)uiBiasAccuracy;
+        return dRet;
+    }
+
     size_t generate( double fFac = -1, size_t uiVerbosity = 1 )
     {
         return pIndex->generate( fFac, uiVerbosity );
+    }
+
+    size_t generateBias( double fFac = -1, size_t uiVerbosity = 1 )
+    {
+        return pBiasIndex->generate( fFac, uiVerbosity );
     }
 
     void clearPointsAndDesc( )

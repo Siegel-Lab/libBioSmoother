@@ -2,7 +2,6 @@
 #include <cctype>
 #include <memory>
 #include <mutex>
-#include <regex>
 
 #pragma once
 
@@ -208,7 +207,6 @@ class PartialQuarry : public HasSession
         Scaled,
         Ticks,
         Tracks,
-        Divided,
         Palette,
         AnnoFilters,
         LCS,
@@ -225,7 +223,9 @@ class PartialQuarry : public HasSession
         RadiclSeqSamples,
         DatasetIdPerRepl,
         ActiveChromLength,
-        // ICESamples,
+        V4cCoords,
+        Flat4C,
+        IceCoords,
         SIZE
     };
     struct ComputeNode
@@ -235,6 +235,7 @@ class PartialQuarry : public HasSession
         std::vector<NodeNames> vIncomingFunctions;
         std::vector<std::vector<std::string>> vIncomingSession;
         std::vector<std::vector<std::string>> vSessionsIncomingInPrevious;
+        bool bHidden = false;
     };
 
     struct ComputeNodeData
@@ -495,7 +496,7 @@ class PartialQuarry : public HasSession
         do
         {
             bContinue = false;
-            for( auto& rNode : { HeatmapCDS, Tracks, AnnotationCDS, ActivateAnnotationCDS, Ticks, Tracks, Palette,
+            for( auto& rNode : { HeatmapCDS, Tracks, AnnotationCDS, ActivateAnnotationCDS, Ticks, Palette,
                                  DecayCDS, RankedSlicesCDS } )
                 if( !update_no_throw( rNode, fPyPrint ) )
                 {
@@ -503,6 +504,19 @@ class PartialQuarry : public HasSession
                     break;
                 }
         } while( bContinue );
+    }
+
+    void clearCache( )
+    {
+        ++uiCurrTime;
+        for(auto& rX : xSessionTime)
+            rX.second = uiCurrTime;
+    }
+
+    void updateAll( const std::function<void( const std::string& )>& fPyPrint )
+    {
+        for( size_t uiNodeName = 0; uiNodeName < NodeNames::SIZE; uiNodeName++ )
+            update_helper( (NodeNames)uiNodeName, fPyPrint );
     }
 
     void setSession( const json& xSession )
@@ -641,16 +655,84 @@ class PartialQuarry : public HasSession
 
     using coordinate_t = interface_t::coordinate_t;
 
+    const std::string getFilePrefix( )
+    {
+        return pIndices->getFilePrefix( );
+    }
+
   private:
-    size_t uiBinWidth, uiBinHeight;
+    /**
+     * @brief Dependency Declared Access
+     *
+     * will throw warnings in DEBUG mode if accessed without declaration in the comp graph.
+     *
+     * @tparam T
+     */
+    template <typename T> class DepDec
+    {
+      private:
+        T xData;
+#ifndef NDEBUG
+        PartialQuarry* rQ;
+        std::string sName;
+        std::set<NodeNames> vWriteAccess;
+        std::set<NodeNames> vReadAccess;
+#endif
+
+      public:
+        DepDec( [[maybe_unused]] PartialQuarry* rQ, [[maybe_unused]] const std::string& sName )
+#ifndef NDEBUG
+            : rQ( rQ ), sName( sName )
+#endif
+        {}
+
+
+        const T& r( ) const
+        {
+#ifndef NDEBUG
+            if( rQ->xCurrNodeName != NodeNames::SIZE && vReadAccess.count( rQ->xCurrNodeName ) == 0 &&
+                vWriteAccess.count( rQ->xCurrNodeName ) == 0 )
+                std::cout << "undeclared data dependency warning: " << rQ->vGraph[ rQ->xCurrNodeName ].sNodeName
+                          << " reads from " << sName << " but does not declare this." << std::endl;
+#endif
+            return xData;
+        }
+
+        T& w( )
+        {
+#ifndef NDEBUG
+            if( rQ->xCurrNodeName != NodeNames::SIZE && vWriteAccess.count( rQ->xCurrNodeName ) == 0 )
+                std::cout << "undeclared data dependency warning: " << rQ->vGraph[ rQ->xCurrNodeName ].sNodeName
+                          << " writes to " << sName << " but does not declare this." << std::endl;
+#endif
+            return xData;
+        }
+
+        void registerWrite( [[maybe_unused]] const NodeNames& xNode )
+        {
+#ifndef NDEBUG
+            vWriteAccess.insert( xNode );
+#endif
+        }
+
+        void registerRead( [[maybe_unused]] const NodeNames& xNode )
+        {
+#ifndef NDEBUG
+            vReadAccess.insert( xNode );
+#endif
+        }
+    };
+
+    DepDec<size_t> uiBinWidth, uiBinHeight;
     int64_t iStartX, iStartY, iEndX, iEndY;
 
     std::array<std::vector<ChromDesc>, 2> vActiveChromosomes;
     std::array<std::vector<AxisCoord>, 2> vAxisCords;
-    std::vector<std::array<DecayCoord, 2>> vDistDepDecCoords;
+    std::array<std::vector<AxisCoord>, 2> vV4cCoords;
+    std::array<std::vector<AxisCoord>, 2> vIceCoords;
+    std::array<std::vector<std::array<DecayCoord, 2>>, 5> vDistDepDecCoords;
     std::array<std::vector<AxisRegion>, 2> vAxisRegions;
     std::vector<AxisCoord> vGridSeqCoords;
-    std::vector<AxisRegion> vGridSeqRegions;
     std::array<std::vector<std::vector<size_t>>, 2> vvGridSeqCoverageValues;
 
     std::vector<std::string> vActiveReplicates;
@@ -659,21 +741,21 @@ class PartialQuarry : public HasSession
 
     sps::IntersectionType xIntersect;
 
-    std::vector<std::array<BinCoord, 2>> vBinCoords;
-    std::vector<std::array<BinCoordRegion, 2>> vBinRegions;
+    std::array<std::vector<std::array<BinCoord, 2>>, 5> vBinCoords;
 
     std::array<std::vector<std::string>, 2> vActiveCoverage;
 
     size_t uiSymmetry;
     size_t iInGroupSetting, iBetweenGroupSetting;
 
-    std::vector<std::vector<size_t>> vvBinValues;
-    std::vector<std::vector<double>> vvDecayValues;
-    std::vector<std::array<size_t, 2>> vvFlatValues;
-    std::vector<std::array<double, 2>> vvFlatDecay;
-    std::array<size_t, 2> vvFlatTotal;
-    std::vector<std::array<double, 2>> vvNormalized;
-    std::vector<double> vCombined;
+    std::array<std::vector<std::vector<size_t>>, 5> vvBinValues;
+    std::array<std::vector<std::vector<double>>, 5> vvDecayValues;
+    std::array<std::vector<std::array<size_t, 2>>, 5> vvFlatValues;
+    std::array<std::vector<std::array<double, 2>>, 5> vvFlatDecay;
+    std::array<std::array<size_t, 2>, 5> vvFlatTotal;
+    std::array<std::vector<std::array<double, 2>>, 3> vvNormalized;
+    std::array<std::vector<double>, 3> vCombined;
+    std::array<std::vector<double>, 2> vFlat4C;
     std::vector<double> vDivided;
     std::vector<double> vScaled;
     std::vector<double> vRanged;
@@ -716,6 +798,7 @@ class PartialQuarry : public HasSession
     std::array<pybind11::dict, 2> xContigTicksCDS;
     std::array<pybind11::dict, 2> xTracksCDS;
     std::array<pybind11::list, 2> vTickLists;
+    std::array<pybind11::list, 2> vContigStartList;
     std::array<size_t, 2> vCanvasSize;
     std::array<std::array<double, 2>, 2> vvMinMaxTracks;
     double fMax, fMin;
@@ -729,15 +812,20 @@ class PartialQuarry : public HasSession
 
     std::vector<AnnoCoord> vGridSeqSamples;
     std::vector<AnnoCoord> vRadiclSeqSamples;
-    std::array<std::vector<AnnoCoord>, 2> vICESamples;
     std::vector<std::array<size_t, 2>> vRadiclSeqCoverage;
     std::vector<std::array<size_t, 2>> vRadiclSeqNumNonEmptyBins;
 
     std::vector<std::vector<size_t>> vvDatasetIdsPerReplAndChr;
+    std::array<std::vector<std::vector<size_t>>, 2> vBiasIdPerReplAndChr;
 
     size_t getDatasetIdfromReplAndChr( size_t uiRepl, size_t uiChrX, size_t uiChrY )
     {
         return vvDatasetIdsPerReplAndChr[ uiRepl ][ uiChrY + uiChrX * vActiveChromosomes[ 1 ].size( ) ];
+    }
+
+    size_t getBiasIdfromReplAndChr( size_t uiRepl, size_t uiI, size_t uiChr )
+    {
+        return vBiasIdPerReplAndChr[ uiI ][ uiRepl ][ uiChr ];
     }
 
     bool bCancel = false;
@@ -793,15 +881,23 @@ class PartialQuarry : public HasSession
     // coords.h
     bool setDirectionality( );
     // coords.h
+    const std::vector<AxisCoord>& pickXCoords(const size_t);
+    // coords.h
+    const std::vector<AxisCoord>& pickYCoords(const size_t);
+    // coords.h
     bool setBinCoords( );
     // coords.h
     bool setDecayCoords( );
+    // coords.h
+    bool setIceCoords( );
     // coords.h
     bool setLCS( );
     // coords.h
     bool setTicks( );
     // coords.h
     bool setCanvasSize( );
+    // coords.h
+    bool setV4cCoords( );
 
     // coords.h
     void regCoords( );
@@ -900,8 +996,6 @@ class PartialQuarry : public HasSession
     // normalization.h
     bool doNotNormalize( );
     // normalization.h
-    bool setDivided( );
-    // normalization.h
     bool normalizeSize( size_t );
     // normalization.h
     bool normalizeBinominalTest( );
@@ -926,13 +1020,13 @@ class PartialQuarry : public HasSession
     };
 
     // normalization.h
-    size_t iceGetCount( IceData&, size_t, size_t, bool );
+    size_t iceGetCount( IceData&, size_t, size_t, size_t, bool );
     // normalization.h
-    void icePreFilter( IceData&, bool, size_t, size_t, bool );
+    void icePreFilter( IceData&, bool, size_t, size_t, size_t, bool );
     // normalization.h
     void iceFilter( IceData&, size_t, size_t );
     // normalization.h
-    void iceTimesOuterProduct( IceData&, bool, size_t, size_t );
+    void iceTimesOuterProduct( IceData&, bool, size_t, size_t, size_t );
     // normalization.h
     void iceMarginalize( IceData&, bool, size_t, size_t );
     // normalization.h
@@ -942,7 +1036,7 @@ class PartialQuarry : public HasSession
     // normalization.h
     void iceDivByMargin( IceData&, bool, double, size_t, size_t );
     // normalization.h
-    void iceApplyBias( IceData&, bool, size_t, size_t );
+    void iceApplyBias( IceData&, bool, size_t, size_t, size_t );
     // normalization.h
     double iceMaxBias( IceData&, bool );
     // normalization.h
@@ -954,6 +1048,8 @@ class PartialQuarry : public HasSession
     bool setAnnotationColors( );
     // colors.h
     bool setCombined( );
+    // colors.h
+    bool setFlat4C( );
     // colors.h
     bool setScaled( );
     // colors.h
@@ -1021,24 +1117,41 @@ class PartialQuarry : public HasSession
     }
 
   public:
-    PartialQuarry( ) : HasSession( ), uiCurrTime( 1 ), vGraph( NodeNames::SIZE ), vGraphData( NodeNames::SIZE )
-    {
-        registerAll( );
-        ++uiCurrTime;
-    }
-
-    PartialQuarry( std::shared_ptr<SpsInterface<false>> pIndex )
-        : HasSession( *pIndex ),
+    PartialQuarry( std::shared_ptr<interface_t> pIndex )
+        : HasSession( pIndex ),
           uiCurrTime( 1 ),
           vGraph( NodeNames::SIZE ),
           vGraphData( NodeNames::SIZE ),
-          pIndices( pIndex )
+          pIndices( pIndex ),
+          uiBinWidth( this, "uiBinWidth" ),
+          uiBinHeight( this, "uiBinHeight" )
     {
         registerAll( );
         ++uiCurrTime;
+
+        // @todo-low-prio these should be declared while registering the nodes
+        // also every member variable should be wrapped with DepDec.
+        uiBinWidth.registerWrite( NodeNames::BinSize );
+        uiBinWidth.registerRead( NodeNames::ActiveChromLength );
+        uiBinWidth.registerRead( NodeNames::RenderArea );
+        uiBinWidth.registerRead( NodeNames::AxisCoords );
+        uiBinWidth.registerRead( NodeNames::IceCoords );
+        uiBinWidth.registerRead( NodeNames::RadiclSeqSamples );
+        uiBinWidth.registerRead( NodeNames::Normalized );
+
+        uiBinHeight.registerWrite( NodeNames::BinSize );
+        uiBinHeight.registerRead( NodeNames::ActiveChromLength );
+        uiBinHeight.registerRead( NodeNames::RenderArea );
+        uiBinHeight.registerRead( NodeNames::AxisCoords );
+        uiBinHeight.registerRead( NodeNames::IceCoords );
+        uiBinHeight.registerRead( NodeNames::RadiclSeqSamples );
+        uiBinHeight.registerRead( NodeNames::Normalized );
     }
 
-    PartialQuarry( std::string sPrefix ) : PartialQuarry( std::make_shared<SpsInterface<false>>( sPrefix ) )
+    PartialQuarry( ) : PartialQuarry( std::shared_ptr<interface_t>{ } )
+    {}
+
+    PartialQuarry( std::string sPrefix ) : PartialQuarry( std::make_shared<interface_t>( sPrefix ) )
     {}
 
     void copyFrom( const PartialQuarry& rOther )
@@ -1067,6 +1180,8 @@ class PartialQuarry : public HasSession
 
     // colors.h
     const pybind11::list getTickList( bool, const std::function<void( const std::string& )>& );
+    // colors.h
+    const pybind11::list getContigStartList( bool, const std::function<void( const std::string& )>& );
 
     // coords.h
     const std::vector<AxisCoord>& getAxisCoords( bool, const std::function<void( const std::string& )>& );
@@ -1163,24 +1278,27 @@ class PartialQuarry : public HasSession
     }
 
   public:
-    const pybind11::int_ interpretName( std::string sName, bool bXAxis, bool bBottom )
+    const pybind11::int_ interpretName( std::string sName, bool bXAxis, bool bBottom, bool bGenomicCoords )
     {
-        if( ( bBottom && sName == "*" ) || sName.size( ) == 0 || to_lower( sName ) == "start" )
+        sName = to_lower( sName );
+        if( ( bBottom && sName == "*" ) || sName.size( ) == 0 || sName == "start" )
             return pybind11::int_( 0 );
-        if( ( !bBottom && sName == "*" ) || sName.size( ) == 0 || to_lower( sName ) == "end" )
+        if( !bGenomicCoords && ( ( !bBottom && sName == "*" ) || sName.size( ) == 0 || sName == "end" ) )
             return pybind11::int_( vCanvasSize[ bXAxis ? 0 : 1 ] );
+        else if( bGenomicCoords && ( ( !bBottom && sName == "*" ) || sName.size( ) == 0 || sName == "end" ) )
+            return pybind11::int_( getValue<size_t>( { "contigs", "genome_size" } ) );
 
-        std::regex xName( to_lower( sName ) );
         size_t uiMaxPos = 0;
         const bool bSqueeze =
             this->xSession[ "settings" ][ "filters" ][ "anno_in_multiple_bins" ].get<std::string>( ) == "squeeze";
         std::string sCoords = getValue<std::string>( { "contigs", "annotation_coordinates" } );
         const bool bFullGenome =
+            bGenomicCoords ||
             !getValue<bool>( { "settings", "filters", bXAxis ? "anno_coords_col" : "anno_coords_row" } );
         size_t uiRunningPos = 0;
         for( auto xChr : vActiveChromosomes[ bXAxis ? 0 : 1 ] )
         {
-            bool bMatch = std::regex_search( to_lower( xChr.sName ), xName );
+            bool bMatch = to_lower( xChr.sName ).find( sName ) != std::string::npos;
             size_t uiLen = 0;
             if( bFullGenome )
                 uiLen = xChr.uiLength;
@@ -1206,44 +1324,15 @@ class PartialQuarry : public HasSession
             uiRunningPos += uiLen;
         }
 
-
-        // for( std::string sAnno : vActiveAnnotation[ bX ? 0 : 1 ] )
-        // {
-        //     auto& rJson = this->xSession[ "annotation" ][ "by_name" ][ sAnno ];
-        //     for( auto xChr : vActiveChromosomes[ bX ? 0 : 1 ] )
-        //         if( rJson.contains( xChr.sName ) )
-        //         {
-        //             int64_t iDataSetId = rJson[ xChr.sName ].get<int64_t>( );
-        //             pIndices->vAnno.iterate(
-        //                 iDataSetId,
-        //                 [ & ]( std::tuple<size_t, size_t, std::string, bool> xTup ) {
-        //                     std::string sSearch = sAnno + "=" + std::get<2>( xTup );
-        //                     size_t uiEq = stringCompare( sName, sSearch );
-        //                     if( uiEq > uiMaxEquality ||
-        //                         ( uiEq == uiMaxEquality && std::get<2>( xTup ).size( ) < uiMinRefSize ) )
-        //                     {
-        //                         uiMaxEquality = uiEq;
-        //                         uiMinRefSize = std::get<2>( xTup ).size( );
-        //                         if( bBottom )
-        //                             uiMaxPos = std::get<0>( xTup );
-        //                         else
-        //                             uiMaxPos = std::get<1>( xTup );
-        //                     }
-
-        //                     return true;
-        //                 },
-        //                 !bFullGenome && !bSqueeze, !bFullGenome && bSqueeze );
-        //         }
-        // }
         return pybind11::int_( uiMaxPos );
     }
 
     void printSizes( )
     {
-        std::cout << "vBinCoords " << vBinCoords.size( ) << std::endl;
-        std::cout << "vvBinValues " << vvBinValues.size( ) << std::endl;
-        std::cout << "vvFlatValues " << vvFlatValues.size( ) << std::endl;
-        std::cout << "vvNormalized " << vvNormalized.size( ) << std::endl;
+        std::cout << "vBinCoords " << vBinCoords[ 0 ].size( ) << std::endl;
+        std::cout << "vvBinValues " << vvBinValues[ 0 ].size( ) << std::endl;
+        std::cout << "vvFlatValues " << vvFlatValues[ 0 ].size( ) << std::endl;
+        std::cout << "vvNormalized " << vvNormalized[ 0 ].size( ) << std::endl;
         std::cout << "vCombined " << vCombined.size( ) << std::endl;
         std::cout << "vColored " << vColored.size( ) << std::endl;
     }
@@ -1300,6 +1389,9 @@ class PartialQuarry : public HasSession
                 }
                 sJoined += "<br/>";
             }
+            for( const NodeNames& rIncoming : rNode.vIncomingFunctions )
+                if( vGraph[ rIncoming ].bHidden )
+                    sJoined += "<i>[" + vGraph[ rIncoming ].sNodeName + "]</i><br/>";
             if( sJoined.size( ) > 0 )
             {
                 sRet += "\t" + rNode.sNodeName + "_in [shape=box, label=<" + sJoined + ">];\n";
@@ -1308,7 +1400,8 @@ class PartialQuarry : public HasSession
             if( rNodeData.bTerminal )
                 sRet += "\t" + rNode.sNodeName + " [shape=hexagon];\n";
             for( const NodeNames& rIncoming : rNode.vIncomingFunctions )
-                sRet += "\t" + vGraph[ rIncoming ].sNodeName + " -> " + rNode.sNodeName + ";\n";
+                if( !vGraph[ rIncoming ].bHidden )
+                    sRet += "\t" + vGraph[ rIncoming ].sNodeName + " -> " + rNode.sNodeName + ";\n";
         }
         return sRet + "}";
     }
