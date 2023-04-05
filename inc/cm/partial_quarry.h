@@ -1209,6 +1209,9 @@ class PartialQuarry : public HasSession
 
     // normalization.h
     const decltype( vScaled ) getScaled( const std::function<void( const std::string& )>& );
+    
+    // colors.h
+    const std::vector<double> getCombined( const std::function<void( const std::string& )>& );
 
     // bin_size.h
     const std::array<int64_t, 4> getDrawingArea( const std::function<void( const std::string& )>& );

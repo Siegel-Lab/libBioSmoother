@@ -236,6 +236,7 @@ PYBIND11_MODULE( libsmoothercpp, m )
         .def( "get_heatmap", &cm::PartialQuarry::getHeatmap ) //
         .def( "get_heatmap_export", &cm::PartialQuarry::getHeatmapExport ) //
         .def( "get_scaled", &cm::PartialQuarry::getScaled ) //
+        .def( "get_combined", &cm::PartialQuarry::getCombined ) //
         .def( "get_dot", &cm::PartialQuarry::getDOT ) //
         .def( "get_background_color", &cm::PartialQuarry::getBackgroundColor ) //
         .def( "get_ticks", &cm::PartialQuarry::getTicks ) //

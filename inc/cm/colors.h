@@ -410,6 +410,13 @@ const std::string& PartialQuarry::getBackgroundColor( const std::function<void( 
     return sBackgroundColor;
 }
 
+const std::vector<double>
+PartialQuarry::getCombined( const std::function<void( const std::string& )>& fPyPrint )
+{
+    update( NodeNames::Combined, fPyPrint );
+    return vCombined[0];
+}
+
 void PartialQuarry::regColors( )
 {
     registerNode( NodeNames::Colors,
