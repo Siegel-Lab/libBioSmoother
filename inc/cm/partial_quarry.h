@@ -1040,6 +1040,8 @@ class PartialQuarry : public HasSession
     // normalization.h
     void iceDivByMargin( IceData&, bool, double, size_t, size_t );
     // normalization.h
+    void rescaleBias( IceData&, bool, double, size_t, size_t );
+    // normalization.h
     double iceMaxBias( IceData&, bool );
     // normalization.h
     void regNormalization( );

@@ -38,7 +38,10 @@ def correlate(quarry, config_sample, sample_values, window_size, n_windows=10):
                 quarry.set_value(["area", "y_end"], y_start + window_size)
                 sample = quarry.get_heatmap_export(lambda s: None)
                 corrs_local.append(get_correlation(sample, default))
-        print(sum(corrs_local) / len(corrs_local), end="\t", flush=True)
+        v = sum(corrs_local) / len(corrs_local)
+        if True:
+            v = round(v, 3)
+        print(v, end="\t", flush=True)
 
 
 def correlate_icing(quarry, sample_values, window_size):
@@ -95,11 +98,15 @@ def __adjust_by_dividend(quarry, v):
     return max(1, v // div)
 
 
-SAMPLE_VALUES = [2**n for n in range(1, 14)]
+SAMPLE_VALUES = [2**n for n in range(4, 14)]
 KBP = 1000
 MBP = 1000 * KBP
-WINDOW_SIZES = [500 * KBP, 1 * MBP, 5 * MBP]
-BIN_SIZES = [10 * KBP, 50 * KBP, 100 * KBP]
+WINDOW_SIZES = [500 * KBP,
+                1 * MBP,
+                5 * MBP]
+BIN_SIZES = [10 * KBP,
+             50 * KBP,
+             100 * KBP]
 
 
 def correlate_all(
@@ -114,6 +121,9 @@ def correlate_all(
         # ("DDD", correlate_ddd),
     ]:
         quarry.set_value(["settings"], default_json)
+        quarry.set_value(["settings", "filters", "symmetry"], "mirror")
+        quarry.set_value(["settings", "filters", "cut_off_bin"], "smaller")
+        quarry.set_value(["settings", "filters", "show_contig_smaller_than_bin"], True)
         quarry.set_value(["settings", "interface", "fixed_bin_size"], True)
         quarry.set_value(["settings", "interface", "add_draw_area", "val"], 0)
         quarry.set_value(

@@ -167,6 +167,16 @@ void PartialQuarry::iceDivByMargin( IceData& rIceData, bool bCol, double fMean, 
     }
 }
 
+void PartialQuarry::rescaleBias( IceData& rIceData, bool bCol, double fMean, size_t uiFrom, size_t uiTo )
+{
+    for( size_t uiI = uiFrom; uiI < uiTo; uiI++ )
+    {
+        assert( uiI < rIceData.vSliceMargin[ bCol ? 0 : 1 ].size( ) );
+
+        rIceData.vSliceBias[ bCol ? 0 : 1 ][ uiI ] /= std::sqrt(fMean);
+    }
+}
+
 bool PartialQuarry::hasChr( size_t uiI, const std::string& sName )
 {
     for( size_t uiJ = 0; uiJ < this->vActiveChromosomes[ uiI ].size( ); uiJ++ )
@@ -707,6 +717,8 @@ bool PartialQuarry::normalizeIC( )
                 if( vVar[ 0 ] < fTol && vVar[ 1 ] < fTol )
                     break;
             }
+            for( bool bCol : { true, false } )
+                rescaleBias(xData, bCol, vMean[ bCol ? 0 : 1 ], 0, xData.vSliceBias[ bCol ? 0 : 1 ].size( ));
             CANCEL_RETURN;
             size_t uiMaxFlat = 0;
             for( size_t uiJ = 0; uiJ < vvFlatValues[ uiY ].size( ); uiJ++ )

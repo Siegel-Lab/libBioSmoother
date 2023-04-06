@@ -1162,7 +1162,7 @@ bool PartialQuarry::setIceCoords( )
     if( getValue<std::string>( { "settings", "normalization", "normalize_by" } ) != "ice" )
         END_RETURN;
 
-    size_t uiNumCoords = getValue<size_t>( { "settings", "normalization", "num_ice_bins", "val" } );
+    const size_t uiNumCoords = getValue<size_t>( { "settings", "normalization", "num_ice_bins", "val" } );
 
     for( size_t uiI = 0; uiI < 2; uiI++ )
     {
@@ -1175,11 +1175,12 @@ bool PartialQuarry::setIceCoords( )
             uiGenomeSize += this->vActiveChromosomes[ uiI ][ uiX ].uiLength;
 
         size_t uiGenomeStart = 0;
-        for( size_t uiX = 0; uiX < this->vActiveChromosomes[ uiI ].size( ); uiX++ )
+        for( size_t uiX = 0; uiX < this->vActiveChromosomes[ uiI ].size( ) && vIceCoords[uiI].size() < uiNumCoords; 
+             uiX++ )
         {
             const size_t uiGenomeLength = this->vActiveChromosomes[ uiI ][ uiX ].uiLength;
             size_t uiNextPos = 0;
-            while( uiNextPos < uiGenomeLength )
+            while( uiNextPos < uiGenomeLength && vIceCoords[uiI].size() < uiNumCoords )
             {
                 vIceCoords[ uiI ].push_back( AxisCoord{
                     //{

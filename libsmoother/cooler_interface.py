@@ -29,7 +29,8 @@ def icing(bin_values, axis_size):
         ".tmp.cooler", bins, pixels, symmetric_upper=False, triucheck=False
     )
     clr = cooler.Cooler(".tmp.cooler")
-    bias, stats = cooler.balance_cooler(clr)
+    # @todo these 3 filters should be in libsmoother not disabled here
+    bias, stats = cooler.balance_cooler(clr, ignore_diags=False, mad_max=0, min_nnz=0)
     ret = []
     for i, v in enumerate(bin_values):
         ret.append(v * bias[i // axis_size] * bias[i % axis_size])
