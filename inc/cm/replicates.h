@@ -352,8 +352,7 @@ template <typename v_t> v_t PartialQuarry::getFlatValue( std::vector<v_t> vColle
     if( iInGroupSetting == 4 )
     {
         if( vCollected.size( ) == 0 )
-            ;
-        return { };
+            return { };
         std::sort( vCollected.begin( ), vCollected.end( ) );
         return vCollected[ vCollected.size( ) / 2 ];
     }
