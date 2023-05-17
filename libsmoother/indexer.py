@@ -276,7 +276,7 @@ class Indexer:
             idx_list.append((len(cats) * 3 + 1, -doubles))
         return idx_list
 
-    def __get_cat_indices_2d(self, cat_x, cat_y):
+    def __get_cat_indices_2d(self, cat_x, cat_y, val):
         doubles = -1
         no_anno = True
         cat_to_idx = {True: {True: 1, False: 0}, False: {True: 2}}
@@ -284,12 +284,12 @@ class Indexer:
         for idx, (cx, cy) in enumerate(zip(cat_x, cat_y)):
             if cx or cy:
                 no_anno = False
-                idx_list.append((cat_to_idx[cx][cy] + idx * 3, 1))
+                idx_list.append((cat_to_idx[cx][cy] + idx * 3, val))
                 doubles += 1
         if no_anno:
-            return [(max(len(cat_x), len(cat_y)) * 3, 1)]
+            return [(max(len(cat_x), len(cat_y)) * 3, val)]
         if doubles > 0:
-            idx_list.append((max(len(cat_x), len(cat_y)) * 3 + 1, -doubles))
+            idx_list.append((max(len(cat_x), len(cat_y)) * 3 + 1, -doubles*val))
         return idx_list
 
     def add_replicate(
@@ -373,6 +373,7 @@ class Indexer:
                     strand_1,
                     strand_2,
                     map_q,
+                    cnt,
                 ) in read_iterator.itr_cell(chr_x, chr_y):
                     total_reads += 1
                     if no_category:
@@ -410,7 +411,7 @@ class Indexer:
                         same_strand_idx = 0 if bool(strand_1) == bool(strand_2) else 1
                         y_strand_idx = 0 if bool(strand_1) else 1
 
-                    for cat_idx, val in self.__get_cat_indices_2d(cat_x, cat_y):
+                    for cat_idx, val in self.__get_cat_indices_2d(cat_x, cat_y, cnt):
                         start = [
                             act_pos_1_s,
                             act_pos_2_s,

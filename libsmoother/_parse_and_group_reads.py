@@ -79,11 +79,36 @@ def parse_tsv(in_filename, test, chr_filter, line_format, progress_print=print):
 
 
 def parse_heatmap(in_filename, test, chr_filter, progress_print=print):
+    def helper_5_col(*cols):
+        chr_1, pos_1, chr_2, pos_2, cnt = cols
+        if isinstance(pos_1, int) and isinstance(pos_2, int) and isinstance(cnt, int):
+            return (
+                None,
+                [chr_1, chr_2],
+                [pos_1, pos_2],
+                ["", ""],
+                ["?", "?"],
+                ["+", "+"],
+                cnt,
+            )
+        read_name, chr_1, pos_1, chr_2, pos_2 = cols
+        return (
+                read_name,
+                [chr_1, chr_2],
+                [pos_1, pos_2],
+                ["", ""],
+                ["?", "?"],
+                ["+", "+"],
+                1,
+            )
+
+
     yield from parse_tsv(
         in_filename,
         test,
         chr_filter,
         {
+            5: helper_5_col,
             5: lambda read_name, chr_1, pos_1, chr_2, pos_2: (
                 read_name,
                 [chr_1, chr_2],
@@ -91,6 +116,7 @@ def parse_heatmap(in_filename, test, chr_filter, progress_print=print):
                 ["", ""],
                 ["?", "?"],
                 ["+", "+"],
+                1,
             ),
             7: lambda read_name, chr_1, pos_1, chr_2, pos_2, mapq_1, mapq_2: (
                 read_name,
@@ -99,6 +125,7 @@ def parse_heatmap(in_filename, test, chr_filter, progress_print=print):
                 [mapq_1, mapq_2],
                 ["?", "?"],
                 ["+", "+"],
+                1,
             ),
             9: lambda read_name, chr_1, pos_1, chr_2, pos_2, mapq_1, mapq_2, tag_a, tag_b: (
                 read_name,
@@ -107,6 +134,7 @@ def parse_heatmap(in_filename, test, chr_filter, progress_print=print):
                 [mapq_1, mapq_2],
                 [tag_a, tag_b],
                 ["+", "+"],
+                1,
             ),
             11: lambda read_name, str1, chr_1, pos_1, _2, str2, chr_2, pos_2, _4, mapq_1, mapq_2: (
                 read_name,
@@ -115,6 +143,7 @@ def parse_heatmap(in_filename, test, chr_filter, progress_print=print):
                 [mapq_1, mapq_2],
                 ["?", "?"],
                 [str1, str2],
+                1,
             ),
             13: lambda read_name, str1, chr_1, pos_1, _2, str2, chr_2, pos_2, _4, mapq_1, mapq_2, tag_a, tag_b: (
                 read_name,
@@ -123,6 +152,7 @@ def parse_heatmap(in_filename, test, chr_filter, progress_print=print):
                 [mapq_1, mapq_2],
                 [tag_a, tag_b],
                 [str1, str2],
+                1,
             ),
         },
         progress_print,
@@ -132,7 +162,7 @@ def parse_heatmap(in_filename, test, chr_filter, progress_print=print):
 def force_upper_triangle(
     in_filename, test, chr_filter, progress_print=print, parse_func=parse_heatmap
 ):
-    for line, read_name, chrs, poss, mapqs, tags, strand in parse_func(
+    for line, read_name, chrs, poss, mapqs, tags, strand, cnt in parse_func(
         in_filename, test, chr_filter, progress_print
     ):
         order = [
@@ -151,7 +181,7 @@ def force_upper_triangle(
             tags_out.append(tags[idx])
             strand_out.append(strand[idx])
 
-        yield line, read_name, chrs_out, poss_out, mapqs_out, tags_out, strand_out
+        yield line, read_name, chrs_out, poss_out, mapqs_out, tags_out, strand_out, cnt
 
 
 def parse_track(in_filename, test, chr_filter, progress_print=print):
@@ -207,6 +237,7 @@ def group_reads(
     test=False,
 ):
     curr_read_name = None
+    curr_count = None
     group = []
 
     def deal_with_group():
@@ -234,7 +265,7 @@ def group_reads(
             map_q = min([max(x for _1, _2, x, _3 in g) for g in group])
             if min(len(g) for g in group) > 1:
                 map_q += 1
-            yield curr_read_name, chrs, pos_s, pos_e, map_q, strands
+            yield curr_read_name, chrs, pos_s, pos_e, map_q, strands, curr_count
         group = []
 
     for (
@@ -245,10 +276,12 @@ def group_reads(
         mapqs,
         tags,
         strands,
+        cnt,
     ) in parse_func(in_filename, test, chr_filter, progress_print):
-        if read_name != curr_read_name and len(group) > 0 and len(group[0]) > 0:
+        if (curr_read_name is None or read_name != curr_read_name) and len(group) > 0 and len(group[0]) > 0:
             yield from deal_with_group()
         curr_read_name = read_name
+        curr_count = cnt
         for idx, (chr_, pos, mapq, tag, strand) in enumerate(
             zip(chrs, poss, mapqs, tags, strands)
         ):
@@ -338,6 +371,7 @@ def chr_order_heatmap(
         pos_e,
         map_q,
         strands,
+        cnt,
     ) in group_reads(
         in_filename, file_size, chr_filter, progress_print, parse_func, no_groups, test
     ):
@@ -358,6 +392,7 @@ def chr_order_heatmap(
                 strands[0],
                 strands[1],
                 map_q,
+                cnt,
             )
         )
 
