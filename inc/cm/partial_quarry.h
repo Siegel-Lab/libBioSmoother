@@ -821,6 +821,7 @@ class PartialQuarry : public HasSession
     std::array<std::vector<std::vector<size_t>>, 2> vBiasIdPerReplAndChr;
 
     std::array<std::array<std::vector<double>, 2>, 2> vIceSliceBias;
+    size_t uiIceFilterIgnoreDiags;
 
     size_t getDatasetIdfromReplAndChr( size_t uiRepl, size_t uiChrX, size_t uiChrY )
     {

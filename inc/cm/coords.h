@@ -1178,9 +1178,9 @@ bool PartialQuarry::setIceCoords( )
         for( size_t uiX = 0; uiX < this->vActiveChromosomes[ uiI ].size( ) && vIceCoords[uiI].size() < uiNumCoords; 
              uiX++ )
         {
-            const size_t uiGenomeLength = this->vActiveChromosomes[ uiI ][ uiX ].uiLength;
+            const size_t uiContigLength = this->vActiveChromosomes[ uiI ][ uiX ].uiLength;
             size_t uiNextPos = 0;
-            while( uiNextPos < uiGenomeLength && vIceCoords[uiI].size() < uiNumCoords )
+            while( uiNextPos < uiContigLength && vIceCoords[uiI].size() < uiNumCoords )
             {
                 vIceCoords[ uiI ].push_back( AxisCoord{
                     //{
@@ -1197,7 +1197,7 @@ bool PartialQuarry::setIceCoords( )
             }
 
 
-            uiGenomeStart += uiGenomeLength;
+            uiGenomeStart += uiContigLength;
         }
     }
 

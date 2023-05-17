@@ -8,7 +8,6 @@ import os
 import shutil
 from .parameters import list_parameters, values_for_parameter, open_valid_json
 from .test import test
-from .normalization_correlation import correlate_all
 
 
 def init(args):
@@ -141,10 +140,6 @@ def info_smoother(args):
 
 def test_smoother(args):
     test(Quarry(args.index_prefix), args.seed, args.skip_first)
-
-
-def cor_smoother(args):
-    correlate_all(Quarry(args.index_prefix))
 
 
 def add_parsers(main_parser):
@@ -378,13 +373,6 @@ def add_parsers(main_parser):
         "-s", "--skip_first", help="Skip the first x many test", default=0, type=int
     )
     test_parser.set_defaults(func=test_smoother)
-
-    cor_parser = main_parser.add_parser("correlate_norm", help=argparse.SUPPRESS)
-    cor_parser.add_argument(
-        "index_prefix",
-        help="Prefix that was used to create the index (see the init subcommand).",
-    )
-    cor_parser.set_defaults(func=cor_smoother)
 
 
 def make_main_parser():

@@ -69,6 +69,25 @@ size_t PartialQuarry::iceGetCount( IceData& rIceData, size_t uiX, size_t uiY, si
 void PartialQuarry::iceFilter( IceData& /*rIceData*/, size_t /*uiFrom*/, size_t /*uiTo*/ )
 {}
 
+/*
+
+    if mad_max > 0:
+        offsets = clr._load_dset("indexes/chrom_offset")
+        for lo, hi in zip(offsets[:-1], offsets[1:]):
+            c_marg = marg[lo:hi]
+            marg[lo:hi] /= np.median(c_marg[c_marg > 0])
+        logNzMarg = np.log(marg[marg > 0])
+        med_logNzMarg = np.median(logNzMarg)
+        dev_logNzMarg = mad(logNzMarg)
+        cutoff = np.exp(med_logNzMarg - mad_max * dev_logNzMarg)
+        bias[marg < cutoff] = 0
+
+*/
+//void icePreFilterMadMax()
+//{
+//    double fMadMax = getValue<double>( { "settings", "normalization", "ice_mad_max", "val" } );
+//}
+
 void PartialQuarry::icePreFilter( IceData& rIceData, bool bCol, size_t uiFrom, size_t uiTo, size_t uiY, bool bA )
 {
     // filter out rows and columns that have less than 1/4 of their cells filled

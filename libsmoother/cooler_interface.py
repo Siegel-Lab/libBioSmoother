@@ -30,6 +30,7 @@ def icing(bin_values, axis_size):
     )
     clr = cooler.Cooler(".tmp.cooler")
     # @todo these 3 filters should be in libsmoother not disabled here
+    # ignore_diags -> diagonal filter already in there
     bias, stats = cooler.balance_cooler(clr, ignore_diags=False, mad_max=0, min_nnz=0)
     ret = []
     for i, v in enumerate(bin_values):
