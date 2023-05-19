@@ -1010,6 +1010,7 @@ class PartialQuarry : public HasSession
     bool normalizeGridSeq( );
     // normalization.h
     bool normalizeIC( );
+    bool normalizeSymmIC( );
     // normalization.h
     bool normalizeCoolIC( );
     // normalization.h
@@ -1023,27 +1024,42 @@ class PartialQuarry : public HasSession
         std::array<std::vector<double>, 2> vSliceMargin;
         std::vector<double> vBiases;
     };
+    struct SymmIceData
+    {
+        std::vector<double> vSliceBias;
+        std::vector<double> vSliceMargin;
+        std::vector<double> vBiases;
+    };
 
     // normalization.h
     size_t iceGetCount( IceData&, size_t, size_t, size_t, bool );
+    size_t iceGetCount( SymmIceData&, size_t, size_t, size_t, bool );
     // normalization.h
     void icePreFilter( IceData&, bool, size_t, size_t, size_t, bool );
     // normalization.h
     void iceFilter( IceData&, size_t, size_t );
+    void iceFilter( SymmIceData&, size_t, size_t );
     // normalization.h
     void iceTimesOuterProduct( IceData&, bool, size_t, size_t, size_t );
+    void iceTimesOuterProduct( SymmIceData&, bool, size_t, size_t, size_t );
     // normalization.h
     void iceMarginalize( IceData&, bool, size_t, size_t );
+    void iceMarginalize( SymmIceData&, size_t, size_t );
     // normalization.h
     double iceNonZeroMarginVariance( IceData&, bool, double );
+    double iceNonZeroMarginVariance( SymmIceData&, double );
     // normalization.h
     double iceNonZeroMarginMean( IceData&, bool );
+    double iceNonZeroMarginMean( SymmIceData& );
     // normalization.h
     void iceDivByMargin( IceData&, bool, double, size_t, size_t );
+    void iceDivByMargin( SymmIceData&, double, size_t, size_t );
     // normalization.h
     void rescaleBias( IceData&, bool, double, size_t, size_t );
+    void rescaleBias( SymmIceData&, double, size_t, size_t );
     // normalization.h
     double iceMaxBias( IceData&, bool );
+    double iceMaxBias( SymmIceData& );
     // normalization.h
     void regNormalization( );
 
