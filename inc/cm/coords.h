@@ -635,35 +635,39 @@ bool PartialQuarry::setActiveChromLength( )
     END_RETURN;
 }
 
+std::pair<std::vector<AxisCoord>, std::vector<AxisRegion>> PartialQuarry::setAxisCoordsHelper(bool bX )
+{
+    const bool bAnnoCoords =
+        getValue<bool>( { "settings", "filters", bX ? "anno_coords_col" : "anno_coords_row" } );
+    if( !bAnnoCoords )
+        return axisCoordsHelper(
+            bX ? uiBinWidth.r( ) : uiBinHeight.r( ),
+            bX ? std::max( (int64_t)0, this->iStartX ) : std::max( (int64_t)0, this->iStartY ),
+            bX ? std::max( (int64_t)0, this->iEndX ) : std::max( (int64_t)0, this->iEndY ),
+            smaller_bin_to_num( getValue<std::string>( { "settings", "filters", "cut_off_bin" } ) ),
+            getValue<bool>( { "settings", "filters", "show_contig_smaller_than_bin" } ),
+            this->vActiveChromosomes[ bX ? 0 : 1 ],
+            this->bCancel );
+    else
+        return annoCoordsHelper<SpsInterface<false>::anno_t>(
+            bX ? uiBinWidth.r( ) : uiBinHeight.r( ),
+            bX ? std::max( (int64_t)0, this->iStartX ) : std::max( (int64_t)0, this->iStartY ),
+            bX ? std::max( (int64_t)0, this->iEndX ) : std::max( (int64_t)0, this->iEndY ),
+            smaller_bin_to_num( getValue<std::string>( { "settings", "filters", "cut_off_bin" } ) ),
+            multiple_anno( getValue<std::string>( { "settings", "filters", "multiple_annos_in_bin" } ) ),
+            multiple_bins( getValue<std::string>( { "settings", "filters", "anno_in_multiple_bins" } ) ),
+            this->vActiveChromosomes[ bX ? 0 : 1 ], this->bCancel,
+            getValue<json>(
+                { "annotation", "by_name", getValue<std::string>( { "contigs", "annotation_coordinates" } ) } ),
+            pIndices->vAnno );
+}
+
 bool PartialQuarry::setAxisCoords( )
 {
     for( bool bX : { true, false } )
     {
-        const bool bAnnoCoords =
-            getValue<bool>( { "settings", "filters", bX ? "anno_coords_col" : "anno_coords_row" } );
         CANCEL_RETURN;
-        std::pair<std::vector<AxisCoord>, std::vector<AxisRegion>> xRet;
-        if( !bAnnoCoords )
-            xRet = axisCoordsHelper(
-                bX ? uiBinWidth.r( ) : uiBinHeight.r( ),
-                bX ? std::max( (int64_t)0, this->iStartX ) : std::max( (int64_t)0, this->iStartY ),
-                bX ? std::max( (int64_t)0, this->iEndX ) : std::max( (int64_t)0, this->iEndY ),
-                smaller_bin_to_num( getValue<std::string>( { "settings", "filters", "cut_off_bin" } ) ),
-                getValue<bool>( { "settings", "filters", "show_contig_smaller_than_bin" } ),
-                this->vActiveChromosomes[ bX ? 0 : 1 ],
-                this->bCancel );
-        else
-            xRet = annoCoordsHelper<SpsInterface<false>::anno_t>(
-                bX ? uiBinWidth.r( ) : uiBinHeight.r( ),
-                bX ? std::max( (int64_t)0, this->iStartX ) : std::max( (int64_t)0, this->iStartY ),
-                bX ? std::max( (int64_t)0, this->iEndX ) : std::max( (int64_t)0, this->iEndY ),
-                smaller_bin_to_num( getValue<std::string>( { "settings", "filters", "cut_off_bin" } ) ),
-                multiple_anno( getValue<std::string>( { "settings", "filters", "multiple_annos_in_bin" } ) ),
-                multiple_bins( getValue<std::string>( { "settings", "filters", "anno_in_multiple_bins" } ) ),
-                this->vActiveChromosomes[ bX ? 0 : 1 ], this->bCancel,
-                getValue<json>(
-                    { "annotation", "by_name", getValue<std::string>( { "contigs", "annotation_coordinates" } ) } ),
-                pIndices->vAnno );
+        std::pair<std::vector<AxisCoord>, std::vector<AxisRegion>> xRet = setAxisCoordsHelper(bX);
         this->vAxisCords[ bX ? 0 : 1 ] = xRet.first;
         this->vAxisRegions[ bX ? 0 : 1 ] = xRet.second;
     }
@@ -675,21 +679,26 @@ bool PartialQuarry::setGridSeqCoords( )
 {
     if( getValue<std::string>( { "settings", "normalization", "normalize_by" } ) == "grid-seq" )
     {
-        size_t uiGenomeSize = 0;
-        for( ChromDesc& rDesc : this->vActiveChromosomes[ 0 ] )
+        if( getValue<bool>( { "settings", "normalization", "grid_seq_local" } ) )
+            vGridSeqCoords = setAxisCoordsHelper(true).first;
+        else
         {
-            CANCEL_RETURN;
-            uiGenomeSize += rDesc.uiLength;
-        }
+            size_t uiGenomeSize = 0;
+            for( ChromDesc& rDesc : this->vActiveChromosomes[ 0 ] )
+            {
+                CANCEL_RETURN;
+                uiGenomeSize += rDesc.uiLength;
+            }
 
-        auto xRet = annoCoordsHelper<SpsInterface<false>::anno_t>(
-            uiGenomeSize / getValue<size_t>( { "settings", "normalization", "grid_seq_samples", "val" } ), 0,
-            uiGenomeSize, 0 /*<- unused */, 1 /* use first annotation in bin */,
-            1 /* stretch bin over entire annotation*/, this->vActiveChromosomes[ 0 ], this->bCancel,
-            getValue<json>( { "annotation", "by_name",
-                              getValue<std::string>( { "settings", "normalization", "grid_seq_annotation" } ) } ),
-            pIndices->vAnno );
-        vGridSeqCoords = xRet.first;
+            auto xRet = annoCoordsHelper<SpsInterface<false>::anno_t>(
+                uiGenomeSize / getValue<size_t>( { "settings", "normalization", "grid_seq_samples", "val" } ), 0,
+                uiGenomeSize, 0 /*<- unused */, 1 /* use first annotation in bin */,
+                1 /* stretch bin over entire annotation*/, this->vActiveChromosomes[ 0 ], this->bCancel,
+                getValue<json>( { "annotation", "by_name",
+                                getValue<std::string>( { "settings", "normalization", "grid_seq_annotation" } ) } ),
+                pIndices->vAnno );
+            vGridSeqCoords = xRet.first;
+        }
     }
     else
         vGridSeqCoords.clear( );
@@ -1418,6 +1427,7 @@ void PartialQuarry::regCoords( )
                                /*.vIncomingSession =*/
                                { { "settings", "normalization", "grid_seq_samples", "val" },
                                  { "settings", "normalization", "grid_seq_annotation" },
+                                 { "settings", "normalization", "grid_seq_local" },
                                  { "annotation", "by_name" },
                                  { "settings", "normalization", "normalize_by" } },
                                /*.vSessionsIncomingInPrevious =*/{ },

@@ -756,6 +756,7 @@ class PartialQuarry : public HasSession
     std::array<std::vector<std::array<double, 2>>, NUM_COORD_SYSTEMS> vvFlatDecay;
     std::array<std::array<size_t, 2>, NUM_COORD_SYSTEMS> vvFlatTotal;
     std::array<std::vector<std::array<double, 2>>, 3> vvNormalized;
+    std::array<std::vector<std::array<double, 2>>, 3> vvNormalizedDDD;
     std::array<std::vector<double>, 3> vCombined;
     std::array<std::vector<double>, 2> vFlat4C;
     std::vector<double> vDivided;
@@ -873,6 +874,7 @@ class PartialQuarry : public HasSession
     // coords.h
     bool setAnnoFilters( );
     // coords.h
+    std::pair<std::vector<AxisCoord>, std::vector<AxisRegion>> setAxisCoordsHelper(bool);
     bool setAxisCoords( );
 
     // coords.h

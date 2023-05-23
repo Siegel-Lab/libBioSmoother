@@ -86,6 +86,8 @@
         "radicl_seq_axis_is_column": true,
         "grid_seq_filter_intersection": true,
         "grid_seq_display_background": true,
+        "grid_seq_local": false,
+        "ddd_all_samples": false,
         "radicl_seq_display_coverage": true,
         "ice_show_bias": false,
         "ice_local": false,

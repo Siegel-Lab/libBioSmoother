@@ -185,6 +185,7 @@ bool PartialQuarry::setBinValues( )
 
 bool PartialQuarry::setDecayValues( )
 {
+    std::vector<size_t> vvVals;
     for( size_t uiY = 0; uiY < NUM_COORD_SYSTEMS; uiY++ )
     {
         vvDecayValues[ uiY ].clear( );
@@ -193,6 +194,9 @@ bool PartialQuarry::setDecayValues( )
         size_t uiMinuend = getValue<size_t>( { "settings", "normalization", "min_interactions", "val" } );
         size_t uiSamplesMin = getValue<size_t>( { "settings", "normalization", "ddd_samples", "val_min" } );
         size_t uiSamplesMax = getValue<size_t>( { "settings", "normalization", "ddd_samples", "val_max" } );
+        bool bAllSamples = getValue<bool>( { "settings", "normalization", "ddd_all_samples" } );
+        if(bAllSamples)
+            uiSamplesMax = 1;
         double fQuantExcl =
             ( 1.0 - getValue<double>( { "settings", "normalization", "ddd_quantile", "val" } ) / 100.0 ) / 2.0;
 
@@ -234,11 +238,15 @@ bool PartialQuarry::setDecayValues( )
 
                                 int64_t iMyH = std::max( (int64_t)1, vCoords[ uiI ].iTo - vCoords[ uiI ].iFrom );
                                 int64_t iH = std::max( (int64_t)1, ( ( iTop - iMyH ) - iBot ) / (int64_t)uiSamplesMax );
+                                if(bAllSamples)
+                                    iH = 1;
 
                                 if( ( iTop - iMyH ) - iBot >= (int64_t)( uiSamplesMin - 1 ) * iMyH )
                                 {
-                                    std::vector<size_t> vvVals;
-                                    vvVals.reserve( uiSamplesMax );
+                                    vvVals.clear();
+                                    vvVals.reserve( std::min( (int64_t)uiSamplesMax, (int64_t)(iTop - iBot)) );
+                                    if(bAllSamples)
+                                        vvVals.reserve(iTop - iBot);
                                     for( int64_t iMyBot = iBot; iMyBot <= iTop - iMyH; iMyBot += iH )
                                     {
                                         int64_t iMyTop = iMyBot + iMyH;

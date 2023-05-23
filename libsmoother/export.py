@@ -788,8 +788,8 @@ def __draw_contigs(session, d, sizes, print_callback=lambda s: None):
             (minmax(e, o, w + o) + minmax(s, o, w + o)) / 2
             for s, e in zip(contig_starts_y[:-1], contig_starts_y[1:])
         ]
-        contig_names_x = session.get_ticks(True, print_callback)["contig_names"]
-        contig_names_y = session.get_ticks(False, print_callback)["contig_names"]
+        contig_names_x = session.get_contig_ticks(True, print_callback)["contig_names"]
+        contig_names_y = session.get_contig_ticks(False, print_callback)["contig_names"]
         __draw_tick_lines(
             d,
             contig_centers_x,

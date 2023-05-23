@@ -137,8 +137,7 @@ void PartialQuarry::iceTimesOuterProduct( SymmIceData& rIceData, bool bA, size_t
     const size_t uiH = rIceData.vSliceBias.size( );
     for( size_t uiI = uiFrom; uiI < uiTo; uiI++ )
     {
-        assert( uiI / uiH < rIceData.vSliceBias[ 0 ].size( ) );
-        assert( uiI % uiH < rIceData.vSliceBias[ 1 ].size( ) );
+        assert( uiI / uiH < rIceData.vSliceBias.size( ) );
         assert( uiI < rIceData.vBiases.size( ) );
         rIceData.vBiases[ uiI ] = rIceData.vSliceBias[ uiI / uiH ] * rIceData.vSliceBias[ uiI % uiH ] *
                                   iceGetCount( rIceData, uiI / uiH, uiI % uiH, uiY, bA );
@@ -1047,18 +1046,32 @@ bool PartialQuarry::setNormalized( )
 bool PartialQuarry::setDistDepDecayRemoved( )
 {
     if( getValue<bool>( { "settings", "normalization", "ddd" } ) )
-        for( size_t uiY = 0; uiY < 5; uiY++ )
-            for( size_t uiI = 0; uiI < vvNormalized[ uiY ].size( ); uiI++ )
+    {
+        for( size_t uiY = 0; uiY < 3; uiY++ )
+        {
+            vvNormalizedDDD[uiY].resize(vvNormalized[ uiY ].size());
+            assert(vBinCoords[ uiY ].size() <= vvNormalized[ uiY ].size());
+            for( size_t uiI = 0; uiI < vBinCoords[ uiY ].size( ); uiI++ )
                 for( size_t uiJ = 0; uiJ < 2; uiJ++ )
                     if( vBinCoords[ uiY ][ uiI ][ uiJ ].uiDecayCoordIndex != std::numeric_limits<size_t>::max( ) )
                     {
                         CANCEL_RETURN;
                         if( vvFlatDecay[ uiY ][ vBinCoords[ 0 ][ uiI ][ uiJ ].uiDecayCoordIndex ][ uiJ ] > 0 )
-                            vvNormalized[ uiY ][ uiI ][ uiJ ] /=
-                                vvFlatDecay[ uiY ][ vBinCoords[ 0 ][ uiI ][ uiJ ].uiDecayCoordIndex ][ uiJ ];
+                            vvNormalizedDDD[ uiY ][ uiI ][ uiJ ] =
+                                vvNormalized[ uiY ][ uiI ][ uiJ ] / vvFlatDecay[ uiY ][ vBinCoords[ 0 ][ uiI ][ uiJ ].uiDecayCoordIndex ][ uiJ ];
                         else
-                            vvNormalized[ uiY ][ uiI ][ uiJ ] = 0;
+                            vvNormalizedDDD[ uiY ][ uiI ][ uiJ ] = 0;
                     }
+        }
+    }
+    else
+        for( size_t uiY = 0; uiY < 3; uiY++ )
+        {
+            vvNormalizedDDD[uiY].resize(vvNormalized[ uiY ].size());
+            for( size_t uiI = 0; uiI < vBinCoords[ uiY ].size( ); uiI++ )
+                for( size_t uiJ = 0; uiJ < 2; uiJ++ )
+                    vvNormalizedDDD[uiY][ uiI ][ uiJ ] = vvNormalized[ uiY ][ uiI ][ uiJ ];
+        }
     END_RETURN;
 }
 

@@ -885,7 +885,7 @@ void PartialQuarry::regCoverage( )
                                /*.fFunc =*/&PartialQuarry::setTracks,
                                /*.vIncomingFunctions =*/
                                { NodeNames::LCS, NodeNames::AnnotationColors, NodeNames::CoverageValues,
-                                 NodeNames::Flat4C, NodeNames::Normalized },
+                                 NodeNames::Flat4C, NodeNames::DistDepDecayRemoved },
                                /*.vIncomingSession =*/
                                { { "settings", "normalization", "display_ice_remainder" },
                                  { "settings", "normalization", "grid_seq_display_background" },

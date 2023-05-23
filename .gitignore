@@ -32,3 +32,4 @@ libsmoothercpp*.so
 *.pyd
 build/*
 test/test_data/*
+*.pickle

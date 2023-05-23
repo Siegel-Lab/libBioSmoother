@@ -18,8 +18,9 @@ def __test_config(quarry, name, idx, skip_first):
     if idx >= skip_first:
         try:
             quarry.clear_cache()
-            print("[" + str(idx) + "]", name)
+            print("[" + str(idx) + "]", name, end=" ", flush=True)
             quarry.update_all(lambda s: None)
+            print("[OK]")
         except Exception:
             traceback.print_exc()
 
@@ -77,22 +78,20 @@ def __test_default_configs(quarry, default_json, valid_json, idx, skip_first):
         )
     return idx
 
+EXCLUDE_SLOWDOWN = [
+    ["interface", "max_num_bins"],
+    ["interface", "fixed_bin_size"],
+    ["interface", "fixed_number_of_bins"],
+    ["normalization", "ddd_samples"],
+    ["normalization", "grid_seq_samples"],
+    ["normalization", "radicl_seq_samples"],
+]
 
 def __config_randomly(quarry, default_json, valid_json):
     __configure(quarry, default_json)
     for p in list_parameters(default_json, valid_json):
         # these will slow down rendering unnecessarily
-        if p == ["interface", "max_num_bins"]:
-            continue
-        if p == ["interface", "fixed_bin_size"]:
-            continue
-        if p == ["interface", "fixed_number_of_bins"]:
-            continue
-        if p == ["normalization", "ddd_samples"]:
-            continue
-        if p == ["normalization", "grid_seq_samples"]:
-            continue
-        if p == ["normalization", "radicl_seq_samples"]:
+        if p in EXCLUDE_SLOWDOWN:
             continue
 
         d = json_get(p, default_json)
