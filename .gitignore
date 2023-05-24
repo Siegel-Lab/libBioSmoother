@@ -33,3 +33,6 @@ libsmoothercpp*.so
 build/*
 test/test_data/*
 *.pickle
+*.shelf.dat
+*.shelf.dir
+*.shelf.bak
