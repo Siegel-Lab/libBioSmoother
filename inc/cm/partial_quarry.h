@@ -211,7 +211,6 @@ class PartialQuarry : public HasSession
         AnnoFilters,
         LCS,
         CanvasSize,
-        GridSeqCoords,
         MappingQuality,
         Directionality,
         RankedSlicesCDS,
@@ -734,7 +733,6 @@ class PartialQuarry : public HasSession
     std::array<std::vector<AxisCoord>, 2> vIceCoords;
     std::array<std::vector<std::array<DecayCoord, 2>>, NUM_COORD_SYSTEMS> vDistDepDecCoords;
     std::array<std::vector<AxisRegion>, 2> vAxisRegions;
-    std::vector<AxisCoord> vGridSeqCoords;
     std::array<std::vector<std::vector<size_t>>, 2> vvGridSeqCoverageValues;
 
     std::vector<std::string> vActiveReplicates;
@@ -908,8 +906,6 @@ class PartialQuarry : public HasSession
 
     // coords.h
     void regCoords( );
-    // coords.h
-    bool setGridSeqCoords( );
 
     // replicates.h
     bool setIntersectionType( );

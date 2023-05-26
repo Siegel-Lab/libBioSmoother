@@ -108,8 +108,8 @@ bool PartialQuarry::setRenderArea( )
         iStartX = uiL - ( uiL % uiBinWidth.r( ) );
         iStartY = uiB - ( uiB % uiBinHeight.r( ) );
 
-        iEndX = uiR + uiBinWidth.r( ) - ( uiR % uiBinWidth.r( ) );
-        iEndY = uiT + uiBinHeight.r( ) - ( uiT % uiBinHeight.r( ) );
+        iEndX = uiR - ( uiR % uiBinWidth.r( ) );
+        iEndY = uiT - ( uiT % uiBinHeight.r( ) );
     }
     END_RETURN;
 }

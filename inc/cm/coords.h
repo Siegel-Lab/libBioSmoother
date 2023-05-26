@@ -675,37 +675,6 @@ bool PartialQuarry::setAxisCoords( )
     END_RETURN;
 }
 
-bool PartialQuarry::setGridSeqCoords( )
-{
-    if( getValue<std::string>( { "settings", "normalization", "normalize_by" } ) == "grid-seq" )
-    {
-        if( getValue<bool>( { "settings", "normalization", "grid_seq_local" } ) )
-            vGridSeqCoords = setAxisCoordsHelper(true).first;
-        else
-        {
-            size_t uiGenomeSize = 0;
-            for( ChromDesc& rDesc : this->vActiveChromosomes[ 0 ] )
-            {
-                CANCEL_RETURN;
-                uiGenomeSize += rDesc.uiLength;
-            }
-
-            auto xRet = annoCoordsHelper<SpsInterface<false>::anno_t>(
-                uiGenomeSize / getValue<size_t>( { "settings", "normalization", "grid_seq_samples", "val" } ), 0,
-                uiGenomeSize, 0 /*<- unused */, 1 /* use first annotation in bin */,
-                1 /* stretch bin over entire annotation*/, this->vActiveChromosomes[ 0 ], this->bCancel,
-                getValue<json>( { "annotation", "by_name",
-                                getValue<std::string>( { "settings", "normalization", "grid_seq_annotation" } ) } ),
-                pIndices->vAnno );
-            vGridSeqCoords = xRet.first;
-        }
-    }
-    else
-        vGridSeqCoords.clear( );
-    CANCEL_RETURN;
-    END_RETURN;
-}
-
 size_t PartialQuarry::getAnnoListId( std::string sAnno )
 {
     const json& rList = getValue<json>( { "annotation", "list" } );
@@ -1420,18 +1389,6 @@ void PartialQuarry::regCoords( )
                                /*.vSessionsIncomingInPrevious =*/{ },
                                /*bHidden =*/false } );
 
-    registerNode( NodeNames::GridSeqCoords,
-                  ComputeNode{ /*.sNodeName =*/"grid_seq_coords",
-                               /*.fFunc =*/&PartialQuarry::setGridSeqCoords,
-                               /*.vIncomingFunctions =*/{ NodeNames::ActiveChromLength },
-                               /*.vIncomingSession =*/
-                               { { "settings", "normalization", "grid_seq_samples", "val" },
-                                 { "settings", "normalization", "grid_seq_annotation" },
-                                 { "settings", "normalization", "grid_seq_local" },
-                                 { "annotation", "by_name" },
-                                 { "settings", "normalization", "normalize_by" } },
-                               /*.vSessionsIncomingInPrevious =*/{ },
-                               /*bHidden =*/false } );
 }
 
 } // namespace cm

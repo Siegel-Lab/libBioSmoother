@@ -38,10 +38,9 @@ bool PartialQuarry::normalizeBinominalTest( )
     const bool bIsCol = getValue<bool>( { "settings", "normalization", "radicl_seq_axis_is_column" } );
     const size_t uiNumBinsInRowTotal =
         ( vCanvasSize[ bIsCol ? 1 : 0 ] - 1 ) / ( bIsCol ? uiBinHeight.r( ) : uiBinWidth.r( ) ) + 1;
-    const size_t uiNumSaples = getValue<size_t>( { "settings", "normalization", "radicl_seq_samples", "val" } );
     for( size_t uiY = 0; uiY < 3; uiY++ )
         vvNormalized[ uiY ] = normalizeBinominalTestTrampoline(
-            vvFlatValues[ uiY ], vRadiclSeqCoverage, vRadiclSeqNumNonEmptyBins, uiNumSaples, uiNumBinsInRowTotal,
+            vvFlatValues[ uiY ], vRadiclSeqCoverage, vRadiclSeqNumNonEmptyBins, vRadiclSeqSamples.size(), uiNumBinsInRowTotal,
             getValue<double>( { "settings", "normalization", "p_accept", "val" } ), bIsCol,
             uiY == 2 ? vV4cCoords[ 1 ].size( ) : vAxisCords[ 1 ].size( ) );
     CANCEL_RETURN;
@@ -366,7 +365,7 @@ bool PartialQuarry::getSamples( const GetSamplesMode& rMode, const size_t uiNumS
     }
 
     rOut.clear( );
-    rOut.reserve( uiNumSamples );
+    rOut.reserve( std::min(uiNumSamples, uiMaxSamples) );
     std::set<size_t> vSeenDescIds;
     iterateEvenlyDividableByMaxPowerOfTwo( 0, uiMaxSamples, [ & ]( size_t uiVal ) {
         // the CANCEL_RETURN works since this also returns false
@@ -430,7 +429,10 @@ bool PartialQuarry::setGridSeqSamples( )
 
     const std::string sAnno = getValue<std::string>( { "settings", "normalization", "grid_seq_annotation" } );
     const bool bAxisIsCol = getValue<bool>( { "settings", "normalization", "grid_seq_axis_is_column" } );
-    const size_t uiGridSeqSamples = getValue<size_t>( { "settings", "normalization", "grid_seq_samples", "val" } );
+    const bool bAllSamples = getValue<bool>( { "settings", "normalization", "grid_seq_global" } );
+    size_t uiGridSeqSamples = getValue<size_t>( { "settings", "normalization", "grid_seq_samples", "val" } );
+    if (bAllSamples)
+        uiGridSeqSamples = std::numeric_limits<size_t>::max();
 
     getSamples( GetSamplesMode::OneAnnotation, uiGridSeqSamples, sAnno, 0, bAxisIsCol, true, vGridSeqSamples );
     // then this cancel_return is necessary to catch the cancelled getSamples
@@ -448,7 +450,10 @@ bool PartialQuarry::setRadiclSeqSamples( )
 
 
     const bool bAxisIsCol = getValue<bool>( { "settings", "normalization", "radicl_seq_axis_is_column" } );
-    const size_t uiRadiclSeqSamples = getValue<size_t>( { "settings", "normalization", "radicl_seq_samples", "val" } );
+    size_t uiRadiclSeqSamples = getValue<size_t>( { "settings", "normalization", "radicl_seq_samples", "val" } );
+    const bool bAllSamples = getValue<bool>( { "settings", "normalization", "radicl_seq_global" } );
+    if (bAllSamples)
+        uiRadiclSeqSamples = std::numeric_limits<size_t>::max();
 
     getSamples( GetSamplesMode::Bins, uiRadiclSeqSamples, "", bAxisIsCol ? uiBinHeight.r( ) : uiBinWidth.r( ),
                 bAxisIsCol, false, vRadiclSeqSamples );
@@ -1113,7 +1118,8 @@ void PartialQuarry::regNormalization( )
                                  { "settings", "normalization", "normalize_by" },
                                  { "settings", "normalization", "grid_seq_annotation" },
                                  { "settings", "normalization", "grid_seq_samples", "val" },
-                                 { "settings", "normalization", "grid_seq_axis_is_column" } },
+                                 { "settings", "normalization", "grid_seq_axis_is_column" },
+                                 { "settings", "normalization", "grid_seq_global" } },
                                /*.vSessionsIncomingInPrevious =*/{ { "dividend" } },
                                /*bHidden =*/false } );
 
@@ -1124,6 +1130,7 @@ void PartialQuarry::regNormalization( )
                                /*.vIncomingSession =*/
                                { { "settings", "normalization", "normalize_by" },
                                  { "settings", "normalization", "radicl_seq_samples", "val" },
+                                 { "settings", "normalization", "radicl_seq_global" },
                                  { "settings", "normalization", "radicl_seq_axis_is_column" } },
                                /*.vSessionsIncomingInPrevious =*/{ { "dividend" } },
                                /*bHidden =*/false } );

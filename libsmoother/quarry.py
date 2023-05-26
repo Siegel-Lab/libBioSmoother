@@ -92,7 +92,7 @@ class Quarry(PartialQuarry):
                     ][jdx]
                     * fac
                 )
-                if i > 0 and HAS_PALETTES:
+                if i > 0 and HAS_STATS:
                     p = 1 / (i + 1)
                     x = val[jdx]
                     ret.append(binom_test(x, max(x, n), p, alternative="greater"))
