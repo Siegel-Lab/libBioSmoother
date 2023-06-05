@@ -1047,7 +1047,7 @@ const std::vector<AxisCoord>& PartialQuarry::pickYCoords( const size_t uiI )
     {
         case 2:
             return vV4cCoords[ 1 ];
-        case 4:
+        case 3:
             return bLocalIce ? vAxisCords[ 1 ] : vIceCoords[ 1 ];
         default:
             return vAxisCords[ 1 ];
@@ -1132,6 +1132,23 @@ bool PartialQuarry::setDecayCoords( )
     END_RETURN;
 }
 
+bool axisCoordSmaller(const AxisCoord& rA, const AxisCoord& rB)
+{
+    if(rA.uiChromosome == rB.uiChromosome)
+        return rA.uiIndexPos < rB.uiIndexPos;
+    return rA.uiChromosome < rB.uiChromosome;
+}
+
+bool axisCoordOverlap(const AxisCoord& rA, const AxisCoord& rB)
+{
+    if(rA.uiChromosome == rB.uiChromosome)
+        return rA.uiIndexPos + rA.uiIndexSize > rB.uiIndexPos &&
+               rB.uiIndexPos + rB.uiIndexSize > rA.uiIndexPos;
+    return false;
+}
+
+#define ICE_SAMPLE_COORD std::numeric_limits<size_t>::max()
+
 bool PartialQuarry::setIceCoords( )
 {
     for( size_t uiI = 0; uiI < 2; uiI++ )
@@ -1144,7 +1161,9 @@ bool PartialQuarry::setIceCoords( )
 
     for( size_t uiI = 0; uiI < 2; uiI++ )
     {
-        vIceCoords[ uiI ].reserve( uiNumCoords );
+        // create samples
+        std::vector<AxisCoord> vCoordsTmp;
+        vCoordsTmp.reserve( uiNumCoords );
 
         const size_t uiSize = uiI == 0 ? uiBinWidth.r( ) : uiBinHeight.r( );
 
@@ -1153,23 +1172,25 @@ bool PartialQuarry::setIceCoords( )
             uiGenomeSize += this->vActiveChromosomes[ uiI ][ uiX ].uiLength;
 
         size_t uiGenomeStart = 0;
-        for( size_t uiX = 0; uiX < this->vActiveChromosomes[ uiI ].size( ) && vIceCoords[uiI].size() < uiNumCoords; 
+        for( size_t uiX = 0; uiX < this->vActiveChromosomes[ uiI ].size( ) && vCoordsTmp.size() < uiNumCoords; 
              uiX++ )
         {
+            CANCEL_RETURN;
             const size_t uiContigLength = this->vActiveChromosomes[ uiI ][ uiX ].uiLength;
             size_t uiNextPos = 0;
-            while( uiNextPos < uiContigLength && vIceCoords[uiI].size() < uiNumCoords )
+            while( uiNextPos < uiContigLength && vCoordsTmp.size() < uiNumCoords )
             {
-                vIceCoords[ uiI ].push_back( AxisCoord{
+                CANCEL_RETURN;
+                vCoordsTmp.push_back( AxisCoord{
                     //{
                     /* .uiChromosome =*/uiX, //
                     /* .uiIndexPos =*/uiNextPos, //
                     /* .uiIndexSize =*/uiSize, //
                     //},
-                    /*.uiScreenPos =*/uiNextPos + uiGenomeStart, //
-                    /*.uiScreenSize =*/uiSize, //
-                    /*.uiRegionIdx =*/0, //
-                    /*.uiIdx =*/vIceCoords[ uiI ].size( ) //
+                    /*.uiScreenPos =*/ICE_SAMPLE_COORD, //
+                    /*.uiScreenSize =*/ICE_SAMPLE_COORD, //
+                    /*.uiRegionIdx =*/ICE_SAMPLE_COORD, //
+                    /*.uiIdx =*/ICE_SAMPLE_COORD //
                 } );
                 uiNextPos += std::max( uiSize, uiGenomeSize / uiNumCoords );
             }
@@ -1177,6 +1198,42 @@ bool PartialQuarry::setIceCoords( )
 
             uiGenomeStart += uiContigLength;
         }
+        
+        // merge samples with coordinates from window
+        vIceCoords[ uiI ].reserve( uiNumCoords + vBinCoords[ uiI ].size() );
+        size_t uiX = 0;
+        size_t uiY = 0;
+        while(uiX < vCoordsTmp.size() && uiY < vBinCoords[ uiI ].size())
+        {
+            CANCEL_RETURN;
+            // if sample and window overlap discard sample
+            if(axisCoordOverlap(vBinCoords[ uiI ][uiY], vCoordsTmp[uiX]))
+                ++uiX;
+            // else add the smaller coordinate
+            else if( axisCoordSmaller(vBinCoords[ uiI ][uiY], vCoordsTmp[uiX]) )
+            {
+                vIceCoords[ uiI ].push_back(vBinCoords[ uiI ][uiY]);
+                ++uiY;
+            }
+            else
+            {
+                vIceCoords[ uiI ].push_back(vCoordsTmp[uiX]);
+                ++uiX;
+            }
+        }
+        while(uiX < vCoordsTmp.size())
+        {
+            CANCEL_RETURN;
+            vIceCoords[ uiI ].push_back(vCoordsTmp[uiX]);
+            ++uiX;
+        }
+        while(uiY < vBinCoords[ uiI ].size())
+        {
+            CANCEL_RETURN;
+            vIceCoords[ uiI ].push_back(vBinCoords[ uiI ][uiY]);
+            ++uiY;
+        }
+
     }
 
     END_RETURN;

@@ -899,8 +899,8 @@ bool PartialQuarry::normalizeIC( )
 {
     for( size_t uiY = 3; uiY < NUM_COORD_SYSTEMS; uiY++ )
     {
-        const auto& rXCoords = pickXCoords( uiY );
-        const auto& rYCoords = pickYCoords( uiY );
+        const auto& rXCoords = pickXCoords( 3 );
+        const auto& rYCoords = pickYCoords( 3 );
 
         size_t uiW = rXCoords.size( );
         size_t uiH = rYCoords.size( );
@@ -924,12 +924,12 @@ bool PartialQuarry::normalizeIC( )
             std::array<double, 2> vVar{ 0, 0 };
             std::array<double, 2> vMean{ 0, 0 };
             for( bool bCol : { true, false } )
-                icePreFilter( xData, bCol, 0, xData.vSliceBias[ bCol ? 0 : 1 ].size( ), uiY, uiI == 0 );
+                icePreFilter( xData, bCol, 0, xData.vSliceBias[ bCol ? 0 : 1 ].size( ), 3, uiI == 0 );
             for( size_t uiItr = 0; uiItr < uiMaxIters; uiItr++ )
             {
                 CANCEL_RETURN;
                 iceFilter( xData, 0, xData.vBiases.size( ) );
-                iceTimesOuterProduct( xData, uiI == 0, 0, xData.vBiases.size( ), uiY );
+                iceTimesOuterProduct( xData, uiI == 0, 0, xData.vBiases.size( ), 3 );
                 for( bool bCol : { true, false } )
                 {
                     CANCEL_RETURN;
@@ -947,10 +947,10 @@ bool PartialQuarry::normalizeIC( )
                 rescaleBias(xData, bCol, vMean[ bCol ? 0 : 1 ], 0, xData.vSliceBias[ bCol ? 0 : 1 ].size( ));
             CANCEL_RETURN;
             size_t uiMaxFlat = 0;
-            for( size_t uiJ = 0; uiJ < vvFlatValues[ uiY ].size( ); uiJ++ )
+            for( size_t uiJ = 0; uiJ < vvFlatValues[ 3 ].size( ); uiJ++ )
             {
                 CANCEL_RETURN;
-                uiMaxFlat = std::max( uiMaxFlat, vvFlatValues[ uiY ][ uiJ ][ uiI ] );
+                uiMaxFlat = std::max( uiMaxFlat, vvFlatValues[ 3 ][ uiJ ][ uiI ] );
             }
             if( uiMaxFlat > 0 )
             {
@@ -963,22 +963,27 @@ bool PartialQuarry::normalizeIC( )
                 else if( iceMaxBias( xData, true ) == 0 || iceMaxBias( xData, false ) == 0 )
                 {
                     setError( "iterative correction converged to zero, showing un-normalized data" );
-                    for( size_t uiJ = 0; uiJ < xData.vSliceBias[ 4 - uiY ].size( ); uiJ++ )
-                    {
-                        CANCEL_RETURN;
-                        xData.vSliceBias[ 4 - uiY ][ uiJ ] = 1;
-                    }
+                    for( size_t uiY = 0; uiY < 2; uiY++ )
+                        for( size_t uiJ = 0; uiJ < xData.vSliceBias[ uiY ].size( ); uiJ++ )
+                        {
+                            CANCEL_RETURN;
+                            xData.vSliceBias[ uiY ][ uiJ ] = 1;
+                        }
                 }
             }
             else
             {
-                for( size_t uiJ = 0; uiJ < xData.vSliceBias[ 4 - uiY ].size( ); uiJ++ )
-                {
-                    CANCEL_RETURN;
-                    xData.vSliceBias[ 4 - uiY ][ uiJ ] = 1;
-                }
+                for( size_t uiY = 0; uiY < 2; uiY++ )
+                    for( size_t uiJ = 0; uiJ < xData.vSliceBias[ uiY ].size( ); uiJ++ )
+                    {
+                        CANCEL_RETURN;
+                        xData.vSliceBias[ uiY ][ uiJ ] = 1;
+                    }
             }
-            vIceSliceBias[ 4 - uiY ][ uiI ].swap( xData.vSliceBias[ 4 - uiY ] );
+            
+            for( size_t uiY = 0; uiY < 2; uiY++ )
+                for( size_t uiX = 0; uiX < ; uiX++ )
+                vIceSliceBias[ uiY ][ uiI ].swap( xData.vSliceBias[ uiY ] );
         }
     }
 
@@ -993,6 +998,7 @@ bool PartialQuarry::normalizeIC( )
                                                   * (double)vvFlatValues[ 0 ][ uiI ][ uiA ];
     }
 
+#if 0
     {
         const auto& rYCoords = pickYCoords( 0 );
         size_t uiH = rYCoords.size( );
@@ -1012,6 +1018,7 @@ bool PartialQuarry::normalizeIC( )
                 vvNormalized[ 1 ][ uiI ][ uiA ] = vIceSliceBias[ 1 ][ uiA ][ uiI % uiH ] //
                                                   * (double)vvFlatValues[ 2 ][ uiI ][ uiA ];
     }
+#endif
     END_RETURN;
 }
 

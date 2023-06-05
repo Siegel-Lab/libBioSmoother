@@ -725,7 +725,14 @@ class PartialQuarry : public HasSession
     DepDec<size_t> uiBinWidth, uiBinHeight;
     int64_t iStartX, iStartY, iEndX, iEndY;
 
-    const static size_t NUM_COORD_SYSTEMS = 5;
+    /* Coord systems are:
+     * - normal window
+     * - virtual 4 C on x axis
+     * - virtual 4 C on y axis
+     * - icing window
+     *
+     */
+    const static size_t NUM_COORD_SYSTEMS = 4;
 
     std::array<std::vector<ChromDesc>, 2> vActiveChromosomes;
     std::array<std::vector<AxisCoord>, 2> vAxisCords;
