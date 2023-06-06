@@ -3,6 +3,8 @@
 
 #pragma once
 
+#define ICE_SAMPLE_COORD std::numeric_limits<size_t>::max( )
+
 namespace cm
 {
 
@@ -93,7 +95,7 @@ axisCoordsHelper( size_t uiBinSize, size_t uiScreenStartPos, size_t uiScreenEndP
                                            /* .uiChromosome =*/uiI, //
                                            /* .uiIndexPos =*/uiIndexPos, //
                                            /* .uiIndexSize =*/uiCurrBinSize, //
-                                           //},
+                                                                             //},
                                            /*.uiScreenPos =*/uiCurrScreenPos, //
                                            /*.uiScreenSize =*/uiCurrBinSize, //
                                            /*.uiRegionIdx =*/uiChr, //
@@ -635,10 +637,9 @@ bool PartialQuarry::setActiveChromLength( )
     END_RETURN;
 }
 
-std::pair<std::vector<AxisCoord>, std::vector<AxisRegion>> PartialQuarry::setAxisCoordsHelper(bool bX )
+std::pair<std::vector<AxisCoord>, std::vector<AxisRegion>> PartialQuarry::setAxisCoordsHelper( bool bX )
 {
-    const bool bAnnoCoords =
-        getValue<bool>( { "settings", "filters", bX ? "anno_coords_col" : "anno_coords_row" } );
+    const bool bAnnoCoords = getValue<bool>( { "settings", "filters", bX ? "anno_coords_col" : "anno_coords_row" } );
     if( !bAnnoCoords )
         return axisCoordsHelper(
             bX ? uiBinWidth.r( ) : uiBinHeight.r( ),
@@ -667,7 +668,7 @@ bool PartialQuarry::setAxisCoords( )
     for( bool bX : { true, false } )
     {
         CANCEL_RETURN;
-        std::pair<std::vector<AxisCoord>, std::vector<AxisRegion>> xRet = setAxisCoordsHelper(bX);
+        std::pair<std::vector<AxisCoord>, std::vector<AxisRegion>> xRet = setAxisCoordsHelper( bX );
         this->vAxisCords[ bX ? 0 : 1 ] = xRet.first;
         this->vAxisRegions[ bX ? 0 : 1 ] = xRet.second;
     }
@@ -1028,29 +1029,23 @@ bool PartialQuarry::setV4cCoords( )
 
 const std::vector<AxisCoord>& PartialQuarry::pickXCoords( const size_t uiI )
 {
-    const bool bLocalIce = getValue<bool>( { "settings", "normalization", "ice_local" } );
     switch( uiI )
     {
         case 1:
-            return vV4cCoords[ 0 ];
-        case 3:
-            return bLocalIce ? vAxisCords[ 0 ] : vIceCoords[ 0 ];
+            return vIceV4cCoords[ 0 ];
         default:
-            return vAxisCords[ 0 ];
+            return vIceAxisCoords[ 0 ];
     }
 }
 
 const std::vector<AxisCoord>& PartialQuarry::pickYCoords( const size_t uiI )
 {
-    const bool bLocalIce = getValue<bool>( { "settings", "normalization", "ice_local" } );
     switch( uiI )
     {
         case 2:
-            return vV4cCoords[ 1 ];
-        case 3:
-            return bLocalIce ? vAxisCords[ 1 ] : vIceCoords[ 1 ];
+            return vIceV4cCoords[ 1 ];
         default:
-            return vAxisCords[ 1 ];
+            return vIceAxisCoords[ 1 ];
     }
 }
 
@@ -1064,15 +1059,21 @@ bool PartialQuarry::setBinCoords( )
         const auto& rYCoords = pickYCoords( uiI );
         vBinCoords[ uiI ].clear( );
         vBinCoords[ uiI ].reserve( rXCoords.size( ) * rYCoords.size( ) );
+        vBinCoordsIce[ uiI ].clear( );
+        vBinCoordsIce[ uiI ].reserve( rXCoords.size( ) * rYCoords.size( ) );
         for( const AxisCoord& xX : rXCoords )
             for( const AxisCoord& xY : rYCoords )
             {
                 CANCEL_RETURN;
+                std::array<BinCoord, 2> xCoords;
                 if( xX.uiChromosome != xY.uiChromosome ||
                     (size_t)std::abs( (int64_t)xX.uiIndexPos - (int64_t)xY.uiIndexPos ) >= uiManhattenDist )
-                    vBinCoords[ uiI ].push_back( binObjFromCoords<BinCoord, AxisCoord>( xX, xY ) );
+                    xCoords = binObjFromCoords<BinCoord, AxisCoord>( xX, xY );
                 else
-                    vBinCoords[ uiI ].push_back( { BinCoord{ }, BinCoord{} } );
+                    xCoords = { BinCoord{ }, BinCoord{} };
+                if( xX.uiIdx != ICE_SAMPLE_COORD && xY.uiIdx != ICE_SAMPLE_COORD )
+                    vBinCoords[ uiI ].push_back( xCoords );
+                vBinCoordsIce[ uiI ].push_back( xCoords );
             }
     }
     END_RETURN;
@@ -1097,7 +1098,8 @@ bool PartialQuarry::setDecayCoords( )
                 std::array<DecayCoord, 2> vKey;
                 for( size_t uiI = 0; uiI < 2; uiI++ )
                 {
-                    if( vCoords[ uiI ].uiChromosomeX != std::numeric_limits<size_t>::max( ) )
+                    if( vCoords[ uiI ].uiChromosomeX != std::numeric_limits<size_t>::max( ) &&
+                        vCoords[ uiI ].uiXAxisIdx != ICE_SAMPLE_COORD && vCoords[ uiI ].uiYAxisIdx != ICE_SAMPLE_COORD )
                     {
                         assert( vCoords[ uiI ].uiChromosomeX < vActiveChromosomes[ 0 ].size( ) );
                         assert( vCoords[ uiI ].uiChromosomeY < vActiveChromosomes[ 1 ].size( ) );
@@ -1132,30 +1134,39 @@ bool PartialQuarry::setDecayCoords( )
     END_RETURN;
 }
 
-bool axisCoordSmaller(const AxisCoord& rA, const AxisCoord& rB)
+bool axisCoordSmaller( const AxisCoord& rA, const AxisCoord& rB )
 {
-    if(rA.uiChromosome == rB.uiChromosome)
+    if( rA.uiChromosome == rB.uiChromosome )
         return rA.uiIndexPos < rB.uiIndexPos;
     return rA.uiChromosome < rB.uiChromosome;
 }
 
-bool axisCoordOverlap(const AxisCoord& rA, const AxisCoord& rB)
+bool axisCoordOverlap( const AxisCoord& rA, const AxisCoord& rB )
 {
-    if(rA.uiChromosome == rB.uiChromosome)
-        return rA.uiIndexPos + rA.uiIndexSize > rB.uiIndexPos &&
-               rB.uiIndexPos + rB.uiIndexSize > rA.uiIndexPos;
+    if( rA.uiChromosome == rB.uiChromosome )
+        return rA.uiIndexPos + rA.uiIndexSize > rB.uiIndexPos && rB.uiIndexPos + rB.uiIndexSize > rA.uiIndexPos;
     return false;
 }
 
-#define ICE_SAMPLE_COORD std::numeric_limits<size_t>::max()
 
+// @todo v4c coords also need samples
 bool PartialQuarry::setIceCoords( )
 {
     for( size_t uiI = 0; uiI < 2; uiI++ )
-        vIceCoords[ uiI ].clear( );
+    {
+        vIceAxisCoords[ uiI ].clear( );
+        vIceV4cCoords[ uiI ].clear( );
+        std::copy( vV4cCoords[ uiI ].begin( ), vV4cCoords[ uiI ].end( ), vIceV4cCoords[ uiI ].begin( ) );
+    }
 
-    if( getValue<std::string>( { "settings", "normalization", "normalize_by" } ) != "ice" )
+    if( getValue<std::string>( { "settings", "normalization", "normalize_by" } ) != "ice" ||
+        getValue<bool>( { "settings", "normalization", "ice_local" } ) )
+    {
+        for( size_t uiI = 0; uiI < 2; uiI++ )
+            vIceAxisCoords[ uiI ] = vAxisCords[ uiI ];
+        //std::copy( vAxisCords[ uiI ].begin( ), vAxisCords[ uiI ].end( ), vIceAxisCoords[ uiI ].begin( ) );
         END_RETURN;
+    }
 
     const size_t uiNumCoords = getValue<size_t>( { "settings", "normalization", "num_ice_bins", "val" } );
 
@@ -1172,13 +1183,12 @@ bool PartialQuarry::setIceCoords( )
             uiGenomeSize += this->vActiveChromosomes[ uiI ][ uiX ].uiLength;
 
         size_t uiGenomeStart = 0;
-        for( size_t uiX = 0; uiX < this->vActiveChromosomes[ uiI ].size( ) && vCoordsTmp.size() < uiNumCoords; 
-             uiX++ )
+        for( size_t uiX = 0; uiX < this->vActiveChromosomes[ uiI ].size( ) && vCoordsTmp.size( ) < uiNumCoords; uiX++ )
         {
             CANCEL_RETURN;
             const size_t uiContigLength = this->vActiveChromosomes[ uiI ][ uiX ].uiLength;
             size_t uiNextPos = 0;
-            while( uiNextPos < uiContigLength && vCoordsTmp.size() < uiNumCoords )
+            while( uiNextPos < uiContigLength && vCoordsTmp.size( ) < uiNumCoords )
             {
                 CANCEL_RETURN;
                 vCoordsTmp.push_back( AxisCoord{
@@ -1198,42 +1208,41 @@ bool PartialQuarry::setIceCoords( )
 
             uiGenomeStart += uiContigLength;
         }
-        
+
         // merge samples with coordinates from window
-        vIceCoords[ uiI ].reserve( uiNumCoords + vBinCoords[ uiI ].size() );
+        vIceAxisCoords[ uiI ].reserve( uiNumCoords + vAxisCords[ uiI ].size( ) );
         size_t uiX = 0;
         size_t uiY = 0;
-        while(uiX < vCoordsTmp.size() && uiY < vBinCoords[ uiI ].size())
+        while( uiX < vCoordsTmp.size( ) && uiY < vAxisCords[ uiI ].size( ) )
         {
             CANCEL_RETURN;
             // if sample and window overlap discard sample
-            if(axisCoordOverlap(vBinCoords[ uiI ][uiY], vCoordsTmp[uiX]))
+            if( axisCoordOverlap( vAxisCords[ uiI ][ uiY ], vCoordsTmp[ uiX ] ) )
                 ++uiX;
             // else add the smaller coordinate
-            else if( axisCoordSmaller(vBinCoords[ uiI ][uiY], vCoordsTmp[uiX]) )
+            else if( axisCoordSmaller( vAxisCords[ uiI ][ uiY ], vCoordsTmp[ uiX ] ) )
             {
-                vIceCoords[ uiI ].push_back(vBinCoords[ uiI ][uiY]);
+                vIceAxisCoords[ uiI ].push_back( vAxisCords[ uiI ][ uiY ] );
                 ++uiY;
             }
             else
             {
-                vIceCoords[ uiI ].push_back(vCoordsTmp[uiX]);
+                vIceAxisCoords[ uiI ].push_back( vCoordsTmp[ uiX ] );
                 ++uiX;
             }
         }
-        while(uiX < vCoordsTmp.size())
+        while( uiX < vCoordsTmp.size( ) )
         {
             CANCEL_RETURN;
-            vIceCoords[ uiI ].push_back(vCoordsTmp[uiX]);
+            vIceAxisCoords[ uiI ].push_back( vCoordsTmp[ uiX ] );
             ++uiX;
         }
-        while(uiY < vBinCoords[ uiI ].size())
+        while( uiY < vAxisCords[ uiI ].size( ) )
         {
             CANCEL_RETURN;
-            vIceCoords[ uiI ].push_back(vBinCoords[ uiI ][uiY]);
+            vIceAxisCoords[ uiI ].push_back( vAxisCords[ uiI ][ uiY ] );
             ++uiY;
         }
-
     }
 
     END_RETURN;
@@ -1403,24 +1412,24 @@ void PartialQuarry::regCoords( )
                   ComputeNode{ /*.sNodeName =*/"ice_coords",
                                /*.fFunc =*/&PartialQuarry::setIceCoords,
                                /*.vIncomingFunctions =*/
-                               { NodeNames::CanvasSize, NodeNames::AxisCoords },
+                               { NodeNames::V4cCoords },
                                /*.vIncomingSession =*/
                                { { "settings", "normalization", "normalize_by" },
+                                 { "settings", "normalization", "ice_local" },
                                  { "settings", "normalization", "num_ice_bins", "val" } },
                                /*.vSessionsIncomingInPrevious =*/{ },
                                /*bHidden =*/false } );
 
-    registerNode( NodeNames::BinCoords,
-                  ComputeNode{ /*.sNodeName =*/"bin_coords",
-                               /*.fFunc =*/&PartialQuarry::setBinCoords,
-                               /*.vIncomingFunctions =*/
-                               { NodeNames::AnnoFilters, NodeNames::IntersectionType, NodeNames::Symmetry,
-                                 NodeNames::V4cCoords, NodeNames::IceCoords },
-                               /*.vIncomingSession =*/
-                               { { "settings", "filters", "min_diag_dist", "val" },
-                                 { "settings", "normalization", "ice_local" } },
-                               /*.vSessionsIncomingInPrevious =*/{ { "dividend" } },
-                               /*bHidden =*/false } );
+    registerNode(
+        NodeNames::BinCoords,
+        ComputeNode{ /*.sNodeName =*/"bin_coords",
+                     /*.fFunc =*/&PartialQuarry::setBinCoords,
+                     /*.vIncomingFunctions =*/
+                     { NodeNames::AnnoFilters, NodeNames::IntersectionType, NodeNames::Symmetry, NodeNames::IceCoords },
+                     /*.vIncomingSession =*/
+                     { { "settings", "filters", "min_diag_dist", "val" } },
+                     /*.vSessionsIncomingInPrevious =*/{ { "dividend" } },
+                     /*bHidden =*/false } );
 
     registerNode( NodeNames::AnnoFilters,
                   ComputeNode{ /*.sNodeName =*/"anno_filters",
@@ -1445,7 +1454,6 @@ void PartialQuarry::regCoords( )
                                { { "settings", "normalization", "ddd" }, { "settings", "normalization", "ddd_show" } },
                                /*.vSessionsIncomingInPrevious =*/{ },
                                /*bHidden =*/false } );
-
 }
 
 } // namespace cm

@@ -247,15 +247,17 @@ bool PartialQuarry::setTracks( )
                 vvMinMaxTracks[ uiI ][ 0 ] = std::min( vvMinMaxTracks[ uiI ][ 0 ], uiVal );
                 vvMinMaxTracks[ uiI ][ 1 ] = std::max( vvMinMaxTracks[ uiI ][ 1 ], uiVal );
             }
+        }
 
+        for( size_t uiX = 0; uiX < vIceAxisCoords[ uiI ].size( ); uiX++ )
             for( size_t uiY = 0; uiY < 2; uiY++ )
-                if( bDoIce && vIceSliceBias[ uiI ][ uiY ].size( ) > 0 )
+                if( bDoIce && vIceAxisCoords[ uiI ][ uiY ].uiIdx != ICE_SAMPLE_COORD &&
+                    vIceSliceBias[ 0 ][ uiI ][ uiY ].size( ) > 0 )
                 {
-                    auto uiVal = vIceSliceBias[ uiI ][ uiY ][ uiX ];
+                    auto uiVal = vIceSliceBias[ 0 ][ uiI ][ uiY ][ uiX ];
                     vvMinMaxTracks[ uiI ][ 0 ] = std::min( vvMinMaxTracks[ uiI ][ 0 ], uiVal );
                     vvMinMaxTracks[ uiI ][ 1 ] = std::max( vvMinMaxTracks[ uiI ][ 1 ], uiVal );
                 }
-        }
         pybind11::list vChrs;
         pybind11::list vScreenPoss;
         pybind11::list vIndexStarts;
@@ -599,7 +601,7 @@ bool PartialQuarry::setTracks( )
 
         for( size_t uiY = 0; uiY < 2; uiY++ )
             if( getValue<bool>( { "settings", "normalization", "ice_show_bias" } ) &&
-                vIceSliceBias[ uiI ][ uiY ].size( ) > 0 )
+                vIceSliceBias[ 0 ][ uiI ][ uiY ].size( ) > 0 )
             {
                 pybind11::list vScreenPos;
                 pybind11::list vIndexStart;
@@ -608,65 +610,66 @@ bool PartialQuarry::setTracks( )
                 std::string sChr = "";
 
 
-                for( size_t uiX = 0; uiX < vAxisCords[ uiI ].size( ); uiX++ )
-                {
-                    CANCEL_RETURN;
-                    auto& xCoord = vAxisCords[ uiI ][ uiX ];
-                    std::string sChromName = vActiveChromosomes[ uiI ][ xCoord.uiChromosome ].sName;
-                    if( sChr != "" && sChr != sChromName )
+                for( size_t uiX = 0; uiX < vIceAxisCoords[ uiI ].size( ); uiX++ )
+                    if( vIceAxisCoords[ uiI ][ uiX ].uiIdx != ICE_SAMPLE_COORD )
                     {
-                        vChrs.append( substringChr( sChr ) );
+                        CANCEL_RETURN;
+                        auto& xCoord = vIceAxisCoords[ uiI ][ uiX ];
+                        std::string sChromName = vActiveChromosomes[ uiI ][ xCoord.uiChromosome ].sName;
+                        if( sChr != "" && sChr != sChromName )
+                        {
+                            vChrs.append( substringChr( sChr ) );
 
-                        vScreenPoss.append( vScreenPos );
-                        vScreenPos = pybind11::list( );
+                            vScreenPoss.append( vScreenPos );
+                            vScreenPos = pybind11::list( );
 
-                        vIndexStarts.append( vIndexStart );
-                        vIndexStart = pybind11::list( );
+                            vIndexStarts.append( vIndexStart );
+                            vIndexStart = pybind11::list( );
 
-                        vIndexEnds.append( vIndexEnd );
-                        vIndexEnd = pybind11::list( );
+                            vIndexEnds.append( vIndexEnd );
+                            vIndexEnd = pybind11::list( );
 
-                        vValues.append( vValue );
-                        vValue = pybind11::list( );
+                            vValues.append( vValue );
+                            vValue = pybind11::list( );
 
-                        vColors.append( vColorPaletteAnnotation[ uiCnt % vColorPaletteAnnotation.size( ) ] );
+                            vColors.append( vColorPaletteAnnotation[ uiCnt % vColorPaletteAnnotation.size( ) ] );
 
-                        vNames.append( std::string( "ICE Bias " ) + ( uiY == 0 ? "A" : "B" ) );
-                    }
+                            vNames.append( std::string( "ICE Bias " ) + ( uiY == 0 ? "A" : "B" ) );
+                        }
 
-                    if( uiX == 0 )
-                    {
-                        // zero position at start
+                        if( uiX == 0 )
+                        {
+                            // zero position at start
+                            vIndexStart.append( readableBp( xCoord.uiIndexPos * uiDividend ) );
+                            vIndexEnd.append( readableBp( xCoord.uiIndexPos * uiDividend ) );
+                            vScreenPos.append( xCoord.uiScreenPos );
+                            vValue.append( vvMinMaxTracks[ uiI ][ 0 ] );
+                        }
+
+                        sChr = sChromName;
+                        auto uiVal = vIceSliceBias[ 0 ][ uiI ][ uiY ][ uiX ];
+
+                        // front corner
                         vIndexStart.append( readableBp( xCoord.uiIndexPos * uiDividend ) );
-                        vIndexEnd.append( readableBp( xCoord.uiIndexPos * uiDividend ) );
+                        vIndexEnd.append( readableBp( ( xCoord.uiIndexPos + xCoord.uiIndexSize ) * uiDividend ) );
                         vScreenPos.append( xCoord.uiScreenPos );
-                        vValue.append( vvMinMaxTracks[ uiI ][ 0 ] );
-                    }
+                        vValue.append( uiVal );
 
-                    sChr = sChromName;
-                    auto uiVal = vIceSliceBias[ uiI ][ uiY ][ uiX ];
-
-                    // front corner
-                    vIndexStart.append( readableBp( xCoord.uiIndexPos * uiDividend ) );
-                    vIndexEnd.append( readableBp( ( xCoord.uiIndexPos + xCoord.uiIndexSize ) * uiDividend ) );
-                    vScreenPos.append( xCoord.uiScreenPos );
-                    vValue.append( uiVal );
-
-                    // rear corner
-                    vIndexStart.append( readableBp( xCoord.uiIndexPos * uiDividend ) );
-                    vIndexEnd.append( readableBp( ( xCoord.uiIndexPos + xCoord.uiIndexSize ) * uiDividend ) );
-                    vScreenPos.append( xCoord.uiScreenPos + xCoord.uiScreenSize );
-                    vValue.append( uiVal );
-
-                    if( uiX + 1 == vAxisCords[ uiI ].size( ) )
-                    {
-                        // zero position at end
-                        vIndexStart.append( readableBp( ( xCoord.uiIndexPos + xCoord.uiIndexSize ) * uiDividend ) );
+                        // rear corner
+                        vIndexStart.append( readableBp( xCoord.uiIndexPos * uiDividend ) );
                         vIndexEnd.append( readableBp( ( xCoord.uiIndexPos + xCoord.uiIndexSize ) * uiDividend ) );
                         vScreenPos.append( xCoord.uiScreenPos + xCoord.uiScreenSize );
-                        vValue.append( vvMinMaxTracks[ uiI ][ 0 ] );
+                        vValue.append( uiVal );
+
+                        if( uiX + 1 == vIceAxisCoords[ uiI ].size( ) )
+                        {
+                            // zero position at end
+                            vIndexStart.append( readableBp( ( xCoord.uiIndexPos + xCoord.uiIndexSize ) * uiDividend ) );
+                            vIndexEnd.append( readableBp( ( xCoord.uiIndexPos + xCoord.uiIndexSize ) * uiDividend ) );
+                            vScreenPos.append( xCoord.uiScreenPos + xCoord.uiScreenSize );
+                            vValue.append( vvMinMaxTracks[ uiI ][ 0 ] );
+                        }
                     }
-                }
 
                 vChrs.append( substringChr( sChr ) );
                 vScreenPoss.append( vScreenPos );
@@ -880,23 +883,23 @@ void PartialQuarry::regCoverage( )
                                { { "settings", "filters", "incomplete_alignments" }, { "dividend" } },
                                /*bHidden =*/false } );
 
-    registerNode( NodeNames::Tracks,
-                  ComputeNode{ /*.sNodeName =*/"coverage_tracks",
-                               /*.fFunc =*/&PartialQuarry::setTracks,
-                               /*.vIncomingFunctions =*/
-                               { NodeNames::LCS, NodeNames::AnnotationColors, NodeNames::CoverageValues,
-                                 NodeNames::Flat4C, NodeNames::DistDepDecayRemoved },
-                               /*.vIncomingSession =*/
-                               { { "settings", "normalization", "display_ice_remainder" },
-                                 { "settings", "normalization", "grid_seq_display_background" },
-                                 { "settings", "normalization", "ice_show_bias" },
-                                 { "settings", "normalization", "radicl_seq_display_coverage" } },
-                               /*.vSessionsIncomingInPrevious =*/
-                               { { "dividend" },
-                                 { "settings", "normalization", "grid_seq_axis_is_column" },
-                                 { "settings", "normalization", "radicl_seq_axis_is_column" },
-                                 { "settings", "normalization", "normalize_by" } },
-                               /*bHidden =*/false } );
+    registerNode(
+        NodeNames::Tracks,
+        ComputeNode{ /*.sNodeName =*/"coverage_tracks",
+                     /*.fFunc =*/&PartialQuarry::setTracks,
+                     /*.vIncomingFunctions =*/
+                     { NodeNames::LCS, NodeNames::AnnotationColors, NodeNames::CoverageValues, NodeNames::Flat4C },
+                     /*.vIncomingSession =*/
+                     { { "settings", "normalization", "display_ice_remainder" },
+                       { "settings", "normalization", "grid_seq_display_background" },
+                       { "settings", "normalization", "ice_show_bias" },
+                       { "settings", "normalization", "radicl_seq_display_coverage" } },
+                     /*.vSessionsIncomingInPrevious =*/
+                     { { "dividend" },
+                       { "settings", "normalization", "grid_seq_axis_is_column" },
+                       { "settings", "normalization", "radicl_seq_axis_is_column" },
+                       { "settings", "normalization", "normalize_by" } },
+                     /*bHidden =*/false } );
 
     registerNode( NodeNames::TrackExport,
                   ComputeNode{ /*.sNodeName =*/"track_export",

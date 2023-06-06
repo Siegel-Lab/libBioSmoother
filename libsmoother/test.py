@@ -78,6 +78,7 @@ def __test_default_configs(quarry, default_json, valid_json, idx, skip_first):
         )
     return idx
 
+
 EXCLUDE_SLOWDOWN = [
     ["interface", "max_num_bins"],
     ["interface", "fixed_bin_size"],
@@ -86,6 +87,7 @@ EXCLUDE_SLOWDOWN = [
     ["normalization", "grid_seq_samples"],
     ["normalization", "radicl_seq_samples"],
 ]
+
 
 def __config_randomly(quarry, default_json, valid_json):
     __configure(quarry, default_json)

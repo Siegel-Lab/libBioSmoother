@@ -289,7 +289,7 @@ class Indexer:
         if no_anno:
             return [(max(len(cat_x), len(cat_y)) * 3, val)]
         if doubles > 0:
-            idx_list.append((max(len(cat_x), len(cat_y)) * 3 + 1, -doubles*val))
+            idx_list.append((max(len(cat_x), len(cat_y)) * 3 + 1, -doubles * val))
         return idx_list
 
     def add_replicate(

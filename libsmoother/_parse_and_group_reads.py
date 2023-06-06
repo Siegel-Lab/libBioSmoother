@@ -93,15 +93,14 @@ def parse_heatmap(in_filename, test, chr_filter, progress_print=print):
             )
         read_name, chr_1, pos_1, chr_2, pos_2 = cols
         return (
-                read_name,
-                [chr_1, chr_2],
-                [pos_1, pos_2],
-                ["", ""],
-                ["?", "?"],
-                ["+", "+"],
-                1,
-            )
-
+            read_name,
+            [chr_1, chr_2],
+            [pos_1, pos_2],
+            ["", ""],
+            ["?", "?"],
+            ["+", "+"],
+            1,
+        )
 
     yield from parse_tsv(
         in_filename,
@@ -278,7 +277,11 @@ def group_reads(
         strands,
         cnt,
     ) in parse_func(in_filename, test, chr_filter, progress_print):
-        if (curr_read_name is None or read_name != curr_read_name) and len(group) > 0 and len(group[0]) > 0:
+        if (
+            (curr_read_name is None or read_name != curr_read_name)
+            and len(group) > 0
+            and len(group[0]) > 0
+        ):
             yield from deal_with_group()
         curr_read_name = read_name
         curr_count = cnt

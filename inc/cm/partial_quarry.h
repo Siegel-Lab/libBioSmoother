@@ -729,15 +729,15 @@ class PartialQuarry : public HasSession
      * - normal window
      * - virtual 4 C on x axis
      * - virtual 4 C on y axis
-     * - icing window
      *
      */
-    const static size_t NUM_COORD_SYSTEMS = 4;
+    const static size_t NUM_COORD_SYSTEMS = 3;
 
     std::array<std::vector<ChromDesc>, 2> vActiveChromosomes;
     std::array<std::vector<AxisCoord>, 2> vAxisCords;
+    std::array<std::vector<AxisCoord>, 2> vIceAxisCoords;
     std::array<std::vector<AxisCoord>, 2> vV4cCoords;
-    std::array<std::vector<AxisCoord>, 2> vIceCoords;
+    std::array<std::vector<AxisCoord>, 2> vIceV4cCoords;
     std::array<std::vector<std::array<DecayCoord, 2>>, NUM_COORD_SYSTEMS> vDistDepDecCoords;
     std::array<std::vector<AxisRegion>, 2> vAxisRegions;
     std::array<std::vector<std::vector<size_t>>, 2> vvGridSeqCoverageValues;
@@ -748,6 +748,7 @@ class PartialQuarry : public HasSession
 
     sps::IntersectionType xIntersect;
 
+    std::array<std::vector<std::array<BinCoord, 2>>, NUM_COORD_SYSTEMS> vBinCoordsIce;
     std::array<std::vector<std::array<BinCoord, 2>>, NUM_COORD_SYSTEMS> vBinCoords;
 
     std::array<std::vector<std::string>, 2> vActiveCoverage;
@@ -760,8 +761,8 @@ class PartialQuarry : public HasSession
     std::array<std::vector<std::array<size_t, 2>>, NUM_COORD_SYSTEMS> vvFlatValues;
     std::array<std::vector<std::array<double, 2>>, NUM_COORD_SYSTEMS> vvFlatDecay;
     std::array<std::array<size_t, 2>, NUM_COORD_SYSTEMS> vvFlatTotal;
-    std::array<std::vector<std::array<double, 2>>, 3> vvNormalized;
-    std::array<std::vector<std::array<double, 2>>, 3> vvNormalizedDDD;
+    std::array<std::vector<std::array<double, 2>>, NUM_COORD_SYSTEMS> vvNormalized;
+    std::array<std::vector<std::array<double, 2>>, NUM_COORD_SYSTEMS> vvNormalizedDDD;
     std::array<std::vector<double>, 3> vCombined;
     std::array<std::vector<double>, 2> vFlat4C;
     std::vector<double> vDivided;
@@ -826,7 +827,7 @@ class PartialQuarry : public HasSession
     std::vector<std::vector<size_t>> vvDatasetIdsPerReplAndChr;
     std::array<std::vector<std::vector<size_t>>, 2> vBiasIdPerReplAndChr;
 
-    std::array<std::array<std::vector<double>, 2>, 2> vIceSliceBias;
+    std::array<std::array<std::array<std::vector<double>, 2>, 2>, NUM_COORD_SYSTEMS> vIceSliceBias;
     size_t uiIceFilterIgnoreDiags;
 
     size_t getDatasetIdfromReplAndChr( size_t uiRepl, size_t uiChrX, size_t uiChrY )
@@ -879,7 +880,7 @@ class PartialQuarry : public HasSession
     // coords.h
     bool setAnnoFilters( );
     // coords.h
-    std::pair<std::vector<AxisCoord>, std::vector<AxisRegion>> setAxisCoordsHelper(bool);
+    std::pair<std::vector<AxisCoord>, std::vector<AxisRegion>> setAxisCoordsHelper( bool );
     bool setAxisCoords( );
 
     // coords.h

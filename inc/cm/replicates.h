@@ -140,9 +140,9 @@ bool PartialQuarry::setBinValues( )
         for( size_t uiRepl = 0; uiRepl < vActiveReplicates.size( ); uiRepl++ )
         {
             vvBinValues[ uiY ].emplace_back( );
-            vvBinValues[ uiY ].back( ).reserve( vBinCoords[ uiY ].size( ) );
+            vvBinValues[ uiY ].back( ).reserve( vBinCoordsIce[ uiY ].size( ) );
 
-            for( const std::array<BinCoord, 2>& vCoords : vBinCoords[ uiY ] )
+            for( const std::array<BinCoord, 2>& vCoords : vBinCoordsIce[ uiY ] )
             {
                 std::array<size_t, 2> vVals;
                 CANCEL_RETURN;
@@ -195,7 +195,7 @@ bool PartialQuarry::setDecayValues( )
         size_t uiSamplesMin = getValue<size_t>( { "settings", "normalization", "ddd_samples", "val_min" } );
         size_t uiSamplesMax = getValue<size_t>( { "settings", "normalization", "ddd_samples", "val_max" } );
         bool bAllSamples = getValue<bool>( { "settings", "normalization", "ddd_all_samples" } );
-        if(bAllSamples)
+        if( bAllSamples )
             uiSamplesMax = 1;
         double fQuantExcl =
             ( 1.0 - getValue<double>( { "settings", "normalization", "ddd_quantile", "val" } ) / 100.0 ) / 2.0;
@@ -238,15 +238,15 @@ bool PartialQuarry::setDecayValues( )
 
                                 int64_t iMyH = std::max( (int64_t)1, vCoords[ uiI ].iTo - vCoords[ uiI ].iFrom );
                                 int64_t iH = std::max( (int64_t)1, ( ( iTop - iMyH ) - iBot ) / (int64_t)uiSamplesMax );
-                                if(bAllSamples)
+                                if( bAllSamples )
                                     iH = 1;
 
                                 if( ( iTop - iMyH ) - iBot >= (int64_t)( uiSamplesMin - 1 ) * iMyH )
                                 {
-                                    vvVals.clear();
-                                    vvVals.reserve( std::min( (int64_t)uiSamplesMax, (int64_t)(iTop - iBot)) );
-                                    if(bAllSamples)
-                                        vvVals.reserve(iTop - iBot);
+                                    vvVals.clear( );
+                                    vvVals.reserve( std::min( (int64_t)uiSamplesMax, (int64_t)( iTop - iBot ) ) );
+                                    if( bAllSamples )
+                                        vvVals.reserve( iTop - iBot );
                                     for( int64_t iMyBot = iBot; iMyBot <= iTop - iMyH; iMyBot += iH )
                                     {
                                         int64_t iMyTop = iMyBot + iMyH;
@@ -423,7 +423,7 @@ bool PartialQuarry::setFlatValues( )
             // take size from fst replicate (sizes are equal anyways)
             vvFlatValues[ uiY ].reserve( vvBinValues[ uiY ][ 0 ].size( ) );
 
-            for( size_t uiI = 0; uiI < vBinCoords[ uiY ].size( ); uiI++ )
+            for( size_t uiI = 0; uiI < vBinCoordsIce[ uiY ].size( ); uiI++ )
             {
                 vvFlatValues[ uiY ].push_back( { 0, 0 } );
                 for( size_t uiJ = 0; uiJ < 2; uiJ++ )
@@ -596,6 +596,7 @@ void PartialQuarry::regReplicates( )
                                /*.vIncomingSession =*/
                                { { "settings", "normalization", "ddd_samples", "val_min" },
                                  { "settings", "normalization", "ddd_samples", "val_max" },
+                                 { "settings", "normalization", "ddd_all_samples" },
                                  { "settings", "normalization", "ddd_quantile", "val" },
                                  { "settings", "normalization", "min_interactions", "val" } },
                                /*.vSessionsIncomingInPrevious =*/{ },
