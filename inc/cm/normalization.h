@@ -983,16 +983,20 @@ bool PartialQuarry::normalizeIC( )
             vIceSliceBias[ uiY ][ 0 ][ uiI ].swap( xData.vSliceBias[ 0 ] );
             vIceSliceBias[ uiY ][ 1 ][ uiI ].swap( xData.vSliceBias[ 1 ] );
         }
+        vvNormalized[ uiY ].resize( vBinCoords[ uiY ].size( ) );
+        size_t uiH2 = vAxisCords[ 1 ].size( );
         for( size_t uiX = 0; uiX < vvFlatValues[ uiY ].size( ); uiX++ )
-            if( vBinCoordsIce[ uiY ][ uiX ][ 0 ].uiXAxisIdx != ICE_SAMPLE_COORD &&
-                vBinCoordsIce[ uiY ][ uiX ][ 0 ].uiYAxisIdx != ICE_SAMPLE_COORD )
-                vvNormalized[ uiY ].push_back(
-                    std::array<double, 2>{ vIceSliceBias[ uiY ][ 0 ][ 0 ][ uiX / uiH ] //
-                                               * vIceSliceBias[ uiY ][ 1 ][ 0 ][ uiX % uiH ] //
-                                               * (double)vvFlatValues[ uiY ][ uiX ][ 0 ],
-                                           vIceSliceBias[ uiY ][ 0 ][ 1 ][ uiX / uiH ] //
-                                               * vIceSliceBias[ uiY ][ 1 ][ 1 ][ uiX % uiH ] //
-                                               * (double)vvFlatValues[ uiY ][ uiX ][ 1 ] } );
+            for( size_t uiZ = 0; uiZ < 2; uiZ++ )
+                if( vBinCoordsIce[ uiY ][ uiX ][ uiZ ].uiXAxisIdx != ICE_SAMPLE_COORD &&
+                    vBinCoordsIce[ uiY ][ uiX ][ uiZ ].uiYAxisIdx != ICE_SAMPLE_COORD )
+                {
+                    const size_t uiX2 = vBinCoordsIce[ uiY ][ uiX ][ uiZ ].uiYAxisIdx +
+                                        uiH2 * vBinCoordsIce[ uiY ][ uiX ][ uiZ ].uiXAxisIdx;
+                    assert( uiX2 < vvNormalized[ uiY ].size( ) );
+                    vvNormalized[ uiY ][ uiX2 ][ uiZ ] = vIceSliceBias[ uiY ][ 0 ][ uiZ ][ uiX / uiH ] //
+                                                         * vIceSliceBias[ uiY ][ 1 ][ uiZ ][ uiX % uiH ] //
+                                                         * (double)vvFlatValues[ uiY ][ uiX ][ uiZ ];
+                }
     }
 
     END_RETURN;

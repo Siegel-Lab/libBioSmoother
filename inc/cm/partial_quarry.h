@@ -902,7 +902,7 @@ class PartialQuarry : public HasSession
     // coords.h
     bool setDecayCoords( );
     // coords.h
-    bool sampleAndMerge(size_t, size_t, const std::vector<AxisCoord>&, std::vector<AxisCoord>& );
+    bool sampleAndMerge( size_t, size_t, const std::vector<AxisCoord>&, std::vector<AxisCoord>& );
     // coords.h
     bool setIceCoords( );
     // coords.h

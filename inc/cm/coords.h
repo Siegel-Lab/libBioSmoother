@@ -1051,6 +1051,7 @@ const std::vector<AxisCoord>& PartialQuarry::pickYCoords( const size_t uiI )
 
 bool PartialQuarry::setBinCoords( )
 {
+    // @fixme @continue_here segfault with this filter
     size_t uiManhattenDist = 1000 * getValue<size_t>( { "settings", "filters", "min_diag_dist", "val" } ) /
                              getValue<size_t>( { "dividend" } );
     for( size_t uiI = 0; uiI < NUM_COORD_SYSTEMS; uiI++ )
@@ -1071,6 +1072,7 @@ bool PartialQuarry::setBinCoords( )
                     xCoords = binObjFromCoords<BinCoord, AxisCoord>( xX, xY );
                 else
                     xCoords = { BinCoord{ }, BinCoord{} };
+
                 if( xX.uiIdx != ICE_SAMPLE_COORD && xY.uiIdx != ICE_SAMPLE_COORD )
                     vBinCoords[ uiI ].push_back( xCoords );
                 vBinCoordsIce[ uiI ].push_back( xCoords );
@@ -1137,7 +1139,7 @@ bool PartialQuarry::setDecayCoords( )
 bool axisCoordSmaller( const AxisCoord& rA, const AxisCoord& rB )
 {
     if( rA.uiChromosome == rB.uiChromosome )
-        return rA.uiIndexPos < rB.uiIndexPos;
+        return rA.uiIndexPos + rA.uiIndexSize < rB.uiIndexPos;
     return rA.uiChromosome < rB.uiChromosome;
 }
 
@@ -1148,43 +1150,47 @@ bool axisCoordOverlap( const AxisCoord& rA, const AxisCoord& rB )
     return false;
 }
 
-bool PartialQuarry::sampleAndMerge(size_t uiNumSamples, size_t uiI, const std::vector<AxisCoord>& rToMerge, std::vector<AxisCoord>& rOut )
+bool PartialQuarry::sampleAndMerge( size_t uiNumSamples, size_t uiI, const std::vector<AxisCoord>& rToMerge,
+                                    std::vector<AxisCoord>& rOut )
 {
     // create samples
     std::vector<AxisCoord> vCoordsTmp;
-    vCoordsTmp.reserve( uiNumSamples );
-
-    const size_t uiSize = uiI == 0 ? uiBinWidth.r( ) : uiBinHeight.r( );
-
-    size_t uiGenomeSize = 0;
-    for( size_t uiX = 0; uiX < this->vActiveChromosomes[ uiI ].size( ); uiX++ )
-        uiGenomeSize += this->vActiveChromosomes[ uiI ][ uiX ].uiLength;
-
-    size_t uiGenomeStart = 0;
-    for( size_t uiX = 0; uiX < this->vActiveChromosomes[ uiI ].size( ) && vCoordsTmp.size( ) < uiNumSamples; uiX++ )
+    if( rToMerge.size( ) > 0 )
     {
-        CANCEL_RETURN;
-        const size_t uiContigLength = this->vActiveChromosomes[ uiI ][ uiX ].uiLength;
-        size_t uiNextPos = 0;
-        while( uiNextPos < uiContigLength && vCoordsTmp.size( ) < uiNumSamples )
+        vCoordsTmp.reserve( uiNumSamples );
+
+        const size_t uiSize = uiI == 0 ? uiBinWidth.r( ) : uiBinHeight.r( );
+
+        size_t uiGenomeSize = 0;
+        for( size_t uiX = 0; uiX < this->vActiveChromosomes[ uiI ].size( ); uiX++ )
+            uiGenomeSize += this->vActiveChromosomes[ uiI ][ uiX ].uiLength;
+
+        size_t uiGenomeStart = 0;
+        for( size_t uiX = 0; uiX < this->vActiveChromosomes[ uiI ].size( ) && vCoordsTmp.size( ) < uiNumSamples; uiX++ )
         {
             CANCEL_RETURN;
-            vCoordsTmp.push_back( AxisCoord{
-                //{
-                /* .uiChromosome =*/uiX, //
-                /* .uiIndexPos =*/uiNextPos, //
-                /* .uiIndexSize =*/uiSize, //
-                //},
-                /*.uiScreenPos =*/ICE_SAMPLE_COORD, //
-                /*.uiScreenSize =*/ICE_SAMPLE_COORD, //
-                /*.uiRegionIdx =*/ICE_SAMPLE_COORD, //
-                /*.uiIdx =*/ICE_SAMPLE_COORD //
-            } );
-            uiNextPos += std::max( uiSize, uiGenomeSize / uiNumSamples );
+            const size_t uiContigLength = this->vActiveChromosomes[ uiI ][ uiX ].uiLength;
+            size_t uiNextPos = 0;
+            while( uiNextPos < uiContigLength && vCoordsTmp.size( ) < uiNumSamples )
+            {
+                CANCEL_RETURN;
+                vCoordsTmp.push_back( AxisCoord{
+                    //{
+                    /* .uiChromosome =*/uiX, //
+                    /* .uiIndexPos =*/uiNextPos, //
+                    /* .uiIndexSize =*/uiSize, //
+                    //},
+                    /*.uiScreenPos =*/ICE_SAMPLE_COORD, //
+                    /*.uiScreenSize =*/ICE_SAMPLE_COORD, //
+                    /*.uiRegionIdx =*/ICE_SAMPLE_COORD, //
+                    /*.uiIdx =*/ICE_SAMPLE_COORD //
+                } );
+                uiNextPos += std::max( uiSize, uiGenomeSize / uiNumSamples );
+            }
+
+
+            uiGenomeStart += uiContigLength;
         }
-
-
-        uiGenomeStart += uiContigLength;
     }
 
     // merge samples with coordinates from window
@@ -1247,8 +1253,8 @@ bool PartialQuarry::setIceCoords( )
 
     for( size_t uiI = 0; uiI < 2; uiI++ )
     {
-        sampleAndMerge(uiNumCoords, uiI, vAxisCords[ uiI ], vIceAxisCoords[ uiI ]);
-        sampleAndMerge(uiNumCoords, 1 - uiI, vV4cCoords[ uiI ], vIceV4cCoords[ uiI ]);
+        sampleAndMerge( uiNumCoords, uiI, vAxisCords[ uiI ], vIceAxisCoords[ uiI ] );
+        sampleAndMerge( uiNumCoords, 1 - uiI, vV4cCoords[ uiI ], vIceV4cCoords[ uiI ] );
         CANCEL_RETURN;
     }
 
