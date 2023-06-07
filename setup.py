@@ -136,7 +136,7 @@ setup(
     url='https://github.com/Siegel-Lab/libSmoother',
     description="On-the-fly processing and visualization of contact mapping data",
     long_description="",
-    packages=["libsmoother"],
+    packages=["libsmoother", "libsmoother.conf"],
     ext_modules=[CMakeExtension("libsmoothercpp")],
     data_files=[("libsmoother", ["libsmoother/conf/default.json", "libsmoother/conf/valid.json"])],
     include_package_data=True,
