@@ -27,12 +27,12 @@ jobs:
       run: |
         pip install --upgrade pip
         pip install wheel pybind11 auditwheel build
+        git config --global --add safe.directory '*'
 
     - uses: actions/checkout@v3
       with:
         repository: Siegel-Lab/libSps
         submodules: true
-        set-safe-directory: "*"
         #ref: v0.3.7
 
     - name: Install libSps
@@ -66,12 +66,12 @@ jobs:
       run: |
         /opt/python/${{ matrix.python-version }}/bin/python -m pip install --upgrade pip
         /opt/python/${{ matrix.python-version }}/bin/python -m pip install wheel auditwheel pybind11
+        git config --global --add safe.directory '*'
 
     - uses: actions/checkout@v3
       with:
         repository: Siegel-Lab/libSps
         submodules: true
-        set-safe-directory: "*"
         #ref: v0.3.7
 
     - name: Install libSps
