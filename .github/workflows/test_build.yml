@@ -31,7 +31,7 @@ jobs:
     - uses: actions/checkout@v3
       with:
         repository: Siegel-Lab/libSps
-        ref: v0.3.7
+        #ref: v0.3.7
 
     - name: Update submodules
       run: |
@@ -75,7 +75,7 @@ jobs:
     - uses: actions/checkout@v3
       with:
         repository: Siegel-Lab/libSps
-        ref: v0.3.7
+        #ref: v0.3.7
 
     - name: Update submodules
       run: |
@@ -126,7 +126,7 @@ jobs:
     - uses: actions/checkout@v3
       with:
         repository: Siegel-Lab/libSps
-        ref: v0.3.7
+        #ref: v0.3.7
 
     - name: Update submodules
       run: git submodule update --init --recursive
@@ -170,7 +170,7 @@ jobs:
     - uses: actions/checkout@v3
       with:
         repository: Siegel-Lab/libSps
-        ref: v0.3.7
+        #ref: v0.3.7
 
     - name: Update submodules
       run: git submodule update --init --recursive
@@ -230,7 +230,7 @@ jobs:
 
     - name: Install package
       run: pip install --index-url https://test.pypi.org/simple/ libbiosmoother
-      
+
     - name: Import package
       run: |
         python -c "import libbiosmoother; print(libbiosmoother.LIB_BIO_SMOOTHER_CPP_VERSION)"
