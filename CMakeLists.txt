@@ -61,9 +61,9 @@ add_custom_target(
 find_package(libsps REQUIRED PATHS ${Python_SITEARCH})
 find_package(pybind11 REQUIRED PATHS ${Python_SITEARCH})
 
-if(WITH_STXXL)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${STXXL_CXX_FLAGS}")
-endif(WITH_STXXL)
+#if(WITH_STXXL)
+#    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${STXXL_CXX_FLAGS}")
+#endif(WITH_STXXL)
 
 pybind11_add_module( libbiosmoothercpp src/main.cpp )
 target_include_directories( libbiosmoothercpp PUBLIC inc )
@@ -72,7 +72,7 @@ target_include_directories( libbiosmoothercpp PUBLIC ${CMAKE_BINARY_DIR}/generat
 target_link_libraries( libbiosmoothercpp PRIVATE libsps )
 if(WITH_STXXL)
     target_include_directories( libbiosmoothercpp SYSTEM PRIVATE ${STXXL_INCLUDE_DIRS} )
-    target_link_libraries( libbiosmoothercpp PRIVATE stxxl )
+#    target_link_libraries( libbiosmoothercpp PRIVATE stxxl )
 endif(WITH_STXXL)
 target_compile_definitions( libbiosmoothercpp PRIVATE WITH_PYTHON )
 target_compile_definitions( libbiosmoothercpp PRIVATE CXX_COMPILER_ID="${CMAKE_CXX_COMPILER_ID}" )
