@@ -50,11 +50,11 @@ class CMakeBuild(build_ext):
         # from Python.
         cmake_args = [
             f"-DCMAKE_LIBRARY_OUTPUT_DIRECTORY={extdir}{os.sep}",
-            f"-DPYTHON_EXECUTABLE={sys.executable}",
+            f"-DPython_EXECUTABLE={sys.executable}",
             f"-DCMAKE_BUILD_TYPE={cfg}",  # not used on MSVC, but no harm
-            f"-DPYTHON_LIBRARY={sysconfig.get_config_var('LIBDIR')}",
-            f"-DPYTHON_INCLUDE_DIR={sysconfig.get_path('include')}",
-            f"-DLIB_SMOOTHER_VERSION={VERSION}",
+            f"-DPython_LIBRARY={sysconfig.get_config_var('LIBDIR')}",
+            f"-DPython_INCLUDE_DIR={sysconfig.get_path('include')}",
+            f"-DLIB_BIO_SMOOTHER_VERSION={VERSION}",
         ]
         build_args = []
         # Adding CMake arguments set as environment variable
@@ -128,17 +128,19 @@ class CMakeBuild(build_ext):
         )
 
 setup(
-    name="libsmoother",
+    name="libbiosmoother",
     version=VERSION,
     author='Markus Schmidt',
     author_email='markus.rainer.schmidt@gmail.com',
     license='MIT',
-    url='https://github.com/Siegel-Lab/libSmoother',
+    url='https://github.com/Siegel-Lab/libBioSmoother',
     description="On-the-fly processing and visualization of contact mapping data",
-    long_description="",
-    packages=["libsmoother", "libsmoother.conf"],
-    ext_modules=[CMakeExtension("libsmoothercpp")],
-    data_files=[("libsmoother", ["libsmoother/conf/default.json", "libsmoother/conf/valid.json"])],
+    long_description="""
+        On-the-fly processing and visualization of contact mapping data
+    """,
+    packages=["libbiosmoother", "libbiosmoother.conf"],
+    ext_modules=[CMakeExtension("libbiosmoothercpp")],
+    data_files=[("libbiosmoother", ["libbiosmoother/conf/default.json", "libbiosmoother/conf/valid.json"])],
     include_package_data=True,
     cmdclass={"build_ext": CMakeBuild},
     extras_require={"test": "pytest"},
@@ -147,23 +149,18 @@ setup(
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Intended Audience :: Science/Research',
-        'License :: MIT License',
         'Operating System :: POSIX :: Linux',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.9',
     ],
     install_requires=[
-        'pybind11>=2.8.0',
-        'cmake>=3.17',
-        'make',
-        'libsps @ git+https://github.com/Siegel-Lab/libSps@stable-latest',
         'scipy',
         'statsmodels',
         'scikit-learn',
     ],
     entry_points={
         'console_scripts': [
-            'libsmoother = libsmoother.cli:main',
+            'libbiosmoother = libbiosmoother.cli:main',
         ],
     },
 )

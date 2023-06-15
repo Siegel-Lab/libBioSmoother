@@ -26,6 +26,7 @@ dependencies:
     - psutil
     - drawSvg>=1.9.0
     - statsmodels
+    - wheel
   - breathe
   - tectonic
   - clang-format

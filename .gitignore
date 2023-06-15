@@ -28,7 +28,7 @@ settings.json
 perf.data
 perf.data.old
 *.egg-info
-libsmoothercpp*.so
+libbiosmoothercpp*.so
 *.pyd
 build/*
 test/test_data/*
@@ -36,3 +36,4 @@ test/test_data/*
 *.shelf.dat
 *.shelf.dir
 *.shelf.bak
+dist/*
