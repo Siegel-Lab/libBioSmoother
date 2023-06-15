@@ -27,6 +27,7 @@ jobs:
       run: |
         pip install --upgrade pip
         pip install wheel pybind11 auditwheel build
+        git config --global --add safe.directory '*'
 
     - uses: actions/checkout@v3
       with:
@@ -65,6 +66,7 @@ jobs:
       run: |
         /opt/python/${{ matrix.python-version }}/bin/python -m pip install --upgrade pip
         /opt/python/${{ matrix.python-version }}/bin/python -m pip install wheel auditwheel pybind11
+        git config --global --add safe.directory '*'
 
     - uses: actions/checkout@v3
       with:
