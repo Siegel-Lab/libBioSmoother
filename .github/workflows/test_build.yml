@@ -21,7 +21,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-          python-version: ["cp36-cp36m", "cp37-cp37m", "cp38-cp38", "cp39-cp39", "cp310-cp310", "cp311-cp311", "cp312-cp312"]
+          python-version: ["cp38-cp38", "cp39-cp39", "cp310-cp310", "cp311-cp311", "cp312-cp312"]
 
     steps:
     - name: Install dependencies
@@ -64,7 +64,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-          python-version: ["3.6", "3.7", "3.8", "3.9", "3.10", "3.11"]
+          python-version: ["3.8", "3.9", "3.10", "3.11"]
 
     steps:
     - uses: actions/setup-python@v3
@@ -104,7 +104,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-          python-version: ["3.6", "3.7", "3.8", "3.9", "3.10", "3.11"]
+          python-version: ["3.8", "3.9", "3.10", "3.11"]
 
     steps:
     - name: Set up Python
@@ -166,7 +166,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-          python-version: ["3.7", "3.8", "3.9", "3.10", "3.11"]
+          python-version: ["3.8", "3.9", "3.10", "3.11"]
           os: ["ubuntu-latest", "windows-latest", "mac-latest"]
 
     steps:
