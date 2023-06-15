@@ -37,7 +37,7 @@ else()
 endif()
 
 
-find_package (Python REQUIRED QUIET COMPONENTS Interpreter Development.Module)
+find_package (Python REQUIRED COMPONENTS Interpreter Development.Module)
 
 # configure the version.h.in file
 add_custom_target(
