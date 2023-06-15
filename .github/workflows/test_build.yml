@@ -38,6 +38,7 @@ jobs:
       run: pip install -e . 
 
     - uses: actions/checkout@v3
+      with:
         submodules: true
 
     - name: Build package
@@ -75,6 +76,7 @@ jobs:
       run: /opt/python/${{ matrix.python-version }}/bin/python -m pip install -e . -vvv
 
     - uses: actions/checkout@v3
+      with:
         submodules: true
 
     - name: Build package
@@ -120,6 +122,7 @@ jobs:
       run: pip install -e . 
 
     - uses: actions/checkout@v3
+      with:
         submodules: true
 
     - name: Build package
@@ -160,6 +163,7 @@ jobs:
       run: pip install -e . 
 
     - uses: actions/checkout@v3
+      with:
         submodules: true
 
     - name: Build package
