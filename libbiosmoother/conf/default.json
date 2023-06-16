@@ -1,5 +1,5 @@
 {
-    "smoother_config_file_version": 0.1,
+    "biosmoother_config_file_version": 0.1,
     "display_name": "Default",
     "normalization": {
         "normalize_by": "dont",
