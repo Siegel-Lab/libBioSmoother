@@ -329,7 +329,7 @@ class Indexer:
             self.prefix,
             name,
             path,
-            get_filesize(path),
+            0, # unused
             self.session_default["contigs"]["list"],
             no_groups,
             "test" in self.session_default,
@@ -505,7 +505,7 @@ class Indexer:
             self.prefix,
             name,
             path,
-            get_filesize(path),
+            0, # unused
             self.session_default["contigs"]["list"],
             no_groups,
             "test" in self.session_default,
