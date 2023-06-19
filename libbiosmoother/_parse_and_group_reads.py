@@ -140,6 +140,15 @@ def parse_heatmap(in_filename, test, chr_filter, progress_print=print):
                 ["+", "+"],
                 1,
             ),
+            10: lambda read_name, chr_1, pos_1, chr_2, pos_2, str1, str2, _1, mapq_1, mapq_2: (
+                read_name,
+                [chr_1, chr_2],
+                [pos_1, pos_2],
+                [mapq_1, mapq_2],
+                ["?", "?"],
+                [str1, str2],
+                1,
+            ),
             11: lambda read_name, str1, chr_1, pos_1, _2, str2, chr_2, pos_2, _4, mapq_1, mapq_2: (
                 read_name,
                 [chr_1, chr_2],
