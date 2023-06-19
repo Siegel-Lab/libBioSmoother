@@ -45,6 +45,7 @@ def parse_tsv(in_filename, test, chr_filter, line_format, progress_print=print):
                 )
             # ignore empty lines and comments / header lines
             if len(line) == 0 or line[0] == "#":
+                print("skipping line", line)
                 continue
             # parse file columns
             num_cols = len(line.split())
