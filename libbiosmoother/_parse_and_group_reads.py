@@ -1,6 +1,7 @@
 PRINT_MODULO = 1000
 import errno
 import os
+import fileinput
 
 TEST_FAC = 100000
 MAX_READS_IM_MEM = 10000
@@ -29,7 +30,7 @@ def read_xa_tag(tags):
 
 
 def parse_tsv(in_filename, test, chr_filter, line_format, progress_print=print):
-    with open(in_filename, "r") as in_file_1:
+    with fileinput.input(in_filename) as in_file_1:
         cnt = 0
         file_pos = 0
         file_size = get_filesize(in_filename)
@@ -41,6 +42,9 @@ def parse_tsv(in_filename, test, chr_filter, line_format, progress_print=print):
                     in_filename + ":",
                     str(round(100 * (file_pos) / file_size, 2)) + "%",
                 )
+            # ignore empty lines and comments / header lines
+            if len(line) == 0 or line[0] == "#":
+                continue
             # parse file columns
             num_cols = len(line.split())
             if num_cols in line_format:
