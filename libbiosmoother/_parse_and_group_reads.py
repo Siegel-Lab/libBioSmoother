@@ -45,7 +45,7 @@ def parse_tsv(in_filename, test, chr_filter, line_format, progress_print=print):
                 )
             # ignore empty lines and comments / header lines
             if len(line) == 0 or line[0] == "#":
-                print("skipping line", line)
+                print("skipping line", line[:-1])
                 continue
             # parse file columns
             num_cols = len(line.split())
@@ -294,7 +294,7 @@ def group_reads(
         cnt,
     ) in parse_func(in_filename, test, chr_filter, progress_print):
         if (
-            (curr_read_name is None or read_name != curr_read_name)
+            (curr_read_name in [None, ".", "", "-"] or read_name != curr_read_name)
             and len(group) > 0
             and len(group[0]) > 0
         ):
