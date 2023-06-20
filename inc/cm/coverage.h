@@ -215,7 +215,7 @@ bool PartialQuarry::setTracks( )
     {
         vvMinMaxTracks[ uiI ][ 0 ] = std::numeric_limits<double>::max( );
         vvMinMaxTracks[ uiI ][ 1 ] = std::numeric_limits<double>::min( );
-        const bool bDoIce = getValue<bool>( { "settings", "normalization", "ice_show_bias" } );
+        const bool bDoIce = sNorm == "ice" && getValue<bool>( { "settings", "normalization", "ice_show_bias" } );
 
         for( size_t uiX = 0; uiX < vAxisCords[ uiI ].size( ); uiX++ )
         {
@@ -705,11 +705,37 @@ bool PartialQuarry::setTrackExport( )
         vTrackExport[ uiI ].clear( );
         vTrackExport[ uiI ].reserve( vAxisCords[ uiI ].size( ) );
         vTrackExportNames[ uiI ].clear( );
-        vTrackExportNames[ uiI ].reserve( vvCoverageValues[ uiI ].size( ) );
+        vTrackExportNames[ uiI ].reserve( vvCoverageValues[ uiI ].size( ) + 1 );
+
+        
+        const std::string sNorm = getValue<std::string>( { "settings", "normalization", "normalize_by" } );
+        const bool bGridSeqNormDisp =
+            sNorm == "grid-seq" && getValue<bool>( { "settings", "normalization", "grid_seq_display_background" } );
+        const bool bRadiclNormDisp =
+            sNorm == "radicl-seq" && getValue<bool>( { "settings", "normalization", "radicl_seq_display_coverage" } );
+        bool bIsCol;
+        if( bGridSeqNormDisp )
+            bIsCol = getValue<bool>( { "settings", "normalization", "grid_seq_axis_is_column" } );
+        else if( bRadiclNormDisp )
+            bIsCol = getValue<bool>( { "settings", "normalization", "radicl_seq_axis_is_column" } );
+        
+        const bool bDoIce = sNorm == "ice" && getValue<bool>( { "settings", "normalization", "ice_show_bias" } );
 
 
         for( size_t uiId = 0; uiId < vvCoverageValues[ uiI ].size( ); uiI++ )
             vTrackExportNames[ uiI ].push_back( vActiveCoverage[ uiI ][ uiId ] );
+        if( ( bRadiclNormDisp || bGridSeqNormDisp ) && ( bIsCol == ( uiI == 0 ) ) )
+        {
+            if( bGridSeqNormDisp )
+                vTrackExportNames[ uiI ].push_back( "Associated_slices_background" );
+            else if( bRadiclNormDisp )
+                vTrackExportNames[ uiI ].push_back( "Binominal_test_coverage" );
+        }
+        if(bDoIce)
+        {
+            vTrackExportNames[ uiI ].push_back( "ICE_bias_A" );
+            vTrackExportNames[ uiI ].push_back( "ICE_bias_B" );
+        }
 
         for( size_t uiX = 0; uiX < vAxisCords[ uiI ].size( ); uiX++ )
         {
@@ -717,6 +743,18 @@ bool PartialQuarry::setTrackExport( )
             std::vector<double> vValues;
             for( size_t uiId = 0; uiId < vvCoverageValues[ uiI ].size( ); uiI++ )
                 vValues.push_back( vvCoverageValues[ uiI ][ uiId ][ uiX ] );
+            if( ( bRadiclNormDisp || bGridSeqNormDisp ) && ( bIsCol == ( uiI == 0 ) ) )
+            {
+                if( bGridSeqNormDisp )
+                    vValues.push_back( vBackgroundGridSeq[ uiX ] );
+                else if( bRadiclNormDisp )
+                    vValues.push_back( vRadiclSeqCoverage[ uiX ][ uiI ] );
+            }
+            if(bDoIce)
+            {
+                vValues.push_back( vIceSliceBias[ 0 ][ uiI ][ 0 ][ uiX ] );
+                vValues.push_back( vIceSliceBias[ 0 ][ uiI ][ 1 ][ uiX ] );
+            }
 
             auto& xCoord = vAxisCords[ uiI ][ uiX ];
             std::string sChromName = vActiveChromosomes[ uiI ][ xCoord.uiChromosome ].sName;
