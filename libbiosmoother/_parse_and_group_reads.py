@@ -37,15 +37,17 @@ def parse_tsv(in_filename, test, chr_filter, line_format, progress_print=print):
             file_size = get_filesize(in_filename)
         for idx_2, line in enumerate(in_file_1):
             file_pos += len(line)
-            if idx_2 % PRINT_MODULO == PRINT_MODULO - 1 and in_filename != "-":
-                progress_print(
-                    "file",
-                    in_filename + ":",
-                    str(round(100 * (file_pos) / file_size, 2)) + "%",
-                )
+            if idx_2 % PRINT_MODULO == PRINT_MODULO - 1:
+                if in_filename != "-":
+                    progress_print(
+                        "file",
+                        in_filename + ":",
+                        str(round(100 * (file_pos) / file_size, 2)) + "%",
+                    )
+                else:
+                    progress_print(str(idx_2) + " lines read from stdin")
             # ignore empty lines and comments / header lines
             if len(line) == 0 or line[0] == "#":
-                print("skipping line", line[:-1])
                 continue
             # parse file columns
             num_cols = len(line.split())

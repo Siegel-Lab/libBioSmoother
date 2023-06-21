@@ -252,7 +252,7 @@ bool PartialQuarry::setTracks( )
         for( size_t uiX = 0; uiX < vIceAxisCoords[ uiI ].size( ); uiX++ )
             for( size_t uiY = 0; uiY < 2; uiY++ )
                 if( bDoIce && vIceAxisCoords[ uiI ][ uiY ].uiIdx != ICE_SAMPLE_COORD &&
-                    vIceSliceBias[ 0 ][ uiI ][ uiY ].size( ) > 0 )
+                    vIceSliceBias[ 0 ][ uiI ][ uiY ].size( ) > 0 && vInGroup[uiY].size() > 0 )
                 {
                     auto uiVal = vIceSliceBias[ 0 ][ uiI ][ uiY ][ uiX ];
                     vvMinMaxTracks[ uiI ][ 0 ] = std::min( vvMinMaxTracks[ uiI ][ 0 ], uiVal );
@@ -601,7 +601,7 @@ bool PartialQuarry::setTracks( )
 
         for( size_t uiY = 0; uiY < 2; uiY++ )
             if( getValue<bool>( { "settings", "normalization", "ice_show_bias" } ) &&
-                vIceSliceBias[ 0 ][ uiI ][ uiY ].size( ) > 0 )
+                vIceSliceBias[ 0 ][ uiI ][ uiY ].size( ) > 0 && vInGroup[uiY].size() > 0 )
             {
                 pybind11::list vScreenPos;
                 pybind11::list vIndexStart;
@@ -733,8 +733,10 @@ bool PartialQuarry::setTrackExport( )
         }
         if(bDoIce)
         {
-            vTrackExportNames[ uiI ].push_back( "ICE_bias_A" );
-            vTrackExportNames[ uiI ].push_back( "ICE_bias_B" );
+            if(vInGroup[0].size() > 0 )
+                vTrackExportNames[ uiI ].push_back( "ICE_bias_A" );
+            if(vInGroup[1].size() > 1 )
+                vTrackExportNames[ uiI ].push_back( "ICE_bias_B" );
         }
 
         for( size_t uiX = 0; uiX < vAxisCords[ uiI ].size( ); uiX++ )
@@ -752,8 +754,10 @@ bool PartialQuarry::setTrackExport( )
             }
             if(bDoIce)
             {
-                vValues.push_back( vIceSliceBias[ 0 ][ uiI ][ 0 ][ uiX ] );
-                vValues.push_back( vIceSliceBias[ 0 ][ uiI ][ 1 ][ uiX ] );
+                if(vInGroup[0].size() > 0 )
+                    vValues.push_back( vIceSliceBias[ 0 ][ uiI ][ 0 ][ uiX ] );
+                if(vInGroup[1].size() > 0 )
+                    vValues.push_back( vIceSliceBias[ 0 ][ uiI ][ 1 ][ uiX ] );
             }
 
             auto& xCoord = vAxisCords[ uiI ][ uiX ];
