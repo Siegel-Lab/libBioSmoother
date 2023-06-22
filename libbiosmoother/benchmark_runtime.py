@@ -18,3 +18,4 @@ def benchmark_runtime(quarry, N, output_file):
 
     with open(output_file, "wb") as f:
         pickle.dump(data_out, f)
+    print(data_out)

@@ -48,14 +48,13 @@ bool PartialQuarry::setDatasetIdPerRepl( )
     {
         vvDatasetIdsPerReplAndChr.emplace_back( );
         vvDatasetIdsPerReplAndChr.back( ).reserve( vActiveChromosomes[ 0 ].size( ) * vActiveChromosomes[ 1 ].size( ) );
+        auto xIds = getValue<std::map<std::string, std::map<std::string, size_t>>>( { "replicates", "by_name", sRep, "ids" } );
         for( const ChromDesc& xChromX : vActiveChromosomes[ 0 ] )
             for( const ChromDesc& xChromY : vActiveChromosomes[ 1 ] )
             {
                 CANCEL_RETURN;
-                if( hasValue( { "replicates", "by_name", sRep, "ids", xChromX.sName } ) &&
-                    hasValue( { "replicates", "by_name", sRep, "ids", xChromX.sName, xChromY.sName } ) )
-                    vvDatasetIdsPerReplAndChr.back( ).push_back(
-                        getValue<size_t>( { "replicates", "by_name", sRep, "ids", xChromX.sName, xChromY.sName } ) );
+                if( xIds.count( xChromX.sName ) > 0 && xIds[xChromX.sName].count( xChromY.sName ) > 0 )
+                    vvDatasetIdsPerReplAndChr.back( ).push_back(xIds[xChromX.sName][xChromY.sName] );
                 else
                     vvDatasetIdsPerReplAndChr.back( ).push_back( std::numeric_limits<size_t>::max( ) );
             }
@@ -67,14 +66,15 @@ bool PartialQuarry::setDatasetIdPerRepl( )
         vBiasIdPerReplAndChr[ uiI ].reserve( vActiveReplicates.size( ) );
         for( const std::string& sRep : vActiveReplicates )
         {
+            auto xIds = getValue<std::map<std::string, size_t>>( { "replicates", "by_name", sRep, 
+                                                                   uiI == 1 ? "ice_row" : "ice_col" } );
             vBiasIdPerReplAndChr[ uiI ].emplace_back( );
             vBiasIdPerReplAndChr[ uiI ].back( ).reserve( vActiveChromosomes[ uiI ].size( ) );
             for( const ChromDesc& xChrom : vActiveChromosomes[ uiI ] )
             {
                 CANCEL_RETURN;
-                if( hasValue( { "replicates", "by_name", sRep, uiI == 1 ? "ice_row" : "ice_col", xChrom.sName } ) )
-                    vBiasIdPerReplAndChr[ uiI ].back( ).push_back( getValue<size_t>(
-                        { "replicates", "by_name", sRep, uiI == 1 ? "ice_row" : "ice_col", xChrom.sName } ) );
+                if( xIds.count( xChrom.sName ) > 0 )
+                    vBiasIdPerReplAndChr[ uiI ].back( ).push_back( xIds[ xChrom.sName] );
                 else
                     vBiasIdPerReplAndChr[ uiI ].back( ).push_back( std::numeric_limits<size_t>::max( ) );
             }
