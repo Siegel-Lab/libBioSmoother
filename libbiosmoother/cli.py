@@ -8,6 +8,7 @@ import os
 import shutil
 from .parameters import list_parameters, values_for_parameter, open_valid_json
 from .test import test
+from .benchmark_runtime import benchmark_runtime
 
 
 def init(args):
@@ -140,6 +141,9 @@ def info_smoother(args):
 
 def test_smoother(args):
     test(Quarry(args.index_prefix), args.seed, args.skip_first)
+
+def benchmark_runtime_smoother(args):
+    benchmark_runtime(Quarry(args.index_prefix), args.num_experiments, args.outfile)
 
 
 def add_parsers(main_parser):
@@ -373,6 +377,19 @@ def add_parsers(main_parser):
         "-s", "--skip_first", help="Skip the first x many test", default=0, type=int
     )
     test_parser.set_defaults(func=test_smoother)
+
+    bench_parser = main_parser.add_parser("benchmark", help=argparse.SUPPRESS)
+    bench_parser.add_argument(
+        "index_prefix",
+        help="Prefix that was used to create the index (see the init subcommand).",
+    )
+    bench_parser.add_argument(
+        "-N", "--num_experiments", help="Number of samples to take", default=100, type=int
+    )
+    bench_parser.add_argument(
+        "-o", "--outfile", help="outputfile", default="benchmark.pickle", type=str
+    )
+    bench_parser.set_defaults(func=benchmark_runtime_smoother)
 
 
 def make_main_parser():

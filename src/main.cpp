@@ -265,6 +265,7 @@ PYBIND11_MODULE( libbiosmoothercpp, m )
         .def( "clear_cache", &cm::PartialQuarry::clearCache ) //
         .def( "update_all", &cm::PartialQuarry::updateAll ) //
         .def( "save_session", &cm::PartialQuarry::saveSession ) //
+        .def( "get_runtimes", &cm::PartialQuarry::getRuntimes ) //
 
         .def( "normalizeBinominalTestTrampoline", &cm::ContectMappingPublicist::normalizeBinominalTestTrampoline ) //
         .def( "normalizeCoolerTrampoline", &cm::ContectMappingPublicist::normalizeCoolerTrampoline ) //

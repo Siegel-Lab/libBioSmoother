@@ -244,6 +244,7 @@ class PartialQuarry : public HasSession
         std::string sError = "";
         bool bRegistered = false;
         bool bTerminal = true;
+        int64_t uiLastRuntime = 0;
     };
 
     size_t uiCurrTime;
@@ -374,6 +375,8 @@ class PartialQuarry : public HasSession
                     std::cout << pms_int.count( ) << " ms (predecessors)" << std::endl << std::endl;
 
                 xNodeData.uiLastUpdated = uiCurrTime;
+                auto mics_int = std::chrono::duration_cast<std::chrono::microseconds>( t2 - t1 );
+                xNodeData.uiLastRuntime = mics_int.count( );
             }
             else if( uiVerbosity >= 3 )
                 std::cout << "no reason found to run node " << xNode.sNodeName << std::endl;
@@ -1436,6 +1439,16 @@ class PartialQuarry : public HasSession
                     sRet += "\t" + vGraph[ rIncoming ].sNodeName + " -> " + rNode.sNodeName + ";\n";
         }
         return sRet + "}";
+    }
+
+    std::vector<std::pair<std::string, size_t>> getRuntimes()
+    {
+        std::vector<std::pair<std::string, size_t>> vRet;
+        vRet.reserve(NodeNames::SIZE);
+        for( size_t uiNodeName = 0; uiNodeName < NodeNames::SIZE; uiNodeName++ )
+            vRet.push_back(std::make_pair(vGraph[uiNodeName].sNodeName, vGraphData[uiNodeName].uiLastRuntime));
+
+        return vRet;
     }
 };
 
