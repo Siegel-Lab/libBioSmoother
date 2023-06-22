@@ -1,7 +1,12 @@
 import pickle
+from .quarry import open_default_json
+import json
 
 def benchmark_runtime(quarry, N, output_file):
     data_out = {}
+    with open_default_json() as default_file:
+        default_json = json.load(default_file)
+    quarry.set_value(["settings"], default_json)
     for n in range(N):
         quarry.clear_cache()
         quarry.update_all(lambda s: None)
