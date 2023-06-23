@@ -410,15 +410,17 @@ size_t multiple_anno( std::string sVal )
     throw std::logic_error( "unknown multiple_annos_in_bin value" );
 }
 
-std::vector<ChromDesc> activeChromList( json xChromLen, json xChromDisp )
+std::vector<ChromDesc> activeChromList( json xChromLen, json xChromDisp, const std::vector<std::string>& xChromOrder )
 {
     std::vector<ChromDesc> vRet;
     vRet.reserve( xChromDisp.size( ) );
     for( auto& xChrom : xChromDisp )
     {
         std::string sChrom = xChrom.get<std::string>( );
+        size_t uiIdx = (size_t)(std::find(xChromOrder.begin(), xChromOrder.end(), sChrom) - xChromOrder.begin());
         vRet.emplace_back( ChromDesc{ /*.sName =*/sChrom, /*.uiUnadjustedLength =*/xChromLen[ sChrom ].get<size_t>( ),
-                                      /*uiLength =*/0 } );
+                                      /*uiLength =*/0,
+                                      /*uiId = */uiIdx } );
     }
     return vRet;
 }
@@ -611,10 +613,12 @@ const std::array<size_t, 2> PartialQuarry::getCanvasSize( const std::function<vo
 
 bool PartialQuarry::setActiveChrom( )
 {
+    auto vContigList = getValue<std::vector<std::string>>( { "contigs", "list" } );
     for( bool bX : { true, false } )
         this->vActiveChromosomes[ bX ? 0 : 1 ] =
             activeChromList( getValue<json>( { "contigs", "lengths" } ),
-                             getValue<json>( { "contigs", bX ? "displayed_on_x" : "displayed_on_y" } ) );
+                             getValue<json>( { "contigs", bX ? "displayed_on_x" : "displayed_on_y" } ),
+                              vContigList );
     END_RETURN;
 }
 

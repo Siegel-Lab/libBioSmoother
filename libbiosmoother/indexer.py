@@ -325,12 +325,14 @@ class Indexer:
         if group in ["b", "both"]:
             self.append_session(["replicates", "in_group_b"], name)
 
+        contigs = self.session_default["contigs"]["list"]
+
         read_iterator = chr_order_heatmap(
             self.prefix,
             name,
             path,
             0, # unused
-            self.session_default["contigs"]["list"],
+            contigs,
             no_groups,
             "test" in self.session_default,
             force_upper_triangle,
@@ -338,16 +340,17 @@ class Indexer:
         )
         total_reads = 0
 
-        num_itr = len(read_iterator)
+        num_itr = len(contigs) * len(contigs)
         cnt = 0
-        for chr_x in read_iterator.itr_x_axis():
+        first_id = None
+        for chr_x in contigs:
             anno_ids_x = [
                 self.session_default["annotation"]["by_name"][anno][chr_x]
                 if chr_x in self.session_default["annotation"]["by_name"][anno]
                 else -1
                 for anno in self.session_default["annotation"]["list"]
             ]
-            for chr_y in read_iterator.itr_y_axis():
+            for chr_y in contigs:
                 anno_ids_y = [
                     self.session_default["annotation"]["by_name"][anno][chr_y]
                     if chr_y in self.session_default["annotation"]["by_name"][anno]
@@ -430,24 +433,14 @@ class Indexer:
                             y_strand_idx,
                         ]
                         self.indices.insert(start, end, val)
-                if (
-                    chr_x
-                    not in self.session_default["replicates"]["by_name"][name]["ids"]
-                ):
-                    self.set_session(["replicates", "by_name", name, "ids", chr_x], {})
-                assert (
-                    chr_y
-                    not in self.session_default["replicates"]["by_name"][name]["ids"][
-                        chr_x
-                    ]
-                )
-                self.set_session(
-                    ["replicates", "by_name", name, "ids", chr_x, chr_y],
-                    self.indices.generate(
+                id = self.indices.generate(
                         fac=-2 if shekelyan else -1, verbosity=GENERATE_VERBOSITY
-                    ),
-                )
+                    )
+                if first_id is None:
+                    first_id = id
 
+        self.set_session(["replicates", "by_name", name, "first_dataset_id"], first_id)
+        self.set_session(["replicates", "by_name", name, "num_datasets"], num_itr)
         self.set_session(["replicates", "by_name", name, "total_reads"], total_reads)
         if total_reads == 0:
             print(
@@ -501,21 +494,24 @@ class Indexer:
         if group in ["row", "both"]:
             self.append_session(["coverage", "in_row"], name)
 
+        contigs = self.session_default["contigs"]["list"]
+
         read_iterator = chr_order_coverage(
             self.prefix,
             name,
             path,
             0, # unused
-            self.session_default["contigs"]["list"],
+            contigs,
             no_groups,
             "test" in self.session_default,
             lambda *x: self.progress_print("loading", *x),
         )
         total_reads = 0
 
-        num_itr = len(read_iterator)
+        num_itr = len(contigs)
         cnt = 0
-        for chr_x in read_iterator.itr_x_axis():
+        fist_id = None
+        for chr_x in contigs:
             anno_ids = [
                 self.session_default["annotation"]["by_name"][anno][chr_x]
                 if chr_x in self.session_default["annotation"]["by_name"][anno]
@@ -580,13 +576,11 @@ class Indexer:
                         0,
                     ]
                     self.indices.insert(start, end, val)
-            self.set_session(
-                ["coverage", "by_name", name, "ids", chr_x],
-                self.indices.generate(
-                    fac=-2 if shekelyan else -1, verbosity=GENERATE_VERBOSITY
-                ),
-            )
-
+            id = self.indices.generate(fac=-2 if shekelyan else -1, verbosity=GENERATE_VERBOSITY)
+            if fist_id is None:
+                fist_id = id
+        self.set_session(["coverage", "by_name", name, "first_dataset_id"], fist_id)
+        self.set_session(["coverage", "by_name", name, "num_datasets"], num_itr)
         self.set_session(["coverage", "by_name", name, "total_reads"], total_reads)
 
         if total_reads == 0:

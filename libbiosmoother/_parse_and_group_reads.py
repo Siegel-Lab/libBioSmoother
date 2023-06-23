@@ -327,19 +327,6 @@ class ChrOrderHeatmapIterator:
                 if self.in_file[chr_1][chr_2]:
                     os.remove(self.prefix + "." + chr_1 + "." + chr_2)
 
-    def itr_x_axis(self):
-        for x in set(self.chrs.keys()):
-            yield x
-
-    def itr_y_axis(self):
-        for y in set([chr_y for vals in self.chrs.values() for chr_y in vals.keys()]):
-            yield y
-
-    def itr_heatmap(self):
-        for chr_x in self.yield_x_axis():
-            for chr_y in self.yield_y_axis():
-                yield chr_x, chr_y
-
     def itr_cell(self, chr_x, chr_y):
         if chr_x in self.chrs and chr_y in self.chrs[chr_x]:
             if self.in_file[chr_x][chr_y]:
@@ -348,23 +335,6 @@ class ChrOrderHeatmapIterator:
                         yield line.split()
             for tup in self.chrs[chr_x][chr_y]:
                 yield tup
-
-    def itr_row(self, chr_y):
-        for chr_x in self.itr_x_axis():
-            yield from self.itr_cell(chr_x, chr_y)
-
-    def itr_col(self, chr_x):
-        for chr_y in self.itr_y_axis():
-            yield from self.itr_cell(chr_x, chr_y)
-
-    def itr_diag(self):
-        for x in set([*self.itr_x_axis(), *self.itr_y_axis()]):
-            yield x
-
-    def __len__(self):
-        x_cnt = len(list(self.itr_x_axis()))
-        y_cnt = len(list(self.itr_y_axis()))
-        return x_cnt * y_cnt
 
 
 def chr_order_heatmap(
@@ -441,10 +411,6 @@ class ChrOrderCoverageIterator:
             if self.in_file[chr_]:
                 os.remove(self.prefix + "." + chr_)
 
-    def itr_x_axis(self):
-        for x in self.chrs.keys():
-            yield x
-
     def itr_cell(self, chr_):
         if self.in_file[chr_]:
             with open(self.prefix + "." + chr_, "r") as in_file:
@@ -452,9 +418,6 @@ class ChrOrderCoverageIterator:
                     yield line.split()
         for tup in self.chrs[chr_]:
             yield tup
-
-    def __len__(self):
-        return len(self.chrs)
 
 
 def chr_order_coverage(

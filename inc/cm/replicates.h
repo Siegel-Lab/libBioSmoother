@@ -45,41 +45,9 @@ bool PartialQuarry::setDatasetIdPerRepl( )
     vvDatasetIdsPerReplAndChr.reserve( vActiveReplicates.size( ) );
 
     for( const std::string& sRep : vActiveReplicates )
-    {
-        vvDatasetIdsPerReplAndChr.emplace_back( );
-        vvDatasetIdsPerReplAndChr.back( ).reserve( vActiveChromosomes[ 0 ].size( ) * vActiveChromosomes[ 1 ].size( ) );
-        auto xIds = getValue<std::map<std::string, std::map<std::string, size_t>>>( { "replicates", "by_name", sRep, "ids" } );
-        for( const ChromDesc& xChromX : vActiveChromosomes[ 0 ] )
-            for( const ChromDesc& xChromY : vActiveChromosomes[ 1 ] )
-            {
-                CANCEL_RETURN;
-                if( xIds.count( xChromX.sName ) > 0 && xIds[xChromX.sName].count( xChromY.sName ) > 0 )
-                    vvDatasetIdsPerReplAndChr.back( ).push_back(xIds[xChromX.sName][xChromY.sName] );
-                else
-                    vvDatasetIdsPerReplAndChr.back( ).push_back( std::numeric_limits<size_t>::max( ) );
-            }
-    }
-
-    for( size_t uiI = 0; uiI < 2; uiI++ )
-    {
-        vBiasIdPerReplAndChr[ uiI ].clear( );
-        vBiasIdPerReplAndChr[ uiI ].reserve( vActiveReplicates.size( ) );
-        for( const std::string& sRep : vActiveReplicates )
-        {
-            auto xIds = getValue<std::map<std::string, size_t>>( { "replicates", "by_name", sRep, 
-                                                                   uiI == 1 ? "ice_row" : "ice_col" } );
-            vBiasIdPerReplAndChr[ uiI ].emplace_back( );
-            vBiasIdPerReplAndChr[ uiI ].back( ).reserve( vActiveChromosomes[ uiI ].size( ) );
-            for( const ChromDesc& xChrom : vActiveChromosomes[ uiI ] )
-            {
-                CANCEL_RETURN;
-                if( xIds.count( xChrom.sName ) > 0 )
-                    vBiasIdPerReplAndChr[ uiI ].back( ).push_back( xIds[ xChrom.sName] );
-                else
-                    vBiasIdPerReplAndChr[ uiI ].back( ).push_back( std::numeric_limits<size_t>::max( ) );
-            }
-        }
-    }
+        vvDatasetIdsPerReplAndChr.push_back(
+            getValue<size_t>( { "replicates", "by_name", sRep, "first_dataset_id" } )
+         );
     END_RETURN;
 }
 
@@ -150,8 +118,10 @@ bool PartialQuarry::setBinValues( )
                 {
                     if( vCoords[ uiI ].uiChromosomeX != std::numeric_limits<size_t>::max( ) )
                     {
-                        size_t iDataSetId = getDatasetIdfromReplAndChr( uiRepl, vCoords[ uiI ].uiChromosomeX,
-                                                                        vCoords[ uiI ].uiChromosomeY );
+                        size_t iDataSetId = getDatasetIdfromReplAndChr( uiRepl, 
+                                vActiveChromosomes[ 0 ][vCoords[ uiI ].uiChromosomeX].uiId,
+                                vActiveChromosomes[ 1 ][vCoords[ uiI ].uiChromosomeY].uiId
+                            );
                         if( iDataSetId != std::numeric_limits<size_t>::max( ) )
                         {
                             vVals[ uiI ] =
@@ -214,82 +184,78 @@ bool PartialQuarry::setDecayValues( )
                     if( vCoords[ uiI ].uiChromosomeX != std::numeric_limits<size_t>::max( ) &&
                         vCoords[ uiI ].uiChromosomeY != std::numeric_limits<size_t>::max( ) )
                     {
-                        size_t iDataSetId = getDatasetIdfromReplAndChr( uiRepl, vCoords[ uiI ].uiChromosomeX,
-                                                                        vCoords[ uiI ].uiChromosomeY );
+                        size_t iDataSetId = getDatasetIdfromReplAndChr( uiRepl, 
+                            vActiveChromosomes[ 0 ][vCoords[ uiI ].uiChromosomeX].uiId,
+                            vActiveChromosomes[ 1 ][vCoords[ uiI ].uiChromosomeY].uiId );
 
-                        if( iDataSetId != std::numeric_limits<size_t>::max( ) )
+                        int64_t iChrX = vActiveChromosomes[ 0 ][ vCoords[ uiI ].uiChromosomeX ].uiLength;
+                        int64_t iChrY = vActiveChromosomes[ 1 ][ vCoords[ uiI ].uiChromosomeY ].uiLength;
+
+                        /* The two contigs span a rectange of size cW x cH.
+                            * The bin has a bottom left corner with a distance of c form the diagonal (positive = to
+                            * right, neg = to left)
+                            *
+                            */
+
+                        int64_t iCornerPos = ( vCoords[ uiI ].iFrom + vCoords[ uiI ].iTo ) / 2;
+                        // corner pos within contig rectangle
+                        if( iCornerPos >= -iChrY && iCornerPos <= iChrX )
                         {
-                            int64_t iChrX = vActiveChromosomes[ 0 ][ vCoords[ uiI ].uiChromosomeX ].uiLength;
-                            int64_t iChrY = vActiveChromosomes[ 1 ][ vCoords[ uiI ].uiChromosomeY ].uiLength;
+                            int64_t iBot = std::abs( iCornerPos );
+                            int64_t iChrTopRightCornerPos = iChrX - iChrY;
+                            int64_t iTop = iChrX + iChrY - std::abs( iChrTopRightCornerPos - iCornerPos );
 
-                            /* The two contigs span a rectange of size cW x cH.
-                             * The bin has a bottom left corner with a distance of c form the diagonal (positive = to
-                             * right, neg = to left)
-                             *
-                             */
+                            int64_t iMyH = std::max( (int64_t)1, vCoords[ uiI ].iTo - vCoords[ uiI ].iFrom );
+                            int64_t iH = std::max( (int64_t)1, ( ( iTop - iMyH ) - iBot ) / (int64_t)uiSamplesMax );
+                            if( bAllSamples )
+                                iH = 1;
 
-                            int64_t iCornerPos = ( vCoords[ uiI ].iFrom + vCoords[ uiI ].iTo ) / 2;
-                            // corner pos within contig rectangle
-                            if( iCornerPos >= -iChrY && iCornerPos <= iChrX )
+                            if( ( iTop - iMyH ) - iBot >= (int64_t)( uiSamplesMin - 1 ) * iMyH )
                             {
-                                int64_t iBot = std::abs( iCornerPos );
-                                int64_t iChrTopRightCornerPos = iChrX - iChrY;
-                                int64_t iTop = iChrX + iChrY - std::abs( iChrTopRightCornerPos - iCornerPos );
-
-                                int64_t iMyH = std::max( (int64_t)1, vCoords[ uiI ].iTo - vCoords[ uiI ].iFrom );
-                                int64_t iH = std::max( (int64_t)1, ( ( iTop - iMyH ) - iBot ) / (int64_t)uiSamplesMax );
+                                vvVals.clear( );
+                                vvVals.reserve( std::min( (int64_t)uiSamplesMax, (int64_t)( iTop - iBot ) ) );
                                 if( bAllSamples )
-                                    iH = 1;
-
-                                if( ( iTop - iMyH ) - iBot >= (int64_t)( uiSamplesMin - 1 ) * iMyH )
+                                    vvVals.reserve( iTop - iBot );
+                                for( int64_t iMyBot = iBot; iMyBot <= iTop - iMyH; iMyBot += iH )
                                 {
-                                    vvVals.clear( );
-                                    vvVals.reserve( std::min( (int64_t)uiSamplesMax, (int64_t)( iTop - iBot ) ) );
-                                    if( bAllSamples )
-                                        vvVals.reserve( iTop - iBot );
-                                    for( int64_t iMyBot = iBot; iMyBot <= iTop - iMyH; iMyBot += iH )
-                                    {
-                                        int64_t iMyTop = iMyBot + iMyH;
+                                    int64_t iMyTop = iMyBot + iMyH;
 
-                                        assert( iMyBot >= iCornerPos );
-                                        size_t uiYs = (size_t)( iMyBot + iCornerPos ) / 2;
-                                        size_t uiXs = (size_t)( iMyBot - iCornerPos ) / 2;
-                                        assert( iMyTop >= iCornerPos );
-                                        size_t uiYe = std::max( uiYs + 1, (size_t)( iMyTop + iCornerPos ) / 2 );
-                                        size_t uiXe = std::max( uiXs + 1, (size_t)( iMyTop - iCornerPos ) / 2 );
-                                        assert( uiYe <= (size_t)iChrX );
-                                        assert( uiXe <= (size_t)iChrY );
+                                    assert( iMyBot >= iCornerPos );
+                                    size_t uiYs = (size_t)( iMyBot + iCornerPos ) / 2;
+                                    size_t uiXs = (size_t)( iMyBot - iCornerPos ) / 2;
+                                    assert( iMyTop >= iCornerPos );
+                                    size_t uiYe = std::max( uiYs + 1, (size_t)( iMyTop + iCornerPos ) / 2 );
+                                    size_t uiXe = std::max( uiXs + 1, (size_t)( iMyTop - iCornerPos ) / 2 );
+                                    assert( uiYe <= (size_t)iChrX );
+                                    assert( uiXe <= (size_t)iChrY );
 
-                                        vvVals.push_back(
-                                            pIndices->count( iDataSetId,
-                                                             { uiXs, uiYs, uiMapQMin, uiFromAnnoFilter,
-                                                               uiFromSameStrandFilter, uiFromYStrandFilter },
-                                                             { uiXe, uiYe, uiMapQMax, uiToAnnoFilter,
-                                                               uiToSameStrandFilter, uiToYStrandFilter },
-                                                             xIntersect,
-                                                             0 ) );
+                                    vvVals.push_back(
+                                        pIndices->count( iDataSetId,
+                                                            { uiXs, uiYs, uiMapQMin, uiFromAnnoFilter,
+                                                            uiFromSameStrandFilter, uiFromYStrandFilter },
+                                                            { uiXe, uiYe, uiMapQMax, uiToAnnoFilter,
+                                                            uiToSameStrandFilter, uiToYStrandFilter },
+                                                            xIntersect,
+                                                            0 ) );
 
-                                        if( vvVals.back( ) > uiMinuend )
-                                            vvVals.back( ) -= uiMinuend;
-                                        else
-                                            vvVals.back( ) = 0;
-                                    }
-
-                                    std::sort( vvVals.begin( ), vvVals.end( ) );
-                                    if( fQuantExcl >= 0.5 )
-                                        vVals[ uiI ] = (double)vvVals[ vvVals.size( ) / 2 ];
+                                    if( vvVals.back( ) > uiMinuend )
+                                        vvVals.back( ) -= uiMinuend;
                                     else
-                                    {
-                                        vVals[ uiI ] = 0;
-                                        for( size_t uiJ = vvVals.size( ) * fQuantExcl;
-                                             uiJ < vvVals.size( ) * ( 1 - fQuantExcl );
-                                             uiJ++ )
-                                            vVals[ uiI ] += (double)vvVals[ uiJ ];
-                                        vVals[ uiI ] /= (size_t)( (double)vvVals.size( ) * ( 1.0 - 2.0 * fQuantExcl ) );
-                                    }
+                                        vvVals.back( ) = 0;
                                 }
+
+                                std::sort( vvVals.begin( ), vvVals.end( ) );
+                                if( fQuantExcl >= 0.5 )
+                                    vVals[ uiI ] = (double)vvVals[ vvVals.size( ) / 2 ];
                                 else
+                                {
                                     vVals[ uiI ] = 0;
+                                    for( size_t uiJ = vvVals.size( ) * fQuantExcl;
+                                            uiJ < vvVals.size( ) * ( 1 - fQuantExcl );
+                                            uiJ++ )
+                                        vVals[ uiI ] += (double)vvVals[ uiJ ];
+                                    vVals[ uiI ] /= (size_t)( (double)vvVals.size( ) * ( 1.0 - 2.0 * fQuantExcl ) );
+                                }
                             }
                             else
                                 vVals[ uiI ] = 0;

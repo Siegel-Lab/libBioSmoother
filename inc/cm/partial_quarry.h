@@ -26,6 +26,7 @@ struct ChromDesc
     std::string sName;
     size_t uiUnadjustedLength;
     size_t uiLength;
+    size_t uiId;
 };
 
 struct IndexCoord
@@ -827,20 +828,14 @@ class PartialQuarry : public HasSession
     std::vector<std::array<size_t, 2>> vRadiclSeqCoverage;
     std::vector<std::array<size_t, 2>> vRadiclSeqNumNonEmptyBins;
 
-    std::vector<std::vector<size_t>> vvDatasetIdsPerReplAndChr;
-    std::array<std::vector<std::vector<size_t>>, 2> vBiasIdPerReplAndChr;
+    std::vector<size_t> vvDatasetIdsPerReplAndChr; 
 
     size_t uiIceFilterIgnoreDiags;
     std::array<std::array<std::array<std::vector<double>, 2>, 2>, NUM_COORD_SYSTEMS> vIceSliceBias;
 
     size_t getDatasetIdfromReplAndChr( size_t uiRepl, size_t uiChrX, size_t uiChrY )
     {
-        return vvDatasetIdsPerReplAndChr[ uiRepl ][ uiChrY + uiChrX * vActiveChromosomes[ 1 ].size( ) ];
-    }
-
-    size_t getBiasIdfromReplAndChr( size_t uiRepl, size_t uiI, size_t uiChr )
-    {
-        return vBiasIdPerReplAndChr[ uiI ][ uiRepl ][ uiChr ];
+        return vvDatasetIdsPerReplAndChr[ uiRepl ] + uiChrY + uiChrX * getValue<json>( { "contigs", "list" } ).size( );
     }
 
     bool bCancel = false;
