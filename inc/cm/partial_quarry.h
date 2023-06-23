@@ -829,13 +829,14 @@ class PartialQuarry : public HasSession
     std::vector<std::array<size_t, 2>> vRadiclSeqNumNonEmptyBins;
 
     std::vector<size_t> vvDatasetIdsPerReplAndChr; 
+    size_t uiContigListSize;
 
     size_t uiIceFilterIgnoreDiags;
     std::array<std::array<std::array<std::vector<double>, 2>, 2>, NUM_COORD_SYSTEMS> vIceSliceBias;
 
     size_t getDatasetIdfromReplAndChr( size_t uiRepl, size_t uiChrX, size_t uiChrY )
     {
-        return vvDatasetIdsPerReplAndChr[ uiRepl ] + uiChrY + uiChrX * getValue<json>( { "contigs", "list" } ).size( );
+        return vvDatasetIdsPerReplAndChr[ uiRepl ] + uiChrY + uiChrX * uiContigListSize;
     }
 
     bool bCancel = false;

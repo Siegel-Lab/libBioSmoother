@@ -48,6 +48,7 @@ bool PartialQuarry::setDatasetIdPerRepl( )
         vvDatasetIdsPerReplAndChr.push_back(
             getValue<size_t>( { "replicates", "by_name", sRep, "first_dataset_id" } )
          );
+    uiContigListSize = getValue<json>( { "contigs", "list" } ).size( );
     END_RETURN;
 }
 
@@ -122,20 +123,15 @@ bool PartialQuarry::setBinValues( )
                                 vActiveChromosomes[ 0 ][vCoords[ uiI ].uiChromosomeX].uiId,
                                 vActiveChromosomes[ 1 ][vCoords[ uiI ].uiChromosomeY].uiId
                             );
-                        if( iDataSetId != std::numeric_limits<size_t>::max( ) )
-                        {
-                            vVals[ uiI ] =
-                                pIndices->count( iDataSetId,
-                                                 { vCoords[ uiI ].uiIndexY, vCoords[ uiI ].uiIndexX, uiMapQMin,
-                                                   uiFromAnnoFilter, uiFromSameStrandFilter, uiFromYStrandFilter },
-                                                 { vCoords[ uiI ].uiIndexY + vCoords[ uiI ].uiIndexH,
-                                                   vCoords[ uiI ].uiIndexX + vCoords[ uiI ].uiIndexW, uiMapQMax,
-                                                   uiToAnnoFilter, uiToSameStrandFilter, uiToYStrandFilter },
-                                                 xIntersect,
-                                                 0 );
-                        }
-                        else
-                            vVals[ uiI ] = { };
+                        vVals[ uiI ] =
+                            pIndices->count( iDataSetId,
+                                                { vCoords[ uiI ].uiIndexY, vCoords[ uiI ].uiIndexX, uiMapQMin,
+                                                uiFromAnnoFilter, uiFromSameStrandFilter, uiFromYStrandFilter },
+                                                { vCoords[ uiI ].uiIndexY + vCoords[ uiI ].uiIndexH,
+                                                vCoords[ uiI ].uiIndexX + vCoords[ uiI ].uiIndexW, uiMapQMax,
+                                                uiToAnnoFilter, uiToSameStrandFilter, uiToYStrandFilter },
+                                                xIntersect,
+                                                0 );
                     }
                     else
                         vVals[ uiI ] = { };
