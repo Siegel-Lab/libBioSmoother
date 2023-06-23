@@ -20,8 +20,13 @@ def init(args):
 def reset(args):
     for possible in [args.index_prefix, args.index_prefix + ".smoother_index"]:
         if os.path.exists(possible) and os.path.isdir(possible):
-            os.remove(possible + "/session.json")
-            shutil.copy(possible + "/default_session.json", possible + "/session.json")
+            with open_default_json() as default_settings_file:
+                default_settings = json.load(default_settings_file)
+            with open(possible + "/default_session.json", "r") as default_session_file:
+                default_session = json.load(default_session_file)
+            default_session["settings"] = default_settings
+            with open(possible + "/session.json", "w") as session_file:
+                json.dump(default_session, session_file)
             return
     raise RuntimeError("the given index", args.index_prefix, "does not exist.")
 

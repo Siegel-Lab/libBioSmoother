@@ -283,6 +283,14 @@
             "do_row": false,
             "row_from": 0,
             "row_to": 10
+        },
+        "axis_label_max_char": {
+            "max": 100,
+            "min": 1,
+            "val": 10,
+            "step": 1,
+            "spinner_min_restricted": true,
+            "spinner_max_restricted": false
         }
     },
     "filters": {

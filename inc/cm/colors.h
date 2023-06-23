@@ -264,12 +264,13 @@ const std::array<double, 4> PartialQuarry::getPaletteTicks( const std::function<
 
 bool PartialQuarry::setHeatmapCDS( )
 {
+    const size_t uiMaxChar = getValue<size_t>({"settings", "interface", "axis_label_max_char", "val"});
     std::array<std::vector<std::string>, 2> vShortChrNames;
     for( size_t uiI = 0; uiI < 2; uiI++ )
     {
         vShortChrNames[ uiI ].reserve( vActiveChromosomes[ uiI ].size( ) );
         for( const auto& xChr : vActiveChromosomes[ uiI ] )
-            vShortChrNames[ uiI ].push_back( substringChr( xChr.sName ) );
+            vShortChrNames[ uiI ].push_back( substringChr( xChr.sName ).substr( 0, uiMaxChar ) );
     }
     std::array<std::array<std::vector<std::string>, 2>, 2> vBinCoordsReadable;
     size_t uiDividend = getValue<size_t>( { "dividend" } );
@@ -481,7 +482,7 @@ void PartialQuarry::regColors( )
                   ComputeNode{ /*.sNodeName =*/"heatmap_cds",
                                /*.fFunc =*/&PartialQuarry::setHeatmapCDS,
                                /*.vIncomingFunctions =*/{ NodeNames::Colored },
-                               /*.vIncomingSession =*/{ },
+                               /*.vIncomingSession =*/{ {"settings", "interface", "axis_label_max_char", "val"} },
                                /*.vSessionsIncomingInPrevious =*/{ { "dividend" } },
                                /*bHidden =*/false } );
 

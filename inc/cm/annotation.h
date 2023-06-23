@@ -26,13 +26,14 @@ bool PartialQuarry::setActivateAnnotation( )
 bool PartialQuarry::setActivateAnnotationCDS( )
 {
     pybind11::gil_scoped_acquire acquire;
+    const size_t uiMaxChar = getValue<size_t>({"settings", "interface", "axis_label_max_char", "val"});
     for( size_t uiX : { 0, 1 } )
     {
         pybind11::list xL;
         for( std::string sAnno : vActiveAnnotation[ uiX ] )
         {
             CANCEL_RETURN;
-            xL.append( sAnno );
+            xL.append( sAnno.substr( 0, uiMaxChar ) );
         }
         if( getValue<bool>( { "settings", "interface", "v4c", uiX == 0 ? "do_row" : "do_col" } ) )
             xL.append( "V4C" );
@@ -194,6 +195,7 @@ bool PartialQuarry::setAnnotationCDS( )
     size_t uiDividend = getValue<size_t>( { "dividend" } );
 
     double fMinAnnoDist = getValue<double>( { "settings", "interface", "min_anno_dist" } );
+    const size_t uiMaxChar = getValue<size_t>({"settings", "interface", "axis_label_max_char", "val"});
 
     for( size_t uiX : { 0, 1 } )
     {
@@ -216,6 +218,7 @@ bool PartialQuarry::setAnnotationCDS( )
         for( size_t uiN = 0; uiN < vActiveAnnotation[ uiX ].size( ); uiN++ )
         {
             std::string& rAnnoName = vActiveAnnotation[ uiX ][ uiN ];
+            rAnnoName = rAnnoName.substr( 0, uiMaxChar );
             for( size_t uiA = 0; uiA < vAnnotationValues[ uiX ][ uiN ].first.size( ); uiA++ )
             {
                 CANCEL_RETURN;
@@ -357,7 +360,7 @@ void PartialQuarry::regAnnotation( )
                   ComputeNode{ /*.sNodeName =*/"annotation_cds",
                                /*.fFunc =*/&PartialQuarry::setAnnotationCDS,
                                /*.vIncomingFunctions =*/{ NodeNames::AnnotationValues, NodeNames::AnnotationColors },
-                               /*.vIncomingSession =*/{ { "settings", "interface", "min_anno_dist" } },
+                               /*.vIncomingSession =*/{ { "settings", "interface", "min_anno_dist" }, {"settings", "interface", "axis_label_max_char", "val"} },
                                /*.vSessionsIncomingInPrevious =*/{ { "dividend" } },
                                /*bHidden =*/false } );
 
@@ -369,6 +372,7 @@ void PartialQuarry::regAnnotation( )
                                {
                                    { "settings", "interface", "v4c", "do_col" },
                                    { "settings", "interface", "v4c", "do_row" },
+                                   {"settings", "interface", "axis_label_max_char", "val"},
                                },
                                /*.vSessionsIncomingInPrevious =*/{ },
                                /*bHidden =*/false } );

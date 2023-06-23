@@ -517,6 +517,7 @@ bool PartialQuarry::setTicks( )
     pybind11::gil_scoped_acquire acquire;
     size_t uiDividend = getValue<size_t>( { "dividend" } );
     const bool bSqueeze = getValue<std::string>( { "settings", "filters", "anno_in_multiple_bins" } ) == "squeeze";
+    const size_t uiMaxChar = getValue<size_t>({"settings", "interface", "axis_label_max_char", "val"});
 
 
     for( size_t uiI = 0; uiI < 2; uiI++ )
@@ -534,7 +535,7 @@ bool PartialQuarry::setTicks( )
         for( ChromDesc& rDesc : this->vActiveChromosomes[ uiI ] )
         {
             CANCEL_RETURN;
-            vNames.append( substringChr( rDesc.sName ) );
+            vNames.append( substringChr( rDesc.sName ).substr(0, uiMaxChar) );
             vStartPos.append( uiRunningStart );
             vStartPos2.append( uiRunningStart2 );
             uiRunningStart2 += rDesc.uiLength;
@@ -1344,7 +1345,8 @@ void PartialQuarry::regCoords( )
                        { "settings", "filters", "anno_coords_col" },
                        { "settings", "filters", "anno_in_multiple_bins" },
                        { "annotation", "by_name" },
-                       { "dividend" } },
+                       { "dividend" },
+                       {"settings", "interface", "axis_label_max_char", "val"} },
                      /*bHidden =*/false } );
 
     registerNode( NodeNames::CanvasSize,

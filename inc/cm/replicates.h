@@ -463,6 +463,8 @@ bool PartialQuarry::setDecayCDS( )
     pybind11::list vXs;
     pybind11::list vYs;
     pybind11::list vColors;
+    
+    const size_t uiMaxChar = getValue<size_t>({"settings", "interface", "axis_label_max_char", "val"});
 
     size_t uiDividend = getValue<size_t>( { "dividend" } );
 
@@ -488,7 +490,8 @@ bool PartialQuarry::setDecayCDS( )
                 vActiveChromosomes[ uiJ ][ vDistDepDecCoords[ 0 ][ uiI ][ uiJ ].uiChromosomeX ].sName;
             std::string sChromNameY =
                 vActiveChromosomes[ uiJ ][ vDistDepDecCoords[ 0 ][ uiI ][ uiJ ].uiChromosomeY ].sName;
-            vChrs.append( substringChr( sChromNameX ) + " - " + substringChr( sChromNameY ) +
+            vChrs.append( substringChr( sChromNameX ).substr(0, uiMaxChar) + " - " + 
+                          substringChr( sChromNameY ).substr(0, uiMaxChar) +
                           ( uiJ == 0 ? ", Group A" : ", Group B" ) );
             vXs.append( vX );
             vYs.append( vY );
@@ -604,7 +607,7 @@ void PartialQuarry::regReplicates( )
                   ComputeNode{ /*.sNodeName =*/"decay_cds",
                                /*.fFunc=*/&PartialQuarry::setDecayCDS,
                                /*.vIncomingFunctions =*/{ NodeNames::FlatDecay, NodeNames::AnnotationColors },
-                               /*.vIncomingSession =*/{ },
+                               /*.vIncomingSession =*/{ {"settings", "interface", "axis_label_max_char", "val"} },
                                /*.vSessionsIncomingInPrevious =*/{ { "dividend" } },
                                /*bHidden =*/false } );
 }

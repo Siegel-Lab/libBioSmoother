@@ -12,6 +12,7 @@ import copy
 import time
 from importlib.metadata import version
 from .quarry import Quarry
+from .quarry import open_default_json
 
 MAP_Q_MAX = 255
 
@@ -252,6 +253,10 @@ class Indexer:
         else:
             self.set_session(["contigs", "annotation_coordinates"], "")
             self.set_session(["annotation", "filter"], "")
+
+        with open_default_json() as default_file:
+            default_json = json.load(default_file)
+        self.session["settings"] = default_json
 
         self.save_session()
 
