@@ -389,7 +389,7 @@ def add_parsers(main_parser):
         help="Prefix that was used to create the index (see the init subcommand).",
     )
     bench_parser.add_argument(
-        "-N", "--num_experiments", help="Number of samples to take", default=100, type=int
+        "-N", "--num_experiments", help="Number of samples to take. (default: %(default)s)", default=100, type=int
     )
     bench_parser.add_argument(
         "-o", "--outfile", help="outputfile", default="benchmark.pickle", type=str
