@@ -5,10 +5,6 @@ import os
 
 def benchmark_runtime(quarry, N, output_file):
     data_out = {}
-    if os.path.exists(output_file):
-        with open(output_file, "rb") as f:
-            data_out = pickle.load(f)
-
     with open_default_json() as default_file:
         default_json = json.load(default_file)
     quarry.set_value(["settings"], default_json)
