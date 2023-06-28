@@ -43,7 +43,7 @@ def repl(args):
         args.no_map_q,
         args.no_multi_map,
         args.no_cat,
-        args.no_strand,
+        not args.strand,
         args.shekelyan,
         args.force_upper_triangle,
     )
@@ -60,7 +60,7 @@ def norm(args):
         args.no_map_q,
         args.no_multi_map,
         args.no_cat,
-        args.no_strand,
+        not args.strand,
         args.shekelyan,
     )
 
@@ -239,9 +239,9 @@ def add_parsers(main_parser):
     )
     repl_parser.add_argument(
         "-s",
-        "--no_strand",
+        "--strand",
         action="store_true",
-        help="Do not store strand information. (default: off)",
+        help="Do store strand information. (default: off)",
     )
     repl_parser.add_argument(
         "-u",
@@ -305,9 +305,9 @@ def add_parsers(main_parser):
     )
     norm_parser.add_argument(
         "-s",
-        "--no_strand",
+        "--strand",
         action="store_true",
-        help="Do not store strand information. (default: off)",
+        help="Do store strand information. (default: off)",
     )
     norm_parser.add_argument("--shekelyan", help=argparse.SUPPRESS, action="store_true")
     norm_parser.add_argument("--no_groups", help=argparse.SUPPRESS, action="store_true")

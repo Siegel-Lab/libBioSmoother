@@ -16,10 +16,12 @@ def simplified_filepath(path):
 
 
 def read_xa_tag(tags):
-    if tags == "notag" or len(tags) < 5:
+    if tags[:5] == "XS:Z:":
+        tags = tags[5:]
+    if tags == "notag" or len(tags) == 0:
         return []
     l = []
-    for tag in tags[5:].split(";"):
+    for tag in tags.split(";"):
         split = tag.split(",")
         if len(split) == 5:
             chrom, str_pos, _CIGAR, _NM = split
@@ -159,6 +161,15 @@ def parse_heatmap(in_filename, test, chr_filter, progress_print=print):
                 [pos_1, pos_2],
                 [mapq_1, mapq_2],
                 ["?", "?"],
+                [str1, str2],
+                1,
+            ),
+            12: lambda read_name, chr_1, pos_1, chr_2, pos_2, str1, str2, _1, mapq_1, mapq_2, xa_1, xa_2: (
+                read_name,
+                [chr_1, chr_2],
+                [pos_1, pos_2],
+                [mapq_1, mapq_2],
+                [xa_1, xa_2],
                 [str1, str2],
                 1,
             ),
