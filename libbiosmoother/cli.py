@@ -13,7 +13,8 @@ from .benchmark_runtime import benchmark_runtime
 
 def init(args):
     Indexer(args.index_prefix, strict=True).create_session(
-        args.chr_len, args.dividend, args.anno_path, args.order_path, args.test
+        args.chr_len, args.dividend, args.anno_path, args.test,
+        args.filterable_annotations, args.map_q_thresholds
     )
 
 
@@ -168,8 +169,20 @@ def add_parsers(main_parser):
         default="",
     )
     init_parser.add_argument(
-        "--order_path",
-        help="Path to a file that contains the order of annotations, default: gene first, then alphabetic for others.",
+        "-f",
+        "--filterable_annotations",
+        nargs='*',
+        type=str,
+        default=["gene"],
+        help="Pick the annotations that can be used as filters in smoother. (default: %(default)s)",
+    )
+    init_parser.add_argument(
+        "-m",
+        "--map_q_thresholds",
+        nargs='*',
+        type=int,
+        default=[3, 30],
+        help="Pick several thresholds, that can then be used to filter reads by mapping quality. (default: %(default)s)",
     )
     init_parser.add_argument(
         "-d",
@@ -358,7 +371,7 @@ def add_parsers(main_parser):
     )
     get_parser.set_defaults(func=get_smoother)
 
-    info_parser = main_parser.add_parser("par_info", help=argparse.SUPPRESS)
+    info_parser = main_parser.add_parser("par_info", argument_default=argparse.SUPPRESS)
     info_parser.add_argument(
         "index_prefix",
         help="Prefix that was used to create the index (see the init subcommand).",
@@ -370,7 +383,7 @@ def add_parsers(main_parser):
     )
     info_parser.set_defaults(func=info_smoother)
 
-    test_parser = main_parser.add_parser("test", help=argparse.SUPPRESS)
+    test_parser = main_parser.add_parser("test", argument_default=argparse.SUPPRESS)
     test_parser.add_argument(
         "index_prefix",
         help="Prefix that was used to create the index (see the init subcommand).",
@@ -383,7 +396,7 @@ def add_parsers(main_parser):
     )
     test_parser.set_defaults(func=test_smoother)
 
-    bench_parser = main_parser.add_parser("benchmark", help=argparse.SUPPRESS)
+    bench_parser = main_parser.add_parser("benchmark", argument_default=argparse.SUPPRESS)
     bench_parser.add_argument(
         "index_prefix",
         help="Prefix that was used to create the index (see the init subcommand).",

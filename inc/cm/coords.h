@@ -683,7 +683,7 @@ bool PartialQuarry::setAxisCoords( )
 
 size_t PartialQuarry::getAnnoListId( std::string sAnno )
 {
-    const json& rList = getValue<json>( { "annotation", "list" } );
+    const json& rList = getValue<json>( { "annotation", "filterable" } );
     size_t uiI = 0;
     for( const auto& rEle : rList )
     {

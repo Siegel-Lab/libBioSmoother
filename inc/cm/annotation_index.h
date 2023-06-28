@@ -277,6 +277,7 @@ template <template <typename> typename vec_gen_t> class AnnotationDescIndex
         return lowerBound( uiDatasetId, uiIntervalIdx, false, true );
     }
 
+    // @todo @fixme this should consider the individual reads instead of the rectangles
     std::vector<bool> getCategories( size_t uiFrom, size_t uiTo, size_t uiDividend, std::vector<int> vCats,
                                      bool bIntervalCoords = false, bool bIntervalCount = false )
     {

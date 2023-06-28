@@ -93,7 +93,7 @@ class Indexer:
         curr_def[keys[-1]].append(copy.deepcopy(val))
 
     def create_session(
-        self, chr_len_file_name, dividend, anno_path, annotation_order=None, test=False
+        self, chr_len_file_name, dividend, anno_path, test=False, filterable_annotations=[], map_q_thresholds=[]
     ):
         if os.path.exists(self.prefix):
             print("ERROR: The given index already exists.")
@@ -146,6 +146,7 @@ class Indexer:
             ["annotation"],
             {
                 "list": [],
+                "filterable": [],
                 "by_name": {},
                 "visible_x": [],
                 "visible_y": [],
@@ -163,6 +164,7 @@ class Indexer:
                 "annotation_coordinates": "",
             },
         )
+        self.set_session(["map_q_thresholds"], map_q_thresholds)
         if test:
             self.set_session(["test"], True)
 
@@ -210,26 +212,18 @@ class Indexer:
                 if chrom not in sorted_list[name]:
                     sorted_list[name][chrom] = []
                 sorted_list[name][chrom].append((start, end, info, on_forw_strnd))
-            order = []
-            if annotation_order is None:
-                if "gene" in sorted_list:
-                    order.append("gene")
-            else:
-                with open(annotation_order, "r") as anno_order_file:
-                    for line in anno_order_file:
-                        if line in sorted_list:
-                            order.append(line)
-            for name in sorted(list(sorted_list.keys())):
-                if not name in order:
-                    order.append(name)
-            if len(order) > 0:
-                self.set_session(["contigs", "annotation_coordinates"], order[0])
-                self.set_session(["annotation", "filter"], order[0])
+            existing_filterable_annotations = []
+            for anno in filterable_annotations:
+                if anno in sorted_list:
+                    existing_filterable_annotations.append(anno)
+            self.set_session(["annotation", "filterable"], existing_filterable_annotations)
+            if len(existing_filterable_annotations) > 0:
+                self.set_session(["contigs", "annotation_coordinates"], existing_filterable_annotations[0])
+                self.set_session(["annotation", "filter"], existing_filterable_annotations[0])
             else:
                 self.set_session(["contigs", "annotation_coordinates"], "")
                 self.set_session(["annotation", "filter"], "")
-            for name in order:
-                chroms = sorted_list[name]
+            for name, chroms in sorted_list.items():
                 if name not in self.session_default["annotation"]["list"]:
                     self.append_session(["annotation", "list"], name)
                     self.append_session(["annotation", "visible_x"], name)
@@ -297,6 +291,16 @@ class Indexer:
             idx_list.append((max(len(cat_x), len(cat_y)) * 3 + 1, -doubles * val))
         return idx_list
 
+    def get_map_q_thresholds(self):
+        t_dict = {0: 0}
+        t_last = 0
+        for idx, t in enumerate(self.session_default["map_q_thresholds"]):
+            for i in range(t_last, t):
+                t_dict[i + 1] = idx + 1
+        for i in range(t, MAP_Q_MAX + 1):
+            t_dict[i + 1] = idx + 2
+        return t_dict
+
     def add_replicate(
         self,
         path,
@@ -343,6 +347,7 @@ class Indexer:
             force_upper_triangle,
             lambda *x: self.progress_print("loading", *x),
         )
+        t_dict = self.get_map_q_thresholds()
         total_reads = 0
 
         num_itr = len(contigs) * len(contigs)
@@ -353,14 +358,14 @@ class Indexer:
                 self.session_default["annotation"]["by_name"][anno][chr_x]
                 if chr_x in self.session_default["annotation"]["by_name"][anno]
                 else -1
-                for anno in self.session_default["annotation"]["list"]
+                for anno in self.session_default["annotation"]["filterable"]
             ]
             for chr_y in contigs:
                 anno_ids_y = [
                     self.session_default["annotation"]["by_name"][anno][chr_y]
                     if chr_y in self.session_default["annotation"]["by_name"][anno]
                     else -1
-                    for anno in self.session_default["annotation"]["list"]
+                    for anno in self.session_default["annotation"]["filterable"]
                 ]
                 cnt += 1
                 self.progress_print(
@@ -376,8 +381,10 @@ class Indexer:
                     read_name,
                     pos_1_s,
                     pos_1_e,
+                    #pos_1_list,
                     pos_2_s,
                     pos_2_e,
+                    #pos_2_list,
                     strand_1,
                     strand_2,
                     map_q,
@@ -386,7 +393,7 @@ class Indexer:
                     total_reads += 1
                     if no_category:
                         cat_x = [False] * len(
-                            self.session_default["annotation"]["list"]
+                            self.session_default["annotation"]["filterable"]
                         )
                         cat_y = cat_x
                     else:
@@ -410,6 +417,7 @@ class Indexer:
                     else:
                         act_pos_1_e = int(pos_2_e) // self.session_default["dividend"]
                         act_pos_2_e = int(pos_1_e) // self.session_default["dividend"]
+                    map_q = t_dict[int(map_q)]
                     if no_map_q:
                         map_q = 1
                     if no_strand:
@@ -424,7 +432,7 @@ class Indexer:
                         start = [
                             act_pos_1_s,
                             act_pos_2_s,
-                            MAP_Q_MAX - int(map_q) - 1,
+                            MAP_Q_MAX - map_q - 1,
                             cat_idx,
                             same_strand_idx,
                             y_strand_idx,
@@ -432,7 +440,7 @@ class Indexer:
                         end = [
                             act_pos_1_e,
                             act_pos_2_e,
-                            MAP_Q_MAX - int(map_q) - 1,
+                            MAP_Q_MAX - map_q - 1,
                             cat_idx,
                             same_strand_idx,
                             y_strand_idx,
@@ -511,6 +519,7 @@ class Indexer:
             "test" in self.session_default,
             lambda *x: self.progress_print("loading", *x),
         )
+        t_dict = self.get_map_q_thresholds()
         total_reads = 0
 
         num_itr = len(contigs)
@@ -521,7 +530,7 @@ class Indexer:
                 self.session_default["annotation"]["by_name"][anno][chr_x]
                 if chr_x in self.session_default["annotation"]["by_name"][anno]
                 else -1
-                for anno in self.session_default["annotation"]["list"]
+                for anno in self.session_default["annotation"]["filterable"]
             ]
             cnt += 1
             self.progress_print(
@@ -541,7 +550,7 @@ class Indexer:
             ) in read_iterator.itr_cell(chr_x):
                 total_reads += 1
                 if no_category:
-                    cat = [False] * len(self.session_default["annotation"]["list"])
+                    cat = [False] * len(self.session_default["annotation"]["filterable"])
                 else:
                     cat = self.indices.anno.get_categories(
                         int(pos_1_s),
@@ -556,6 +565,7 @@ class Indexer:
                 else:
                     act_pos_1_e = int(pos_1_e) // self.session_default["dividend"]
 
+                map_q = t_dict[int(map_q)]
                 if no_map_q:
                     map_q = 1
                 if no_strand:
@@ -567,7 +577,7 @@ class Indexer:
                     start = [
                         act_pos_1_s,
                         0,
-                        MAP_Q_MAX - int(map_q) - 1,
+                        MAP_Q_MAX - map_q - 1,
                         cat_idx,
                         strand_idx,
                         0,
@@ -575,7 +585,7 @@ class Indexer:
                     end = [
                         act_pos_1_e,
                         0,
-                        MAP_Q_MAX - int(map_q) - 1,
+                        MAP_Q_MAX - map_q - 1,
                         cat_idx,
                         strand_idx,
                         0,

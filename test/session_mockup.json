@@ -134,6 +134,9 @@
         "list": [
             "gene"
         ],
+        "filterable": [
+            "gene"
+        ],
         "visible_x": [],
         "visible_y": [],
         "filter": "gene",
@@ -146,6 +149,9 @@
             }
         }
     },
+    "map_q_thresholds": [
+        5, 30
+    ],
     "export_prefix": "blub",
     "previous": null,
     "next": null,

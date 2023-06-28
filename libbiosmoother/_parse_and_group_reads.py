@@ -45,7 +45,7 @@ def parse_tsv(in_filename, test, chr_filter, line_format, progress_print=print):
                         str(round(100 * (file_pos) / file_size, 2)) + "%",
                     )
                 else:
-                    progress_print(str(idx_2) + " lines read from stdin")
+                    progress_print("from stdin: read " + str(idx_2) + " lines so far.")
             # ignore empty lines and comments / header lines
             if len(line) == 0 or line[0] == "#":
                 continue
