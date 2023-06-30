@@ -208,7 +208,6 @@
             "spinner_min_restricted": true,
             "spinner_max_restricted": true
         },
-        "stretch": false,
         "squared_bins": true,
         "fixed_number_of_bins": false,
         "fixed_num_bins_x": {
@@ -368,6 +367,5 @@
             "spinner_max_restricted": false
         },
         "export_format": "tsv"
-    },
-    "active_tools": ["Pan", "Hover", "Crosshair"]
+    }
 }

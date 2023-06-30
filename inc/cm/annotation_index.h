@@ -277,12 +277,18 @@ template <template <typename> typename vec_gen_t> class AnnotationDescIndex
         return lowerBound( uiDatasetId, uiIntervalIdx, false, true );
     }
 
-    // @todo @fixme this should consider the individual reads instead of the rectangles
-    std::vector<bool> getCategories( size_t uiFrom, size_t uiTo, size_t uiDividend, std::vector<int> vCats,
+    std::vector<bool> getCategories( std::vector<int> vuiPos, size_t uiDividend, std::vector<int> vCats,
                                      bool bIntervalCoords = false, bool bIntervalCount = false )
     {
         std::vector<bool> vRet;
         vRet.reserve( vCats.size( ) );
+        int uiFrom = std::numeric_limits<int>::max();
+        int uiTo = 0;
+        for( int uiX : vuiPos)
+        {
+            uiFrom = std::min( uiFrom, uiX );
+            uiTo = std::max( uiTo, uiX );
+        }
         for( int uiDatasetId : vCats )
         {
             bool bFound = false;
@@ -290,8 +296,9 @@ template <template <typename> typename vec_gen_t> class AnnotationDescIndex
                 iterate(
                     uiDatasetId, uiFrom / uiDividend, uiTo / uiDividend + 1,
                     [ & ]( std::tuple<size_t, size_t, std::string, bool> xTup ) {
-                        if( std::get<0>( xTup ) <= uiTo && std::get<1>( xTup ) > uiFrom )
-                            bFound = true;
+                        for( int uiX : vuiPos)
+                            if( std::get<0>( xTup ) <= (size_t)uiX && std::get<1>( xTup ) > (size_t)uiX )
+                                bFound = true;
                         return !bFound;
                     },
                     bIntervalCoords, bIntervalCount );

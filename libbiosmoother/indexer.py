@@ -260,19 +260,19 @@ class Indexer:
             and name not in self.session_default["coverage"]["list"]
         )
 
-    def __get_cat_indices_1d(self, cats):
+    def __get_cat_indices_1d(self, cats, val):
         doubles = -1
         no_anno = True
         idx_list = []
         for idx, c in enumerate(cats):
             if c:
                 no_anno = False
-                idx_list.append((idx * 3 + 1, 1))
+                idx_list.append((idx * 3 + 1, val))
                 doubles += 1
         if no_anno:
-            return [(len(cats) * 3, 1)]
+            return [(len(cats) * 3, val)]
         if doubles > 0:
-            idx_list.append((len(cats) * 3 + 1, -doubles))
+            idx_list.append((len(cats) * 3 + 1, -doubles * val))
         return idx_list
 
     def __get_cat_indices_2d(self, cat_x, cat_y, val):
@@ -381,10 +381,10 @@ class Indexer:
                     read_name,
                     pos_1_s,
                     pos_1_e,
-                    #pos_1_list,
                     pos_2_s,
                     pos_2_e,
-                    #pos_2_list,
+                    pos_1_l,
+                    pos_2_l,
                     strand_1,
                     strand_2,
                     map_q,
@@ -398,14 +398,12 @@ class Indexer:
                         cat_y = cat_x
                     else:
                         cat_x = self.indices.anno.get_categories(
-                            int(pos_1_s),
-                            int(pos_1_e),
+                            [int(x) for x in pos_1_l.split(",")],
                             self.session_default["dividend"],
                             anno_ids_x,
                         )
                         cat_y = self.indices.anno.get_categories(
-                            int(pos_2_s),
-                            int(pos_2_e),
+                            [int(x) for x in pos_2_l.split(",")],
                             self.session_default["dividend"],
                             anno_ids_y,
                         )
@@ -545,16 +543,17 @@ class Indexer:
                 read_name,
                 pos_1_s,
                 pos_1_e,
+                pos_1_l,
                 strand_1,
                 map_q,
+                bin_cnt,
             ) in read_iterator.itr_cell(chr_x):
                 total_reads += 1
                 if no_category:
                     cat = [False] * len(self.session_default["annotation"]["filterable"])
                 else:
                     cat = self.indices.anno.get_categories(
-                        int(pos_1_s),
-                        int(pos_1_e),
+                        [int(x) for x in pos_1_l.split(",")],
                         self.session_default["dividend"],
                         anno_ids,
                     )
@@ -572,8 +571,9 @@ class Indexer:
                     strand_idx = 0
                 else:
                     strand_idx = 0 if bool(strand_1) else 1
+                bin_cnt = int(bin_cnt)
 
-                for cat_idx, val in self.__get_cat_indices_1d(cat):
+                for cat_idx, val in self.__get_cat_indices_1d(cat, bin_cnt):
                     start = [
                         act_pos_1_s,
                         0,

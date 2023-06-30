@@ -225,6 +225,7 @@ def parse_track(in_filename, test, chr_filter, progress_print=print):
                 [mapq_1],
                 ["?"],
                 ["+"],
+                1,
             ),
             5: lambda read_name, chr_1, pos_1, mapq_1, tag_a: (
                 read_name,
@@ -233,6 +234,7 @@ def parse_track(in_filename, test, chr_filter, progress_print=print):
                 [mapq_1],
                 [tag_a],
                 ["+"],
+                1,
             ),
             6: lambda read_name, str1, chr_1, pos_1, _2, mapq_1: (
                 read_name,
@@ -241,6 +243,7 @@ def parse_track(in_filename, test, chr_filter, progress_print=print):
                 [mapq_1],
                 ["?"],
                 [str1],
+                1,
             ),
             7: lambda read_name, str1, chr_1, pos_1, _2, mapq_1, tag_a: (
                 read_name,
@@ -249,6 +252,7 @@ def parse_track(in_filename, test, chr_filter, progress_print=print):
                 [mapq_1],
                 [tag_a],
                 [str1],
+                1,
             ),
         },
         progress_print,
@@ -279,21 +283,24 @@ def group_reads(
                     do_cont = False  # no reads that come from different chromosomes
             chrs.append(chr_1_cmp)
         if do_cont:
+            pos_l = []
             pos_s = []
             pos_e = []
             strands = []
             for g in group:
                 strands.append(g[0][3])
                 if no_groups:
-                    pos_s.append(g[0][1])
-                    pos_e.append(g[0][1])
+                    pos_l.append([g[0][1]])
+                    pos_s.append(pos_l[-1][0])
+                    pos_e.append(pos_l[-1][0])
                 else:
-                    pos_s.append(min([p for _1, p, _2, _3 in g]))
-                    pos_e.append(max([p for _1, p, _2, _3 in g]))
+                    pos_l.append([p for _1, p, _2, _3 in g])
+                    pos_s.append(min(pos_l[-1]))
+                    pos_e.append(max(pos_l[-1]))
             map_q = min([max(x for _1, _2, x, _3 in g) for g in group])
             if min(len(g) for g in group) > 1:
                 map_q += 1
-            yield curr_read_name, chrs, pos_s, pos_e, map_q, strands, curr_count
+            yield curr_read_name, chrs, pos_s, pos_e, pos_l, map_q, strands, curr_count
         group = []
 
     for (
@@ -371,6 +378,7 @@ def chr_order_heatmap(
         chrs_,
         pos_s,
         pos_e,
+        pos_l,
         map_q,
         strands,
         cnt,
@@ -391,6 +399,8 @@ def chr_order_heatmap(
                 pos_e[0],
                 pos_s[1],
                 pos_e[1],
+                ",".join(str(x) for x in pos_l[0]),
+                ",".join(str(x) for x in pos_l[1]),
                 strands[0],
                 strands[1],
                 map_q,
@@ -423,12 +433,13 @@ class ChrOrderCoverageIterator:
                 os.remove(self.prefix + "." + chr_)
 
     def itr_cell(self, chr_):
-        if self.in_file[chr_]:
-            with open(self.prefix + "." + chr_, "r") as in_file:
-                for line in in_file:
-                    yield line.split()
-        for tup in self.chrs[chr_]:
-            yield tup
+        if chr_ in self.chrs:
+            if self.in_file[chr_]:
+                with open(self.prefix + "." + chr_, "r") as in_file:
+                    for line in in_file:
+                        yield line.split()
+            for tup in self.chrs[chr_]:
+                yield tup
 
 
 def chr_order_coverage(
@@ -449,15 +460,18 @@ def chr_order_coverage(
         chrs_,
         pos_s,
         pos_e,
+        pos_l,
         map_q,
         strands,
+        cnt,
     ) in group_reads(
         in_filename, file_size, chr_filter, progress_print, parse_track, no_groups, test
     ):
         if chrs_[0] not in chrs:
             chrs[chrs_[0]] = []
             in_file[chrs_[0]] = False
-        chrs[chrs_[0]].append((read_name, pos_s[0], pos_e[0], strands[0], map_q))
+        chrs[chrs_[0]].append((read_name, pos_s[0], pos_e[0], ",".join(str(x) for x in pos_l[0]), strands[0], 
+                               map_q, cnt))
 
         if len(chrs[chrs_[0]]) >= MAX_READS_IM_MEM:
             with open(

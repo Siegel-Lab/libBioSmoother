@@ -276,8 +276,8 @@ PYBIND11_MODULE( libbiosmoothercpp, m )
         .def( "add_intervals", &cm::AnnotationDescIndex<DiskVecGenerator>::addIntervals, pybind11::arg( "intervals" ),
               pybind11::arg( "divided" ),
               pybind11::arg( "verbosity" ) = 0 ) //
-        .def( "get_categories", &cm::AnnotationDescIndex<DiskVecGenerator>::getCategories, pybind11::arg( "from" ),
-              pybind11::arg( "to" ), pybind11::arg( "dividend" ), pybind11::arg( "relevant" ),
+        .def( "get_categories", &cm::AnnotationDescIndex<DiskVecGenerator>::getCategories, pybind11::arg( "pos" ),
+              pybind11::arg( "dividend" ), pybind11::arg( "relevant" ),
               pybind11::arg( "interval_coords" ) = false,
               pybind11::arg( "interval_count" ) = false ) //
         ;
