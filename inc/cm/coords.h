@@ -726,7 +726,7 @@ bool PartialQuarry::setAnnoFilters( )
     else
     {
         uiFromAnnoFilter = 0;
-        uiToAnnoFilter = getValue<json>( { "annotation", "list" } ).size( ) * 3 + 2;
+        uiToAnnoFilter = getValue<json>( { "annotation", "filterable" } ).size( ) * 3 + 2;
     }
 
     END_RETURN;
@@ -1458,7 +1458,7 @@ void PartialQuarry::regCoords( )
                                { { "annotation", "filter" },
                                  { "settings", "filters", "anno_filter_row" },
                                  { "settings", "filters", "anno_filter_col" },
-                                 { "annotation", "list" } },
+                                 { "annotation", "filterable" } },
                                /*.vSessionsIncomingInPrevious =*/
                                { { "contigs", "annotation_coordinates" },
                                  { "settings", "filters", "anno_coords_row" },
