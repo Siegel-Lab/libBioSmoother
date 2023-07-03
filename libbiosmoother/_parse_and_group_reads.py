@@ -54,9 +54,9 @@ def parse_tsv(in_filename, test, chr_filter, line_format, progress_print=print):
             # parse file columns
             num_cols = len(line.split())
             if num_cols in line_format:
-                read_name, chrs, poss, mapqs, tags, strand, bin_cnt = line_format[num_cols](
-                    *line.split()
-                )
+                read_name, chrs, poss, mapqs, tags, strand, bin_cnt = line_format[
+                    num_cols
+                ](*line.split())
 
                 cont = False
                 for chr_ in chrs:
@@ -470,8 +470,17 @@ def chr_order_coverage(
         if chrs_[0] not in chrs:
             chrs[chrs_[0]] = []
             in_file[chrs_[0]] = False
-        chrs[chrs_[0]].append((read_name, pos_s[0], pos_e[0], ",".join(str(x) for x in pos_l[0]), strands[0], 
-                               map_q, cnt))
+        chrs[chrs_[0]].append(
+            (
+                read_name,
+                pos_s[0],
+                pos_e[0],
+                ",".join(str(x) for x in pos_l[0]),
+                strands[0],
+                map_q,
+                cnt,
+            )
+        )
 
         if len(chrs[chrs_[0]]) >= MAX_READS_IM_MEM:
             with open(

@@ -46,8 +46,7 @@ bool PartialQuarry::setDatasetIdPerRepl( )
 
     for( const std::string& sRep : vActiveReplicates )
         vvDatasetIdsPerReplAndChr.push_back(
-            getValue<size_t>( { "replicates", "by_name", sRep, "first_dataset_id" } )
-         );
+            getValue<size_t>( { "replicates", "by_name", sRep, "first_dataset_id" } ) );
     uiContigListSize = getValue<json>( { "contigs", "list" } ).size( );
     END_RETURN;
 }
@@ -119,19 +118,19 @@ bool PartialQuarry::setBinValues( )
                 {
                     if( vCoords[ uiI ].uiChromosomeX != std::numeric_limits<size_t>::max( ) )
                     {
-                        size_t iDataSetId = getDatasetIdfromReplAndChr( uiRepl, 
-                                vActiveChromosomes[ 0 ][vCoords[ uiI ].uiChromosomeX].uiId,
-                                vActiveChromosomes[ 1 ][vCoords[ uiI ].uiChromosomeY].uiId
-                            );
+                        size_t iDataSetId =
+                            getDatasetIdfromReplAndChr( uiRepl,
+                                                        vActiveChromosomes[ 0 ][ vCoords[ uiI ].uiChromosomeX ].uiId,
+                                                        vActiveChromosomes[ 1 ][ vCoords[ uiI ].uiChromosomeY ].uiId );
                         vVals[ uiI ] =
                             pIndices->count( iDataSetId,
-                                                { vCoords[ uiI ].uiIndexY, vCoords[ uiI ].uiIndexX, uiMapQMin,
-                                                uiFromAnnoFilter, uiFromSameStrandFilter, uiFromYStrandFilter },
-                                                { vCoords[ uiI ].uiIndexY + vCoords[ uiI ].uiIndexH,
-                                                vCoords[ uiI ].uiIndexX + vCoords[ uiI ].uiIndexW, uiMapQMax,
-                                                uiToAnnoFilter, uiToSameStrandFilter, uiToYStrandFilter },
-                                                xIntersect,
-                                                0 );
+                                             { vCoords[ uiI ].uiIndexY, vCoords[ uiI ].uiIndexX, uiMapQMin,
+                                               uiFromAnnoFilter, uiFromSameStrandFilter, uiFromYStrandFilter },
+                                             { vCoords[ uiI ].uiIndexY + vCoords[ uiI ].uiIndexH,
+                                               vCoords[ uiI ].uiIndexX + vCoords[ uiI ].uiIndexW, uiMapQMax,
+                                               uiToAnnoFilter, uiToSameStrandFilter, uiToYStrandFilter },
+                                             xIntersect,
+                                             0 );
                     }
                     else
                         vVals[ uiI ] = { };
@@ -180,18 +179,19 @@ bool PartialQuarry::setDecayValues( )
                     if( vCoords[ uiI ].uiChromosomeX != std::numeric_limits<size_t>::max( ) &&
                         vCoords[ uiI ].uiChromosomeY != std::numeric_limits<size_t>::max( ) )
                     {
-                        size_t iDataSetId = getDatasetIdfromReplAndChr( uiRepl, 
-                            vActiveChromosomes[ 0 ][vCoords[ uiI ].uiChromosomeX].uiId,
-                            vActiveChromosomes[ 1 ][vCoords[ uiI ].uiChromosomeY].uiId );
+                        size_t iDataSetId =
+                            getDatasetIdfromReplAndChr( uiRepl,
+                                                        vActiveChromosomes[ 0 ][ vCoords[ uiI ].uiChromosomeX ].uiId,
+                                                        vActiveChromosomes[ 1 ][ vCoords[ uiI ].uiChromosomeY ].uiId );
 
                         int64_t iChrX = vActiveChromosomes[ 0 ][ vCoords[ uiI ].uiChromosomeX ].uiLength;
                         int64_t iChrY = vActiveChromosomes[ 1 ][ vCoords[ uiI ].uiChromosomeY ].uiLength;
 
                         /* The two contigs span a rectange of size cW x cH.
-                            * The bin has a bottom left corner with a distance of c form the diagonal (positive = to
-                            * right, neg = to left)
-                            *
-                            */
+                         * The bin has a bottom left corner with a distance of c form the diagonal (positive = to
+                         * right, neg = to left)
+                         *
+                         */
 
                         int64_t iCornerPos = ( vCoords[ uiI ].iFrom + vCoords[ uiI ].iTo ) / 2;
                         // corner pos within contig rectangle
@@ -225,14 +225,13 @@ bool PartialQuarry::setDecayValues( )
                                     assert( uiYe <= (size_t)iChrX );
                                     assert( uiXe <= (size_t)iChrY );
 
-                                    vvVals.push_back(
-                                        pIndices->count( iDataSetId,
-                                                            { uiXs, uiYs, uiMapQMin, uiFromAnnoFilter,
-                                                            uiFromSameStrandFilter, uiFromYStrandFilter },
-                                                            { uiXe, uiYe, uiMapQMax, uiToAnnoFilter,
-                                                            uiToSameStrandFilter, uiToYStrandFilter },
-                                                            xIntersect,
-                                                            0 ) );
+                                    vvVals.push_back( pIndices->count( iDataSetId,
+                                                                       { uiXs, uiYs, uiMapQMin, uiFromAnnoFilter,
+                                                                         uiFromSameStrandFilter, uiFromYStrandFilter },
+                                                                       { uiXe, uiYe, uiMapQMax, uiToAnnoFilter,
+                                                                         uiToSameStrandFilter, uiToYStrandFilter },
+                                                                       xIntersect,
+                                                                       0 ) );
 
                                     if( vvVals.back( ) > uiMinuend )
                                         vvVals.back( ) -= uiMinuend;
@@ -247,8 +246,8 @@ bool PartialQuarry::setDecayValues( )
                                 {
                                     vVals[ uiI ] = 0;
                                     for( size_t uiJ = vvVals.size( ) * fQuantExcl;
-                                            uiJ < vvVals.size( ) * ( 1 - fQuantExcl );
-                                            uiJ++ )
+                                         uiJ < vvVals.size( ) * ( 1 - fQuantExcl );
+                                         uiJ++ )
                                         vVals[ uiI ] += (double)vvVals[ uiJ ];
                                     vVals[ uiI ] /= (size_t)( (double)vvVals.size( ) * ( 1.0 - 2.0 * fQuantExcl ) );
                                 }
@@ -459,8 +458,8 @@ bool PartialQuarry::setDecayCDS( )
     pybind11::list vXs;
     pybind11::list vYs;
     pybind11::list vColors;
-    
-    const size_t uiMaxChar = getValue<size_t>({"settings", "interface", "axis_label_max_char", "val"});
+
+    const size_t uiMaxChar = getValue<size_t>( { "settings", "interface", "axis_label_max_char", "val" } );
 
     size_t uiDividend = getValue<size_t>( { "dividend" } );
 
@@ -486,8 +485,8 @@ bool PartialQuarry::setDecayCDS( )
                 vActiveChromosomes[ uiJ ][ vDistDepDecCoords[ 0 ][ uiI ][ uiJ ].uiChromosomeX ].sName;
             std::string sChromNameY =
                 vActiveChromosomes[ uiJ ][ vDistDepDecCoords[ 0 ][ uiI ][ uiJ ].uiChromosomeY ].sName;
-            vChrs.append( substringChr( sChromNameX ).substr(0, uiMaxChar) + " - " + 
-                          substringChr( sChromNameY ).substr(0, uiMaxChar) +
+            vChrs.append( substringChr( sChromNameX ).substr( 0, uiMaxChar ) + " - " +
+                          substringChr( sChromNameY ).substr( 0, uiMaxChar ) +
                           ( uiJ == 0 ? ", Group A" : ", Group B" ) );
             vXs.append( vX );
             vYs.append( vY );
@@ -527,7 +526,7 @@ void PartialQuarry::regReplicates( )
                   ComputeNode{ /*.sNodeName =*/"dataset_id_per_repl",
                                /*.fFunc=*/&PartialQuarry::setDatasetIdPerRepl,
                                /*.vIncomingFunctions =*/{ NodeNames::ActiveReplicates, NodeNames::ActiveChrom },
-                               /*.vIncomingSession =*/{ { "replicates", "by_name" } },
+                               /*.vIncomingSession =*/{ { "replicates", "by_name" }, { "contigs", "list" } },
                                /*.vSessionsIncomingInPrevious =*/{ },
                                /*bHidden =*/true } );
 
@@ -603,7 +602,7 @@ void PartialQuarry::regReplicates( )
                   ComputeNode{ /*.sNodeName =*/"decay_cds",
                                /*.fFunc=*/&PartialQuarry::setDecayCDS,
                                /*.vIncomingFunctions =*/{ NodeNames::FlatDecay, NodeNames::AnnotationColors },
-                               /*.vIncomingSession =*/{ {"settings", "interface", "axis_label_max_char", "val"} },
+                               /*.vIncomingSession =*/{ { "settings", "interface", "axis_label_max_char", "val" } },
                                /*.vSessionsIncomingInPrevious =*/{ { "dividend" } },
                                /*bHidden =*/false } );
 }

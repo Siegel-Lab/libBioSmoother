@@ -1,4 +1,8 @@
-from ._import_lib_bio_smoother_cpp import SPS_VERSION, LIB_BIO_SMOOTHER_CPP_VERSION, COMPILER_ID
+from ._import_lib_bio_smoother_cpp import (
+    SPS_VERSION,
+    LIB_BIO_SMOOTHER_CPP_VERSION,
+    COMPILER_ID,
+)
 from importlib.metadata import version
 import argparse
 from .indexer import *
@@ -13,8 +17,12 @@ from .benchmark_runtime import benchmark_runtime
 
 def init(args):
     Indexer(args.index_prefix, strict=True).create_session(
-        args.chr_len, args.dividend, args.anno_path, args.test,
-        args.filterable_annotations, args.map_q_thresholds
+        args.chr_len,
+        args.dividend,
+        args.anno_path,
+        args.test,
+        args.filterable_annotations,
+        args.map_q_thresholds,
     )
 
 
@@ -148,6 +156,7 @@ def info_smoother(args):
 def test_smoother(args):
     test(Quarry(args.index_prefix), args.seed, args.skip_first)
 
+
 def benchmark_runtime_smoother(args):
     benchmark_runtime(Quarry(args.index_prefix), args.num_experiments, args.outfile)
 
@@ -171,7 +180,7 @@ def add_parsers(main_parser):
     init_parser.add_argument(
         "-f",
         "--filterable_annotations",
-        nargs='*',
+        nargs="*",
         type=str,
         default=["gene"],
         help="Pick the annotations that can be used as filters in smoother. (default: %(default)s)",
@@ -179,7 +188,7 @@ def add_parsers(main_parser):
     init_parser.add_argument(
         "-m",
         "--map_q_thresholds",
-        nargs='*',
+        nargs="*",
         type=int,
         default=[3, 30],
         help="Pick several thresholds, that can then be used to filter reads by mapping quality. (default: %(default)s)",
@@ -396,13 +405,19 @@ def add_parsers(main_parser):
     )
     test_parser.set_defaults(func=test_smoother)
 
-    bench_parser = main_parser.add_parser("benchmark", argument_default=argparse.SUPPRESS)
+    bench_parser = main_parser.add_parser(
+        "benchmark", argument_default=argparse.SUPPRESS
+    )
     bench_parser.add_argument(
         "index_prefix",
         help="Prefix that was used to create the index (see the init subcommand).",
     )
     bench_parser.add_argument(
-        "-N", "--num_experiments", help="Number of samples to take. (default: %(default)s)", default=100, type=int
+        "-N",
+        "--num_experiments",
+        help="Number of samples to take. (default: %(default)s)",
+        default=100,
+        type=int,
     )
     bench_parser.add_argument(
         "-o", "--outfile", help="outputfile", default="benchmark.pickle", type=str

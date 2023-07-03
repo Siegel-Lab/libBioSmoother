@@ -3,6 +3,7 @@ from .quarry import open_default_json
 import json
 import os
 
+
 def benchmark_runtime(quarry, N, output_file):
     data_out = {}
     with open_default_json() as default_file:

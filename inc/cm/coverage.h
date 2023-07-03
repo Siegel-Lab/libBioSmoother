@@ -53,7 +53,7 @@ size_t PartialQuarry::getMaxCoverageFromRepl( const size_t uiChromId, const size
     std::vector<std::tuple<size_t, int64_t, size_t, size_t>> vHeap;
     for( size_t uiI = 0; uiI < vActiveChromosomes[ bCol ? 1 : 0 ].size( ); uiI++ )
     {
-        size_t uiId = vActiveChromosomes[ bCol ? 1 : 0 ][uiI].uiId;
+        size_t uiId = vActiveChromosomes[ bCol ? 1 : 0 ][ uiI ].uiId;
         const size_t uiDatasetId = getDatasetIdfromReplAndChr( uiRepl, bCol != bSymPart ? uiChromId : uiId,
                                                                bCol != bSymPart ? uiId : uiChromId );
         if( uiDatasetId != std::numeric_limits<size_t>::max( ) )
@@ -90,9 +90,9 @@ size_t PartialQuarry::getMaxCoverageFromRepl( const AxisCoord& xCoords, const si
                                               size_t uiCoverageGetMaxBinSize, bool bCol, bool bSymPart )
 {
 
-    return getMaxCoverageFromRepl( vActiveChromosomes[ bCol ? 0 : 1 ][xCoords.uiChromosome].uiId, 
-                                   xCoords.uiIndexPos, xCoords.uiIndexPos + xCoords.uiIndexSize,
-                                   uiRep, uiCoverageGetMaxBinSize, bCol, bSymPart );
+    return getMaxCoverageFromRepl( vActiveChromosomes[ bCol ? 0 : 1 ][ xCoords.uiChromosome ].uiId, xCoords.uiIndexPos,
+                                   xCoords.uiIndexPos + xCoords.uiIndexSize, uiRep, uiCoverageGetMaxBinSize, bCol,
+                                   bSymPart );
 }
 
 size_t PartialQuarry::getCoverageFromRepl( const size_t uiChromId, const size_t uiFrom, const size_t uiTo,
@@ -101,7 +101,7 @@ size_t PartialQuarry::getCoverageFromRepl( const size_t uiChromId, const size_t 
     size_t uiRet = 0;
     for( size_t uiI = 0; uiI < vActiveChromosomes[ bCol ? 1 : 0 ].size( ); uiI++ )
     {
-        size_t uiId = vActiveChromosomes[ bCol ? 1 : 0 ][uiI].uiId;
+        size_t uiId = vActiveChromosomes[ bCol ? 1 : 0 ][ uiI ].uiId;
         const size_t uiDatasetId = getDatasetIdfromReplAndChr( uiRepl, bCol != bSymPart ? uiChromId : uiId,
                                                                bCol != bSymPart ? uiId : uiChromId );
 
@@ -123,9 +123,8 @@ size_t PartialQuarry::getCoverageFromRepl( const size_t uiChromId, const size_t 
 }
 size_t PartialQuarry::getCoverageFromRepl( const AxisCoord& xCoords, const size_t uiRepl, bool bCol, bool bSymPart )
 {
-    return getCoverageFromRepl( vActiveChromosomes[ bCol ? 0 : 1 ][xCoords.uiChromosome].uiId, 
-                                xCoords.uiIndexPos, xCoords.uiIndexPos + xCoords.uiIndexSize,
-                                uiRepl, bCol, bSymPart );
+    return getCoverageFromRepl( vActiveChromosomes[ bCol ? 0 : 1 ][ xCoords.uiChromosome ].uiId, xCoords.uiIndexPos,
+                                xCoords.uiIndexPos + xCoords.uiIndexSize, uiRepl, bCol, bSymPart );
 }
 
 bool PartialQuarry::setCoverageValues( )
@@ -256,7 +255,7 @@ bool PartialQuarry::setTracks( )
         for( size_t uiX = 0; uiX < vIceAxisCoords[ uiI ].size( ); uiX++ )
             for( size_t uiY = 0; uiY < 2; uiY++ )
                 if( bDoIce && vIceAxisCoords[ uiI ][ uiY ].uiIdx != ICE_SAMPLE_COORD &&
-                    vIceSliceBias[ 0 ][ uiI ][ uiY ].size( ) > 0 && vInGroup[uiY].size() > 0 )
+                    vIceSliceBias[ 0 ][ uiI ][ uiY ].size( ) > 0 && vInGroup[ uiY ].size( ) > 0 )
                 {
                     auto uiVal = vIceSliceBias[ 0 ][ uiI ][ uiY ][ uiX ];
                     vvMinMaxTracks[ uiI ][ 0 ] = std::min( vvMinMaxTracks[ uiI ][ 0 ], uiVal );
@@ -605,7 +604,7 @@ bool PartialQuarry::setTracks( )
 
         for( size_t uiY = 0; uiY < 2; uiY++ )
             if( getValue<bool>( { "settings", "normalization", "ice_show_bias" } ) &&
-                vIceSliceBias[ 0 ][ uiI ][ uiY ].size( ) > 0 && vInGroup[uiY].size() > 0 )
+                vIceSliceBias[ 0 ][ uiI ][ uiY ].size( ) > 0 && vInGroup[ uiY ].size( ) > 0 )
             {
                 pybind11::list vScreenPos;
                 pybind11::list vIndexStart;
@@ -711,7 +710,7 @@ bool PartialQuarry::setTrackExport( )
         vTrackExportNames[ uiI ].clear( );
         vTrackExportNames[ uiI ].reserve( vvCoverageValues[ uiI ].size( ) + 1 );
 
-        
+
         const std::string sNorm = getValue<std::string>( { "settings", "normalization", "normalize_by" } );
         const bool bGridSeqNormDisp =
             sNorm == "grid-seq" && getValue<bool>( { "settings", "normalization", "grid_seq_display_background" } );
@@ -722,7 +721,7 @@ bool PartialQuarry::setTrackExport( )
             bIsCol = getValue<bool>( { "settings", "normalization", "grid_seq_axis_is_column" } );
         else if( bRadiclNormDisp )
             bIsCol = getValue<bool>( { "settings", "normalization", "radicl_seq_axis_is_column" } );
-        
+
         const bool bDoIce = sNorm == "ice" && getValue<bool>( { "settings", "normalization", "ice_show_bias" } );
 
 
@@ -735,11 +734,11 @@ bool PartialQuarry::setTrackExport( )
             else if( bRadiclNormDisp )
                 vTrackExportNames[ uiI ].push_back( "Binominal_test_coverage" );
         }
-        if(bDoIce)
+        if( bDoIce )
         {
-            if(vInGroup[0].size() > 0 )
+            if( vInGroup[ 0 ].size( ) > 0 )
                 vTrackExportNames[ uiI ].push_back( "ICE_bias_A" );
-            if(vInGroup[1].size() > 1 )
+            if( vInGroup[ 1 ].size( ) > 1 )
                 vTrackExportNames[ uiI ].push_back( "ICE_bias_B" );
         }
 
@@ -756,11 +755,11 @@ bool PartialQuarry::setTrackExport( )
                 else if( bRadiclNormDisp )
                     vValues.push_back( vRadiclSeqCoverage[ uiX ][ uiI ] );
             }
-            if(bDoIce)
+            if( bDoIce )
             {
-                if(vInGroup[0].size() > 0 )
+                if( vInGroup[ 0 ].size( ) > 0 )
                     vValues.push_back( vIceSliceBias[ 0 ][ uiI ][ 0 ][ uiX ] );
-                if(vInGroup[1].size() > 0 )
+                if( vInGroup[ 1 ].size( ) > 0 )
                     vValues.push_back( vIceSliceBias[ 0 ][ uiI ][ 1 ][ uiX ] );
             }
 

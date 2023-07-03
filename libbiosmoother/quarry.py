@@ -57,7 +57,9 @@ class Quarry(PartialQuarry):
                 SPS_VERSION,
             )
 
-        lib_bio_smoother_in_index = self.get_value(["version", "lib_bio_smoother_version"])
+        lib_bio_smoother_in_index = self.get_value(
+            ["version", "lib_bio_smoother_version"]
+        )
         if lib_bio_smoother_in_index != LIB_BIO_SMOOTHER_CPP_VERSION:
             print(
                 "WARNING: the version of libBioSmoother that was used to create this index is different from the current version.",

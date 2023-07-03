@@ -828,7 +828,7 @@ class PartialQuarry : public HasSession
     std::vector<std::array<size_t, 2>> vRadiclSeqCoverage;
     std::vector<std::array<size_t, 2>> vRadiclSeqNumNonEmptyBins;
 
-    std::vector<size_t> vvDatasetIdsPerReplAndChr; 
+    std::vector<size_t> vvDatasetIdsPerReplAndChr;
     size_t uiContigListSize;
 
     size_t uiIceFilterIgnoreDiags;
@@ -1437,12 +1437,12 @@ class PartialQuarry : public HasSession
         return sRet + "}";
     }
 
-    std::vector<std::pair<std::string, size_t>> getRuntimes()
+    std::vector<std::pair<std::string, size_t>> getRuntimes( )
     {
         std::vector<std::pair<std::string, size_t>> vRet;
-        vRet.reserve(NodeNames::SIZE);
+        vRet.reserve( NodeNames::SIZE );
         for( size_t uiNodeName = 0; uiNodeName < NodeNames::SIZE; uiNodeName++ )
-            vRet.push_back(std::make_pair(vGraph[uiNodeName].sNodeName, vGraphData[uiNodeName].uiLastRuntime));
+            vRet.push_back( std::make_pair( vGraph[ uiNodeName ].sNodeName, vGraphData[ uiNodeName ].uiLastRuntime ) );
 
         return vRet;
     }

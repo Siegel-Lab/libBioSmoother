@@ -26,7 +26,7 @@ bool PartialQuarry::setActivateAnnotation( )
 bool PartialQuarry::setActivateAnnotationCDS( )
 {
     pybind11::gil_scoped_acquire acquire;
-    const size_t uiMaxChar = getValue<size_t>({"settings", "interface", "axis_label_max_char", "val"});
+    const size_t uiMaxChar = getValue<size_t>( { "settings", "interface", "axis_label_max_char", "val" } );
     for( size_t uiX : { 0, 1 } )
     {
         pybind11::list xL;
@@ -195,7 +195,7 @@ bool PartialQuarry::setAnnotationCDS( )
     size_t uiDividend = getValue<size_t>( { "dividend" } );
 
     double fMinAnnoDist = getValue<double>( { "settings", "interface", "min_anno_dist" } );
-    const size_t uiMaxChar = getValue<size_t>({"settings", "interface", "axis_label_max_char", "val"});
+    const size_t uiMaxChar = getValue<size_t>( { "settings", "interface", "axis_label_max_char", "val" } );
 
     for( size_t uiX : { 0, 1 } )
     {
@@ -360,7 +360,9 @@ void PartialQuarry::regAnnotation( )
                   ComputeNode{ /*.sNodeName =*/"annotation_cds",
                                /*.fFunc =*/&PartialQuarry::setAnnotationCDS,
                                /*.vIncomingFunctions =*/{ NodeNames::AnnotationValues, NodeNames::AnnotationColors },
-                               /*.vIncomingSession =*/{ { "settings", "interface", "min_anno_dist" }, {"settings", "interface", "axis_label_max_char", "val"} },
+                               /*.vIncomingSession =*/
+                               { { "settings", "interface", "min_anno_dist" },
+                                 { "settings", "interface", "axis_label_max_char", "val" } },
                                /*.vSessionsIncomingInPrevious =*/{ { "dividend" } },
                                /*bHidden =*/false } );
 
@@ -372,7 +374,7 @@ void PartialQuarry::regAnnotation( )
                                {
                                    { "settings", "interface", "v4c", "do_col" },
                                    { "settings", "interface", "v4c", "do_row" },
-                                   {"settings", "interface", "axis_label_max_char", "val"},
+                                   { "settings", "interface", "axis_label_max_char", "val" },
                                },
                                /*.vSessionsIncomingInPrevious =*/{ },
                                /*bHidden =*/false } );

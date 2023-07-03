@@ -9,7 +9,9 @@ except:
 
 
 def __write_header(out_file):
-    out_file.write("##libBioSmoother Version: " + Quarry.get_libBioSmoother_version() + "\n")
+    out_file.write(
+        "##libBioSmoother Version: " + Quarry.get_libBioSmoother_version() + "\n"
+    )
     out_file.write("##libSps Version: " + Quarry.get_libSps_version() + "\n")
 
 

@@ -537,21 +537,19 @@ bool PartialQuarry::setRadiclSeqCoverage( )
                     const size_t uiChrX = bAxisIsCol != bSymPart ? rAxis.uiChromosome : rSample.uiChromosome;
                     const size_t uiChrY = bAxisIsCol != bSymPart ? rSample.uiChromosome : rAxis.uiChromosome;
 
-                    size_t uiDataSetId = getDatasetIdfromReplAndChr( uiRepl, 
-                        vActiveChromosomes[ 0 ][uiChrX].uiId, 
-                        vActiveChromosomes[ 1 ][uiChrY].uiId );
+                    size_t uiDataSetId = getDatasetIdfromReplAndChr(
+                        uiRepl, vActiveChromosomes[ 0 ][ uiChrX ].uiId, vActiveChromosomes[ 1 ][ uiChrY ].uiId );
 
                     const size_t uiXMin = bAxisIsCol != bSymPart ? rAxis.uiIndexPos : rSample.uiIndexPos;
                     const size_t uiXMax = bAxisIsCol != bSymPart ? rAxis.uiIndexPos + rAxis.uiIndexSize
-                                                                    : rSample.uiIndexPos + rSample.uiIndexSize;
+                                                                 : rSample.uiIndexPos + rSample.uiIndexSize;
                     const size_t uiYMin = bAxisIsCol != bSymPart ? rSample.uiIndexPos : rAxis.uiIndexPos;
                     const size_t uiYMax = bAxisIsCol != bSymPart ? rSample.uiIndexPos + rSample.uiIndexSize
-                                                                    : rAxis.uiIndexPos + rAxis.uiIndexSize;
+                                                                 : rAxis.uiIndexPos + rAxis.uiIndexSize;
 
                     vVals[ uiJ ] = pIndices->count(
                         uiDataSetId,
-                        { uiYMin, uiXMin, uiMapQMin, uiFromAnnoFilter, uiFromSameStrandFilter,
-                            uiFromYStrandFilter },
+                        { uiYMin, uiXMin, uiMapQMin, uiFromAnnoFilter, uiFromSameStrandFilter, uiFromYStrandFilter },
                         { uiYMax, uiXMax, uiMapQMax, uiToAnnoFilter, uiToSameStrandFilter, uiToYStrandFilter },
                         xIntersect, 0 );
                     vVals[ uiJ ] = vVals[ uiJ ] > uiMinuend ? vVals[ uiJ ] - uiMinuend : 0;
@@ -713,14 +711,15 @@ bool PartialQuarry::setRnaAssociatedBackground( )
                             uiChrX = rSample.uiChromosome;
                             uiChrY = rAxis.uiChromosome;
                         }
-                        size_t iDataSetId = getDatasetIdfromReplAndChr( uiRepl, 
-                            vActiveChromosomes[ bAxisIsCol ? 0 : 1 ][uiChrX].uiId,
-                            vActiveChromosomes[ bAxisIsCol ? 1 : 0 ][uiChrY].uiId );
+                        size_t iDataSetId =
+                            getDatasetIdfromReplAndChr( uiRepl,
+                                                        vActiveChromosomes[ bAxisIsCol ? 0 : 1 ][ uiChrX ].uiId,
+                                                        vActiveChromosomes[ bAxisIsCol ? 1 : 0 ][ uiChrY ].uiId );
 
                         vBackgroundGridSeq.back( ) += pIndices->count(
                             iDataSetId,
                             { uiStartY, uiStartX, uiMapQMin, uiFromAnnoFilter, uiFromSameStrandFilter,
-                                uiFromYStrandFilter },
+                              uiFromYStrandFilter },
                             { uiEndY, uiEndX, uiMapQMax, uiToAnnoFilter, uiToSameStrandFilter, uiToYStrandFilter },
                             xIntersect,
                             0 );

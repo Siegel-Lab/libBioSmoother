@@ -417,10 +417,10 @@ std::vector<ChromDesc> activeChromList( json xChromLen, json xChromDisp, const s
     for( auto& xChrom : xChromDisp )
     {
         std::string sChrom = xChrom.get<std::string>( );
-        size_t uiIdx = (size_t)(std::find(xChromOrder.begin(), xChromOrder.end(), sChrom) - xChromOrder.begin());
+        size_t uiIdx = (size_t)( std::find( xChromOrder.begin( ), xChromOrder.end( ), sChrom ) - xChromOrder.begin( ) );
         vRet.emplace_back( ChromDesc{ /*.sName =*/sChrom, /*.uiUnadjustedLength =*/xChromLen[ sChrom ].get<size_t>( ),
                                       /*uiLength =*/0,
-                                      /*uiId = */uiIdx } );
+                                      /*uiId = */ uiIdx } );
     }
     return vRet;
 }
@@ -517,7 +517,7 @@ bool PartialQuarry::setTicks( )
     pybind11::gil_scoped_acquire acquire;
     size_t uiDividend = getValue<size_t>( { "dividend" } );
     const bool bSqueeze = getValue<std::string>( { "settings", "filters", "anno_in_multiple_bins" } ) == "squeeze";
-    const size_t uiMaxChar = getValue<size_t>({"settings", "interface", "axis_label_max_char", "val"});
+    const size_t uiMaxChar = getValue<size_t>( { "settings", "interface", "axis_label_max_char", "val" } );
 
 
     for( size_t uiI = 0; uiI < 2; uiI++ )
@@ -535,7 +535,7 @@ bool PartialQuarry::setTicks( )
         for( ChromDesc& rDesc : this->vActiveChromosomes[ uiI ] )
         {
             CANCEL_RETURN;
-            vNames.append( substringChr( rDesc.sName ).substr(0, uiMaxChar) );
+            vNames.append( substringChr( rDesc.sName ).substr( 0, uiMaxChar ) );
             vStartPos.append( uiRunningStart );
             vStartPos2.append( uiRunningStart2 );
             uiRunningStart2 += rDesc.uiLength;
@@ -619,7 +619,7 @@ bool PartialQuarry::setActiveChrom( )
         this->vActiveChromosomes[ bX ? 0 : 1 ] =
             activeChromList( getValue<json>( { "contigs", "lengths" } ),
                              getValue<json>( { "contigs", bX ? "displayed_on_x" : "displayed_on_y" } ),
-                              vContigList );
+                             vContigList );
     END_RETURN;
 }
 
@@ -1311,15 +1311,17 @@ void PartialQuarry::regCoords( )
                                /*.vSessionsIncomingInPrevious =*/{ },
                                /*bHidden =*/true } );
 
-    registerNode(
-        NodeNames::ActiveChrom,
-        ComputeNode{ /*.sNodeName =*/"active_chroms",
-                     /*.fFunc =*/&PartialQuarry::setActiveChrom,
-                     /*.vIncomingFunctions =*/{ },
-                     /*.vIncomingSession =*/
-                     { { "contigs", "displayed_on_x" }, { "contigs", "displayed_on_y" }, { "contigs", "lengths" } },
-                     /*.vSessionsIncomingInPrevious =*/{ },
-                     /*bHidden =*/true } );
+    registerNode( NodeNames::ActiveChrom,
+                  ComputeNode{ /*.sNodeName =*/"active_chroms",
+                               /*.fFunc =*/&PartialQuarry::setActiveChrom,
+                               /*.vIncomingFunctions =*/{ },
+                               /*.vIncomingSession =*/
+                               { { "contigs", "displayed_on_x" },
+                                 { "contigs", "displayed_on_y" },
+                                 { "contigs", "lengths" },
+                                 { "contigs", "list" } },
+                               /*.vSessionsIncomingInPrevious =*/{ },
+                               /*bHidden =*/true } );
 
     registerNode( NodeNames::ActiveChromLength,
                   ComputeNode{ /*.sNodeName =*/"active_chroms_length",
@@ -1338,15 +1340,14 @@ void PartialQuarry::regCoords( )
         ComputeNode{ /*.sNodeName =*/"ticks",
                      /*.fFunc =*/&PartialQuarry::setTicks,
                      /*.vIncomingFunctions =*/{ NodeNames::LCS, NodeNames::AnnotationValues, NodeNames::CanvasSize },
-                     /*.vIncomingSession =*/{ },
+                     /*.vIncomingSession =*/{ { "settings", "interface", "axis_label_max_char", "val" } },
                      /*.vSessionsIncomingInPrevious =*/
                      { { "contigs", "annotation_coordinates" },
                        { "settings", "filters", "anno_coords_row" },
                        { "settings", "filters", "anno_coords_col" },
                        { "settings", "filters", "anno_in_multiple_bins" },
                        { "annotation", "by_name" },
-                       { "dividend" },
-                       {"settings", "interface", "axis_label_max_char", "val"} },
+                       { "dividend" } },
                      /*bHidden =*/false } );
 
     registerNode( NodeNames::CanvasSize,

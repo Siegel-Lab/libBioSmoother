@@ -282,9 +282,9 @@ template <template <typename> typename vec_gen_t> class AnnotationDescIndex
     {
         std::vector<bool> vRet;
         vRet.reserve( vCats.size( ) );
-        int uiFrom = std::numeric_limits<int>::max();
+        int uiFrom = std::numeric_limits<int>::max( );
         int uiTo = 0;
-        for( int uiX : vuiPos)
+        for( int uiX : vuiPos )
         {
             uiFrom = std::min( uiFrom, uiX );
             uiTo = std::max( uiTo, uiX );
@@ -296,7 +296,7 @@ template <template <typename> typename vec_gen_t> class AnnotationDescIndex
                 iterate(
                     uiDatasetId, uiFrom / uiDividend, uiTo / uiDividend + 1,
                     [ & ]( std::tuple<size_t, size_t, std::string, bool> xTup ) {
-                        for( int uiX : vuiPos)
+                        for( int uiX : vuiPos )
                             if( std::get<0>( xTup ) <= (size_t)uiX && std::get<1>( xTup ) > (size_t)uiX )
                                 bFound = true;
                         return !bFound;

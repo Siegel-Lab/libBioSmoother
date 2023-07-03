@@ -93,7 +93,13 @@ class Indexer:
         curr_def[keys[-1]].append(copy.deepcopy(val))
 
     def create_session(
-        self, chr_len_file_name, dividend, anno_path, test=False, filterable_annotations=[], map_q_thresholds=[]
+        self,
+        chr_len_file_name,
+        dividend,
+        anno_path,
+        test=False,
+        filterable_annotations=[],
+        map_q_thresholds=[],
     ):
         if os.path.exists(self.prefix):
             print("ERROR: The given index already exists.")
@@ -216,10 +222,17 @@ class Indexer:
             for anno in filterable_annotations:
                 if anno in sorted_list:
                     existing_filterable_annotations.append(anno)
-            self.set_session(["annotation", "filterable"], existing_filterable_annotations)
+            self.set_session(
+                ["annotation", "filterable"], existing_filterable_annotations
+            )
             if len(existing_filterable_annotations) > 0:
-                self.set_session(["contigs", "annotation_coordinates"], existing_filterable_annotations[0])
-                self.set_session(["annotation", "filter"], existing_filterable_annotations[0])
+                self.set_session(
+                    ["contigs", "annotation_coordinates"],
+                    existing_filterable_annotations[0],
+                )
+                self.set_session(
+                    ["annotation", "filter"], existing_filterable_annotations[0]
+                )
             else:
                 self.set_session(["contigs", "annotation_coordinates"], "")
                 self.set_session(["annotation", "filter"], "")
@@ -340,7 +353,7 @@ class Indexer:
             self.prefix,
             name,
             path,
-            0, # unused
+            0,  # unused
             contigs,
             no_groups,
             "test" in self.session_default,
@@ -426,7 +439,9 @@ class Indexer:
                         y_strand_idx = 0 if bool(strand_1) else 1
                     bin_cnt = int(bin_cnt)
 
-                    for cat_idx, val in self.__get_cat_indices_2d(cat_x, cat_y, bin_cnt):
+                    for cat_idx, val in self.__get_cat_indices_2d(
+                        cat_x, cat_y, bin_cnt
+                    ):
                         start = [
                             act_pos_1_s,
                             act_pos_2_s,
@@ -445,8 +460,8 @@ class Indexer:
                         ]
                         self.indices.insert(start, end, val)
                 id = self.indices.generate(
-                        fac=-2 if shekelyan else -1, verbosity=GENERATE_VERBOSITY
-                    )
+                    fac=-2 if shekelyan else -1, verbosity=GENERATE_VERBOSITY
+                )
                 if first_id is None:
                     first_id = id
 
@@ -511,7 +526,7 @@ class Indexer:
             self.prefix,
             name,
             path,
-            0, # unused
+            0,  # unused
             contigs,
             no_groups,
             "test" in self.session_default,
@@ -550,7 +565,9 @@ class Indexer:
             ) in read_iterator.itr_cell(chr_x):
                 total_reads += 1
                 if no_category:
-                    cat = [False] * len(self.session_default["annotation"]["filterable"])
+                    cat = [False] * len(
+                        self.session_default["annotation"]["filterable"]
+                    )
                 else:
                     cat = self.indices.anno.get_categories(
                         [int(x) for x in pos_1_l.split(",")],
@@ -591,7 +608,9 @@ class Indexer:
                         0,
                     ]
                     self.indices.insert(start, end, val)
-            id = self.indices.generate(fac=-2 if shekelyan else -1, verbosity=GENERATE_VERBOSITY)
+            id = self.indices.generate(
+                fac=-2 if shekelyan else -1, verbosity=GENERATE_VERBOSITY
+            )
             if fist_id is None:
                 fist_id = id
         self.set_session(["coverage", "by_name", name, "first_dataset_id"], fist_id)
