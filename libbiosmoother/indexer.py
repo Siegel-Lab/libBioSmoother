@@ -328,6 +328,7 @@ class Indexer:
         no_strand=False,
         shekelyan=False,
         force_upper_triangle=False,
+        columns=["chr1", "pos1", "chr2", "pos2"],
     ):
         if not self.name_unique(name):
             raise RuntimeError(
@@ -359,6 +360,7 @@ class Indexer:
             "test" in self.session_default,
             force_upper_triangle,
             lambda *x: self.progress_print("loading", *x),
+            columns,
         )
         t_dict = self.get_map_q_thresholds()
         total_reads = 0
@@ -495,6 +497,7 @@ class Indexer:
         no_category=False,
         no_strand=False,
         shekelyan=False,
+        columns=["chr", "pos"],
     ):
         if not self.name_unique(name):
             raise RuntimeError(
@@ -531,6 +534,7 @@ class Indexer:
             no_groups,
             "test" in self.session_default,
             lambda *x: self.progress_print("loading", *x),
+            columns,
         )
         t_dict = self.get_map_q_thresholds()
         total_reads = 0
@@ -574,6 +578,7 @@ class Indexer:
                         self.session_default["dividend"],
                         anno_ids,
                     )
+                # @fixme @continue_here: track data reads are only located at very beginning of contigs for some reason
 
                 act_pos_1_s = int(pos_1_s) // self.session_default["dividend"]
                 if no_multi_map:

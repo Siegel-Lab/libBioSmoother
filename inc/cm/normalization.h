@@ -951,7 +951,7 @@ bool PartialQuarry::normalizeIC( )
             }
             if( uiMaxFlat > 0 )
             {
-                std::string sErrorWhere = std::array<std::string>{"Heatmap", "Column V4C", "Row V4C"}[uiY];
+                std::string sErrorWhere = std::array<std::string, 3>{"Heatmap", "Column V4C", "Row V4C"}[uiY];
                 if( vVar[ 0 ] >= fTol || vVar[ 1 ] >= fTol )
                 {
                     setError( "iterative correction did not converge for " + sErrorWhere + " (var=" + 

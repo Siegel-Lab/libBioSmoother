@@ -51,139 +51,77 @@ def parse_tsv(in_filename, test, chr_filter, line_format, progress_print=print):
             # ignore empty lines and comments / header lines
             if len(line) == 0 or line[0] == "#":
                 continue
+
             # parse file columns
-            num_cols = len(line.split())
-            if num_cols in line_format:
-                read_name, chrs, poss, mapqs, tags, strand, bin_cnt = line_format[
-                    num_cols
-                ](*line.split())
+            read_name, chrs, poss, mapqs, tags, strand, bin_cnt = line_format(line.split())
 
-                cont = False
-                for chr_ in chrs:
-                    if not chr_ in chr_filter:
-                        cont = True
-                if cont:
-                    continue
-                mapqs = [
-                    0 if mapq in ["", "nomapq", "255", "*"] else mapq for mapq in mapqs
-                ]
-                poss = [max(0, int(x)) for x in poss]
-                mapqs = [max(0, int(x)) for x in mapqs]
-                strand = [s == "+" for s in strand]
-                bin_cnt = int(bin_cnt)
+            cont = False
+            for chr_ in chrs:
+                if not chr_ in chr_filter:
+                    cont = True
+            if cont:
+                continue
+            mapqs = [
+                0 if mapq in ["", "nomapq", "255", "*", "."] else mapq for mapq in mapqs
+            ]
+            poss = [max(0, int(x)) for x in poss]
+            mapqs = [max(0, int(x)) for x in mapqs]
+            for s in strand:
+                if s not in ["+", "-"]:
+                    raise RuntimeError("Invalid strand: " + s + "in line: " + line)
+            strand = [s == "+" for s in strand]
+            bin_cnt = int(bin_cnt)
 
-                # if cnt > TEST_FAC and test:
-                #    break
-                cnt += 1
+            cnt += 1
 
-                yield line, read_name, chrs, poss, mapqs, tags, strand, bin_cnt
-            else:
-                raise ValueError(
-                    'line "'
-                    + line
-                    + '" has '
-                    + str(num_cols)
-                    + ", columns which is unexpected. There can be ["
-                    + ", ".join(str(x) for x in line_format.keys())
-                    + "] columns."
-                )
+            yield line, read_name, chrs, poss, mapqs, tags, strand, bin_cnt
 
+def setup_col_converter(columns, col_oder, default_values):
+    for col in columns:
+        col = col.replace("[", "").replace("]", "")
+        if col != "." and col not in col_oder:
+            raise RuntimeError("Invalid column name: " + col + ". Valid column names are: " + 
+                               ", ".join("'" + c + "'" for c in col_oder) + ", and '.'.")
+    non_opt_cols = sum(1 if "[" not in col and "]" not in col else 0 for col in columns)
+    col_converter = {}
+    for n in range(non_opt_cols, len(columns) + 1):
+        dropped_cols = columns[:]
+        idx = len(dropped_cols) - 1
+        while len(dropped_cols) > n:
+            assert idx >= 0
+            if "[" in dropped_cols[idx] and "]" in dropped_cols[idx]:
+                del dropped_cols[idx]
+            idx -= 1
+        dropped_cols = [col.replace("[", "").replace("]", "") for col in dropped_cols]
 
-def parse_heatmap(in_filename, test, chr_filter, progress_print=print):
-    def helper_5_col(*cols):
-        chr_1, pos_1, chr_2, pos_2, cnt = cols
-        if isinstance(pos_1, int) and isinstance(pos_2, int) and isinstance(cnt, int):
-            return (
-                None,
-                [chr_1, chr_2],
-                [pos_1, pos_2],
-                ["", ""],
-                ["?", "?"],
-                ["+", "+"],
-                cnt,
-            )
-        read_name, chr_1, pos_1, chr_2, pos_2 = cols
-        return (
-            read_name,
-            [chr_1, chr_2],
-            [pos_1, pos_2],
-            ["", ""],
-            ["?", "?"],
-            ["+", "+"],
-            1,
-        )
+        col_converter[n] = [ col_oder.index(col_name) if col_name != "." else None for col_name in dropped_cols ]
+    def convert(cols):
+        n = min(len(cols), len(columns))
+        if n not in col_converter:
+            raise RuntimeError("line '" + " ".join(cols) + "' does not match the expected columns:" + 
+                               ", ".join(columns))
+        ret = default_values[:]
+        for idx, col in zip(col_converter[n], cols):
+            if not idx is None:
+                ret[idx] = col
+        return ret
+    return convert
 
+def parse_heatmap(in_filename, test, chr_filter, progress_print=print, columns=["chr1", "pos1", "chr2", "pos2"]):
+    col_converter = setup_col_converter(columns, ["readid", "chr1", "pos1", "chr2", "pos2", "strand1", "strand2",
+                                                  "mapq1", "mapq2", "xa1", "xa2", "cnt"],
+                                        ["-", ".", "0", ".", "0", "+", "+", "*", "*", "", "", "1"])
+
+    def convert(cols):
+        readid, chr1, pos1, chr2, pos2, strand1, strand2, mapq1, mapq2, xa1, xa2, cnt = col_converter(cols)
+        return readid, [chr1, chr2], [pos1, pos2], [mapq1, mapq2], [xa1, xa2], [strand1, strand2], cnt
+    
     yield from parse_tsv(
         in_filename,
         test,
         chr_filter,
-        {
-            5: helper_5_col,
-            5: lambda read_name, chr_1, pos_1, chr_2, pos_2: (
-                read_name,
-                [chr_1, chr_2],
-                [pos_1, pos_2],
-                ["", ""],
-                ["?", "?"],
-                ["+", "+"],
-                1,
-            ),
-            7: lambda read_name, chr_1, pos_1, chr_2, pos_2, mapq_1, mapq_2: (
-                read_name,
-                [chr_1, chr_2],
-                [pos_1, pos_2],
-                [mapq_1, mapq_2],
-                ["?", "?"],
-                ["+", "+"],
-                1,
-            ),
-            9: lambda read_name, chr_1, pos_1, chr_2, pos_2, mapq_1, mapq_2, tag_a, tag_b: (
-                read_name,
-                [chr_1, chr_2],
-                [pos_1, pos_2],
-                [mapq_1, mapq_2],
-                [tag_a, tag_b],
-                ["+", "+"],
-                1,
-            ),
-            10: lambda read_name, chr_1, pos_1, chr_2, pos_2, str1, str2, _1, mapq_1, mapq_2: (
-                read_name,
-                [chr_1, chr_2],
-                [pos_1, pos_2],
-                [mapq_1, mapq_2],
-                ["?", "?"],
-                [str1, str2],
-                1,
-            ),
-            11: lambda read_name, str1, chr_1, pos_1, _2, str2, chr_2, pos_2, _4, mapq_1, mapq_2: (
-                read_name,
-                [chr_1, chr_2],
-                [pos_1, pos_2],
-                [mapq_1, mapq_2],
-                ["?", "?"],
-                [str1, str2],
-                1,
-            ),
-            12: lambda read_name, chr_1, pos_1, chr_2, pos_2, str1, str2, _1, mapq_1, mapq_2, xa_1, xa_2: (
-                read_name,
-                [chr_1, chr_2],
-                [pos_1, pos_2],
-                [mapq_1, mapq_2],
-                [xa_1, xa_2],
-                [str1, str2],
-                1,
-            ),
-            13: lambda read_name, str1, chr_1, pos_1, _2, str2, chr_2, pos_2, _4, mapq_1, mapq_2, tag_a, tag_b: (
-                read_name,
-                [chr_1, chr_2],
-                [pos_1, pos_2],
-                [mapq_1, mapq_2],
-                [tag_a, tag_b],
-                [str1, str2],
-                1,
-            ),
-        },
-        progress_print,
+        line_format=convert,
+        progress_print=progress_print
     )
 
 
@@ -212,50 +150,19 @@ def force_upper_triangle(
         yield line, read_name, chrs_out, poss_out, mapqs_out, tags_out, strand_out, cnt
 
 
-def parse_track(in_filename, test, chr_filter, progress_print=print):
+def parse_track(in_filename, test, chr_filter, progress_print=print, columns=["chr", "pos"]):
+    col_converter = setup_col_converter(columns, ["readid", "chr", "pos", "strand", "mapq", "xa", "cnt"],
+                                        ["-", ".", "0", "+", "*", "", "1"])
+    def convert(cols):
+        readid, chr1, pos1, strand1, mapq1, xa1, cnt = col_converter(cols)
+        return readid, [chr1], [pos1], [mapq1], [xa1], [strand1], cnt
+
     yield from parse_tsv(
         in_filename,
         test,
         chr_filter,
-        {
-            4: lambda read_name, chr_1, pos_1, mapq_1: (
-                read_name,
-                [chr_1],
-                [pos_1],
-                [mapq_1],
-                ["?"],
-                ["+"],
-                1,
-            ),
-            5: lambda read_name, chr_1, pos_1, mapq_1, tag_a: (
-                read_name,
-                [chr_1],
-                [pos_1],
-                [mapq_1],
-                [tag_a],
-                ["+"],
-                1,
-            ),
-            6: lambda read_name, str1, chr_1, pos_1, _2, mapq_1: (
-                read_name,
-                [chr_1],
-                [pos_1],
-                [mapq_1],
-                ["?"],
-                [str1],
-                1,
-            ),
-            7: lambda read_name, str1, chr_1, pos_1, _2, mapq_1, tag_a: (
-                read_name,
-                [chr_1],
-                [pos_1],
-                [mapq_1],
-                [tag_a],
-                [str1],
-                1,
-            ),
-        },
-        progress_print,
+        line_format=convert,
+        progress_print=progress_print
     )
 
 
@@ -267,6 +174,7 @@ def group_reads(
     parse_func=parse_heatmap,
     no_groups=False,
     test=False,
+    columns=["chr1", "pos1", "chr2", "pos2"],
 ):
     curr_read_name = None
     curr_count = None
@@ -312,7 +220,7 @@ def group_reads(
         tags,
         strands,
         cnt,
-    ) in parse_func(in_filename, test, chr_filter, progress_print):
+    ) in parse_func(in_filename, test, chr_filter, progress_print, columns):
         if (
             (curr_read_name in [None, ".", "", "-"] or read_name != curr_read_name)
             and len(group) > 0
@@ -365,6 +273,7 @@ def chr_order_heatmap(
     test=False,
     do_force_upper_triangle=False,
     progress_print=print,
+    columns=["chr1", "pos1", "chr2", "pos2"],
 ):
     prefix = index_prefix + "/.tmp." + dataset_name
     chrs = {}
@@ -383,7 +292,7 @@ def chr_order_heatmap(
         strands,
         cnt,
     ) in group_reads(
-        in_filename, file_size, chr_filter, progress_print, parse_func, no_groups, test
+        in_filename, file_size, chr_filter, progress_print, parse_func, no_groups, test, columns
     ):
         chr_1, chr_2 = chrs_
         if chr_1 not in chrs:
@@ -451,6 +360,7 @@ def chr_order_coverage(
     no_groups=False,
     test=False,
     progress_print=print,
+    columns=["chr", "pos"],
 ):
     prefix = index_prefix + "/.tmp." + dataset_name
     chrs = {}
@@ -465,7 +375,7 @@ def chr_order_coverage(
         strands,
         cnt,
     ) in group_reads(
-        in_filename, file_size, chr_filter, progress_print, parse_track, no_groups, test
+        in_filename, file_size, chr_filter, progress_print, parse_track, no_groups, test, columns
     ):
         if chrs_[0] not in chrs:
             chrs[chrs_[0]] = []
@@ -498,11 +408,6 @@ def get_filesize(path):
     if not os.path.exists(path):
         raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), path)
     return os.path.getsize(path)
-    # return int(
-    #    subprocess.run(["wc", "-l", path], stdout=subprocess.PIPE)
-    #    .stdout.decode("utf-8")
-    #    .split(" ")[0]
-    # )
 
 
 def parse_annotations(annotation_file):

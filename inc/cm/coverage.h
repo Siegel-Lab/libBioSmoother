@@ -142,7 +142,7 @@ bool PartialQuarry::setCoverageValues( )
         {
             vvCoverageValues[ uiJ ].emplace_back( );
             vvCoverageValues[ uiJ ].back( ).reserve( vAxisCords[ uiJ ].size( ) );
-            auto xRep = getValue<json>( { "coverage", "by_name", sRep } );
+            size_t uiFstDatasetId = getValue<json>( { "coverage", "by_name", sRep, "first_dataset_id" } );
 
             for( AxisCoord& xCoords : vAxisCords[ uiJ ] )
             {
@@ -151,16 +151,14 @@ bool PartialQuarry::setCoverageValues( )
                 {
                     CANCEL_RETURN;
 
-                    std::string sChromName = vActiveChromosomes[ uiJ ][ xCoords.uiChromosome ].sName;
-                    int64_t iDataSetId = xRep[ "ids" ][ sChromName ].get<int64_t>( );
-                    if( iDataSetId != -1 )
-                        uiVal = pIndices->count(
-                            iDataSetId,
-                            { xCoords.uiIndexPos, 0, uiMapQMin, uiFromAnnoFilter, ui1DFromStrandFilter, 0 },
-                            { xCoords.uiIndexPos + xCoords.uiIndexSize, 1, uiMapQMax, uiToAnnoFilter,
-                              ui1DToStrandFilter, 1 },
-                            xIntersect,
-                            0 );
+                    int64_t iDataSetId = uiFstDatasetId + vActiveChromosomes[ uiJ ][ xCoords.uiChromosome ].uiId;
+                    uiVal = pIndices->count(
+                        iDataSetId,
+                        { xCoords.uiIndexPos, 0, uiMapQMin, uiFromAnnoFilter, ui1DFromStrandFilter, 0 },
+                        { xCoords.uiIndexPos + xCoords.uiIndexSize, 1, uiMapQMax, uiToAnnoFilter,
+                            ui1DToStrandFilter, 1 },
+                        xIntersect,
+                        0 );
                 }
                 else
                     uiVal = 0;
