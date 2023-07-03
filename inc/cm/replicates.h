@@ -526,8 +526,8 @@ void PartialQuarry::regReplicates( )
                   ComputeNode{ /*.sNodeName =*/"dataset_id_per_repl",
                                /*.fFunc=*/&PartialQuarry::setDatasetIdPerRepl,
                                /*.vIncomingFunctions =*/{ NodeNames::ActiveReplicates, NodeNames::ActiveChrom },
-                               /*.vIncomingSession =*/{ { "replicates", "by_name" }, { "contigs", "list" } },
-                               /*.vSessionsIncomingInPrevious =*/{ },
+                               /*.vIncomingSession =*/{ { "replicates", "by_name" } },
+                               /*.vSessionsIncomingInPrevious =*/{ { "contigs", "list" } },
                                /*bHidden =*/true } );
 
     registerNode( NodeNames::IntersectionType,

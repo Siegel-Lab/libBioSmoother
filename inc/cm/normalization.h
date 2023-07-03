@@ -951,15 +951,17 @@ bool PartialQuarry::normalizeIC( )
             }
             if( uiMaxFlat > 0 )
             {
+                std::string sErrorWhere = std::array<std::string>{"Heatmap", "Column V4C", "Row V4C"}[uiY];
                 if( vVar[ 0 ] >= fTol || vVar[ 1 ] >= fTol )
                 {
-                    setError( "iterative correction did not converge (var=" + std::to_string( vVar[ 0 ] ) + ", " +
+                    setError( "iterative correction did not converge for " + sErrorWhere + " (var=" + 
+                              std::to_string( vVar[ 0 ] ) + ", " +
                               std::to_string( vVar[ 1 ] ) + " mean=" + std::to_string( vMean[ 0 ] ) + ", " +
                               std::to_string( vMean[ 1 ] ) + "), showing data anyways" );
                 }
                 else if( iceMaxBias( xData, true ) == 0 || iceMaxBias( xData, false ) == 0 )
                 {
-                    setError( "iterative correction converged to zero, showing un-normalized data" );
+                    setError( "iterative correction converged to zero " + sErrorWhere + ", showing un-normalized data" );
                     for( size_t uiY = 0; uiY < 2; uiY++ )
                         for( size_t uiJ = 0; uiJ < xData.vSliceBias[ uiY ].size( ); uiJ++ )
                         {
@@ -982,7 +984,11 @@ bool PartialQuarry::normalizeIC( )
             vIceSliceBias[ uiY ][ 1 ][ uiI ].swap( xData.vSliceBias[ 1 ] );
         }
         vvNormalized[ uiY ].resize( vBinCoords[ uiY ].size( ) );
-        size_t uiH2 = vAxisCords[ 1 ].size( );
+        size_t uiH2;
+        if(uiY == 2)
+            uiH2 = 1;
+        else
+            uiH2 = vAxisCords[ 1 ].size( );
         for( size_t uiX = 0; uiX < vvFlatValues[ uiY ].size( ); uiX++ )
             for( size_t uiZ = 0; uiZ < 2; uiZ++ )
                 if( vBinCoordsIce[ uiY ][ uiX ][ uiZ ].uiXAxisIdx != ICE_SAMPLE_COORD &&
