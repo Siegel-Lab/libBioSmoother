@@ -578,7 +578,6 @@ class Indexer:
                         self.session_default["dividend"],
                         anno_ids,
                     )
-                # @fixme @continue_here: track data reads are only located at very beginning of contigs for some reason
 
                 act_pos_1_s = int(pos_1_s) // self.session_default["dividend"]
                 if no_multi_map:
