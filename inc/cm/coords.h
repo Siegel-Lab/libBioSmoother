@@ -1056,7 +1056,6 @@ const std::vector<AxisCoord>& PartialQuarry::pickYCoords( const size_t uiI )
 
 bool PartialQuarry::setBinCoords( )
 {
-    // @fixme @continue_here segfault with this filter
     size_t uiManhattenDist = 1000 * getValue<size_t>( { "settings", "filters", "min_diag_dist", "val" } ) /
                              getValue<size_t>( { "dividend" } );
     for( size_t uiI = 0; uiI < NUM_COORD_SYSTEMS; uiI++ )
