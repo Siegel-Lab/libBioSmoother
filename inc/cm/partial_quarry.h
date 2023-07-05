@@ -752,6 +752,7 @@ class PartialQuarry : public HasSession
     std::array<std::vector<size_t>, 2> vInGroup;
 
     sps::IntersectionType xIntersect;
+    bool bOnlyMMRs = false;
 
     std::array<std::vector<std::array<BinCoord, 2>>, NUM_COORD_SYSTEMS> vBinCoordsIce;
     std::array<std::vector<std::array<BinCoord, 2>>, NUM_COORD_SYSTEMS> vBinCoords;
@@ -1398,6 +1399,7 @@ class PartialQuarry : public HasSession
                                                   { 0, 0, 0, 0 },
                                                   { uiSizeA, uiSizeB, 256, uiNumAnno * 3 + 2 },
                                                   sps::IntersectionType::overlaps,
+                                                  bOnlyMMRs,
                                                   0 )
                               << "\t" << pIndices->getNumOverlays( iDataSetId );
 

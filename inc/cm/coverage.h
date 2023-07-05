@@ -42,7 +42,7 @@ std::tuple<size_t, int64_t, size_t, size_t> PartialQuarry::makeHeapTuple( bool b
         iDataSetId, { uiYMin, uiXMin, uiMapQMin, uiFromAnnoFilter[0], 
                       uiFromSameStrandFilter, uiFromYStrandFilter },
         { uiYMax, uiXMax, uiMapQMax, uiToAnnoFilter[0], uiToSameStrandFilter, 
-          uiToYStrandFilter }, xIntersect, 0 );
+          uiToYStrandFilter }, xIntersect, bOnlyMMRs, 0 );
 
     return std::make_tuple( uiCount, iDataSetId, uiStart, uiEnd );
 }
@@ -118,7 +118,7 @@ size_t PartialQuarry::getCoverageFromRepl( const size_t uiChromId, const size_t 
                 { uiYMin, uiXMin, uiMapQMin, uiFromAnnoFilter[ 0 ], uiFromSameStrandFilter, 
                   uiFromYStrandFilter },
                 { uiYMax, uiXMax, uiMapQMax, uiToAnnoFilter[ 0 ], uiToSameStrandFilter, uiToYStrandFilter }, 
-                xIntersect, 0 );
+                xIntersect, bOnlyMMRs, 0 );
         }
     }
 
@@ -162,6 +162,7 @@ bool PartialQuarry::setCoverageValues( )
                         { xCoords.uiIndexPos + xCoords.uiIndexSize, 1, uiMapQMax, uiToAnnoFilter[ uiJ ], 
                           ui1DToStrandFilter, 1 },
                         xIntersect,
+                        bOnlyMMRs,
                         0 );
                 }
                 else

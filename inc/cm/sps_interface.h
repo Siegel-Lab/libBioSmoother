@@ -167,9 +167,9 @@ template <bool CACHED> class SpsInterface : public HasSession
     }
 
     size_t count( size_t iDataSetId, std::array<coordinate_t, D - O> vFrom, std::array<coordinate_t, D - O> vTo,
-                  sps::IntersectionType xIntersect, size_t uiVerbosity = 1 )
+                  sps::IntersectionType xIntersect, bool bNoPoints, size_t uiVerbosity = 1 )
     {
-        return pIndex->count( iDataSetId, vFrom, vTo, xIntersect, uiVerbosity );
+        return pIndex->count( iDataSetId, vFrom, vTo, xIntersect, bNoPoints, uiVerbosity );
     }
 
     double countBias( size_t iDataSetId, std::array<coordinate_t, 1> vFrom, std::array<coordinate_t, 1> vTo,

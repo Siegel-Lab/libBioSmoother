@@ -552,7 +552,7 @@ bool PartialQuarry::setRadiclSeqCoverage( )
                         { uiYMin, uiXMin, uiMapQMin, uiFromAnnoFilter[uiJ], uiFromSameStrandFilter, 
                           uiFromYStrandFilter },
                         { uiYMax, uiXMax, uiMapQMax, uiToAnnoFilter[uiJ], uiToSameStrandFilter, uiToYStrandFilter },
-                        xIntersect, 0 );
+                        xIntersect, bOnlyMMRs, 0 );
                     vVals[ uiJ ] = vVals[ uiJ ] > uiMinuend ? vVals[ uiJ ] - uiMinuend : 0;
                 }
 
@@ -721,6 +721,7 @@ bool PartialQuarry::setRnaAssociatedBackground( )
                               uiFromYStrandFilter },
                             { uiEndY, uiEndX, uiMapQMax, uiToAnnoFilter[0], uiToSameStrandFilter, uiToYStrandFilter },
                             xIntersect,
+                            bOnlyMMRs,
                             0 );
                     }
                 }

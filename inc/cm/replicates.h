@@ -56,12 +56,23 @@ bool PartialQuarry::setIntersectionType( )
 {
     std::string sRenderSetting = getValue<std::string>( { "settings", "filters", "ambiguous_mapping" } );
 
+    bOnlyMMRs = false;
     if( sRenderSetting == "enclosed" )
         xIntersect = sps::IntersectionType::enclosed;
+    else if( sRenderSetting == "enclosed_only" )
+    {
+        xIntersect = sps::IntersectionType::enclosed;
+        bOnlyMMRs = true;
+    }
     else if( sRenderSetting == "encloses" )
         xIntersect = sps::IntersectionType::encloses;
     else if( sRenderSetting == "overlaps" )
         xIntersect = sps::IntersectionType::overlaps;
+    else if( sRenderSetting == "overlaps_only" )
+    {
+        xIntersect = sps::IntersectionType::overlaps;
+        bOnlyMMRs = true;
+    }
     else if( sRenderSetting == "first" )
         xIntersect = sps::IntersectionType::first;
     else if( sRenderSetting == "last" )
@@ -130,6 +141,7 @@ bool PartialQuarry::setBinValues( )
                                                vCoords[ uiI ].uiIndexX + vCoords[ uiI ].uiIndexW, uiMapQMax,
                                                uiToAnnoFilter[uiI], uiToSameStrandFilter, uiToYStrandFilter },
                                              xIntersect,
+                                             bOnlyMMRs,
                                              0 );
                     }
                     else
@@ -231,6 +243,7 @@ bool PartialQuarry::setDecayValues( )
                                                                        { uiXe, uiYe, uiMapQMax, uiToAnnoFilter[uiI],
                                                                          uiToSameStrandFilter, uiToYStrandFilter },
                                                                        xIntersect,
+                                                                       bOnlyMMRs,
                                                                        0 ) );
 
                                     if( vvVals.back( ) > uiMinuend )
