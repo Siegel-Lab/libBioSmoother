@@ -125,10 +125,10 @@ bool PartialQuarry::setBinValues( )
                         vVals[ uiI ] =
                             pIndices->count( iDataSetId,
                                              { vCoords[ uiI ].uiIndexY, vCoords[ uiI ].uiIndexX, uiMapQMin,
-                                               uiFromAnnoFilter, uiFromSameStrandFilter, uiFromYStrandFilter },
+                                               uiFromAnnoFilter[uiI], uiFromSameStrandFilter, uiFromYStrandFilter },
                                              { vCoords[ uiI ].uiIndexY + vCoords[ uiI ].uiIndexH,
                                                vCoords[ uiI ].uiIndexX + vCoords[ uiI ].uiIndexW, uiMapQMax,
-                                               uiToAnnoFilter, uiToSameStrandFilter, uiToYStrandFilter },
+                                               uiToAnnoFilter[uiI], uiToSameStrandFilter, uiToYStrandFilter },
                                              xIntersect,
                                              0 );
                     }
@@ -226,9 +226,9 @@ bool PartialQuarry::setDecayValues( )
                                     assert( uiXe <= (size_t)iChrY );
 
                                     vvVals.push_back( pIndices->count( iDataSetId,
-                                                                       { uiXs, uiYs, uiMapQMin, uiFromAnnoFilter,
+                                                                       { uiXs, uiYs, uiMapQMin, uiFromAnnoFilter[uiI],
                                                                          uiFromSameStrandFilter, uiFromYStrandFilter },
-                                                                       { uiXe, uiYe, uiMapQMax, uiToAnnoFilter,
+                                                                       { uiXe, uiYe, uiMapQMax, uiToAnnoFilter[uiI],
                                                                          uiToSameStrandFilter, uiToYStrandFilter },
                                                                        xIntersect,
                                                                        0 ) );

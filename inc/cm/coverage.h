@@ -39,8 +39,10 @@ std::tuple<size_t, int64_t, size_t, size_t> PartialQuarry::makeHeapTuple( bool b
     const coordinate_t uiYMin = bCol != bSymPart ? uiStart : uiFrom;
     const coordinate_t uiYMax = bCol != bSymPart ? uiEnd : uiTo;
     const size_t uiCount = pIndices->count(
-        iDataSetId, { uiYMin, uiXMin, uiMapQMin, uiFromAnnoFilter, uiFromSameStrandFilter, uiFromYStrandFilter },
-        { uiYMax, uiXMax, uiMapQMax, uiToAnnoFilter, uiToSameStrandFilter, uiToYStrandFilter }, xIntersect, 0 );
+        iDataSetId, { uiYMin, uiXMin, uiMapQMin, uiFromAnnoFilter[0], 
+                      uiFromSameStrandFilter, uiFromYStrandFilter },
+        { uiYMax, uiXMax, uiMapQMax, uiToAnnoFilter[0], uiToSameStrandFilter, 
+          uiToYStrandFilter }, xIntersect, 0 );
 
     return std::make_tuple( uiCount, iDataSetId, uiStart, uiEnd );
 }
@@ -113,8 +115,10 @@ size_t PartialQuarry::getCoverageFromRepl( const size_t uiChromId, const size_t 
             const size_t uiYMax = bCol != bSymPart ? vActiveChromosomes[ bCol ? 1 : 0 ][ uiI ].uiLength : uiTo;
             uiRet += pIndices->count(
                 uiDatasetId,
-                { uiYMin, uiXMin, uiMapQMin, uiFromAnnoFilter, uiFromSameStrandFilter, uiFromYStrandFilter },
-                { uiYMax, uiXMax, uiMapQMax, uiToAnnoFilter, uiToSameStrandFilter, uiToYStrandFilter }, xIntersect, 0 );
+                { uiYMin, uiXMin, uiMapQMin, uiFromAnnoFilter[ 0 ], uiFromSameStrandFilter, 
+                  uiFromYStrandFilter },
+                { uiYMax, uiXMax, uiMapQMax, uiToAnnoFilter[ 0 ], uiToSameStrandFilter, uiToYStrandFilter }, 
+                xIntersect, 0 );
         }
     }
 
@@ -154,9 +158,9 @@ bool PartialQuarry::setCoverageValues( )
                     int64_t iDataSetId = uiFstDatasetId + vActiveChromosomes[ uiJ ][ xCoords.uiChromosome ].uiId;
                     uiVal = pIndices->count(
                         iDataSetId,
-                        { xCoords.uiIndexPos, 0, uiMapQMin, uiFromAnnoFilter, ui1DFromStrandFilter, 0 },
-                        { xCoords.uiIndexPos + xCoords.uiIndexSize, 1, uiMapQMax, uiToAnnoFilter, ui1DToStrandFilter,
-                          1 },
+                        { xCoords.uiIndexPos, 0, uiMapQMin, uiFromAnnoFilter[ uiJ ], ui1DFromStrandFilter, 0 },
+                        { xCoords.uiIndexPos + xCoords.uiIndexSize, 1, uiMapQMax, uiToAnnoFilter[ uiJ ], 
+                          ui1DToStrandFilter, 1 },
                         xIntersect,
                         0 );
                 }

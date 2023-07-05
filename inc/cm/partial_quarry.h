@@ -777,8 +777,8 @@ class PartialQuarry : public HasSession
 
     std::string sBackgroundColor;
 
-    size_t uiFromAnnoFilter;
-    size_t uiToAnnoFilter;
+    std::array<size_t, 2> uiFromAnnoFilter;
+    std::array<size_t, 2> uiToAnnoFilter;
     size_t uiFromSameStrandFilter;
     size_t uiToSameStrandFilter;
     size_t ui1DFromStrandFilter;

@@ -549,8 +549,9 @@ bool PartialQuarry::setRadiclSeqCoverage( )
 
                     vVals[ uiJ ] = pIndices->count(
                         uiDataSetId,
-                        { uiYMin, uiXMin, uiMapQMin, uiFromAnnoFilter, uiFromSameStrandFilter, uiFromYStrandFilter },
-                        { uiYMax, uiXMax, uiMapQMax, uiToAnnoFilter, uiToSameStrandFilter, uiToYStrandFilter },
+                        { uiYMin, uiXMin, uiMapQMin, uiFromAnnoFilter[uiJ], uiFromSameStrandFilter, 
+                          uiFromYStrandFilter },
+                        { uiYMax, uiXMax, uiMapQMax, uiToAnnoFilter[uiJ], uiToSameStrandFilter, uiToYStrandFilter },
                         xIntersect, 0 );
                     vVals[ uiJ ] = vVals[ uiJ ] > uiMinuend ? vVals[ uiJ ] - uiMinuend : 0;
                 }
@@ -716,9 +717,9 @@ bool PartialQuarry::setRnaAssociatedBackground( )
 
                         vBackgroundGridSeq.back( ) += pIndices->count(
                             iDataSetId,
-                            { uiStartY, uiStartX, uiMapQMin, uiFromAnnoFilter, uiFromSameStrandFilter,
+                            { uiStartY, uiStartX, uiMapQMin, uiFromAnnoFilter[0], uiFromSameStrandFilter,
                               uiFromYStrandFilter },
-                            { uiEndY, uiEndX, uiMapQMax, uiToAnnoFilter, uiToSameStrandFilter, uiToYStrandFilter },
+                            { uiEndY, uiEndX, uiMapQMax, uiToAnnoFilter[0], uiToSameStrandFilter, uiToYStrandFilter },
                             xIntersect,
                             0 );
                     }
