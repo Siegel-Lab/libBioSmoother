@@ -73,25 +73,20 @@ bool PartialQuarry::setAnnotationValues( )
         vMaxAnnoRows[ uiX ] = 1;
         for( std::string sCurrAnno : vActiveAnnotation[ uiX ] )
         {
-            auto rJson = getValue<json>( { "annotation", "by_name", sCurrAnno } );
+            auto uiFistAnnoIdx = getValue<size_t>( { "annotation", "by_name", sCurrAnno } );
             for( AxisRegion& xRegion : vAxisRegions[ uiX ] )
             {
                 CANCEL_RETURN;
 
-                std::string sChromName = vActiveChromosomes[ uiX ][ xRegion.uiChromosome ].sName;
+                size_t iDataSetId = uiFistAnnoIdx + vActiveChromosomes[ uiX ][ xRegion.uiChromosome ].uiId;
 
-                if( rJson.contains( sChromName ) )
-                {
-                    int64_t iDataSetId = rJson[ sChromName ].get<int64_t>( );
-
-                    uiTotalCount += pIndices->vAnno.count( iDataSetId, xRegion.uiIndexPos,
-                                                           ( xRegion.uiIndexPos + xRegion.uiIndexSize ), false, false );
-                }
+                uiTotalCount += pIndices->vAnno.count( iDataSetId, xRegion.uiIndexPos,
+                                                        ( xRegion.uiIndexPos + xRegion.uiIndexSize ), false, false );
             }
         }
         for( std::string sCurrAnno : vActiveAnnotation[ uiX ] )
         {
-            auto rJson = getValue<json>( { "annotation", "by_name", sCurrAnno } );
+            auto uiFistAnnoIdx = getValue<size_t>( { "annotation", "by_name", sCurrAnno } );
             vAnnotationValues[ uiX ].emplace_back( );
             if( uiTotalCount < uiMaxDetailedDisplay )
             {
@@ -99,55 +94,51 @@ bool PartialQuarry::setAnnotationValues( )
                 std::vector<size_t> vEndPos;
                 for( AxisRegion& xRegion : vAxisRegions[ uiX ] )
                 {
-                    std::string sChromName = vActiveChromosomes[ uiX ][ xRegion.uiChromosome ].sName;
-                    if( rJson.contains( sChromName ) )
+                    size_t iDataSetId = uiFistAnnoIdx + vActiveChromosomes[ uiX ][ xRegion.uiChromosome ].uiId;
+                    for( auto& xAnno :
+                            pIndices->vAnno.query( iDataSetId, xRegion.uiIndexPos,
+                                                xRegion.uiIndexPos + xRegion.uiIndexSize, false, false ) )
                     {
-                        int64_t iDataSetId = rJson[ sChromName ].get<int64_t>( );
-                        for( auto& xAnno :
-                             pIndices->vAnno.query( iDataSetId, xRegion.uiIndexPos,
-                                                    xRegion.uiIndexPos + xRegion.uiIndexSize, false, false ) )
+                        double uiStartPos;
+                        double uiEndPos;
+                        if( bSqueeze && !bIsGenomeCoords )
                         {
-                            double uiStartPos;
-                            double uiEndPos;
-                            if( bSqueeze && !bIsGenomeCoords )
+                            uiStartPos = xRegion.uiScreenPos;
+                            uiEndPos = ( xRegion.uiScreenPos + xRegion.uiScreenSize );
+                        }
+                        else
+                        {
+                            double fAnnoF = (double)std::get<0>( xAnno );
+                            double fAnnoT = (double)std::get<1>( xAnno );
+                            if( !bSqueeze || bIsGenomeCoords )
                             {
-                                uiStartPos = xRegion.uiScreenPos;
-                                uiEndPos = ( xRegion.uiScreenPos + xRegion.uiScreenSize );
+                                fAnnoF /= (double)uiDividend;
+                                fAnnoT /= (double)uiDividend;
                             }
-                            else
-                            {
-                                double fAnnoF = (double)std::get<0>( xAnno );
-                                double fAnnoT = (double)std::get<1>( xAnno );
-                                if( !bSqueeze || bIsGenomeCoords )
-                                {
-                                    fAnnoF /= (double)uiDividend;
-                                    fAnnoT /= (double)uiDividend;
-                                }
-                                double fRegF = xRegion.uiIndexPos;
-                                double fRegF2 = xRegion.uiScreenPos;
-                                double fRegT = xRegion.uiScreenPos + xRegion.uiScreenSize;
-                                uiStartPos = ( fAnnoF > fRegF ? fAnnoF - fRegF : 0.0 ) + fRegF2;
-                                uiEndPos = std::min( ( fAnnoT > fRegF ? fAnnoT - fRegF : 0.0 ) + fRegF2, fRegT );
-                            }
+                            double fRegF = xRegion.uiIndexPos;
+                            double fRegF2 = xRegion.uiScreenPos;
+                            double fRegT = xRegion.uiScreenPos + xRegion.uiScreenSize;
+                            uiStartPos = ( fAnnoF > fRegF ? fAnnoF - fRegF : 0.0 ) + fRegF2;
+                            uiEndPos = std::min( ( fAnnoT > fRegF ? fAnnoT - fRegF : 0.0 ) + fRegF2, fRegT );
+                        }
 
-                            if( uiEndPos >= uiStartPos )
-                            {
-                                size_t uiRow = 0;
-                                while( uiRow < vEndPos.size( ) && uiStartPos < vEndPos[ uiRow ] + uiMinAnnoDist )
-                                    ++uiRow;
-                                if( uiRow == vEndPos.size( ) )
-                                    vEndPos.emplace_back( 0 );
-                                vEndPos[ uiRow ] = uiEndPos;
-                                vAnnotationValues[ uiX ].back( ).second.push_back(
-                                    Annotation{ /*.sInfo =*/std::get<2>( xAnno ),
-                                                /*.bForw =*/std::get<3>( xAnno ),
-                                                /*.fScreenX =*/uiStartPos,
-                                                /*.fScreenY =*/uiEndPos,
-                                                /*.uiIndexX =*/std::get<0>( xAnno ),
-                                                /*.uiIndexY =*/std::get<1>( xAnno ),
-                                                /*.uiRow =*/uiRow,
-                                                /*.uiChromosome =*/xRegion.uiChromosome } );
-                            }
+                        if( uiEndPos >= uiStartPos )
+                        {
+                            size_t uiRow = 0;
+                            while( uiRow < vEndPos.size( ) && uiStartPos < vEndPos[ uiRow ] + uiMinAnnoDist )
+                                ++uiRow;
+                            if( uiRow == vEndPos.size( ) )
+                                vEndPos.emplace_back( 0 );
+                            vEndPos[ uiRow ] = uiEndPos;
+                            vAnnotationValues[ uiX ].back( ).second.push_back(
+                                Annotation{ /*.sInfo =*/std::get<2>( xAnno ),
+                                            /*.bForw =*/std::get<3>( xAnno ),
+                                            /*.fScreenX =*/uiStartPos,
+                                            /*.fScreenY =*/uiEndPos,
+                                            /*.uiIndexX =*/std::get<0>( xAnno ),
+                                            /*.uiIndexY =*/std::get<1>( xAnno ),
+                                            /*.uiRow =*/uiRow,
+                                            /*.uiChromosome =*/xRegion.uiChromosome } );
                         }
                     }
                 }
@@ -159,16 +150,11 @@ bool PartialQuarry::setAnnotationValues( )
                 vAnnotationValues[ uiX ].back( ).first.reserve( vAxisCords[ uiX ].size( ) );
                 for( AxisCoord& xCoords : vAxisCords[ uiX ] )
                 {
-                    std::string sChromName = vActiveChromosomes[ uiX ][ xCoords.uiChromosome ].sName;
-                    if( rJson.contains( sChromName ) )
-                    {
-                        int64_t iDataSetId = rJson[ sChromName ].get<int64_t>( );
+                    const size_t uiChrIdx = vActiveChromosomes[ uiX ][ xCoords.uiChromosome ].uiId;
+                        int64_t iDataSetId = uiFistAnnoIdx + uiChrIdx;
                         vAnnotationValues[ uiX ].back( ).first.push_back(
                             pIndices->vAnno.count( iDataSetId, xCoords.uiIndexPos,
-                                                   ( xCoords.uiIndexPos + xCoords.uiIndexSize ), false, false ) );
-                    }
-                    else
-                        vAnnotationValues[ uiX ].back( ).first.push_back( 0 );
+                                                    ( xCoords.uiIndexPos + xCoords.uiIndexSize ), false, false ) );
                 }
             }
         }

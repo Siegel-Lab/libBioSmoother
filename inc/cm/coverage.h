@@ -775,7 +775,7 @@ bool PartialQuarry::setTrackExport( )
 bool PartialQuarry::setRankedSlicesCDS( )
 {
     const std::string sAnno = getValue<std::string>( { "settings", "normalization", "grid_seq_annotation" } );
-    const auto rJson = getValue<json>( { "annotation", "by_name", sAnno } );
+    auto uiFistAnnoIdx = getValue<size_t>( { "annotation", "by_name", sAnno } );
     const uint32_t uiDividend = getValue<uint32_t>( { "dividend" } );
     std::array<std::vector<size_t>, 2> vSorted;
 
@@ -813,8 +813,9 @@ bool PartialQuarry::setRankedSlicesCDS( )
 
             const AnnoCoord& rSample = vGridSeqSamples[ vSorted[ uiI ][ uiX ] ];
             const std::string& sChromName = this->vActiveChromosomes[ 0 ][ rSample.uiChromosome ].sName;
+            const size_t uiChromId = this->vActiveChromosomes[ 0 ][ rSample.uiChromosome ].uiId;
 
-            const auto rIntervalIt = pIndices->vAnno.get( rJson[ sChromName ].get<int64_t>( ), rSample.uiAnnoId );
+            const auto rIntervalIt = pIndices->vAnno.get( uiFistAnnoIdx + uiChromId, rSample.uiAnnoId );
 
             vChrs.append( substringChr( sChromName ) );
             vAnnoDesc.append( pIndices->vAnno.desc( *rIntervalIt ) );

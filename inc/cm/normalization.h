@@ -328,23 +328,23 @@ bool PartialQuarry::getSamples( const GetSamplesMode& rMode, const size_t uiNumS
     std::vector<std::pair<size_t, size_t>> vChromIdForSampleIdx;
     vChromIdForSampleIdx.reserve( this->vActiveChromosomes[ uiColumn ].size( ) );
 
-    json rAnnoJson;
+
+    size_t uiFistAnnoIdx;
     if( rMode != GetSamplesMode::Bins )
-        rAnnoJson = getValue<json>( { "annotation", "by_name", sAnno } );
+        uiFistAnnoIdx = getValue<size_t>( { "annotation", "by_name", sAnno } );
 
     size_t uiMaxSamples = 0;
     for( size_t uiI = 0; uiI < this->vActiveChromosomes[ uiColumn ].size( ); uiI++ )
     {
         const ChromDesc& rActiveChrom = this->vActiveChromosomes[ uiColumn ][ uiI ];
-        if( ( !bOnlyChromsOnBothAxes || hasChr( 1 - uiColumn, rActiveChrom.sName ) ) &&
-            ( rMode == GetSamplesMode::Bins || rAnnoJson.contains( rActiveChrom.sName ) ) )
+        if( ( !bOnlyChromsOnBothAxes || hasChr( 1 - uiColumn, rActiveChrom.sName ) ) )
         {
             CANCEL_RETURN;
             switch( rMode )
             {
                 case GetSamplesMode::OneAnnotation:
                     vChromIdForSampleIdx.emplace_back( uiMaxSamples, uiI );
-                    uiMaxSamples += pIndices->vAnno.numIntervals( rAnnoJson[ rActiveChrom.sName ].get<int64_t>( ) );
+                    uiMaxSamples += pIndices->vAnno.numIntervals( uiFistAnnoIdx + rActiveChrom.uiId );
                     break;
                 case GetSamplesMode::Bins:
                     vChromIdForSampleIdx.emplace_back( uiMaxSamples, uiI );
@@ -378,12 +378,12 @@ bool PartialQuarry::getSamples( const GetSamplesMode& rMode, const size_t uiNumS
         assert( rIt != vChromIdForSampleIdx.begin( ) );
         const size_t uiChrom = ( rIt - 1 )->second;
 
-        const std::string& rChr = this->vActiveChromosomes[ uiColumn ][ uiChrom ].sName;
+        const size_t uiChr = this->vActiveChromosomes[ uiColumn ][ uiChrom ].uiId;
 
         switch( rMode )
         {
             case GetSamplesMode::OneAnnotation: {
-                const auto rIntervalIt = pIndices->vAnno.get( rAnnoJson[ rChr ].get<int64_t>( ), uiVal );
+                const auto rIntervalIt = pIndices->vAnno.get( uiFistAnnoIdx + uiChr, uiVal );
                 const size_t uiDescId = rIntervalIt->uiDescId;
                 if( vSeenDescIds.count( uiDescId ) == 0 )
                 {
@@ -668,8 +668,6 @@ bool PartialQuarry::setRnaAssociatedBackground( )
         END_RETURN;
 
     const bool bAxisIsCol = getValue<bool>( { "settings", "normalization", "grid_seq_axis_is_column" } );
-    const std::string sAnno = getValue<std::string>( { "settings", "normalization", "grid_seq_annotation" } );
-    const auto rJson = getValue<json>( { "annotation", "by_name", sAnno } );
 
     vBackgroundGridSeq.clear( );
     vBackgroundGridSeq.reserve( vAxisCords[ bAxisIsCol ? 0 : 1 ].size( ) );
@@ -1190,8 +1188,6 @@ void PartialQuarry::regNormalization( )
                                /*.vSessionsIncomingInPrevious =*/
                                { { "settings", "normalization", "normalize_by" },
                                  { "settings", "normalization", "grid_seq_axis_is_column" },
-                                 { "settings", "normalization", "grid_seq_annotation" },
-                                 { "annotation", "by_name" },
                                  { "replicates", "by_name" },
                                  { "dividend" } },
                                /*bHidden =*/false } );

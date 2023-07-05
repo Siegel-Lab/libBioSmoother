@@ -236,25 +236,29 @@ class Indexer:
             else:
                 self.set_session(["contigs", "annotation_coordinates"], "")
                 self.set_session(["annotation", "filter"], "")
-            for name, chroms in sorted_list.items():
+            for name, anno_by_chrom in sorted_list.items():
                 if name not in self.session_default["annotation"]["list"]:
                     self.append_session(["annotation", "list"], name)
                     self.append_session(["annotation", "visible_x"], name)
                     self.append_session(["annotation", "visible_y"], name)
-                    self.set_session(["annotation", "by_name", name], {})
 
-                    for chrom, annos in chroms.items():
+                    first_id = None
+                    for chrom in self.session_default["contigs"]["list"]:
+                        if chrom in anno_by_chrom:
+                            annos = anno_by_chrom[chrom]
+                        else:
+                            annos = []
                         self.progress_print(
                             "annotating", name + "(s)", "for contig", chrom
                         )
-                        self.set_session(
-                            ["annotation", "by_name", name, chrom],
-                            self.indices.anno.add_intervals(
+                        idx = self.indices.anno.add_intervals(
                                 annos,
                                 self.session_default["dividend"],
                                 verbosity=GENERATE_VERBOSITY,
-                            ),
-                        )
+                            )
+                        if first_id is None:
+                            first_id = idx
+                    self.set_session( ["annotation", "by_name", name], first_id )
                 else:
                     raise RuntimeError("annotation with this name already exists")
         else:
@@ -368,18 +372,14 @@ class Indexer:
         num_itr = len(contigs) * len(contigs)
         cnt = 0
         first_id = None
-        for chr_x in contigs:
+        for idx_x, chr_x in enumerate(contigs):
             anno_ids_x = [
-                self.session_default["annotation"]["by_name"][anno][chr_x]
-                if chr_x in self.session_default["annotation"]["by_name"][anno]
-                else -1
+                self.session_default["annotation"]["by_name"][anno] + idx_x
                 for anno in self.session_default["annotation"]["filterable"]
             ]
-            for chr_y in contigs:
+            for idx_y, chr_y in enumerate(contigs):
                 anno_ids_y = [
-                    self.session_default["annotation"]["by_name"][anno][chr_y]
-                    if chr_y in self.session_default["annotation"]["by_name"][anno]
-                    else -1
+                    self.session_default["annotation"]["by_name"][anno] + idx_y
                     for anno in self.session_default["annotation"]["filterable"]
                 ]
                 cnt += 1
@@ -542,11 +542,9 @@ class Indexer:
         num_itr = len(contigs)
         cnt = 0
         fist_id = None
-        for chr_x in contigs:
+        for idx_x, chr_x in enumerate(contigs):
             anno_ids = [
-                self.session_default["annotation"]["by_name"][anno][chr_x]
-                if chr_x in self.session_default["annotation"]["by_name"][anno]
-                else -1
+                self.session_default["annotation"]["by_name"][anno] + idx_x
                 for anno in self.session_default["annotation"]["filterable"]
             ]
             cnt += 1
