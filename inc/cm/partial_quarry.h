@@ -226,6 +226,7 @@ class PartialQuarry : public HasSession
         V4cCoords,
         Flat4C,
         IceCoords,
+        BinCoordsCDS,
         SIZE
     };
     struct ComputeNode
@@ -500,7 +501,7 @@ class PartialQuarry : public HasSession
         {
             bContinue = false;
             for( auto& rNode : { HeatmapCDS, Tracks, AnnotationCDS, ActivateAnnotationCDS, Ticks, Palette, DecayCDS,
-                                 RankedSlicesCDS } )
+                                 RankedSlicesCDS, BinCoordsCDS } )
                 if( !update_no_throw( rNode, fPyPrint ) )
                 {
                     bContinue = true;
@@ -811,6 +812,7 @@ class PartialQuarry : public HasSession
     std::array<pybind11::dict, 2> xContigTicksCDS;
     std::array<pybind11::dict, 2> xTracksCDS;
     std::array<pybind11::list, 2> vTickLists;
+    std::array<pybind11::dict, 2> vBinPosCDS;
     std::array<pybind11::list, 2> vContigStartList;
     std::array<size_t, 2> vCanvasSize;
     std::array<std::array<double, 2>, 2> vvMinMaxTracks;
@@ -908,6 +910,8 @@ class PartialQuarry : public HasSession
     bool setLCS( );
     // coords.h
     bool setTicks( );
+    // coords.h
+    bool setBinCoordsCDS( );
     // coords.h
     bool setCanvasSize( );
     // coords.h
@@ -1202,9 +1206,10 @@ class PartialQuarry : public HasSession
     // coords.h
     const pybind11::list getAnnotationList( bool, const std::function<void( const std::string& )>& );
 
-    // colors.h
+    // coords.h
     const pybind11::dict getTicks( bool, const std::function<void( const std::string& )>& );
     const pybind11::dict getContigTicks( bool, const std::function<void( const std::string& )>& );
+    const pybind11::dict getBinCoordsCds( bool, const std::function<void( const std::string& )>& );
 
     // colors.h
     const pybind11::list getTickList( bool, const std::function<void( const std::string& )>& );

@@ -214,8 +214,8 @@ annoCoordsHelper( size_t uiBinSize, size_t uiScreenStartPos, size_t uiScreenEndP
         {
             if( bCancel )
                 return std::make_pair( vRet, vRet2 );
-            auto xLower = rAnno.lowerBound( iDataSetId, uiCurrScreenPos - uiChromosomeStartPos,
-                                            iAnnoInMultipleBins < 2, iAnnoInMultipleBins == 2 );
+            auto xLower = rAnno.lowerBound( iDataSetId, uiCurrScreenPos - uiChromosomeStartPos, iAnnoInMultipleBins < 2,
+                                            iAnnoInMultipleBins == 2 );
             auto xUpper = rAnno.upperBound( iDataSetId, uiCurrScreenPos - uiChromosomeStartPos + uiBinSize,
                                             iAnnoInMultipleBins < 2, iAnnoInMultipleBins == 2 );
             typename anno_t::interval_it_t xBegin, xPick;
@@ -238,7 +238,7 @@ annoCoordsHelper( size_t uiBinSize, size_t uiScreenStartPos, size_t uiScreenEndP
                     case 0: // separate
                     case 1: // stretch
                         uiIndexPos = xLower->uiIntervalStart + uiCurrScreenPos - xLower->uiIntervalCoordsStart -
-                                        uiChromosomeStartPos;
+                                     uiChromosomeStartPos;
                         break;
                     case 2: // squeeze
                         uiIndexPos =
@@ -311,7 +311,7 @@ annoCoordsHelper( size_t uiBinSize, size_t uiScreenStartPos, size_t uiScreenEndP
                     case 0: // separate
                     {
                         size_t uiAddGap = ( ( xUpper - 1 )->uiIntervalStart - xLower->uiIntervalEnd ) -
-                                            ( ( xUpper - 1 )->uiIntervalCoordsStart - xLower->uiIntervalCoordsEnd );
+                                          ( ( xUpper - 1 )->uiIntervalCoordsStart - xLower->uiIntervalCoordsEnd );
                         uiCurrIndexSize = std::min( uiBinSize + uiAddGap, uiCurrIndexSize );
                         uiCurrScreenSize = std::min( uiBinSize, uiCurrScreenSize );
                     }
@@ -479,7 +479,7 @@ bool PartialQuarry::setCanvasSize( )
         {
             size_t iAnnoInMultipleBins =
                 multiple_bins( getValue<std::string>( { "settings", "filters", "anno_in_multiple_bins" } ) );
-                
+
             auto uiFistAnnoIdx = getValue<size_t>(
                 { "annotation", "by_name", getValue<std::string>( { "contigs", "annotation_coordinates" } ) } );
 
@@ -570,6 +570,43 @@ bool PartialQuarry::setTicks( )
     END_RETURN;
 }
 
+bool PartialQuarry::setBinCoordsCDS( )
+{
+    using namespace pybind11::literals;
+    pybind11::gil_scoped_acquire acquire;
+
+    const size_t uiMaxChar = getValue<size_t>( { "settings", "interface", "axis_label_max_char", "val" } );
+    for( size_t uiI = 0; uiI < 2; uiI++ )
+    {
+        std::vector<std::string> vShortChrNames;
+        vShortChrNames.reserve( vActiveChromosomes[ uiI ].size( ) );
+        for( const auto& xChr : vActiveChromosomes[ uiI ] )
+            vShortChrNames.push_back( substringChr( xChr.sName ).substr( 0, uiMaxChar ) );
+
+        pybind11::list vChr;
+        pybind11::list vIndexLeft;
+        pybind11::list vIndexRight;
+
+        size_t uiDividend = getValue<size_t>( { "dividend" } );
+        for( const auto& rAxis : vAxisCords[ uiI ] )
+        {
+            CANCEL_RETURN;
+
+            if( rAxis.uiIdx != std::numeric_limits<size_t>::max( ) )
+                vChr.append( vShortChrNames[ rAxis.uiChromosome ] );
+            else
+                vChr.append( nullptr );
+            vIndexLeft.append( readableBp( rAxis.uiIndexPos * uiDividend ) );
+            vIndexRight.append( readableBp( ( rAxis.uiIndexPos + rAxis.uiIndexSize ) * uiDividend ) );
+        }
+        vBinPosCDS[ uiI ] = pybind11::dict( "chr"_a = vChr, //
+                                            "index_left"_a = vIndexLeft, //
+                                            "index_right"_a = vIndexRight //
+        );
+    }
+    END_RETURN;
+}
+
 const pybind11::dict PartialQuarry::getTicks( bool bXAxis, const std::function<void( const std::string& )>& fPyPrint )
 {
     update( NodeNames::Ticks, fPyPrint );
@@ -581,6 +618,13 @@ const pybind11::dict PartialQuarry::getContigTicks( bool bXAxis,
 {
     update( NodeNames::Ticks, fPyPrint );
     return xContigTicksCDS[ bXAxis ? 0 : 1 ];
+}
+
+const pybind11::dict PartialQuarry::getBinCoordsCds( bool bXAxis,
+                                                  const std::function<void( const std::string& )>& fPyPrint )
+{
+    update( NodeNames::BinCoordsCDS, fPyPrint );
+    return vBinPosCDS[ bXAxis ? 0 : 1 ];
 }
 
 const pybind11::list PartialQuarry::getTickList( bool bXAxis,
@@ -926,7 +970,7 @@ bool PartialQuarry::setV4cCoords( )
     for( size_t uiI = 0; uiI < 2; uiI++ )
     {
         const bool bAnnoCoords =
-            getValue<bool>( { "settings", "filters", uiI == 0 ? "anno_coords_col" : "anno_coords_row" } );            
+            getValue<bool>( { "settings", "filters", uiI == 0 ? "anno_coords_col" : "anno_coords_row" } );
         auto uiFistAnnoIdx = getValue<size_t>(
             { "annotation", "by_name", getValue<std::string>( { "contigs", "annotation_coordinates" } ) } );
         const bool bSqueeze = getValue<std::string>( { "settings", "filters", "anno_in_multiple_bins" } ) == "squeeze";
@@ -1337,6 +1381,14 @@ void PartialQuarry::regCoords( )
                        { "annotation", "by_name" },
                        { "dividend" } },
                      /*bHidden =*/false } );
+    registerNode( NodeNames::BinCoordsCDS,
+                  ComputeNode{ /*.sNodeName =*/"bin_coord_cds",
+                               /*.fFunc =*/&PartialQuarry::setBinCoordsCDS,
+                               /*.vIncomingFunctions =*/{ NodeNames::AxisCoords },
+                               /*.vIncomingSession =*/{ { "settings", "interface", "axis_label_max_char", "val" } },
+                               /*.vSessionsIncomingInPrevious =*/
+                               { { "dividend" } },
+                               /*bHidden =*/false } );
 
     registerNode( NodeNames::CanvasSize,
                   ComputeNode{ /*.sNodeName =*/"canvas_size",

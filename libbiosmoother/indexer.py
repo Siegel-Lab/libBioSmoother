@@ -252,13 +252,13 @@ class Indexer:
                             "annotating", name + "(s)", "for contig", chrom
                         )
                         idx = self.indices.anno.add_intervals(
-                                annos,
-                                self.session_default["dividend"],
-                                verbosity=GENERATE_VERBOSITY,
-                            )
+                            annos,
+                            self.session_default["dividend"],
+                            verbosity=GENERATE_VERBOSITY,
+                        )
                         if first_id is None:
                             first_id = idx
-                    self.set_session( ["annotation", "by_name", name], first_id )
+                    self.set_session(["annotation", "by_name", name], first_id)
                 else:
                     raise RuntimeError("annotation with this name already exists")
         else:

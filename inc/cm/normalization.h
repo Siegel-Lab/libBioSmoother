@@ -537,8 +537,8 @@ bool PartialQuarry::setRadiclSeqCoverage( )
                     const size_t uiChrX = bAxisIsCol != bSymPart ? rAxis.uiChromosome : rSample.uiChromosome;
                     const size_t uiChrY = bAxisIsCol != bSymPart ? rSample.uiChromosome : rAxis.uiChromosome;
 
-                    size_t uiDataSetId = getDatasetIdfromReplAndChr(
-                        uiRepl, vActiveChromosomes[ 0 ][ uiChrX ].uiId, vActiveChromosomes[ 1 ][ uiChrY ].uiId );
+                    size_t uiDataSetId = getDatasetIdfromReplAndChr( uiRepl, vActiveChromosomes[ 0 ][ uiChrX ].uiId,
+                                                                     vActiveChromosomes[ 1 ][ uiChrY ].uiId );
 
                     const size_t uiXMin = bAxisIsCol != bSymPart ? rAxis.uiIndexPos : rSample.uiIndexPos;
                     const size_t uiXMax = bAxisIsCol != bSymPart ? rAxis.uiIndexPos + rAxis.uiIndexSize
@@ -949,17 +949,18 @@ bool PartialQuarry::normalizeIC( )
             }
             if( uiMaxFlat > 0 )
             {
-                std::string sErrorWhere = std::array<std::string, 3>{"Heatmap", "Column V4C", "Row V4C"}[uiY];
+                std::string sErrorWhere = std::array<std::string, 3>{ "Heatmap", "Column V4C", "Row V4C" }[ uiY ];
                 if( vVar[ 0 ] >= fTol || vVar[ 1 ] >= fTol )
                 {
-                    setError( "iterative correction did not converge for " + sErrorWhere + " (var=" + 
-                              std::to_string( vVar[ 0 ] ) + ", " +
-                              std::to_string( vVar[ 1 ] ) + " mean=" + std::to_string( vMean[ 0 ] ) + ", " +
-                              std::to_string( vMean[ 1 ] ) + "), showing data anyways" );
+                    setError( "iterative correction did not converge for " + sErrorWhere +
+                              " (var=" + std::to_string( vVar[ 0 ] ) + ", " + std::to_string( vVar[ 1 ] ) +
+                              " mean=" + std::to_string( vMean[ 0 ] ) + ", " + std::to_string( vMean[ 1 ] ) +
+                              "), showing data anyways" );
                 }
                 else if( iceMaxBias( xData, true ) == 0 || iceMaxBias( xData, false ) == 0 )
                 {
-                    setError( "iterative correction converged to zero " + sErrorWhere + ", showing un-normalized data" );
+                    setError( "iterative correction converged to zero " + sErrorWhere +
+                              ", showing un-normalized data" );
                     for( size_t uiY = 0; uiY < 2; uiY++ )
                         for( size_t uiJ = 0; uiJ < xData.vSliceBias[ uiY ].size( ); uiJ++ )
                         {
@@ -983,7 +984,7 @@ bool PartialQuarry::normalizeIC( )
         }
         vvNormalized[ uiY ].resize( vBinCoords[ uiY ].size( ) );
         size_t uiH2;
-        if(uiY == 2)
+        if( uiY == 2 )
             uiH2 = 1;
         else
             uiH2 = vAxisCords[ 1 ].size( );

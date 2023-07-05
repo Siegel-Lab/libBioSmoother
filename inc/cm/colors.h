@@ -264,28 +264,6 @@ const std::array<double, 4> PartialQuarry::getPaletteTicks( const std::function<
 
 bool PartialQuarry::setHeatmapCDS( )
 {
-    const size_t uiMaxChar = getValue<size_t>( { "settings", "interface", "axis_label_max_char", "val" } );
-    std::array<std::vector<std::string>, 2> vShortChrNames;
-    for( size_t uiI = 0; uiI < 2; uiI++ )
-    {
-        vShortChrNames[ uiI ].reserve( vActiveChromosomes[ uiI ].size( ) );
-        for( const auto& xChr : vActiveChromosomes[ uiI ] )
-            vShortChrNames[ uiI ].push_back( substringChr( xChr.sName ).substr( 0, uiMaxChar ) );
-    }
-    std::array<std::array<std::vector<std::string>, 2>, 2> vBinCoordsReadable;
-    size_t uiDividend = getValue<size_t>( { "dividend" } );
-    for( size_t uiI = 0; uiI < 2; uiI++ )
-    {
-        vBinCoordsReadable[ uiI ][ 0 ].reserve( vAxisCords[ uiI ].size( ) );
-        vBinCoordsReadable[ uiI ][ 1 ].reserve( vAxisCords[ uiI ].size( ) );
-        for( const auto& rAxis : vAxisCords[ uiI ] )
-        {
-            vBinCoordsReadable[ uiI ][ 0 ].push_back( readableBp( rAxis.uiIndexPos * uiDividend ) );
-            vBinCoordsReadable[ uiI ][ 1 ].push_back(
-                readableBp( ( rAxis.uiIndexPos + rAxis.uiIndexSize ) * uiDividend ) );
-        }
-    }
-
     using namespace pybind11::literals;
     pybind11::gil_scoped_acquire acquire;
 
@@ -296,12 +274,9 @@ bool PartialQuarry::setHeatmapCDS( )
 
     pybind11::list vColor;
 
-    pybind11::list vChrX;
-    pybind11::list vChrY;
-    pybind11::list vIndexLeft;
-    pybind11::list vIndexRight;
-    pybind11::list vIndexBottom;
-    pybind11::list vIndexTop;
+    pybind11::list vBinIdX;
+    pybind11::list vBinIdY;
+
 
     pybind11::list vScoreTotal;
     pybind11::list vRangedOut;
@@ -323,21 +298,8 @@ bool PartialQuarry::setHeatmapCDS( )
 
             vColor.append( vColored[ uiI ] );
 
-
-            if( vBinCoords[ 0 ][ uiI ][ 0 ].uiChromosomeX != std::numeric_limits<size_t>::max( ) )
-            {
-                vChrX.append( vShortChrNames[ 0 ][ vBinCoords[ 0 ][ uiI ][ 0 ].uiChromosomeX ] );
-                vChrY.append( vShortChrNames[ 1 ][ vBinCoords[ 0 ][ uiI ][ 0 ].uiChromosomeY ] );
-            }
-            else
-            {
-                vChrX.append( nullptr );
-                vChrY.append( nullptr );
-            }
-            vIndexLeft.append( vBinCoordsReadable[ 0 ][ 0 ][ vBinCoords[ 0 ][ uiI ][ 0 ].uiXAxisIdx ] );
-            vIndexRight.append( vBinCoordsReadable[ 0 ][ 1 ][ vBinCoords[ 0 ][ uiI ][ 0 ].uiXAxisIdx ] );
-            vIndexBottom.append( vBinCoordsReadable[ 1 ][ 0 ][ vBinCoords[ 0 ][ uiI ][ 0 ].uiYAxisIdx ] );
-            vIndexTop.append( vBinCoordsReadable[ 1 ][ 1 ][ vBinCoords[ 0 ][ uiI ][ 0 ].uiYAxisIdx ] );
+            vBinIdX.append( vBinCoords[ 0 ][ uiI ][ 0 ].uiXAxisIdx );
+            vBinIdY.append( vBinCoords[ 0 ][ uiI ][ 0 ].uiYAxisIdx );
 
             vScoreTotal.append( vScaled[ uiI ] );
             vRangedOut.append( vRanged[ uiI ] );
@@ -355,12 +317,8 @@ bool PartialQuarry::setHeatmapCDS( )
 
                                   "color"_a = vColor,
 
-                                  "chr_x"_a = vChrX,
-                                  "chr_y"_a = vChrY,
-                                  "index_left"_a = vIndexLeft,
-                                  "index_right"_a = vIndexRight,
-                                  "index_bottom"_a = vIndexBottom,
-                                  "index_top"_a = vIndexTop,
+                                  "bin_id_x"_a = vBinIdX,
+                                  "bin_id_y"_a = vBinIdY,
 
                                   "score_total"_a = vScoreTotal,
                                   "ranged_score"_a = vRangedOut,
@@ -482,7 +440,7 @@ void PartialQuarry::regColors( )
                   ComputeNode{ /*.sNodeName =*/"heatmap_cds",
                                /*.fFunc =*/&PartialQuarry::setHeatmapCDS,
                                /*.vIncomingFunctions =*/{ NodeNames::Colored },
-                               /*.vIncomingSession =*/{ { "settings", "interface", "axis_label_max_char", "val" } },
+                               /*.vIncomingSession =*/{ },
                                /*.vSessionsIncomingInPrevious =*/{ { "dividend" } },
                                /*bHidden =*/false } );
 

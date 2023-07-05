@@ -155,8 +155,8 @@ bool PartialQuarry::setCoverageValues( )
                     uiVal = pIndices->count(
                         iDataSetId,
                         { xCoords.uiIndexPos, 0, uiMapQMin, uiFromAnnoFilter, ui1DFromStrandFilter, 0 },
-                        { xCoords.uiIndexPos + xCoords.uiIndexSize, 1, uiMapQMax, uiToAnnoFilter,
-                            ui1DToStrandFilter, 1 },
+                        { xCoords.uiIndexPos + xCoords.uiIndexSize, 1, uiMapQMax, uiToAnnoFilter, ui1DToStrandFilter,
+                          1 },
                         xIntersect,
                         0 );
                 }

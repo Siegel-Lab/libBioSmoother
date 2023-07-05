@@ -240,6 +240,7 @@ PYBIND11_MODULE( libbiosmoothercpp, m )
         .def( "get_dot", &cm::PartialQuarry::getDOT ) //
         .def( "get_background_color", &cm::PartialQuarry::getBackgroundColor ) //
         .def( "get_ticks", &cm::PartialQuarry::getTicks ) //
+        .def( "get_bin_coords_cds", &cm::PartialQuarry::getBinCoordsCds ) //
         .def( "get_contig_ticks", &cm::PartialQuarry::getContigTicks ) //
         .def( "get_tick_list", &cm::PartialQuarry::getTickList ) //
         .def( "get_contig_start_list", &cm::PartialQuarry::getContigStartList ) //

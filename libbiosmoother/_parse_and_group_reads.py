@@ -53,7 +53,9 @@ def parse_tsv(in_filename, test, chr_filter, line_format, progress_print=print):
                 continue
 
             # parse file columns
-            read_name, chrs, poss, mapqs, tags, strand, bin_cnt = line_format(line.split())
+            read_name, chrs, poss, mapqs, tags, strand, bin_cnt = line_format(
+                line.split()
+            )
 
             cont = False
             for chr_ in chrs:
@@ -76,12 +78,18 @@ def parse_tsv(in_filename, test, chr_filter, line_format, progress_print=print):
 
             yield line, read_name, chrs, poss, mapqs, tags, strand, bin_cnt
 
+
 def setup_col_converter(columns, col_oder, default_values):
     for col in columns:
         col = col.replace("[", "").replace("]", "")
         if col != "." and col not in col_oder:
-            raise RuntimeError("Invalid column name: " + col + ". Valid column names are: " + 
-                               ", ".join("'" + c + "'" for c in col_oder) + ", and '.'.")
+            raise RuntimeError(
+                "Invalid column name: "
+                + col
+                + ". Valid column names are: "
+                + ", ".join("'" + c + "'" for c in col_oder)
+                + ", and '.'."
+            )
     non_opt_cols = sum(1 if "[" not in col and "]" not in col else 0 for col in columns)
     col_converter = {}
     for n in range(non_opt_cols, len(columns) + 1):
@@ -94,34 +102,86 @@ def setup_col_converter(columns, col_oder, default_values):
             idx -= 1
         dropped_cols = [col.replace("[", "").replace("]", "") for col in dropped_cols]
 
-        col_converter[n] = [ col_oder.index(col_name) if col_name != "." else None for col_name in dropped_cols ]
+        col_converter[n] = [
+            col_oder.index(col_name) if col_name != "." else None
+            for col_name in dropped_cols
+        ]
+
     def convert(cols):
         n = min(len(cols), len(columns))
         if n not in col_converter:
-            raise RuntimeError("line '" + " ".join(cols) + "' does not match the expected columns:" + 
-                               ", ".join(columns))
+            raise RuntimeError(
+                "line '"
+                + " ".join(cols)
+                + "' does not match the expected columns:"
+                + ", ".join(columns)
+            )
         ret = default_values[:]
         for idx, col in zip(col_converter[n], cols):
             if not idx is None:
                 ret[idx] = col
         return ret
+
     return convert
 
-def parse_heatmap(in_filename, test, chr_filter, progress_print=print, columns=["chr1", "pos1", "chr2", "pos2"]):
-    col_converter = setup_col_converter(columns, ["readid", "chr1", "pos1", "chr2", "pos2", "strand1", "strand2",
-                                                  "mapq1", "mapq2", "xa1", "xa2", "cnt"],
-                                        ["-", ".", "0", ".", "0", "+", "+", "*", "*", "", "", "1"])
+
+def parse_heatmap(
+    in_filename,
+    test,
+    chr_filter,
+    progress_print=print,
+    columns=["chr1", "pos1", "chr2", "pos2"],
+):
+    col_converter = setup_col_converter(
+        columns,
+        [
+            "readid",
+            "chr1",
+            "pos1",
+            "chr2",
+            "pos2",
+            "strand1",
+            "strand2",
+            "mapq1",
+            "mapq2",
+            "xa1",
+            "xa2",
+            "cnt",
+        ],
+        ["-", ".", "0", ".", "0", "+", "+", "*", "*", "", "", "1"],
+    )
 
     def convert(cols):
-        readid, chr1, pos1, chr2, pos2, strand1, strand2, mapq1, mapq2, xa1, xa2, cnt = col_converter(cols)
-        return readid, [chr1, chr2], [pos1, pos2], [mapq1, mapq2], [xa1, xa2], [strand1, strand2], cnt
-    
+        (
+            readid,
+            chr1,
+            pos1,
+            chr2,
+            pos2,
+            strand1,
+            strand2,
+            mapq1,
+            mapq2,
+            xa1,
+            xa2,
+            cnt,
+        ) = col_converter(cols)
+        return (
+            readid,
+            [chr1, chr2],
+            [pos1, pos2],
+            [mapq1, mapq2],
+            [xa1, xa2],
+            [strand1, strand2],
+            cnt,
+        )
+
     yield from parse_tsv(
         in_filename,
         test,
         chr_filter,
         line_format=convert,
-        progress_print=progress_print
+        progress_print=progress_print,
     )
 
 
@@ -150,9 +210,15 @@ def force_upper_triangle(
         yield line, read_name, chrs_out, poss_out, mapqs_out, tags_out, strand_out, cnt
 
 
-def parse_track(in_filename, test, chr_filter, progress_print=print, columns=["chr", "pos"]):
-    col_converter = setup_col_converter(columns, ["readid", "chr", "pos", "strand", "mapq", "xa", "cnt"],
-                                        ["-", ".", "0", "+", "*", "", "1"])
+def parse_track(
+    in_filename, test, chr_filter, progress_print=print, columns=["chr", "pos"]
+):
+    col_converter = setup_col_converter(
+        columns,
+        ["readid", "chr", "pos", "strand", "mapq", "xa", "cnt"],
+        ["-", ".", "0", "+", "*", "", "1"],
+    )
+
     def convert(cols):
         readid, chr1, pos1, strand1, mapq1, xa1, cnt = col_converter(cols)
         return readid, [chr1], [pos1], [mapq1], [xa1], [strand1], cnt
@@ -162,7 +228,7 @@ def parse_track(in_filename, test, chr_filter, progress_print=print, columns=["c
         test,
         chr_filter,
         line_format=convert,
-        progress_print=progress_print
+        progress_print=progress_print,
     )
 
 
@@ -292,7 +358,14 @@ def chr_order_heatmap(
         strands,
         cnt,
     ) in group_reads(
-        in_filename, file_size, chr_filter, progress_print, parse_func, no_groups, test, columns
+        in_filename,
+        file_size,
+        chr_filter,
+        progress_print,
+        parse_func,
+        no_groups,
+        test,
+        columns,
     ):
         chr_1, chr_2 = chrs_
         if chr_1 not in chrs:
@@ -375,7 +448,14 @@ def chr_order_coverage(
         strands,
         cnt,
     ) in group_reads(
-        in_filename, file_size, chr_filter, progress_print, parse_track, no_groups, test, columns
+        in_filename,
+        file_size,
+        chr_filter,
+        progress_print,
+        parse_track,
+        no_groups,
+        test,
+        columns,
     ):
         if chrs_[0] not in chrs:
             chrs[chrs_[0]] = []
