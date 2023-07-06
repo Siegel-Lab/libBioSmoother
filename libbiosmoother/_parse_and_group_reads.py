@@ -16,18 +16,19 @@ def simplified_filepath(path):
 
 
 def read_xa_tag(tags):
-    if tags[:5] == "XS:Z:":
+    if tags[:5] == "XA:Z:":
         tags = tags[5:]
     if tags == "notag" or len(tags) == 0:
         return []
     l = []
     for tag in tags.split(";"):
-        split = tag.split(",")
-        if len(split) == 5:
-            chrom, str_pos, _CIGAR, _NM = split
-            strand = str_pos[0]
-            pos = int(str_pos[1:])
-            l.append([chrom, pos, strand])
+        if tag != "":
+            split = tag.split(",")
+            if len(split) == 4:
+                chrom, str_pos, _CIGAR, _NM = split
+                strand = str_pos[0]
+                pos = int(str_pos[1:])
+                l.append([chrom, pos, strand])
     return l
 
 
@@ -248,33 +249,33 @@ def group_reads(
 
     def deal_with_group():
         nonlocal group
-        do_cont = True
+        dont_cont = False
         chrs = []
         for g in group:
             chr_1_cmp = g[0][0]
             for chr_, _1, _2, _3 in g:
                 if chr_1_cmp != chr_:
-                    do_cont = False  # no reads that come from different chromosomes
+                    dont_cont = True  # no reads that come from different chromosomes
             chrs.append(chr_1_cmp)
-        if do_cont:
-            pos_l = []
-            pos_s = []
-            pos_e = []
-            strands = []
-            for g in group:
-                strands.append(g[0][3])
-                if no_groups:
-                    pos_l.append([g[0][1]])
-                    pos_s.append(pos_l[-1][0])
-                    pos_e.append(pos_l[-1][0])
-                else:
-                    pos_l.append([p for _1, p, _2, _3 in g])
-                    pos_s.append(min(pos_l[-1]))
-                    pos_e.append(max(pos_l[-1]))
-            map_q = min([max(x for _1, _2, x, _3 in g) for g in group])
-            if min(len(g) for g in group) > 1:
-                map_q += 1
-            yield curr_read_name, chrs, pos_s, pos_e, pos_l, map_q, strands, curr_count
+
+        pos_l = []
+        pos_s = []
+        pos_e = []
+        strands = []
+        for g in group:
+            strands.append(g[0][3])
+            if no_groups or dont_cont:
+                pos_l.append([g[0][1]])
+                pos_s.append(pos_l[-1][0])
+                pos_e.append(pos_l[-1][0])
+            else:
+                pos_l.append([p for _1, p, _2, _3 in g])
+                pos_s.append(min(pos_l[-1]))
+                pos_e.append(max(pos_l[-1]))
+        map_q = min([max(x for _1, _2, x, _3 in g) for g in group])
+        if min(len(g) for g in group) > 1 and not dont_cont:
+            map_q += 1
+        yield curr_read_name, chrs, pos_s, pos_e, pos_l, map_q, strands, curr_count
         group = []
 
     for (

@@ -133,13 +133,7 @@ template <bool CACHE> void exportSpsInterface( pybind11::module& m )
               static_cast<void ( cm::SpsInterface<CACHE>::* )( std::vector<uint64_t>, std::vector<uint64_t>, int )>(
                   &cm::SpsInterface<CACHE>::insert ), //
               pybind11::arg( "start" ), pybind11::arg( "end" ), pybind11::arg( "val" ) )
-        .def( "insert_bias",
-              static_cast<void ( cm::SpsInterface<CACHE>::* )( std::vector<uint64_t>, double )>(
-                  &cm::SpsInterface<CACHE>::insertBias ), //
-              pybind11::arg( "start" ), pybind11::arg( "val" ) )
         .def( "generate", &cm::SpsInterface<CACHE>::generate, //
-              pybind11::arg( "fac" ) = -1.0, pybind11::arg( "verbosity" ) = 1 )
-        .def( "generate_bias", &cm::SpsInterface<CACHE>::generateBias, //
               pybind11::arg( "fac" ) = -1.0, pybind11::arg( "verbosity" ) = 1 )
         .def_readwrite( "anno", &cm::SpsInterface<CACHE>::vAnno )
         .def( "get_value", &cm::HasSession::getSessionValue<pybind11::object> ) //
