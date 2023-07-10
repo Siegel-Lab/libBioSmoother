@@ -17,7 +17,9 @@ bool PartialQuarry::setActivateAnnotation( )
         for( auto& rRep : rList )
         {
             CANCEL_RETURN;
-            vActiveAnnotation[ uiX ].push_back( rRep.get<std::string>( ) );
+            std::string sAnno = rRep.get<std::string>( );
+            std::cout << "sAnno: " << sAnno << std::endl;
+            vActiveAnnotation[ uiX ].push_back( sAnno );
         }
     }
     END_RETURN;
@@ -73,6 +75,7 @@ bool PartialQuarry::setAnnotationValues( )
         vMaxAnnoRows[ uiX ] = 1;
         for( std::string sCurrAnno : vActiveAnnotation[ uiX ] )
         {
+            std::cout << "sCurrAnno: " << sCurrAnno << std::endl;
             auto uiFistAnnoIdx = getValue<size_t>( { "annotation", "by_name", sCurrAnno } );
             for( AxisRegion& xRegion : vAxisRegions[ uiX ] )
             {
@@ -201,7 +204,7 @@ bool PartialQuarry::setAnnotationCDS( )
 
         for( size_t uiN = 0; uiN < vActiveAnnotation[ uiX ].size( ); uiN++ )
         {
-            std::string& rAnnoName = vActiveAnnotation[ uiX ][ uiN ];
+            std::string rAnnoName = vActiveAnnotation[ uiX ][ uiN ];
             rAnnoName = rAnnoName.substr( 0, uiMaxChar );
             for( size_t uiA = 0; uiA < vAnnotationValues[ uiX ][ uiN ].first.size( ); uiA++ )
             {

@@ -37,3 +37,4 @@ test/test_data/*
 *.shelf.dir
 *.shelf.bak
 dist/*
+wheelhouse/*

@@ -954,11 +954,12 @@ void PartialQuarry::regCoverage( )
                   ComputeNode{ /*.sNodeName =*/"track_export",
                                /*.fFunc =*/&PartialQuarry::setTrackExport,
                                /*.vIncomingFunctions =*/{ NodeNames::Tracks },
-                               /*.vIncomingSession =*/{ 
+                               /*.vIncomingSession =*/{},
+                               /*.vSessionsIncomingInPrevious =*/{ 
+                                {"settings", "normalization", "ice_show_bias"} ,
                                 {"settings", "normalization", "normalize_by"},
-                                {"settings", "normalization", "ice_show_bias"} 
+                                { "dividend" } 
                                },
-                               /*.vSessionsIncomingInPrevious =*/{ { "dividend" } },
                                /*bHidden =*/false } );
 
     registerNode(
