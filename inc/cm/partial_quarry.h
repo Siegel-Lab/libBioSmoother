@@ -797,6 +797,7 @@ class PartialQuarry : public HasSession
     std::vector<std::string> vColorPaletteAnnotation;
     std::vector<std::string> vColorPaletteAnnotationDark;
     std::array<std::vector<std::string>, 2> vActiveAnnotation;
+    std::array<std::vector<std::string>, 2> vShortAnnotation;
     std::array<std::vector<std::string>, 2> vFilterAnnotation;
     std::array<std::vector<std::pair<std::vector<size_t>, std::vector<Annotation>>>, 2> vAnnotationValues;
     std::array<size_t, 2> vMaxAnnoRows;

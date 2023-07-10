@@ -621,7 +621,7 @@ const pybind11::dict PartialQuarry::getContigTicks( bool bXAxis,
 }
 
 const pybind11::dict PartialQuarry::getBinCoordsCds( bool bXAxis,
-                                                  const std::function<void( const std::string& )>& fPyPrint )
+                                                     const std::function<void( const std::string& )>& fPyPrint )
 {
     update( NodeNames::BinCoordsCDS, fPyPrint );
     return vBinPosCDS[ bXAxis ? 0 : 1 ];
@@ -756,17 +756,17 @@ bool PartialQuarry::setAnnoFilters( )
         const std::array<std::array<size_t, 2>, 2> vvAT{
             /*x false*/ std::array<size_t, 2>{ /*y false*/ 3, /*y true*/ 2 },
             /*x true */ std::array<size_t, 2>{ /*y false*/ 3, /*y true*/ 2 } };
-        uiFromAnnoFilter[0] = uiAnnotationFilterIdx * 3 + vvAF[ bRow ][ bCol ];
-        uiFromAnnoFilter[1] = uiAnnotationFilterIdx * 3 + vvAF[ bCol ][ bRow ];
-        uiToAnnoFilter[0] = uiAnnotationFilterIdx * 3 + vvAT[ bRow ][ bCol ];
-        uiToAnnoFilter[1] = uiAnnotationFilterIdx * 3 + vvAT[ bCol ][ bRow ];
+        uiFromAnnoFilter[ 0 ] = uiAnnotationFilterIdx * 3 + vvAF[ bRow ][ bCol ];
+        uiFromAnnoFilter[ 1 ] = uiAnnotationFilterIdx * 3 + vvAF[ bCol ][ bRow ];
+        uiToAnnoFilter[ 0 ] = uiAnnotationFilterIdx * 3 + vvAT[ bRow ][ bCol ];
+        uiToAnnoFilter[ 1 ] = uiAnnotationFilterIdx * 3 + vvAT[ bCol ][ bRow ];
     }
     else
     {
-        uiFromAnnoFilter[0] = 0;
-        uiFromAnnoFilter[1] = 0;
-        uiToAnnoFilter[0] = getValue<json>( { "annotation", "filterable" } ).size( ) * 3 + 2;
-        uiToAnnoFilter[1] = getValue<json>( { "annotation", "filterable" } ).size( ) * 3 + 2;
+        uiFromAnnoFilter[ 0 ] = 0;
+        uiFromAnnoFilter[ 1 ] = 0;
+        uiToAnnoFilter[ 0 ] = getValue<json>( { "annotation", "filterable" } ).size( ) * 3 + 2;
+        uiToAnnoFilter[ 1 ] = getValue<json>( { "annotation", "filterable" } ).size( ) * 3 + 2;
     }
 
     END_RETURN;

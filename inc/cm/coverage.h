@@ -39,10 +39,9 @@ std::tuple<size_t, int64_t, size_t, size_t> PartialQuarry::makeHeapTuple( bool b
     const coordinate_t uiYMin = bCol != bSymPart ? uiStart : uiFrom;
     const coordinate_t uiYMax = bCol != bSymPart ? uiEnd : uiTo;
     const size_t uiCount = pIndices->count(
-        iDataSetId, { uiYMin, uiXMin, uiMapQMin, uiFromAnnoFilter[0], 
-                      uiFromSameStrandFilter, uiFromYStrandFilter },
-        { uiYMax, uiXMax, uiMapQMax, uiToAnnoFilter[0], uiToSameStrandFilter, 
-          uiToYStrandFilter }, xIntersect, bOnlyMMRs, 0 );
+        iDataSetId, { uiYMin, uiXMin, uiMapQMin, uiFromAnnoFilter[ 0 ], uiFromSameStrandFilter, uiFromYStrandFilter },
+        { uiYMax, uiXMax, uiMapQMax, uiToAnnoFilter[ 0 ], uiToSameStrandFilter, uiToYStrandFilter }, xIntersect,
+        bOnlyMMRs, 0 );
 
     return std::make_tuple( uiCount, iDataSetId, uiStart, uiEnd );
 }
@@ -115,10 +114,9 @@ size_t PartialQuarry::getCoverageFromRepl( const size_t uiChromId, const size_t 
             const size_t uiYMax = bCol != bSymPart ? vActiveChromosomes[ bCol ? 1 : 0 ][ uiI ].uiLength : uiTo;
             uiRet += pIndices->count(
                 uiDatasetId,
-                { uiYMin, uiXMin, uiMapQMin, uiFromAnnoFilter[ 0 ], uiFromSameStrandFilter, 
-                  uiFromYStrandFilter },
-                { uiYMax, uiXMax, uiMapQMax, uiToAnnoFilter[ 0 ], uiToSameStrandFilter, uiToYStrandFilter }, 
-                xIntersect, bOnlyMMRs, 0 );
+                { uiYMin, uiXMin, uiMapQMin, uiFromAnnoFilter[ 0 ], uiFromSameStrandFilter, uiFromYStrandFilter },
+                { uiYMax, uiXMax, uiMapQMax, uiToAnnoFilter[ 0 ], uiToSameStrandFilter, uiToYStrandFilter }, xIntersect,
+                bOnlyMMRs, 0 );
         }
     }
 
@@ -159,7 +157,7 @@ bool PartialQuarry::setCoverageValues( )
                     uiVal = pIndices->count(
                         iDataSetId,
                         { xCoords.uiIndexPos, 0, uiMapQMin, uiFromAnnoFilter[ uiJ ], ui1DFromStrandFilter, 0 },
-                        { xCoords.uiIndexPos + xCoords.uiIndexSize, 1, uiMapQMax, uiToAnnoFilter[ uiJ ], 
+                        { xCoords.uiIndexPos + xCoords.uiIndexSize, 1, uiMapQMax, uiToAnnoFilter[ uiJ ],
                           ui1DToStrandFilter, 1 },
                         xIntersect,
                         bOnlyMMRs,
@@ -954,12 +952,11 @@ void PartialQuarry::regCoverage( )
                   ComputeNode{ /*.sNodeName =*/"track_export",
                                /*.fFunc =*/&PartialQuarry::setTrackExport,
                                /*.vIncomingFunctions =*/{ NodeNames::Tracks },
-                               /*.vIncomingSession =*/{},
-                               /*.vSessionsIncomingInPrevious =*/{ 
-                                {"settings", "normalization", "ice_show_bias"} ,
-                                {"settings", "normalization", "normalize_by"},
-                                { "dividend" } 
-                               },
+                               /*.vIncomingSession =*/{ },
+                               /*.vSessionsIncomingInPrevious =*/
+                               { { "settings", "normalization", "ice_show_bias" },
+                                 { "settings", "normalization", "normalize_by" },
+                                 { "dividend" } },
                                /*bHidden =*/false } );
 
     registerNode(

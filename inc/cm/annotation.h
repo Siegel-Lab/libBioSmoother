@@ -7,8 +7,44 @@
 namespace cm
 {
 
+
+std::vector<std::string> shortAnnoNames( const std::vector<std::string>& rAnnos, size_t uiMaxChars )
+{
+    uiMaxChars = std::max( uiMaxChars, size_t( 7 ) );
+    std::vector<std::string> vShortAnnos;
+    std::map<std::string, size_t> xAnnoCount;
+
+    vShortAnnos.reserve( rAnnos.size( ) );
+    for( auto& sAnno : rAnnos )
+    {
+        std::string sCurrName;
+        if( sAnno.size( ) <= uiMaxChars )
+            sCurrName = sAnno;
+        else
+            sCurrName = sAnno.substr( 0, uiMaxChars - 3 ) + "...";
+
+        if( xAnnoCount.count( sCurrName ) == 0 )
+            xAnnoCount[ sCurrName ] = 0;
+
+        if( xAnnoCount[ sCurrName ] == 0 )
+            vShortAnnos.push_back( sCurrName );
+        else
+        {
+            if( sAnno.size( ) + 4 <= uiMaxChars )
+                vShortAnnos.push_back( sAnno + " (" + std::to_string( xAnnoCount[ sCurrName ] ) + ")" );
+            else
+                vShortAnnos.push_back( sAnno.substr( 0, uiMaxChars - 7 ) + "... (" +
+                                       std::to_string( xAnnoCount[ sCurrName ] ) + ")" );
+        }
+        xAnnoCount[ sCurrName ] += 1;
+    }
+
+    return vShortAnnos;
+}
+
 bool PartialQuarry::setActivateAnnotation( )
 {
+    const size_t uiMaxChar = getValue<size_t>( { "settings", "interface", "axis_label_max_char", "val" } );
     for( size_t uiX : { 0, 1 } )
     {
         vActiveAnnotation[ uiX ].clear( );
@@ -18,9 +54,9 @@ bool PartialQuarry::setActivateAnnotation( )
         {
             CANCEL_RETURN;
             std::string sAnno = rRep.get<std::string>( );
-            std::cout << "sAnno: " << sAnno << std::endl;
             vActiveAnnotation[ uiX ].push_back( sAnno );
         }
+        vShortAnnotation[ uiX ] = shortAnnoNames( vActiveAnnotation[ uiX ], uiMaxChar );
     }
     END_RETURN;
 }
@@ -28,14 +64,13 @@ bool PartialQuarry::setActivateAnnotation( )
 bool PartialQuarry::setActivateAnnotationCDS( )
 {
     pybind11::gil_scoped_acquire acquire;
-    const size_t uiMaxChar = getValue<size_t>( { "settings", "interface", "axis_label_max_char", "val" } );
     for( size_t uiX : { 0, 1 } )
     {
         pybind11::list xL;
-        for( std::string sAnno : vActiveAnnotation[ uiX ] )
+        for( std::string sAnno : vShortAnnotation[ uiX ] )
         {
             CANCEL_RETURN;
-            xL.append( sAnno.substr( 0, uiMaxChar ) );
+            xL.append( sAnno );
         }
         if( getValue<bool>( { "settings", "interface", "v4c", uiX == 0 ? "do_row" : "do_col" } ) )
             xL.append( "V4C" );
@@ -182,7 +217,6 @@ bool PartialQuarry::setAnnotationCDS( )
     size_t uiDividend = getValue<size_t>( { "dividend" } );
 
     double fMinAnnoDist = getValue<double>( { "settings", "interface", "min_anno_dist" } );
-    const size_t uiMaxChar = getValue<size_t>( { "settings", "interface", "axis_label_max_char", "val" } );
 
     for( size_t uiX : { 0, 1 } )
     {
@@ -204,8 +238,7 @@ bool PartialQuarry::setAnnotationCDS( )
 
         for( size_t uiN = 0; uiN < vActiveAnnotation[ uiX ].size( ); uiN++ )
         {
-            std::string rAnnoName = vActiveAnnotation[ uiX ][ uiN ];
-            rAnnoName = rAnnoName.substr( 0, uiMaxChar );
+            std::string rAnnoName = vShortAnnotation[ uiX ][ uiN ];
             for( size_t uiA = 0; uiA < vAnnotationValues[ uiX ][ uiN ].first.size( ); uiA++ )
             {
                 CANCEL_RETURN;
@@ -326,7 +359,10 @@ void PartialQuarry::regAnnotation( )
                   ComputeNode{ /*.sNodeName =*/"active_annotation",
                                /*.fFunc =*/&PartialQuarry::setActivateAnnotation,
                                /*.vIncomingFunctions =*/{ },
-                               /*.vIncomingSession =*/{ { "annotation", "visible_x" }, { "annotation", "visible_y" } },
+                               /*.vIncomingSession =*/
+                               { { "annotation", "visible_x" },
+                                 { "annotation", "visible_y" },
+                                 { "settings", "interface", "axis_label_max_char", "val" } },
                                /*.vSessionsIncomingInPrevious =*/{ },
                                /*bHidden =*/false } );
 
@@ -348,8 +384,7 @@ void PartialQuarry::regAnnotation( )
                                /*.fFunc =*/&PartialQuarry::setAnnotationCDS,
                                /*.vIncomingFunctions =*/{ NodeNames::AnnotationValues, NodeNames::AnnotationColors },
                                /*.vIncomingSession =*/
-                               { { "settings", "interface", "min_anno_dist" },
-                                 { "settings", "interface", "axis_label_max_char", "val" } },
+                               { { "settings", "interface", "min_anno_dist" } },
                                /*.vSessionsIncomingInPrevious =*/{ { "dividend" } },
                                /*bHidden =*/false } );
 
@@ -361,7 +396,6 @@ void PartialQuarry::regAnnotation( )
                                {
                                    { "settings", "interface", "v4c", "do_col" },
                                    { "settings", "interface", "v4c", "do_row" },
-                                   { "settings", "interface", "axis_label_max_char", "val" },
                                },
                                /*.vSessionsIncomingInPrevious =*/{ },
                                /*bHidden =*/false } );
