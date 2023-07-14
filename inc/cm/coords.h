@@ -1180,7 +1180,7 @@ bool PartialQuarry::setDecayCoords( )
 bool axisCoordSmaller( const AxisCoord& rA, const AxisCoord& rB )
 {
     if( rA.uiChromosome == rB.uiChromosome )
-        return rA.uiIndexPos + rA.uiIndexSize < rB.uiIndexPos;
+        return rA.uiIndexPos + rA.uiIndexSize <= rB.uiIndexPos;
     return rA.uiChromosome < rB.uiChromosome;
 }
 
@@ -1376,9 +1376,10 @@ void PartialQuarry::regCoords( )
         ComputeNode{ /*.sNodeName =*/"ticks",
                      /*.fFunc =*/&PartialQuarry::setTicks,
                      /*.vIncomingFunctions =*/{ NodeNames::LCS, NodeNames::AnnotationValues, NodeNames::CanvasSize },
-                     /*.vIncomingSession =*/{ { "settings", "interface", "axis_label_max_char", "val" } },
+                     /*.vIncomingSession =*/{ },
                      /*.vSessionsIncomingInPrevious =*/
-                     { { "contigs", "annotation_coordinates" },
+                     { { "settings", "interface", "axis_label_max_char", "val" },
+                       { "contigs", "annotation_coordinates" },
                        { "settings", "filters", "anno_coords_row" },
                        { "settings", "filters", "anno_coords_col" },
                        { "settings", "filters", "anno_in_multiple_bins" },
