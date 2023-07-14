@@ -110,7 +110,6 @@ bool PartialQuarry::setAnnotationValues( )
         vMaxAnnoRows[ uiX ] = 1;
         for( std::string sCurrAnno : vActiveAnnotation[ uiX ] )
         {
-            std::cout << "sCurrAnno: " << sCurrAnno << std::endl;
             auto uiFistAnnoIdx = getValue<size_t>( { "annotation", "by_name", sCurrAnno } );
             for( AxisRegion& xRegion : vAxisRegions[ uiX ] )
             {

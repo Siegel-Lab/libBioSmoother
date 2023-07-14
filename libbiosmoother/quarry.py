@@ -7,7 +7,7 @@ except ImportError:
     HAS_COOLER_ICING = False
     pass
 try:
-    from bokeh.palettes import Viridis256, Colorblind, Plasma256, Turbo256
+    from bokeh.palettes import Viridis256, Colorblind, Plasma256, Turbo256 # pyright: ignore missing import
 
     HAS_PALETTES = True
 except ImportError:
@@ -16,8 +16,8 @@ except ImportError:
     pass
 
 try:
-    from statsmodels.stats.multitest import multipletests
-    from scipy.stats import binom_test
+    from statsmodels.stats.multitest import multipletests # pyright: ignore missing import
+    from scipy.stats import binom_test # pyright: ignore missing import
 
     HAS_STATS = True
 except ImportError:
@@ -32,12 +32,12 @@ from ._import_lib_bio_smoother_cpp import (
 )
 
 try:
-    import importlib.resources as pkg_resources
+    import importlib.resources as pkg_resources # pyright: ignore missing import
 except ImportError:
     # Try backported to PY<37 `importlib_resources`.
-    import importlib_resources as pkg_resources
+    import importlib_resources as pkg_resources # pyright: ignore missing import
 import json
-
+import sys
 
 def open_default_json():
     return (pkg_resources.files("libbiosmoother") / "conf" / "default.json").open("r")
@@ -55,6 +55,7 @@ class Quarry(PartialQuarry):
                 sps_in_index,
                 "current version:",
                 SPS_VERSION,
+                file=sys.stderr,
             )
 
         lib_bio_smoother_in_index = self.get_value(
@@ -67,6 +68,7 @@ class Quarry(PartialQuarry):
                 lib_bio_smoother_in_index,
                 "current version:",
                 LIB_BIO_SMOOTHER_CPP_VERSION,
+                file=sys.stderr,
             )
 
     def normalizeBinominalTestTrampoline(
