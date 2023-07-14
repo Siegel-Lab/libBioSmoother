@@ -309,22 +309,33 @@ def __get_transform(session, w_plane, x_plane, h_plane, y_plane):
 
 def __draw_heatmap(session, d, sizes, print_callback=lambda s: None):
     if sizes["show_heat"]:
-        offset = 0
-        if sizes["show_anno"]:
-            offset += sizes["annotation"] + sizes["margin"]
-        if sizes["show_secondary"]:
-            offset += sizes["secondary"] + sizes["margin"]
+        offset_x = 0
+        if sizes["show_anno_x"]:
+            offset_x += sizes["annotation"] + sizes["margin"]
+        if sizes["show_secondary_x"]:
+            offset_x += sizes["secondary"] + sizes["margin"]
         if sizes["show_coords"]:
-            offset += sizes["coords"]
+            offset_x += sizes["coords"]
         if sizes["show_contigs"]:
-            offset += sizes["contigs"]
-        if sizes["show_axis"] and (sizes["show_secondary"] or sizes["show_anno"]):
-            offset += sizes["axis"]
+            offset_x += sizes["contigs"]
+        if sizes["show_axis"] and (sizes["show_secondary_x"] or sizes["show_anno_x"]):
+            offset_x += sizes["axis"]
+        offset_y = 0
+        if sizes["show_anno_y"]:
+            offset_y += sizes["annotation"] + sizes["margin"]
+        if sizes["show_secondary_y"]:
+            offset_y += sizes["secondary"] + sizes["margin"]
+        if sizes["show_coords"]:
+            offset_y += sizes["coords"]
+        if sizes["show_contigs"]:
+            offset_y += sizes["contigs"]
+        if sizes["show_axis"] and (sizes["show_secondary_y"] or sizes["show_anno_y"]):
+            offset_y += sizes["axis"]
 
         d.append(
             drawSvg.Rectangle(
-                offset,
-                offset,
+                offset_x,
+                offset_y,
                 sizes["heatmap"],
                 sizes["heatmap"],
                 fill=session.get_background_color(print_callback),
@@ -332,7 +343,7 @@ def __draw_heatmap(session, d, sizes, print_callback=lambda s: None):
         )
 
         x_transform, y_transform = __get_transform(
-            session, sizes["heatmap"], offset, sizes["heatmap"], offset
+            session, sizes["heatmap"], offset_x, sizes["heatmap"], offset_y
         )
 
         __draw_rectangles(
@@ -351,8 +362,8 @@ def __draw_heatmap(session, d, sizes, print_callback=lambda s: None):
             __adaptive_ticker(
                 d,
                 x_transform,
-                offset,
-                offset + sizes["heatmap"],
+                offset_y,
+                offset_y + sizes["heatmap"],
                 True,
                 num_minor_ticks=0,
                 stroke="lightgrey",
@@ -361,8 +372,8 @@ def __draw_heatmap(session, d, sizes, print_callback=lambda s: None):
             __adaptive_ticker(
                 d,
                 y_transform,
-                offset,
-                offset + sizes["heatmap"],
+                offset_x,
+                offset_x + sizes["heatmap"],
                 False,
                 num_minor_ticks=0,
                 stroke="lightgrey",
@@ -373,8 +384,8 @@ def __draw_heatmap(session, d, sizes, print_callback=lambda s: None):
                 d,
                 session.get_tick_list(True, print_callback),
                 x_transform,
-                offset,
-                offset + sizes["heatmap"],
+                offset_y,
+                offset_y + sizes["heatmap"],
                 True,
                 "lightgrey",
                 opacity=0.5,
@@ -383,8 +394,8 @@ def __draw_heatmap(session, d, sizes, print_callback=lambda s: None):
                 d,
                 session.get_tick_list(False, print_callback),
                 y_transform,
-                offset,
-                offset + sizes["heatmap"],
+                offset_x,
+                offset_x + sizes["heatmap"],
                 False,
                 "lightgrey",
                 opacity=0.5,
@@ -416,7 +427,7 @@ def __draw_heatmap(session, d, sizes, print_callback=lambda s: None):
 
 
 def __draw_annotation(session, d, sizes, print_callback=lambda s: None):
-    if sizes["show_anno"]:
+    if sizes["show_anno_x"]:
         offset = 0
         if sizes["show_coords"]:
             offset += sizes["coords"]
@@ -424,7 +435,7 @@ def __draw_annotation(session, d, sizes, print_callback=lambda s: None):
             offset += sizes["contigs"]
 
         offset_x = offset + sizes["annotation"] + sizes["margin"]
-        if sizes["show_secondary"]:
+        if sizes["show_secondary_x"]:
             offset_x += sizes["secondary"] + sizes["margin"]
         if sizes["show_axis"]:
             offset_x += sizes["axis"]
@@ -436,11 +447,6 @@ def __draw_annotation(session, d, sizes, print_callback=lambda s: None):
             sizes["annotation"],
             offset,
             session.get_displayed_annos(True, print_callback),
-        ]
-        active_anno_y = [
-            sizes["annotation"],
-            offset,
-            session.get_displayed_annos(False, print_callback),
         ]
 
         __draw_rectangles(
@@ -455,18 +461,6 @@ def __draw_annotation(session, d, sizes, print_callback=lambda s: None):
             color="color",
             conv_coords_y=__cat_coords,
         )
-        __draw_rectangles(
-            d,
-            session.get_annotation(False, print_callback),
-            active_anno_y,
-            y_transform,
-            bottom="screen_start",
-            top="screen_end",
-            left="anno_name",
-            right="anno_name",
-            color="color",
-            conv_coords_x=__cat_coords,
-        )
 
         if sizes["show_grid_lines"]:
             __adaptive_ticker(
@@ -479,16 +473,6 @@ def __draw_annotation(session, d, sizes, print_callback=lambda s: None):
                 stroke="lightgrey",
                 opacity=0.3,
             )
-            __adaptive_ticker(
-                d,
-                y_transform,
-                offset,
-                offset + sizes["annotation"],
-                False,
-                num_minor_ticks=0,
-                stroke="lightgrey",
-                opacity=0.3,
-            )
         if sizes["show_contig_borders"]:
             __draw_tick_lines(
                 d,
@@ -497,16 +481,6 @@ def __draw_annotation(session, d, sizes, print_callback=lambda s: None):
                 offset,
                 offset + sizes["annotation"],
                 True,
-                "lightgrey",
-                opacity=0.5,
-            )
-            __draw_tick_lines(
-                d,
-                session.get_tick_list(False, print_callback),
-                y_transform,
-                offset,
-                offset + sizes["annotation"],
-                False,
                 "lightgrey",
                 opacity=0.5,
             )
@@ -531,6 +505,64 @@ def __draw_annotation(session, d, sizes, print_callback=lambda s: None):
                 )
             )
 
+    if sizes["show_anno_y"]:
+        offset = 0
+        if sizes["show_coords"]:
+            offset += sizes["coords"]
+        if sizes["show_contigs"]:
+            offset += sizes["contigs"]
+
+        offset_x = offset + sizes["annotation"] + sizes["margin"]
+        if sizes["show_secondary_y"]:
+            offset_x += sizes["secondary"] + sizes["margin"]
+        if sizes["show_axis"]:
+            offset_x += sizes["axis"]
+
+        x_transform, y_transform = __get_transform(
+            session, sizes["heatmap"], offset_x, sizes["heatmap"], offset_x
+        )
+        active_anno_y = [
+            sizes["annotation"],
+            offset,
+            session.get_displayed_annos(False, print_callback),
+        ]
+
+        __draw_rectangles(
+            d,
+            session.get_annotation(False, print_callback),
+            active_anno_y,
+            y_transform,
+            bottom="screen_start",
+            top="screen_end",
+            left="anno_name",
+            right="anno_name",
+            color="color",
+            conv_coords_x=__cat_coords,
+        )
+
+        if sizes["show_grid_lines"]:
+            __adaptive_ticker(
+                d,
+                y_transform,
+                offset,
+                offset + sizes["annotation"],
+                False,
+                num_minor_ticks=0,
+                stroke="lightgrey",
+                opacity=0.3,
+            )
+        if sizes["show_contig_borders"]:
+            __draw_tick_lines(
+                d,
+                session.get_tick_list(False, print_callback),
+                y_transform,
+                offset,
+                offset + sizes["annotation"],
+                False,
+                "lightgrey",
+                opacity=0.5,
+            )
+        if sizes["show_axis"]:
             __draw_tick_lines(
                 d,
                 [x + 0.5 for x in range(len(active_anno_y[2]))],
@@ -553,9 +585,9 @@ def __draw_annotation(session, d, sizes, print_callback=lambda s: None):
 
 
 def __draw_secondary(session, d, sizes, print_callback=lambda s: None):
-    if sizes["show_secondary"]:
+    if sizes["show_secondary_x"]:
         offset = 0
-        if sizes["show_anno"]:
+        if sizes["show_anno_x"]:
             offset += sizes["annotation"] + sizes["margin"]
         if sizes["show_coords"]:
             offset += sizes["coords"]
@@ -583,15 +615,6 @@ def __draw_secondary(session, d, sizes, print_callback=lambda s: None):
             y="values",
             color="colors",
         )
-        __draw_lines(
-            d,
-            session.get_tracks(False, print_callback),
-            active_anno_y,
-            y_transform,
-            y="screen_pos",
-            x="values",
-            color="colors",
-        )
 
         if sizes["show_grid_lines"]:
             __adaptive_ticker(
@@ -604,16 +627,6 @@ def __draw_secondary(session, d, sizes, print_callback=lambda s: None):
                 stroke="lightgrey",
                 opacity=0.3,
             )
-            __adaptive_ticker(
-                d,
-                y_transform,
-                offset,
-                offset + sizes["secondary"],
-                False,
-                num_minor_ticks=0,
-                stroke="lightgrey",
-                opacity=0.3,
-            )
         if sizes["show_contig_borders"]:
             __draw_tick_lines(
                 d,
@@ -622,16 +635,6 @@ def __draw_secondary(session, d, sizes, print_callback=lambda s: None):
                 offset,
                 offset + sizes["secondary"],
                 True,
-                "lightgrey",
-                opacity=0.5,
-            )
-            __draw_tick_lines(
-                d,
-                session.get_tick_list(False, print_callback),
-                y_transform,
-                offset,
-                offset + sizes["secondary"],
-                False,
                 "lightgrey",
                 opacity=0.5,
             )
@@ -655,6 +658,60 @@ def __draw_secondary(session, d, sizes, print_callback=lambda s: None):
                 )
             )
 
+    if sizes["show_secondary_y"]:
+        offset = 0
+        if sizes["show_anno_y"]:
+            offset += sizes["annotation"] + sizes["margin"]
+        if sizes["show_coords"]:
+            offset += sizes["coords"]
+        if sizes["show_contigs"]:
+            offset += sizes["contigs"]
+
+        offset_x = offset + sizes["secondary"] + sizes["margin"]
+        if sizes["show_axis"]:
+            offset_x += sizes["axis"]
+
+        x_transform, y_transform = __get_transform(
+            session, sizes["heatmap"], offset_x, sizes["heatmap"], offset_x
+        )
+        min_x, max_x = session.get_min_max_tracks(True, print_callback)
+        min_y, max_y = session.get_min_max_tracks(False, print_callback)
+        active_anno_x = [max_x - min_x, min_x, sizes["secondary"], offset]
+        active_anno_y = [max_y - min_y, min_y, sizes["secondary"], offset]
+
+        __draw_lines(
+            d,
+            session.get_tracks(False, print_callback),
+            active_anno_y,
+            y_transform,
+            y="screen_pos",
+            x="values",
+            color="colors",
+        )
+
+        if sizes["show_grid_lines"]:
+            __adaptive_ticker(
+                d,
+                y_transform,
+                offset,
+                offset + sizes["secondary"],
+                False,
+                num_minor_ticks=0,
+                stroke="lightgrey",
+                opacity=0.3,
+            )
+        if sizes["show_contig_borders"]:
+            __draw_tick_lines(
+                d,
+                session.get_tick_list(False, print_callback),
+                y_transform,
+                offset,
+                offset + sizes["secondary"],
+                False,
+                "lightgrey",
+                opacity=0.5,
+            )
+        if sizes["show_axis"]:
             __adaptive_ticker(
                 d,
                 active_anno_y,
@@ -681,20 +738,32 @@ def __draw_coordinates(session, d, sizes, print_callback=lambda s: None):
         if sizes["show_contigs"]:
             offset += sizes["contigs"]
 
-        offset_heat = 0
-        if sizes["show_anno"]:
-            offset_heat += sizes["annotation"] + sizes["margin"]
-        if sizes["show_secondary"]:
-            offset_heat += sizes["secondary"] + sizes["margin"]
+        offset_heat_x = 0
+        offset_heat_y = 0
+        if sizes["show_anno_x"]:
+            offset_heat_x += sizes["annotation"] + sizes["margin"]
+        if sizes["show_secondary_x"]:
+            offset_heat_x += sizes["secondary"] + sizes["margin"]
         if sizes["show_coords"]:
-            offset_heat += sizes["coords"]
+            offset_heat_x += sizes["coords"]
         if sizes["show_contigs"]:
-            offset_heat += sizes["contigs"]
-        if sizes["show_axis"] and (sizes["show_secondary"] or sizes["show_anno"]):
-            offset_heat += sizes["axis"]
+            offset_heat_x += sizes["contigs"]
+        if sizes["show_axis"] and (sizes["show_secondary_x"] or sizes["show_anno_x"]):
+            offset_heat_x += sizes["axis"]
+
+        if sizes["show_anno_y"]:
+            offset_heat_y += sizes["annotation"] + sizes["margin"]
+        if sizes["show_secondary_y"]:
+            offset_heat_y += sizes["secondary"] + sizes["margin"]
+        if sizes["show_coords"]:
+            offset_heat_y += sizes["coords"]
+        if sizes["show_contigs"]:
+            offset_heat_y += sizes["contigs"]
+        if sizes["show_axis"] and (sizes["show_secondary_y"] or sizes["show_anno_y"]):
+            offset_heat_y += sizes["axis"]
 
         x_transform, y_transform = __get_transform(
-            session, sizes["heatmap"], offset_heat, sizes["heatmap"], offset_heat
+            session, sizes["heatmap"], offset_heat_x, sizes["heatmap"], offset_heat_y
         )
         contig_starts_x = session.get_tick_list(True, print_callback)
         contig_starts_y = session.get_tick_list(False, print_callback)
@@ -735,9 +804,9 @@ def __draw_coordinates(session, d, sizes, print_callback=lambda s: None):
         )
         d.append(
             drawSvg.Line(
-                offset_heat,
+                offset_heat_x,
                 offset + sizes["coords"],
-                offset_heat + sizes["heatmap"],
+                offset_heat_x + sizes["heatmap"],
                 offset + sizes["coords"],
                 stroke="black",
                 stroke_width=2,
@@ -746,9 +815,9 @@ def __draw_coordinates(session, d, sizes, print_callback=lambda s: None):
         d.append(
             drawSvg.Line(
                 offset + sizes["coords"],
-                offset_heat,
+                offset_heat_y,
                 offset + sizes["coords"],
-                offset_heat + sizes["heatmap"],
+                offset_heat_y + sizes["heatmap"],
                 stroke="black",
                 stroke_width=2,
             )
@@ -763,20 +832,32 @@ def __draw_contigs(session, d, sizes, print_callback=lambda s: None):
     if sizes["show_contigs"]:
         offset = 0
 
-        offset_heat = 0
-        if sizes["show_anno"]:
-            offset_heat += sizes["annotation"] + sizes["margin"]
-        if sizes["show_secondary"]:
-            offset_heat += sizes["secondary"] + sizes["margin"]
+        offset_heat_x = 0
+        offset_heat_y = 0
+        if sizes["show_anno_x"]:
+            offset_heat_x += sizes["annotation"] + sizes["margin"]
+        if sizes["show_secondary_x"]:
+            offset_heat_x += sizes["secondary"] + sizes["margin"]
         if sizes["show_coords"]:
-            offset_heat += sizes["coords"]
+            offset_heat_x += sizes["coords"]
         if sizes["show_contigs"]:
-            offset_heat += sizes["contigs"]
-        if sizes["show_axis"] and (sizes["show_secondary"] or sizes["show_anno"]):
-            offset_heat += sizes["axis"]
+            offset_heat_x += sizes["contigs"]
+        if sizes["show_axis"] and (sizes["show_secondary_x"] or sizes["show_anno_x"]):
+            offset_heat_x += sizes["axis"]
+
+        if sizes["show_anno_y"]:
+            offset_heat_y += sizes["annotation"] + sizes["margin"]
+        if sizes["show_secondary_y"]:
+            offset_heat_y += sizes["secondary"] + sizes["margin"]
+        if sizes["show_coords"]:
+            offset_heat_y += sizes["coords"]
+        if sizes["show_contigs"]:
+            offset_heat_y += sizes["contigs"]
+        if sizes["show_axis"] and (sizes["show_secondary_y"] or sizes["show_anno_y"]):
+            offset_heat_y += sizes["axis"]
 
         x_transform, y_transform = __get_transform(
-            session, sizes["heatmap"], offset_heat, sizes["heatmap"], offset_heat
+            session, sizes["heatmap"], offset_heat_x, sizes["heatmap"], offset_heat_y
         )
         w, o, _, _ = x_transform
         contig_starts_x = session.get_tick_list(True, print_callback)
@@ -821,7 +902,7 @@ def __draw_contigs(session, d, sizes, print_callback=lambda s: None):
             drawSvg.Text(
                 x_label,
                 18,
-                offset_heat + sizes["heatmap"] / 2,
+                offset_heat_x + sizes["heatmap"] / 2,
                 offset,
                 font_family="Consolas, sans-serif",
                 text_anchor="middle",
@@ -833,12 +914,12 @@ def __draw_contigs(session, d, sizes, print_callback=lambda s: None):
                 y_label,
                 18,
                 offset,
-                offset_heat + sizes["heatmap"] / 2,
+                offset_heat_y + sizes["heatmap"] / 2,
                 font_family="Consolas, sans-serif",
                 transform="rotate(-90,"
                 + str(offset)
                 + ","
-                + str(-(offset_heat + sizes["heatmap"] / 2))
+                + str(-(offset_heat_y + sizes["heatmap"] / 2))
                 + ")",
                 text_anchor="middle",
                 dominant_baseline="hanging",
@@ -870,43 +951,66 @@ def __get_sizes(session):
         ),
         "heatmap": session.get_value(["settings", "export", "size", "val"]),
         "margin": session.get_value(["settings", "export", "margins", "val"]),
-        "show_anno": session.get_value(
+        "show_anno_x": session.get_value(
             ["settings", "interface", "show_hide", "annotation"]
-        ),
+        ) and len(session.get_annotation(False, lambda x: None)["anno_name"]) > 0,
+        "show_anno_y": session.get_value(
+            ["settings", "interface", "show_hide", "annotation"]
+        ) and len(session.get_annotation(True, lambda x: None)["anno_name"]) > 0,
         "annotation": session.get_value(["settings", "interface", "anno_size", "val"]),
-        "show_secondary": session.get_value(
+        "show_secondary_x": session.get_value(
             ["settings", "interface", "show_hide", "raw"]
-        ),
+        ) and len(session.get_tracks(True, lambda x: None)["values"]) > 0,
+        "show_secondary_y": session.get_value(
+            ["settings", "interface", "show_hide", "raw"]
+        ) and len(session.get_tracks(False, lambda x: None)["values"]) > 0,
         "secondary": session.get_value(["settings", "interface", "raw_size", "val"]),
     }
 
 
 def __make_drawing(session, sizes):
-    size = 0
+    size_x = 0
+    size_y = 0
 
     if sizes["show_heat"]:
-        size += sizes["heatmap"] + sizes["margin"]
-    if sizes["show_anno"]:
-        size += sizes["annotation"] + sizes["margin"]
-    if sizes["show_secondary"]:
-        size += sizes["secondary"] + sizes["margin"]
+        size_x += sizes["heatmap"] + sizes["margin"]
+    if sizes["show_anno_x"]:
+        size_x += sizes["annotation"] + sizes["margin"]
+    if sizes["show_secondary_x"]:
+        size_x += sizes["secondary"] + sizes["margin"]
     if sizes["show_coords"]:
-        size += sizes["coords"]
+        size_x += sizes["coords"]
     if sizes["show_contigs"]:
-        size += sizes["contigs"]
-    if sizes["show_axis"] and (sizes["show_secondary"] or sizes["show_anno"]):
-        size += sizes["axis"]
+        size_x += sizes["contigs"]
+    if sizes["show_axis"] and (sizes["show_secondary_x"] or sizes["show_anno_x"]):
+        size_x += sizes["axis"]
 
-    size -= sizes["margin"]
+    size_x -= sizes["margin"]
 
-    d = drawSvg.Drawing(size, size, displayInline=False)
+
+    if sizes["show_heat"]:
+        size_y += sizes["heatmap"] + sizes["margin"]
+    if sizes["show_anno_y"]:
+        size_y += sizes["annotation"] + sizes["margin"]
+    if sizes["show_secondary_y"]:
+        size_y += sizes["secondary"] + sizes["margin"]
+    if sizes["show_coords"]:
+        size_y += sizes["coords"]
+    if sizes["show_contigs"]:
+        size_y += sizes["contigs"]
+    if sizes["show_axis"] and (sizes["show_secondary_y"] or sizes["show_anno_y"]):
+        size_y += sizes["axis"]
+
+    size_y -= sizes["margin"]
+
+    d = drawSvg.Drawing(size_x, size_y, displayInline=False)
 
     d.append(
         drawSvg.Rectangle(
             0,
             0,
-            size,
-            size,
+            size_x,
+            size_y,
             fill="#ffffff",
         )
     )
