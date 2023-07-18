@@ -1,5 +1,6 @@
 #include "cm/partial_quarry.h"
 #include <cmath>
+#include <sstream>
 
 #pragma once
 
@@ -156,7 +157,7 @@ std::string PartialQuarry::readableBp( size_t uiBp )
     if( uiBp == 0 )
         return "0 bp";
     else if( uiBp % 1000000 == 0 )
-        return putCommas( uiBp / 1000000 ) + " mbp";
+        return putCommas( uiBp / 1000000 ) + " Mbp";
     else if( uiBp % 1000 == 0 )
         return putCommas( uiBp / 1000 ) + " kbp";
     else

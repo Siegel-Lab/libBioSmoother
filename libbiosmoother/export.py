@@ -1,4 +1,5 @@
 from .quarry import Quarry
+import os
 
 try:
     import drawSvg
@@ -22,45 +23,6 @@ def __conf_session(session):
     ret.set_value(["settings", "interface", "add_draw_area", "val"], 0)
 
     return ret
-
-
-def export_tsv(session, print_callback=lambda s: None):
-    session = __conf_session(session)
-    with open(
-        session.get_value(["settings", "export", "prefix"]) + ".heatmap.tsv", "w"
-    ) as out_file:
-        __write_header(out_file)
-        out_file.write("#chr_x\tstart_x\tend_x\tchr_y\tstart_y\tend_y\tscore\n")
-        for tup in session.get_heatmap_export(print_callback):
-            out_file.write("\t".join([str(x) for x in tup]) + "\n")
-
-    if session.get_value(["settings", "interface", "show_hide", "raw"]):
-        for x_axis, suff in [(True, "x"), (False, "y")]:
-            with open(
-                session.get_value(["settings", "export", "prefix"])
-                + ".track."
-                + suff
-                + ".tsv",
-                "w",
-            ) as out_file:
-                __write_header(out_file)
-                out_file.write("#chr_x\tstart_x\tend_x")
-                for track in session.get_track_export_names(x_axis, print_callback):
-                    out_file.write("\t" + track)
-                out_file.write("\n")
-
-                for tup in session.get_track_export(x_axis, print_callback):
-                    out_file.write(
-                        "\t".join(
-                            [
-                                "\t".join([str(y) for y in x])
-                                if isinstance(x, list)
-                                else str(x)
-                                for x in tup
-                            ]
-                        )
-                        + "\n"
-                    )
 
 
 def __conv_coords(
@@ -168,7 +130,7 @@ def __to_readable_pos(x, dividend, genome_end, contig_starts):
     if x == 0:
         label = "0 bp"
     elif x % 1000000 == 0:
-        label = "{:,}".format(x // 1000000) + " mbp"
+        label = "{:,}".format(x // 1000000) + " Mbp"
     elif x % 1000 == 0:
         label = "{:,}".format(x // 1000) + " kbp"
     else:
@@ -1036,9 +998,59 @@ def assert_has_draw_svg():
             "could not import drawSvg, is it installed? (try pip install drawSvg==1.9.0)"
         )
 
+def assert_file_is_creatable(session):
+    try:
+        with open(session.get_value(["settings", "export", "prefix"]), "w") as _:
+            pass
+        os.remove(session.get_value(["settings", "export", "prefix"]))
+    except:
+        raise RuntimeError(
+            "could not create file, does the given folder exist?"
+        )
+
+
+def export_tsv(session, print_callback=lambda s: None):
+    session = __conf_session(session)
+    assert_file_is_creatable(session)
+    with open(
+        session.get_value(["settings", "export", "prefix"]) + ".heatmap.tsv", "w"
+    ) as out_file:
+        __write_header(out_file)
+        out_file.write("#chr_x\tstart_x\tend_x\tchr_y\tstart_y\tend_y\tscore\n")
+        for tup in session.get_heatmap_export(print_callback):
+            out_file.write("\t".join([str(x) for x in tup]) + "\n")
+
+    if session.get_value(["settings", "interface", "show_hide", "raw"]):
+        for x_axis, suff in [(True, "x"), (False, "y")]:
+            with open(
+                session.get_value(["settings", "export", "prefix"])
+                + ".track."
+                + suff
+                + ".tsv",
+                "w",
+            ) as out_file:
+                __write_header(out_file)
+                out_file.write("#chr_x\tstart_x\tend_x")
+                for track in session.get_track_export_names(x_axis, print_callback):
+                    out_file.write("\t" + track)
+                out_file.write("\n")
+
+                for tup in session.get_track_export(x_axis, print_callback):
+                    out_file.write(
+                        "\t".join(
+                            [
+                                "\t".join([str(y) for y in x])
+                                if isinstance(x, list)
+                                else str(x)
+                                for x in tup
+                            ]
+                        )
+                        + "\n"
+                    )
 
 def export_png(session):
     assert_has_draw_svg()
+    assert_file_is_creatable(session)
     __draw(session).savePng(
         session.get_value(["settings", "export", "prefix"]) + ".png"
     )
@@ -1046,6 +1058,7 @@ def export_png(session):
 
 def export_svg(session):
     assert_has_draw_svg()
+    assert_file_is_creatable(session)
     __draw(session).saveSvg(
         session.get_value(["settings", "export", "prefix"]) + ".svg"
     )
