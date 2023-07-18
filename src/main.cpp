@@ -21,7 +21,7 @@ class PyPartialQuarry : public PartialQuarry
 
     using ret_t = std::vector<std::array<double, 2>>;
     /* Trampoline (need one for each virtual function) */
-    ret_t normalizeBinominalTestTrampoline( const std::vector<std::array<size_t, 2>>& vFlatValues,
+    ret_t normalizeBinominalTestTrampoline( const std::vector<std::array<double, 2>>& vFlatValues,
                                             const std::vector<std::array<size_t, 2>>& vNumInteractionsTotal,
                                             const std::vector<std::array<size_t, 2>>& vNumBinsInteractingWith,
                                             size_t uiSamples,

@@ -48,9 +48,9 @@ bool PartialQuarry::setCombined( )
     for( size_t uiY = 0; uiY < 3; uiY++ )
     {
         vCombined[ uiY ].clear( );
-        vCombined[ uiY ].reserve( vvNormalizedDDD[ uiY ].size( ) );
+        vCombined[ uiY ].reserve( vvNormalized[ uiY ].size( ) );
 
-        for( auto& vArr : vvNormalizedDDD[ uiY ] )
+        for( auto& vArr : vvNormalized[ uiY ] )
         {
             CANCEL_RETURN;
             vCombined[ uiY ].push_back( getMixedValue( vArr[ 0 ], vArr[ 1 ] ) );
@@ -303,8 +303,8 @@ bool PartialQuarry::setHeatmapCDS( )
 
             vScoreTotal.append( vScaled[ uiI ] );
             vRangedOut.append( vRanged[ uiI ] );
-            vScoreA.append( vvNormalizedDDD[ 0 ][ uiI ][ 0 ] );
-            vScoreB.append( vvNormalizedDDD[ 0 ][ uiI ][ 1 ] );
+            vScoreA.append( vvNormalized[ 0 ][ uiI ][ 0 ] );
+            vScoreB.append( vvNormalized[ 0 ][ uiI ][ 1 ] );
             vZero.append( 0 );
         }
     }
@@ -405,7 +405,7 @@ void PartialQuarry::regColors( )
     registerNode( NodeNames::Combined,
                   ComputeNode{ /*.sNodeName =*/"combined_bins",
                                /*.fFunc =*/&PartialQuarry::setCombined,
-                               /*.vIncomingFunctions =*/{ NodeNames::DistDepDecayRemoved, NodeNames::BetweenGroup },
+                               /*.vIncomingFunctions =*/{ NodeNames::Normalized, NodeNames::BetweenGroup },
                                /*.vIncomingSession =*/{ },
                                /*.vSessionsIncomingInPrevious =*/{ },
                                /*bHidden =*/false } );

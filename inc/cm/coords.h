@@ -1131,10 +1131,10 @@ bool PartialQuarry::setDecayCoords( )
     {
         for( size_t uiY = 0; uiY < NUM_COORD_SYSTEMS; uiY++ )
         {
-            vDistDepDecCoords[ uiY ].reserve( vBinCoords[ uiY ].size( ) );
+            vDistDepDecCoords[ uiY ].reserve( vBinCoordsIce[ uiY ].size( ) );
 
             std::map<std::array<DecayCoord, 2>, size_t> vPtr;
-            for( std::array<BinCoord, 2>& vCoords : vBinCoords[ uiY ] )
+            for( std::array<BinCoord, 2>& vCoords : vBinCoordsIce[ uiY ] )
             {
                 CANCEL_RETURN;
 

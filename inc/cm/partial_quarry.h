@@ -1045,8 +1045,8 @@ class PartialQuarry : public HasSession
     };
 
     // normalization.h
-    size_t iceGetCount( IceData&, size_t, size_t, size_t, bool );
-    size_t iceGetCount( SymmIceData&, size_t, size_t, size_t, bool );
+    double iceGetCount( IceData&, size_t, size_t, size_t, bool );
+    double iceGetCount( SymmIceData&, size_t, size_t, size_t, bool );
     // normalization.h
     void icePreFilter( IceData&, bool, size_t, size_t, size_t, bool );
     // normalization.h
@@ -1133,7 +1133,7 @@ class PartialQuarry : public HasSession
 
   protected:
     virtual std::vector<std::array<double, 2>>
-    normalizeBinominalTestTrampoline( const std::vector<std::array<size_t, 2>>&,
+    normalizeBinominalTestTrampoline( const std::vector<std::array<double, 2>>&,
                                       const std::vector<std::array<size_t, 2>>&,
                                       const std::vector<std::array<size_t, 2>>&, size_t, size_t, double, bool, size_t )
     {
