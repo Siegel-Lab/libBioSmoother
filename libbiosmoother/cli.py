@@ -40,45 +40,9 @@ def reset(args):
     raise RuntimeError("the given index", args.index_prefix, "does not exist.")
 
 
-def __check_columns(columns, necessary):
-    columns = [col.lower() for col in columns]  # ignore capitalization
-
-    # check invalid optional columns
-    for min_def in ["[" + col + "]" for col in necessary]:
-        if min_def in columns:
-            raise RuntimeError(
-                ", ".join(necessary) + " cannot be given as optional columns."
-            )
-
-    # check necessary columns
-    for min_def in necessary:
-        if min_def not in columns:
-            raise RuntimeError(
-                "the given columns do not contain at least one of the minimum required columns: "
-                + ", ".join(necessary)
-                + "."
-            )
-
-    # check duplicates
-    columns_non_optional = [col.replace("[", "").replace("]", "") for col in columns]
-    cols_no_dot = [col for col in columns_non_optional if col != "."]
-    if len(cols_no_dot) != len(set(cols_no_dot)):
-        dup = []
-        for idx, col in enumerate(cols_no_dot):
-            if col in cols_no_dot[idx + 1 :]:
-                dup.append(col)
-        raise RuntimeError(
-            "the given columns cannot contain duplicates. But "
-            + ", ".join(dup)
-            + ("is" if len(dup) == 1 else "are")
-            + " given multiple times."
-        )
-    return columns
 
 
 def repl(args):
-    args.columns = __check_columns(args.columns, ["chr1", "pos1", "chr2", "pos2"])
-
     Indexer(args.index_prefix).add_replicate(
         args.path,
         args.name,
@@ -97,8 +61,6 @@ def repl(args):
 
 
 def norm(args):
-    args.columns = __check_columns(args.columns, ["chr", "pos"])
-
     Indexer(args.index_prefix).add_normalization(
         args.path,
         args.name,
@@ -314,7 +276,7 @@ def add_parsers(main_parser):
             "[cnt]",
         ],
         # type=str,
-        help="How columns of the input file should be interpreted. Valid column names are: 'readId', 'chr1', 'chr2', 'pos1', 'pos2', 'strand1', 'strand2', 'mapq1', 'mapq2', 'xa1', 'xa2', 'cnt', and '.'. At a minimum 'chr1', 'chr2', 'pos1' and 'pos2' need to be defined. Column names in squared brackets indicate optional columns (e.g. '[mapq1] [mapq2]'). Optional columns can be omitted in the input file on a row-by-row basis. If there are multiple optional columns, they are ignored starting from the back. If '.' or '[.]' is given as a column name, that column of the input file will be ignored. If a row in the input file contains more than the given columns, the superfluous columns will be ignored. (default: %(default)s)",
+        help="How columns of the input file should be interpreted. Valid column names are: 'readId', 'chr1', 'chr2', 'pos1', 'pos2', 'strand1', 'strand2', 'mapq1', 'mapq2', 'xa1', 'xa2', 'cnt', and '.'. At a minimum 'chr1', 'chr2', 'pos1' and 'pos2' need to be defined. Column names in squared brackets indicate optional columns (e.g. '[mapq1] [mapq2]'). Specify the columns as a space separated list: '-C chr1 pos1 [xa1]'. Optional columns can be omitted in the input file on a row-by-row basis. If there are multiple optional columns, they are ignored starting from the back. If '.' or '[.]' is given as a column name, that column of the input file will be ignored. If a row in the input file contains more than the given columns, the superfluous columns will be ignored. Lines in the input file that start with '#columns:' will also change this parameter for any following lines. (default: %(default)s)",
     )
     repl_parser.add_argument(
         "-u",
@@ -388,7 +350,7 @@ def add_parsers(main_parser):
         nargs="*",
         default=["[readID]", "chr", "pos", "[strand]", "[mapq]", "[xa]", "[cnt]"],
         type=str,
-        help="How columns of the input file should be interpreted. Valid column names are: 'readId', 'chr', 'pos', 'strand', 'mapq', 'xa', 'cnt', and '.'. At a minimum 'chr' and 'pos'. Column names in squared brackets indicate optional columns (e.g. '[mapq] [xa]'). Optional columns can be omitted in the input file on a row-by-row basis. If there are multiple optional columns they are ignored starting from the back. If '.' or '[.]' is given as a column name, that column of the input file will be ignored. If a row in the input file contains more than the given columns, the superfluous columns will be ignored. (default: %(default)s)",
+        help="How columns of the input file should be interpreted. Valid column names are: 'readId', 'chr', 'pos', 'strand', 'mapq', 'xa', 'cnt', and '.'. At a minimum 'chr' and 'pos'. Column names in squared brackets indicate optional columns (e.g. '[mapq] [xa]'). Specify the columns as a space separated list: '-C chr1 pos1 [xa1]'. Optional columns can be omitted in the input file on a row-by-row basis. If there are multiple optional columns they are ignored starting from the back. If '.' or '[.]' is given as a column name, that column of the input file will be ignored. If a row in the input file contains more than the given columns, the superfluous columns will be ignored. Lines in the input file that start with '#columns:' will also change this parameter for any following lines. (default: %(default)s)",
     )
     norm_parser.add_argument("--shekelyan", help=argparse.SUPPRESS, action="store_true")
     norm_parser.add_argument("--no_groups", help=argparse.SUPPRESS, action="store_true")

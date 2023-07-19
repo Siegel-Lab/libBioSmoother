@@ -2,6 +2,7 @@ PRINT_MODULO = 1000
 import errno
 import os
 import fileinput
+import sys
 
 TEST_FAC = 100000
 MAX_READS_IM_MEM = 10000
@@ -32,7 +33,90 @@ def read_xa_tag(tags):
     return l
 
 
-def parse_tsv(in_filename, test, chr_filter, line_format, progress_print=print):
+def __check_columns(columns, necessary):
+    columns = [col.lower() for col in columns]  # ignore capitalization
+
+    # check invalid optional columns
+    for min_def in ["[" + col + "]" for col in necessary]:
+        if min_def in columns:
+            raise RuntimeError(
+                ", ".join(necessary) + " cannot be given as optional columns."
+            )
+
+    # check necessary columns
+    for min_def in necessary:
+        if min_def not in columns:
+            raise RuntimeError(
+                "the given columns do not contain at least one of the minimum required columns: "
+                + ", ".join(necessary)
+                + "."
+            )
+
+    # check duplicates
+    columns_non_optional = [col.replace("[", "").replace("]", "") for col in columns]
+    cols_no_dot = [col for col in columns_non_optional if col != "."]
+    if len(cols_no_dot) != len(set(cols_no_dot)):
+        dup = []
+        for idx, col in enumerate(cols_no_dot):
+            if col in cols_no_dot[idx + 1 :]:
+                dup.append(col)
+        raise RuntimeError(
+            "the given columns cannot contain duplicates. But "
+            + ", ".join(dup)
+            + ("is" if len(dup) == 1 else "are")
+            + " given multiple times."
+        )
+    return columns
+
+def setup_col_converter(columns, col_order, default_values, necessary_columns):
+    columns = __check_columns(columns, necessary_columns)
+    for col in columns:
+        col = col.replace("[", "").replace("]", "")
+        if col != "." and col not in col_order:
+            print(
+                "Warning: Unknown column name: "
+                + col
+                + ". Known column names are: "
+                + ", ".join("'" + c + "'" for c in col_order)
+                + ", and '.'. This column will be ignored.",
+                file=sys.stderr,
+            )
+    non_opt_cols = sum(1 if "[" not in col and "]" not in col else 0 for col in columns)
+    col_converter = {}
+    for n in range(non_opt_cols, len(columns) + 1):
+        dropped_cols = columns[:]
+        idx = len(dropped_cols) - 1
+        while len(dropped_cols) > n:
+            assert idx >= 0
+            if "[" in dropped_cols[idx] and "]" in dropped_cols[idx]:
+                del dropped_cols[idx]
+            idx -= 1
+        dropped_cols = [col.replace("[", "").replace("]", "") for col in dropped_cols]
+
+        col_converter[n] = [
+            col_order.index(col_name) if col_name != "." and col_name in col_order else None
+            for col_name in dropped_cols
+        ]
+
+    def convert(cols):
+        n = min(len(cols), len(columns))
+        if n not in col_converter:
+            raise RuntimeError(
+                "line '"
+                + " ".join(cols)
+                + "' does not match the expected columns:"
+                + ", ".join(columns)
+            )
+        ret = default_values[:]
+        for idx, col in zip(col_converter[n], cols):
+            if not idx is None:
+                ret[idx] = col
+        return ret
+
+    return convert
+
+def parse_tsv(in_filename, test, chr_filter, make_line_format, default_cols, progress_print=print):
+    line_format = make_line_format(default_cols)
     with fileinput.input(in_filename) as in_file_1:
         cnt = 0
         file_pos = 0
@@ -50,7 +134,12 @@ def parse_tsv(in_filename, test, chr_filter, line_format, progress_print=print):
                 else:
                     progress_print("from stdin: read " + str(idx_2) + " lines so far.")
             # ignore empty lines and comments / header lines
-            if len(line) == 0 or line[0] == "#":
+            if len(line) == 0:
+                continue
+            if line[:9] == "#columns:":
+                line_format = make_line_format(line[9:].strip().split())
+                # next line of code will make sure that this line of the input file is not read as actual data
+            if line[0] == "#":
                 continue
 
             # parse file columns
@@ -80,51 +169,6 @@ def parse_tsv(in_filename, test, chr_filter, line_format, progress_print=print):
             yield line, read_name, chrs, poss, mapqs, tags, strand, bin_cnt
 
 
-def setup_col_converter(columns, col_oder, default_values):
-    for col in columns:
-        col = col.replace("[", "").replace("]", "")
-        if col != "." and col not in col_oder:
-            raise RuntimeError(
-                "Invalid column name: "
-                + col
-                + ". Valid column names are: "
-                + ", ".join("'" + c + "'" for c in col_oder)
-                + ", and '.'."
-            )
-    non_opt_cols = sum(1 if "[" not in col and "]" not in col else 0 for col in columns)
-    col_converter = {}
-    for n in range(non_opt_cols, len(columns) + 1):
-        dropped_cols = columns[:]
-        idx = len(dropped_cols) - 1
-        while len(dropped_cols) > n:
-            assert idx >= 0
-            if "[" in dropped_cols[idx] and "]" in dropped_cols[idx]:
-                del dropped_cols[idx]
-            idx -= 1
-        dropped_cols = [col.replace("[", "").replace("]", "") for col in dropped_cols]
-
-        col_converter[n] = [
-            col_oder.index(col_name) if col_name != "." else None
-            for col_name in dropped_cols
-        ]
-
-    def convert(cols):
-        n = min(len(cols), len(columns))
-        if n not in col_converter:
-            raise RuntimeError(
-                "line '"
-                + " ".join(cols)
-                + "' does not match the expected columns:"
-                + ", ".join(columns)
-            )
-        ret = default_values[:]
-        for idx, col in zip(col_converter[n], cols):
-            if not idx is None:
-                ret[idx] = col
-        return ret
-
-    return convert
-
 
 def parse_heatmap(
     in_filename,
@@ -133,55 +177,59 @@ def parse_heatmap(
     progress_print=print,
     columns=["chr1", "pos1", "chr2", "pos2"],
 ):
-    col_converter = setup_col_converter(
-        columns,
-        [
-            "readid",
-            "chr1",
-            "pos1",
-            "chr2",
-            "pos2",
-            "strand1",
-            "strand2",
-            "mapq1",
-            "mapq2",
-            "xa1",
-            "xa2",
-            "cnt",
-        ],
-        ["-", ".", "0", ".", "0", "+", "+", "*", "*", "", "", "1"],
-    )
-
-    def convert(cols):
-        (
-            readid,
-            chr1,
-            pos1,
-            chr2,
-            pos2,
-            strand1,
-            strand2,
-            mapq1,
-            mapq2,
-            xa1,
-            xa2,
-            cnt,
-        ) = col_converter(cols)
-        return (
-            readid,
-            [chr1, chr2],
-            [pos1, pos2],
-            [mapq1, mapq2],
-            [xa1, xa2],
-            [strand1, strand2],
-            cnt,
+    def make_converter(columns_in):
+        col_converter = setup_col_converter(
+            columns_in,
+            [
+                "readid",
+                "chr1",
+                "pos1",
+                "chr2",
+                "pos2",
+                "strand1",
+                "strand2",
+                "mapq1",
+                "mapq2",
+                "xa1",
+                "xa2",
+                "cnt",
+            ],
+            ["-", ".", "0", ".", "0", "+", "+", "*", "*", "", "", "1"],
+            ["chr1", "pos1", "chr2", "pos2"],
         )
+
+        def convert(cols):
+            (
+                readid,
+                chr1,
+                pos1,
+                chr2,
+                pos2,
+                strand1,
+                strand2,
+                mapq1,
+                mapq2,
+                xa1,
+                xa2,
+                cnt,
+            ) = col_converter(cols)
+            return (
+                readid,
+                [chr1, chr2],
+                [pos1, pos2],
+                [mapq1, mapq2],
+                [xa1, xa2],
+                [strand1, strand2],
+                cnt,
+            )
+        return convert
 
     yield from parse_tsv(
         in_filename,
         test,
         chr_filter,
-        line_format=convert,
+        make_converter,
+        columns,
         progress_print=progress_print,
     )
 
@@ -214,21 +262,25 @@ def force_upper_triangle(
 def parse_track(
     in_filename, test, chr_filter, progress_print=print, columns=["chr", "pos"]
 ):
-    col_converter = setup_col_converter(
-        columns,
-        ["readid", "chr", "pos", "strand", "mapq", "xa", "cnt"],
-        ["-", ".", "0", "+", "*", "", "1"],
-    )
+    def make_converter(columns_in):
+        col_converter = setup_col_converter(
+            columns_in,
+            ["readid", "chr", "pos", "strand", "mapq", "xa", "cnt"],
+            ["-", ".", "0", "+", "*", "", "1"],
+            ["chr", "pos"]
+        )
 
-    def convert(cols):
-        readid, chr1, pos1, strand1, mapq1, xa1, cnt = col_converter(cols)
-        return readid, [chr1], [pos1], [mapq1], [xa1], [strand1], cnt
+        def convert(cols):
+            readid, chr1, pos1, strand1, mapq1, xa1, cnt = col_converter(cols)
+            return readid, [chr1], [pos1], [mapq1], [xa1], [strand1], cnt
+        return convert
 
     yield from parse_tsv(
         in_filename,
         test,
         chr_filter,
-        line_format=convert,
+        make_converter,
+        columns,
         progress_print=progress_print,
     )
 
