@@ -218,13 +218,13 @@ bool PartialQuarry::setDecayValues( )
                             if( bAllSamples )
                                 iH = 1;
 
-                            if( ( iTop - iMyH ) - iBot >= (int64_t)( uiSamplesMin - 1 ) * iMyH )
+                            if( iTop - iBot >= (int64_t)( uiSamplesMin - 1 ) * iMyH )
                             {
                                 vvVals.clear( );
                                 vvVals.reserve( std::min( (int64_t)uiSamplesMax, (int64_t)( iTop - iBot ) ) );
                                 if( bAllSamples )
                                     vvVals.reserve( iTop - iBot );
-                                for( int64_t iMyBot = iBot; iMyBot <= iTop - iMyH; iMyBot += iH )
+                                for( int64_t iMyBot = iBot; iMyBot < iTop; iMyBot += iH )
                                 {
                                     int64_t iMyTop = iMyBot + iMyH;
 
@@ -266,13 +266,22 @@ bool PartialQuarry::setDecayValues( )
                                 }
                             }
                             else
+                            {
+                                std::cout << "excluded " << vCoords[ uiI ].iFrom << " - " << vCoords[ uiI ].iTo << " 1 " << "iTop: " << iTop << " iMyH: " << iMyH << " iBot: " << iBot << " uiSamplesMin: " << uiSamplesMin << " iMyH: " << iMyH << std::endl;
                                 vVals[ uiI ] = 0;
+                            }
                         }
                         else
+                        {
+                            std::cout << "excluded " << vCoords[ uiI ].iFrom << " - " << vCoords[ uiI ].iTo << " 2" << std::endl;
                             vVals[ uiI ] = 0;
+                        }
                     }
                     else
+                    {
+                        std::cout << "excluded " << vCoords[ uiI ].iFrom << " - " << vCoords[ uiI ].iTo << " 3" << std::endl;
                         vVals[ uiI ] = 0;
+                    }
                 }
 
                 vvDecayValues[ uiY ].back( ).push_back( symmetry( vVals[ 0 ], vVals[ 1 ] ) );
