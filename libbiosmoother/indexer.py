@@ -407,15 +407,32 @@ class Indexer:
                     map_q,
                     bin_cnt,
                 ) in read_iterator.itr_cell(chr_x, chr_y):
-                    if int(bin_cnt) > 1 and any(int(p) % self.session_default["dividend"] != 0 for p in [
-                        pos_1_s, pos_1_e, pos_2_s, pos_2_e]) and not count_matrix_warning_done:
+                    if (
+                        int(bin_cnt) > 1
+                        and any(
+                            int(p) % self.session_default["dividend"] != 0
+                            for p in [pos_1_s, pos_1_e, pos_2_s, pos_2_e]
+                        )
+                        and not count_matrix_warning_done
+                    ):
                         print(
                             "WARNING: The input file has a count column (i.e could be a count matrix)",
                             "and the bin position of at least one row does not match the minimal resolution",
-                            "of the index.", "pos1: ", pos_1_s, "..", pos_1_e, "pos2:", pos_2_s, "..", 
-                            pos_2_e, "count:", bin_cnt, "minimal index resolution:", 
-                            str(self.session_default["dividend"]) + ". Will not show this warning again.",
-                            file=sys.stderr
+                            "of the index.",
+                            "pos1: ",
+                            pos_1_s,
+                            "..",
+                            pos_1_e,
+                            "pos2:",
+                            pos_2_s,
+                            "..",
+                            pos_2_e,
+                            "count:",
+                            bin_cnt,
+                            "minimal index resolution:",
+                            str(self.session_default["dividend"])
+                            + ". Will not show this warning again.",
+                            file=sys.stderr,
                         )
                         count_matrix_warning_done = True
                     total_reads += 1
@@ -579,15 +596,28 @@ class Indexer:
                 map_q,
                 bin_cnt,
             ) in read_iterator.itr_cell(chr_x):
-                if int(bin_cnt) > 1 and any(int(p) % self.session_default["dividend"] != 0 for p in [
-                    pos_1_s, pos_1_e]) and not count_matrix_warning_done:
+                if (
+                    int(bin_cnt) > 1
+                    and any(
+                        int(p) % self.session_default["dividend"] != 0
+                        for p in [pos_1_s, pos_1_e]
+                    )
+                    and not count_matrix_warning_done
+                ):
                     print(
                         "WARNING: The input file has a count column (i.e could be a count matrix)",
                         "and the bin position of at least one row does not match the minimal resolution",
-                        "of the index.", "pos: ", pos_1_s, "..", pos_1_e, "count:", bin_cnt, 
-                        "minimal index resolution:", 
-                        str(self.session_default["dividend"]) + ". Will not show this warning again.",
-                        file=sys.stderr
+                        "of the index.",
+                        "pos: ",
+                        pos_1_s,
+                        "..",
+                        pos_1_e,
+                        "count:",
+                        bin_cnt,
+                        "minimal index resolution:",
+                        str(self.session_default["dividend"])
+                        + ". Will not show this warning again.",
+                        file=sys.stderr,
                     )
                     count_matrix_warning_done = True
                 total_reads += 1

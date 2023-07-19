@@ -68,6 +68,7 @@ def __check_columns(columns, necessary):
         )
     return columns
 
+
 def setup_col_converter(columns, col_order, default_values, necessary_columns):
     columns = __check_columns(columns, necessary_columns)
     for col in columns:
@@ -94,7 +95,9 @@ def setup_col_converter(columns, col_order, default_values, necessary_columns):
         dropped_cols = [col.replace("[", "").replace("]", "") for col in dropped_cols]
 
         col_converter[n] = [
-            col_order.index(col_name) if col_name != "." and col_name in col_order else None
+            col_order.index(col_name)
+            if col_name != "." and col_name in col_order
+            else None
             for col_name in dropped_cols
         ]
 
@@ -115,7 +118,10 @@ def setup_col_converter(columns, col_order, default_values, necessary_columns):
 
     return convert
 
-def parse_tsv(in_filename, test, chr_filter, make_line_format, default_cols, progress_print=print):
+
+def parse_tsv(
+    in_filename, test, chr_filter, make_line_format, default_cols, progress_print=print
+):
     line_format = make_line_format(default_cols)
     with fileinput.input(in_filename) as in_file_1:
         cnt = 0
@@ -167,7 +173,6 @@ def parse_tsv(in_filename, test, chr_filter, make_line_format, default_cols, pro
             cnt += 1
 
             yield line, read_name, chrs, poss, mapqs, tags, strand, bin_cnt
-
 
 
 def parse_heatmap(
@@ -222,6 +227,7 @@ def parse_heatmap(
                 [strand1, strand2],
                 cnt,
             )
+
         return convert
 
     yield from parse_tsv(
@@ -267,12 +273,13 @@ def parse_track(
             columns_in,
             ["readid", "chr", "pos", "strand", "mapq", "xa", "cnt"],
             ["-", ".", "0", "+", "*", "", "1"],
-            ["chr", "pos"]
+            ["chr", "pos"],
         )
 
         def convert(cols):
             readid, chr1, pos1, strand1, mapq1, xa1, cnt = col_converter(cols)
             return readid, [chr1], [pos1], [mapq1], [xa1], [strand1], cnt
+
         return convert
 
     yield from parse_tsv(

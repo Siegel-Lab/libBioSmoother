@@ -915,17 +915,21 @@ def __get_sizes(session):
         "margin": session.get_value(["settings", "export", "margins", "val"]),
         "show_anno_x": session.get_value(
             ["settings", "interface", "show_hide", "annotation"]
-        ) and len(session.get_annotation(False, lambda x: None)["anno_name"]) > 0,
+        )
+        and len(session.get_annotation(False, lambda x: None)["anno_name"]) > 0,
         "show_anno_y": session.get_value(
             ["settings", "interface", "show_hide", "annotation"]
-        ) and len(session.get_annotation(True, lambda x: None)["anno_name"]) > 0,
+        )
+        and len(session.get_annotation(True, lambda x: None)["anno_name"]) > 0,
         "annotation": session.get_value(["settings", "interface", "anno_size", "val"]),
         "show_secondary_x": session.get_value(
             ["settings", "interface", "show_hide", "raw"]
-        ) and len(session.get_tracks(True, lambda x: None)["values"]) > 0,
+        )
+        and len(session.get_tracks(True, lambda x: None)["values"]) > 0,
         "show_secondary_y": session.get_value(
             ["settings", "interface", "show_hide", "raw"]
-        ) and len(session.get_tracks(False, lambda x: None)["values"]) > 0,
+        )
+        and len(session.get_tracks(False, lambda x: None)["values"]) > 0,
         "secondary": session.get_value(["settings", "interface", "raw_size", "val"]),
     }
 
@@ -948,7 +952,6 @@ def __make_drawing(session, sizes):
         size_x += sizes["axis"]
 
     size_x -= sizes["margin"]
-
 
     if sizes["show_heat"]:
         size_y += sizes["heatmap"] + sizes["margin"]
@@ -998,15 +1001,14 @@ def assert_has_draw_svg():
             "could not import drawSvg, is it installed? (try pip install drawSvg==1.9.0)"
         )
 
+
 def assert_file_is_creatable(session):
     try:
         with open(session.get_value(["settings", "export", "prefix"]), "w") as _:
             pass
         os.remove(session.get_value(["settings", "export", "prefix"]))
     except:
-        raise RuntimeError(
-            "could not create file, does the given folder exist?"
-        )
+        raise RuntimeError("could not create file, does the given folder exist?")
 
 
 def export_tsv(session, print_callback=lambda s: None):
@@ -1047,6 +1049,7 @@ def export_tsv(session, print_callback=lambda s: None):
                         )
                         + "\n"
                     )
+
 
 def export_png(session):
     assert_has_draw_svg()

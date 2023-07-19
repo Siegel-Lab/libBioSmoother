@@ -906,8 +906,8 @@ template <typename out_t, typename in_t> const out_t makeAsymBin( const in_t& xX
                                 /*.uiIndexW =*/xY.uiIndexSize,
                                 /*.uiIndexH =*/xX.uiIndexSize,
 
-                                /*.uiXAxisIdx =*/xY.uiIdx,
-                                /*.uiYAxisIdx =*/xX.uiIdx } };
+                                /*.uiXAxisIdx =*/xX.uiIdx,
+                                /*.uiYAxisIdx =*/xY.uiIdx } };
 }
 
 template <typename out_t, typename in_t>

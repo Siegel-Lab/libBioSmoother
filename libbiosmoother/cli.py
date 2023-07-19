@@ -40,8 +40,6 @@ def reset(args):
     raise RuntimeError("the given index", args.index_prefix, "does not exist.")
 
 
-
-
 def repl(args):
     Indexer(args.index_prefix).add_replicate(
         args.path,

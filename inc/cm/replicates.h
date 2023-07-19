@@ -266,22 +266,13 @@ bool PartialQuarry::setDecayValues( )
                                 }
                             }
                             else
-                            {
-                                std::cout << "excluded " << vCoords[ uiI ].iFrom << " - " << vCoords[ uiI ].iTo << " 1 " << "iTop: " << iTop << " iMyH: " << iMyH << " iBot: " << iBot << " uiSamplesMin: " << uiSamplesMin << " iMyH: " << iMyH << std::endl;
                                 vVals[ uiI ] = 0;
-                            }
                         }
                         else
-                        {
-                            std::cout << "excluded " << vCoords[ uiI ].iFrom << " - " << vCoords[ uiI ].iTo << " 2" << std::endl;
                             vVals[ uiI ] = 0;
-                        }
                     }
                     else
-                    {
-                        std::cout << "excluded " << vCoords[ uiI ].iFrom << " - " << vCoords[ uiI ].iTo << " 3" << std::endl;
                         vVals[ uiI ] = 0;
-                    }
                 }
 
                 vvDecayValues[ uiY ].back( ).push_back( symmetry( vVals[ 0 ], vVals[ 1 ] ) );

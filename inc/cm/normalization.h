@@ -15,8 +15,7 @@ bool PartialQuarry::normalizeSize( size_t uiSize )
             CANCEL_RETURN;
             vvNormalized[ uiY ].push_back( std::array<double, 2>{
                 vvFlatTotal[ uiY ][ 0 ] == 0 ? 0 : (double)uiSize * vVal[ 0 ] / (double)vvFlatTotal[ uiY ][ 0 ],
-                vvFlatTotal[ uiY ][ 1 ] == 0 ? 0
-                                             : (double)uiSize * vVal[ 1 ] / (double)vvFlatTotal[ uiY ][ 1 ] } );
+                vvFlatTotal[ uiY ][ 1 ] == 0 ? 0 : (double)uiSize * vVal[ 1 ] / (double)vvFlatTotal[ uiY ][ 1 ] } );
         }
     END_RETURN;
 }
@@ -741,8 +740,7 @@ bool PartialQuarry::normalizeGridSeq( )
         for( size_t uiI = 0; uiI < vvNormalizedDDD[ uiY ].size( ); uiI++ )
         {
             CANCEL_RETURN;
-            std::array<double, 2> vdVal = { vvNormalizedDDD[ uiY ][ uiI ][ 0 ],
-                                            vvNormalizedDDD[ uiY ][ uiI ][ 1 ] };
+            std::array<double, 2> vdVal = { vvNormalizedDDD[ uiY ][ uiI ][ 0 ], vvNormalizedDDD[ uiY ][ uiI ][ 1 ] };
 
             for( size_t uiK = 0; uiK < 2; uiK++ )
                 vdVal[ uiK ] /= (double)std::max(
@@ -987,21 +985,23 @@ bool PartialQuarry::normalizeIC( )
         vvNormalized[ uiY ].resize( vBinCoords[ uiY ].size( ) );
         size_t uiH2;
         if( uiY == 2 )
-            uiH2 = 1;
+            uiH2 = vV4cCoords[ 1 ].size( );
         else
             uiH2 = vAxisCords[ 1 ].size( );
         for( size_t uiX = 0; uiX < vvNormalizedDDD[ uiY ].size( ); uiX++ )
             for( size_t uiZ = 0; uiZ < 2; uiZ++ )
-                if( vBinCoordsIce[ uiY ][ uiX ][ uiZ ].uiXAxisIdx != ICE_SAMPLE_COORD &&
-                    vBinCoordsIce[ uiY ][ uiX ][ uiZ ].uiYAxisIdx != ICE_SAMPLE_COORD )
+            {
+                const size_t uiXAxisId = vBinCoordsIce[ uiY ][ uiX ][ uiZ ].uiXAxisIdx;
+                const size_t uiYAxisId = vBinCoordsIce[ uiY ][ uiX ][ uiZ ].uiYAxisIdx;
+                if( uiXAxisId != ICE_SAMPLE_COORD && uiYAxisId != ICE_SAMPLE_COORD )
                 {
-                    const size_t uiX2 = vBinCoordsIce[ uiY ][ uiX ][ uiZ ].uiYAxisIdx +
-                                        uiH2 * vBinCoordsIce[ uiY ][ uiX ][ uiZ ].uiXAxisIdx;
+                    const size_t uiX2 = uiYAxisId + uiH2 * uiXAxisId;
                     assert( uiX2 < vvNormalized[ uiY ].size( ) );
                     vvNormalized[ uiY ][ uiX2 ][ uiZ ] = vIceSliceBias[ uiY ][ 0 ][ uiZ ][ uiX / uiH ] //
                                                          * vIceSliceBias[ uiY ][ 1 ][ uiZ ][ uiX % uiH ] //
                                                          * vvNormalizedDDD[ uiY ][ uiX ][ uiZ ];
                 }
+            }
     }
 
     END_RETURN;
@@ -1083,24 +1083,24 @@ PartialQuarry::getScaled( const std::function<void( const std::string& )>& fPyPr
 
 void PartialQuarry::regNormalization( )
 {
-    registerNode(
-        NodeNames::Normalized,
-        ComputeNode{ /*.sNodeName =*/"normalized_bins",
-                     /*.fFunc =*/&PartialQuarry::setNormalized,
-                     /*.vIncomingFunctions =*/
-                     { NodeNames::DistDepDecayRemoved, NodeNames::RnaAssociatedBackground, NodeNames::RadiclSeqCoverage },
-                     /*.vIncomingSession =*/
-                     { { "settings", "normalization", "p_accept", "val" },
-                       { "settings", "normalization", "ice_symmetric_bias" },
-                       { "settings", "normalization", "ice_sparse_slice_filter", "val" } },
-                     /*.vSessionsIncomingInPrevious =*/
-                     { { "contigs", "genome_size" },
-                       { "settings", "normalization", "normalize_by" },
-                       { "settings", "normalization", "grid_seq_axis_is_column" },
-                       { "settings", "normalization", "ice_local" },
-                       { "settings", "normalization", "radicl_seq_samples", "val" },
-                       { "settings", "normalization", "radicl_seq_axis_is_column" } },
-                     /*bHidden =*/false } );
+    registerNode( NodeNames::Normalized,
+                  ComputeNode{ /*.sNodeName =*/"normalized_bins",
+                               /*.fFunc =*/&PartialQuarry::setNormalized,
+                               /*.vIncomingFunctions =*/
+                               { NodeNames::DistDepDecayRemoved, NodeNames::RnaAssociatedBackground,
+                                 NodeNames::RadiclSeqCoverage },
+                               /*.vIncomingSession =*/
+                               { { "settings", "normalization", "p_accept", "val" },
+                                 { "settings", "normalization", "ice_symmetric_bias" },
+                                 { "settings", "normalization", "ice_sparse_slice_filter", "val" } },
+                               /*.vSessionsIncomingInPrevious =*/
+                               { { "contigs", "genome_size" },
+                                 { "settings", "normalization", "normalize_by" },
+                                 { "settings", "normalization", "grid_seq_axis_is_column" },
+                                 { "settings", "normalization", "ice_local" },
+                                 { "settings", "normalization", "radicl_seq_samples", "val" },
+                                 { "settings", "normalization", "radicl_seq_axis_is_column" } },
+                               /*bHidden =*/false } );
 
     registerNode( NodeNames::GridSeqSamples,
                   ComputeNode{ /*.sNodeName =*/"grid_seq_samples",
