@@ -234,8 +234,8 @@ bool PartialQuarry::setDecayValues( )
                                     assert( iMyTop >= iCornerPos );
                                     size_t uiYe = std::max( uiYs + 1, (size_t)( iMyTop + iCornerPos ) / 2 );
                                     size_t uiXe = std::max( uiXs + 1, (size_t)( iMyTop - iCornerPos ) / 2 );
-                                    //assert( uiYe <= (size_t)iChrX );
-                                    //assert( uiXe <= (size_t)iChrY );
+                                    // assert( uiYe <= (size_t)iChrX );
+                                    // assert( uiXe <= (size_t)iChrY );
 
                                     vvVals.push_back( pIndices->count( iDataSetId,
                                                                        { uiXs, uiYs, uiMapQMin, uiFromAnnoFilter[ uiI ],

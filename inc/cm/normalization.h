@@ -668,6 +668,7 @@ bool PartialQuarry::setRnaAssociatedBackground( )
         END_RETURN;
 
     const bool bAxisIsCol = getValue<bool>( { "settings", "normalization", "grid_seq_axis_is_column" } );
+    const bool bIgnoreCis = getValue<bool>( { "settings", "normalization", "grid_seq_ignore_cis" } );
 
     vBackgroundGridSeq.clear( );
     vBackgroundGridSeq.reserve( vAxisCords[ bAxisIsCol ? 0 : 1 ].size( ) );
@@ -679,7 +680,7 @@ bool PartialQuarry::setRnaAssociatedBackground( )
             if( vGridSeqFiltered[ uiI ][ 0 ] && vGridSeqFiltered[ uiI ][ 1 ] ) // element is not filtered out
             {
                 const IndexCoord& rSample = vGridSeqSamples[ uiI ];
-                if( rSample.uiChromosome != rAxis.uiChromosome ) // ignore cis-contigs
+                if( rSample.uiChromosome != rAxis.uiChromosome || !bIgnoreCis ) // ignore cis-contigs
                 {
                     const size_t uiAnnoStart = rSample.uiIndexPos;
                     const size_t uiAnnoEnd = rSample.uiIndexPos + rSample.uiIndexSize;
@@ -1187,7 +1188,7 @@ void PartialQuarry::regNormalization( )
                   ComputeNode{ /*.sNodeName =*/"rna_associated_background",
                                /*.fFunc =*/&PartialQuarry::setRnaAssociatedBackground,
                                /*.vIncomingFunctions =*/{ NodeNames::RnaAssociatedGenesFilter },
-                               /*.vIncomingSession =*/{ },
+                               /*.vIncomingSession =*/{ { "settings", "normalization", "grid_seq_ignore_cis" } },
                                /*.vSessionsIncomingInPrevious =*/
                                { { "settings", "normalization", "normalize_by" },
                                  { "settings", "normalization", "grid_seq_axis_is_column" },
