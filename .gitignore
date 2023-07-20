@@ -38,3 +38,4 @@ test/test_data/*
 *.shelf.bak
 dist/*
 wheelhouse/*
+*.backup
