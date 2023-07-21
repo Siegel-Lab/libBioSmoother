@@ -95,7 +95,8 @@ axisCoordsHelper( size_t uiBinSize, size_t uiScreenStartPos, size_t uiScreenEndP
                                            /* .uiChromosome =*/uiI, //
                                            /* .uiIndexPos =*/uiIndexPos, //
                                            /* .uiIndexSize =*/uiCurrBinSize, //
-                                                                             //},
+                                           /* .uiPloidyId =*/vChromosomes[uiI].uiPloidyId, //
+                                           //},
                                            /*.uiScreenPos =*/uiCurrScreenPos, //
                                            /*.uiScreenSize =*/uiCurrBinSize, //
                                            /*.uiRegionIdx =*/uiChr, //
@@ -131,6 +132,7 @@ axisCoordsHelper( size_t uiBinSize, size_t uiScreenStartPos, size_t uiScreenEndP
                 /*  .uiChromosome =*/uiI, //
                 /*  .uiIndexPos =*/uiStartChromPos, //
                 /*  .uiIndexSize =*/uiItrEndPos - uiStartChromPos, //
+                /*  .uiPloidyId =*/vChromosomes[uiI].uiPloidyId, //
                 // },
                 /* .uiScreenPos =*/uiStartScreenPos, //
                 /* .uiScreenSize =*/uiCurrScreenPos - uiStartScreenPos, //
@@ -334,6 +336,7 @@ annoCoordsHelper( size_t uiBinSize, size_t uiScreenStartPos, size_t uiScreenEndP
                     /* .uiChromosome =*/uiI, //
                     /* .uiIndexPos =*/uiIndexPos, //
                     /* .uiIndexSize =*/uiCurrIndexSize, //
+                    /* .uiPloidyId =*/vChromosomes[uiI].uiPloidyId, //
                     /*},*/
                     /*.uiScreenPos =*/uiCurrScreenPos, //
                     /*.uiScreenSize =*/uiCurrScreenSize, //
@@ -355,6 +358,7 @@ annoCoordsHelper( size_t uiBinSize, size_t uiScreenStartPos, size_t uiScreenEndP
                         /*  .uiChromosome =*/uiI, //
                         /*  .uiIndexPos =*/uiIndexPos, //
                         /*  .uiIndexSize =*/uiCurrIndexSize, //
+                        /* .uiPloidyId =*/vChromosomes[uiI].uiPloidyId, //
                         /* },*/
                         /* .uiScreenPos =*/uiCurrScreenPos, //
                         /* .uiScreenSize =*/uiCurrScreenSize, //
@@ -407,17 +411,23 @@ size_t multiple_anno( std::string sVal )
     throw std::logic_error( "unknown multiple_annos_in_bin value" );
 }
 
-std::vector<ChromDesc> activeChromList( json xChromLen, json xChromDisp, const std::vector<std::string>& xChromOrder )
+std::vector<ChromDesc> activeChromList( json xChromLen, json xChromDisp, const std::vector<std::string>& xChromOrder,
+                                        const json xPloidyMap, const json xPloidyGroups )
 {
     std::vector<ChromDesc> vRet;
     vRet.reserve( xChromDisp.size( ) );
     for( auto& xChrom : xChromDisp )
     {
-        std::string sChrom = xChrom.get<std::string>( );
-        size_t uiIdx = (size_t)( std::find( xChromOrder.begin( ), xChromOrder.end( ), sChrom ) - xChromOrder.begin( ) );
-        vRet.emplace_back( ChromDesc{ /*.sName =*/sChrom, /*.uiUnadjustedLength =*/xChromLen[ sChrom ].get<size_t>( ),
+        std::string sReadableName = xChrom.get<std::string>( );
+        const std::string sDatasetName = xPloidyMap[ sReadableName ];
+        size_t uiIdx =
+            (size_t)( std::find( xChromOrder.begin( ), xChromOrder.end( ), sDatasetName ) - xChromOrder.begin( ) );
+        vRet.emplace_back( ChromDesc{ /*.sName =*/sReadableName,
+                                      /*.uiUnadjustedLength =*/xChromLen[ sDatasetName ].get<size_t>( ),
                                       /*uiLength =*/0,
-                                      /*uiId = */ uiIdx } );
+                                      /*uiId = */ uiIdx,
+                                      /*uiPloidyId = */ vRet.size(),
+                                      /*sPloidyGroupId = */xPloidyGroups[sDatasetName] } );
     }
     return vRet;
 }
@@ -648,14 +658,81 @@ const std::array<size_t, 2> PartialQuarry::getCanvasSize( const std::function<vo
     return vCanvasSize;
 }
 
+template<typename T>
+bool set_overlap(const std::set<T>& rA, const std::set<T>& rB)
+{
+    for (const auto& rVal : rA)
+        if (rB.find(rVal) != rB.end())
+            return true;
+    return false;
+}
+
+bool ploidyValid(const ChromDesc& rA, const ChromDesc& rB, std::map<size_t, std::set<std::string>> vBaseToGroup)
+{
+    // interactions within the same base contig but from different ploidy normalized contigs are never considered
+    if(rA.uiId == rB.uiId && rA.uiPloidyId != rB.uiPloidyId)
+        return false;
+    // interactions within the same group are always considered
+    // this also catches all cis interactions (as these are within the same group)
+    if(rA.sPloidyGroupId == rB.sPloidyGroupId)
+        return true;
+
+    // interactions that are from contigs that do not share any groups
+    if (!set_overlap(vBaseToGroup[rA.uiId], vBaseToGroup[rB.uiId]))
+        return true;
+
+    return false;
+}
+
 bool PartialQuarry::setActiveChrom( )
 {
-    auto vContigList = getValue<std::vector<std::string>>( { "contigs", "list" } );
+    auto vPloidyList = getValue<std::vector<std::string>>( { "contigs", "ploidy_list" } );
+    auto xPoidyMap = getValue<json>( { "contigs", "ploidy_map" } );
+    auto xPloidyGroups = getValue<json>( { "contigs", "ploidy_groups" } );
     for( bool bX : { true, false } )
         this->vActiveChromosomes[ bX ? 0 : 1 ] =
             activeChromList( getValue<json>( { "contigs", "lengths" } ),
-                             getValue<json>( { "contigs", bX ? "displayed_on_x" : "displayed_on_y" } ),
-                             vContigList );
+                             getValue<json>( { "contigs", bX ? "displayed_on_x" : "displayed_on_y" } ), vPloidyList,
+                             xPoidyMap, xPloidyCounts, xPloidyGroups );
+    
+    std::vector<ChromDesc> vFullChromosomeList = activeChromList( getValue<json>( { "contigs", "lengths" } ),
+                             getValue<json>( { "contigs", "list" } ), vPloidyList,
+                             xPoidyMap, xPloidyCounts, xPloidyGroups );
+    // compute ploidy counts
+    this->vPloidyCounts.clear();
+    uiFullContigListSize = vFullChromosomeList.size();
+    this->vPloidyCounts.resize( vFullChromosomeList.size( ) * vFullChromosomeList.size( ) );
+    std::vector<size_t> vBaseContigs;
+    std::map<size_t, std::set<std::string>> vBaseToGroup;
+    std::map<size_t, std::vector<size_t>> vBaseToActual;
+    vBaseToGroup.reserve(vFullChromosomeList.size());
+    vBaseContigs.reserve(vFullChromosomeList.size());
+    for(auto& rChr : vFullChromosomeList)
+    {
+        vBaseToGroup[rChr.uiId].add(rChr.sPloidyGroupId);
+        vBaseToActual[rChr.uiId].push_back(rChr.uiPloidyId);
+        vBaseContigs.push_back(rChr.uiId);
+    }
+    for(size_t uiX : vBaseContigs)
+        for(size_t uiY : vBaseContigs)
+        {
+            size_t uiValidSpots = 0;
+            for(size_t uiXAct : vBaseToActual[uiX])
+                for(size_t uiYAct : vBaseToActual[uiY])
+                    if(ploidyValid(vFullChromosomeList[uiXAct], vFullChromosomeList[uiYAct], vBaseToGroup))
+                        uiValidSpots += 1;
+
+            for(size_t uiXAct : vBaseToActual[uiX])
+                for(size_t uiYAct : vBaseToActual[uiY])
+                {
+                    size_t uiIdx = uiXAct + uiYAct * vFullChromosomeList.size();
+                    if(ploidyValid(vFullChromosomeList[uiXAct], vFullChromosomeList[uiYAct], vBaseToGroup))
+                        this->vPloidyCounts[uiIdx] = uiValidSpots;
+                    else
+                        this->vPloidyCounts[uiIdx] = 0;
+                }
+        }
+    
     END_RETURN;
 }
 
@@ -886,7 +963,10 @@ template <typename out_t, typename in_t> const out_t makeSymBin( const in_t& xX,
                                 /*.uiIndexH =*/xY.uiIndexSize,
 
                                 /*.uiXAxisIdx =*/xX.uiIdx,
-                                /*.uiYAxisIdx =*/xY.uiIdx } };
+                                /*.uiYAxisIdx =*/xY.uiIdx,
+
+                                /*.uiPloidyIdX =*/xX.uiPloidyId,
+                                /*.uiPloidyIdY =*/xY.uiPloidyId } };
 }
 
 template <typename out_t, typename in_t> const out_t makeAsymBin( const in_t& xX, const in_t& xY )
@@ -907,7 +987,10 @@ template <typename out_t, typename in_t> const out_t makeAsymBin( const in_t& xX
                                 /*.uiIndexH =*/xX.uiIndexSize,
 
                                 /*.uiXAxisIdx =*/xX.uiIdx,
-                                /*.uiYAxisIdx =*/xY.uiIdx } };
+                                /*.uiYAxisIdx =*/xY.uiIdx,
+
+                                /*.uiPloidyIdX =*/xX.uiPloidyId,
+                                /*.uiPloidyIdY =*/xY.uiPloidyId  } };
 }
 
 template <typename out_t, typename in_t>
@@ -1054,6 +1137,7 @@ bool PartialQuarry::setV4cCoords( )
                         /* .uiChromosome =*/uiX, //
                         /* .uiIndexPos =*/uiIndexFromCtg, //
                         /* .uiIndexSize =*/uiIndexToCtg - uiIndexFromCtg, //
+                        /* .uiPloidyId =*/this->vActiveChromosomes[ uiI ][ uiX ].uiPloidyId, //
                         //},
                         /*.uiScreenPos =*/uiScreenFromCtg, //
                         /*.uiScreenSize =*/uiScreenToCtg - uiScreenFromCtg, //
@@ -1220,6 +1304,7 @@ bool PartialQuarry::sampleAndMerge( size_t uiNumSamples, size_t uiI, const std::
                     /* .uiChromosome =*/uiX, //
                     /* .uiIndexPos =*/uiNextPos, //
                     /* .uiIndexSize =*/uiSize, //
+                    /* .uiPloidyId =*/this->vActiveChromosomes[ uiI ][ uiX ].uiPloidyId, //
                     //},
                     /*.uiScreenPos =*/ICE_SAMPLE_COORD, //
                     /*.uiScreenSize =*/ICE_SAMPLE_COORD, //
@@ -1355,7 +1440,10 @@ void PartialQuarry::regCoords( )
                                { { "contigs", "displayed_on_x" },
                                  { "contigs", "displayed_on_y" },
                                  { "contigs", "lengths" },
-                                 { "contigs", "list" } },
+                                 { "contigs", "list" },
+                                 { "contigs", "ploidy_list" },
+                                 { "contigs", "ploidy_map" },
+                                 { "contigs", "ploidy_groups" } },
                                /*.vSessionsIncomingInPrevious =*/{ },
                                /*bHidden =*/true } );
 

@@ -431,6 +431,56 @@ bool PartialQuarry::setFlatValues( )
     END_RETURN;
 }
 
+double ploidyCorrect(size_t uiVal, const BinCoord& rxPos) // @todo @continue_here ploidy division & integrate in graph
+{
+    return ((double)uiVal) / ((double) this->vPloidyCounts[rxPos.uiPloidyIdX+rxPos.uiPloidyIdY*uiFullContigListSize]);
+}
+
+bool PartialQuarry::setPloidyValues( ) // @todo @continue_here ploidy division & integrate in graph
+{
+    for( size_t uiY = 0; uiY < NUM_COORD_SYSTEMS; uiY++ )
+    {
+        vvFlatValues[ uiY ].clear( );
+
+        if( vvBinValues[ uiY ].size( ) > 0 )
+        {
+            // take size from fst replicate (sizes are equal anyways)
+            vvFlatValues[ uiY ].reserve( vvBinValues[ uiY ][ 0 ].size( ) );
+
+            for( size_t uiI = 0; uiI < vBinCoordsIce[ uiY ].size( ); uiI++ )
+            {
+                vvFlatValues[ uiY ].push_back( { 0, 0 } );
+                for( size_t uiJ = 0; uiJ < 2; uiJ++ )
+                {
+                    std::vector<size_t> vCollected;
+                    vCollected.reserve( vInGroup[ uiJ ].size( ) );
+                    for( size_t uiX : vInGroup[ uiJ ] )
+                    {
+                        CANCEL_RETURN;
+                        vCollected.push_back( vvBinValues[ uiY ][ uiX ][ uiI ] );
+                    }
+
+                    vvFlatValues[ uiY ].back( )[ uiJ ] = getFlatValue( vCollected );
+                }
+            }
+
+            for( size_t uiJ = 0; uiJ < 2; uiJ++ )
+            {
+                std::vector<size_t> vCollected;
+                vCollected.reserve( vInGroup[ uiJ ].size( ) );
+                for( size_t uiX : vInGroup[ uiJ ] )
+                {
+                    CANCEL_RETURN;
+                    vCollected.push_back( vActiveReplicatesTotal[ uiX ] );
+                }
+
+                vvFlatTotal[ uiY ][ uiJ ] = getFlatValue( vCollected );
+            }
+        }
+    }
+    END_RETURN;
+}
+
 bool PartialQuarry::setFlatDecay( )
 {
     for( size_t uiY = 0; uiY < NUM_COORD_SYSTEMS; uiY++ )

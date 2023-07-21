@@ -2,23 +2,45 @@
     "dividend": 1000,
     "contigs": {
         "list": [
-            "chr_1",
-            "chr_2"
+            "chr_1_A",
+            "chr_2_A",
+            "chr_1_B",
+            "chr_2_B"
         ],
         "lengths": {
             "chr_1": 10,
             "chr_2": 50
         },
         "displayed_on_x": [
-            "chr_1",
-            "chr_2"
+            "chr_1_A",
+            "chr_2_A",
+            "chr_1_B",
+            "chr_2_B"
         ],
         "displayed_on_y": [
-            "chr_1",
-            "chr_2"
+            "chr_1_A",
+            "chr_2_A",
+            "chr_1_B",
+            "chr_2_B"
         ],
         "genome_size": 60,
-        "annotation_coordinates": "gene"
+        "annotation_coordinates": "gene",
+        "ploidy_map": {
+            "chr_1_A": "chr_1",
+            "chr_1_B": "chr_1",
+            "chr_2_A": "chr_2",
+            "chr_2_B": "chr_2"
+        },
+        "ploidy_groups": {
+            "chr_1_A": "1",
+            "chr_1_B": "1",
+            "chr_2_A": "1",
+            "chr_2_B": "1"
+        },
+        "ploidy_list": [
+            "chr_1",
+            "chr_2"
+        ]
     },
     "area": {
         "x_start": 0,

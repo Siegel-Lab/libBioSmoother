@@ -163,6 +163,10 @@ def benchmark_runtime_smoother(args):
     benchmark_runtime(Quarry(args.index_prefix), args.num_experiments, args.outfile)
 
 
+def ploidy_smoother(args):
+    Quarry(args.index_prefix).set_plody_list(args.ploidy_file)
+
+
 def add_parsers(main_parser):
     init_parser = main_parser.add_parser("init", help="Create a new index.")
     init_parser.add_argument(
@@ -455,6 +459,17 @@ def add_parsers(main_parser):
         "-o", "--outfile", help="outputfile", default="benchmark.pickle", type=str
     )
     bench_parser.set_defaults(func=benchmark_runtime_smoother)
+
+    ploidy_parser = main_parser.add_parser("ploidy")
+    ploidy_parser.add_argument(
+        "index_prefix",
+        help="Prefix that was used to create the index (see the init subcommand).",
+    )
+    ploidy_parser.add_argument(
+        "ploidy_file",
+        help="Prefix that was used to create the index (see the init subcommand).",
+    )
+    ploidy_parser.set_defaults(func=ploidy_smoother)
 
 
 def make_main_parser():

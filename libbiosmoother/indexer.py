@@ -164,6 +164,9 @@ class Indexer:
             ["contigs"],
             {
                 "list": [],
+                "ploidy_map": {},
+                "ploidy_list": [],
+                "ploidy_groups": {},
                 "lengths": {},
                 "displayed_on_x": [],
                 "displayed_on_y": [],
@@ -180,6 +183,9 @@ class Indexer:
                 chr_name, chr_len = line.split()
                 if not test or ("Chr1" in chr_name):
                     self.append_session(["contigs", "list"], chr_name)
+                    self.append_session(["contigs", "ploidy_list"], chr_name)
+                    self.set_session(["contigs", "ploidy_map", chr_name], chr_name)
+                    self.set_session(["contigs", "ploidy_groups", chr_name], "1")
                     self.set_session(
                         ["contigs", "lengths", chr_name], int(chr_len) // dividend
                     )

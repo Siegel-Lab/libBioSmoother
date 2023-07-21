@@ -235,6 +235,44 @@ class Quarry(PartialQuarry):
         # trigger the cpp copy constructor
         return Quarry(super(PartialQuarry, self))
 
+    def set_plody_list(self, ploidy_file):
+        ploidy_map = {}
+        ploidy_list = []
+        ploidy_groups = {}
+        group_count = 1
+        with open(ploidy_file, "r") as len_file:
+            for line in len_file:
+                line = line.strip()
+                # if whole line is '-'
+                if all(c == "-" for c in line):
+                    group_count += 1
+                    continue
+                if len(line) > 0 and line[0] != "#":
+                    chr_from, chr_to = line.split()
+                    if chr_to in ploidy_map:
+                        print(
+                            "ERROR: The target contig name",
+                            chr_to,
+                            "occurs multiple times in the input file. Hence, the given ploidy file is not valid and will be ignored.",
+                        )
+                        return
+                    if chr_from not in self.get_value(["contigs", "ploidy_list"]):
+                        print(
+                            "WARNING: The source contig name",
+                            chr_from,
+                            "does not occur in the dataset. It will be ignored.",
+                        )
+                        continue
+                    ploidy_map[chr_to] = chr_from
+                    ploidy_list.append(chr_to)
+                    ploidy_groups[chr_to] = str(group_count)
+        self.set_value(["contigs", "list"], ploidy_list)
+        self.set_value(["contigs", "displayed_on_x"], ploidy_list)
+        self.set_value(["contigs", "displayed_on_y"], ploidy_list)
+        self.set_value(["contigs", "ploidy_map"], ploidy_map)
+        self.set_value(["contigs", "ploidy_groups"], ploidy_groups)
+        self.save_session()
+
     @staticmethod
     def get_libSps_version():
         return SPS_VERSION

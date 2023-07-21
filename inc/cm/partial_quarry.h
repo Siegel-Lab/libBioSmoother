@@ -27,6 +27,8 @@ struct ChromDesc
     size_t uiUnadjustedLength;
     size_t uiLength;
     size_t uiId;
+    size_t uiPloidyId;
+    std::string sPloidyGroupId;
 };
 
 struct IndexCoord
@@ -34,6 +36,7 @@ struct IndexCoord
     size_t uiChromosome;
     size_t uiIndexPos;
     size_t uiIndexSize;
+    size_t uiPloidyId;
 };
 
 struct AnnoCoord : IndexCoord
@@ -85,6 +88,7 @@ struct BinCoordBase
     size_t uiScreenW, uiScreenH;
     size_t uiIndexW, uiIndexH;
     size_t uiXAxisIdx, uiYAxisIdx;
+    size_t uiPloidyIdX, uiPloidyIdY;
 };
 
 struct BinCoord : BinCoordBase
@@ -189,6 +193,7 @@ class PartialQuarry : public HasSession
         BinValues,
         DecayValues,
         FlatValues,
+        PloidyValues,
         InGroup,
         Normalized,
         DistDepDecayRemoved,
@@ -739,6 +744,8 @@ class PartialQuarry : public HasSession
     const static size_t NUM_COORD_SYSTEMS = 3;
 
     std::array<std::vector<ChromDesc>, 2> vActiveChromosomes;
+    std::vector<size_t> vPloidyCounts;
+    size_t uiFullContigListSize;
     std::array<std::vector<AxisCoord>, 2> vAxisCords;
     std::array<std::vector<AxisCoord>, 2> vIceAxisCoords;
     std::array<std::vector<AxisCoord>, 2> vV4cCoords;
@@ -765,8 +772,10 @@ class PartialQuarry : public HasSession
     std::array<std::vector<std::vector<size_t>>, NUM_COORD_SYSTEMS> vvBinValues;
     std::array<std::vector<std::vector<double>>, NUM_COORD_SYSTEMS> vvDecayValues;
     std::array<std::vector<std::array<size_t, 2>>, NUM_COORD_SYSTEMS> vvFlatValues;
+    std::array<std::vector<std::array<double, 2>>, NUM_COORD_SYSTEMS> vvPloidyValues;
     std::array<std::vector<std::array<double, 2>>, NUM_COORD_SYSTEMS> vvFlatDecay;
     std::array<std::array<size_t, 2>, NUM_COORD_SYSTEMS> vvFlatTotal;
+    std::array<std::array<double, 2>, NUM_COORD_SYSTEMS> vvPloidyTotal;
     std::array<std::vector<std::array<double, 2>>, NUM_COORD_SYSTEMS> vvNormalized;
     std::array<std::vector<std::array<double, 2>>, NUM_COORD_SYSTEMS> vvNormalizedDDD;
     std::array<std::vector<double>, 3> vCombined;
@@ -977,6 +986,8 @@ class PartialQuarry : public HasSession
 
     // replicates.h
     bool setFlatValues( );
+    // replicates.h
+    bool setPloidyValues( );
     // replicates.h
     bool setFlatDecay( );
     // replicates.h
