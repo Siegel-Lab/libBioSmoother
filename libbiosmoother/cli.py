@@ -164,7 +164,7 @@ def benchmark_runtime_smoother(args):
 
 
 def ploidy_smoother(args):
-    Quarry(args.index_prefix).set_plody_list(args.ploidy_file)
+    Quarry(args.index_prefix).set_ploidy_list(args.ploidy_file)
 
 
 def add_parsers(main_parser):

@@ -28,7 +28,7 @@ struct ChromDesc
     size_t uiLength;
     size_t uiId;
     size_t uiPloidyId;
-    std::string sPloidyGroupId;
+    size_t uiPloidyGroupId;
 };
 
 struct IndexCoord
@@ -79,7 +79,7 @@ struct AxisRegion : AxisCoord
     size_t uiNumCoords;
 };
 
-struct BinCoordBase
+struct BinCoordBase // @todo @continue_here this should carry the ploidy Id as well as the normal id
 {
     size_t uiChromosomeX = std::numeric_limits<size_t>::max( );
     size_t uiChromosomeY = std::numeric_limits<size_t>::max( );
@@ -775,7 +775,6 @@ class PartialQuarry : public HasSession
     std::array<std::vector<std::array<double, 2>>, NUM_COORD_SYSTEMS> vvPloidyValues;
     std::array<std::vector<std::array<double, 2>>, NUM_COORD_SYSTEMS> vvFlatDecay;
     std::array<std::array<size_t, 2>, NUM_COORD_SYSTEMS> vvFlatTotal;
-    std::array<std::array<double, 2>, NUM_COORD_SYSTEMS> vvPloidyTotal;
     std::array<std::vector<std::array<double, 2>>, NUM_COORD_SYSTEMS> vvNormalized;
     std::array<std::vector<std::array<double, 2>>, NUM_COORD_SYSTEMS> vvNormalizedDDD;
     std::array<std::vector<double>, 3> vCombined;
@@ -984,6 +983,8 @@ class PartialQuarry : public HasSession
     // replicates.h
     double getMixedValue( double, double );
 
+    // replicates.h
+    double ploidyCorrect( size_t, const BinCoord& );
     // replicates.h
     bool setFlatValues( );
     // replicates.h

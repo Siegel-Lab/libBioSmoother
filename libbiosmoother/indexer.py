@@ -185,7 +185,7 @@ class Indexer:
                     self.append_session(["contigs", "list"], chr_name)
                     self.append_session(["contigs", "ploidy_list"], chr_name)
                     self.set_session(["contigs", "ploidy_map", chr_name], chr_name)
-                    self.set_session(["contigs", "ploidy_groups", chr_name], "1")
+                    self.set_session(["contigs", "ploidy_groups", chr_name], 1)
                     self.set_session(
                         ["contigs", "lengths", chr_name], int(chr_len) // dividend
                     )

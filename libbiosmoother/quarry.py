@@ -235,14 +235,14 @@ class Quarry(PartialQuarry):
         # trigger the cpp copy constructor
         return Quarry(super(PartialQuarry, self))
 
-    def set_plody_list(self, ploidy_file):
+    def set_ploidy_list(self, ploidy_file):
         ploidy_map = {}
         ploidy_list = []
         ploidy_groups = {}
         group_count = 1
         with open(ploidy_file, "r") as len_file:
             for line in len_file:
-                line = line.strip()
+                line = line[:-1].strip()
                 # if whole line is '-'
                 if all(c == "-" for c in line):
                     group_count += 1
@@ -265,7 +265,7 @@ class Quarry(PartialQuarry):
                         continue
                     ploidy_map[chr_to] = chr_from
                     ploidy_list.append(chr_to)
-                    ploidy_groups[chr_to] = str(group_count)
+                    ploidy_groups[chr_to] = group_count
         self.set_value(["contigs", "list"], ploidy_list)
         self.set_value(["contigs", "displayed_on_x"], ploidy_list)
         self.set_value(["contigs", "displayed_on_y"], ploidy_list)

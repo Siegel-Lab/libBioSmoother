@@ -47,7 +47,7 @@ bool PartialQuarry::setDatasetIdPerRepl( )
     for( const std::string& sRep : vActiveReplicates )
         vvDatasetIdsPerReplAndChr.push_back(
             getValue<size_t>( { "replicates", "by_name", sRep, "first_dataset_id" } ) );
-    uiContigListSize = getValue<json>( { "contigs", "list" } ).size( );
+    uiContigListSize = getValue<json>( { "contigs", "ploidy_list" } ).size( );
     END_RETURN;
 }
 
@@ -129,10 +129,10 @@ bool PartialQuarry::setBinValues( )
                 {
                     if( vCoords[ uiI ].uiChromosomeX != std::numeric_limits<size_t>::max( ) )
                     {
-                        size_t iDataSetId =
-                            getDatasetIdfromReplAndChr( uiRepl,
-                                                        vActiveChromosomes[ 0 ][ vCoords[ uiI ].uiChromosomeX ].uiId,
-                                                        vActiveChromosomes[ 1 ][ vCoords[ uiI ].uiChromosomeY ].uiId );
+                        size_t iDataSetId = getDatasetIdfromReplAndChr(
+                            uiRepl,
+                            vActiveChromosomes[ 0 ][ vCoords[ uiI ].uiChromosomeX ].uiPloidyId,
+                            vActiveChromosomes[ 1 ][ vCoords[ uiI ].uiChromosomeY ].uiPloidyId );
                         vVals[ uiI ] =
                             pIndices->count( iDataSetId,
                                              { vCoords[ uiI ].uiIndexY, vCoords[ uiI ].uiIndexX, uiMapQMin,
@@ -191,10 +191,10 @@ bool PartialQuarry::setDecayValues( )
                     if( vCoords[ uiI ].uiChromosomeX != std::numeric_limits<size_t>::max( ) &&
                         vCoords[ uiI ].uiChromosomeY != std::numeric_limits<size_t>::max( ) )
                     {
-                        size_t iDataSetId =
-                            getDatasetIdfromReplAndChr( uiRepl,
-                                                        vActiveChromosomes[ 0 ][ vCoords[ uiI ].uiChromosomeX ].uiId,
-                                                        vActiveChromosomes[ 1 ][ vCoords[ uiI ].uiChromosomeY ].uiId );
+                        size_t iDataSetId = getDatasetIdfromReplAndChr(
+                            uiRepl,
+                            vActiveChromosomes[ 0 ][ vCoords[ uiI ].uiChromosomeX ].uiPloidyId,
+                            vActiveChromosomes[ 1 ][ vCoords[ uiI ].uiChromosomeY ].uiPloidyId );
 
                         int64_t iChrX = vActiveChromosomes[ 0 ][ vCoords[ uiI ].uiChromosomeX ].uiLength;
                         int64_t iChrY = vActiveChromosomes[ 1 ][ vCoords[ uiI ].uiChromosomeY ].uiLength;
@@ -431,50 +431,31 @@ bool PartialQuarry::setFlatValues( )
     END_RETURN;
 }
 
-double ploidyCorrect(size_t uiVal, const BinCoord& rxPos) // @todo @continue_here ploidy division & integrate in graph
+double PartialQuarry::ploidyCorrect( size_t uiVal, const BinCoord& rxPos )
 {
-    return ((double)uiVal) / ((double) this->vPloidyCounts[rxPos.uiPloidyIdX+rxPos.uiPloidyIdY*uiFullContigListSize]);
+    if( this->vPloidyCounts[ rxPos.uiId + rxPos.uiYAxisIdx * uiFullContigListSize ] == 0 )
+        return 0;
+    return ( (double)uiVal ) /
+           ( (double)this->vPloidyCounts[ rxPos.uiXAxisIdx + rxPos.uiYAxisIdx * uiFullContigListSize ] );
 }
 
-bool PartialQuarry::setPloidyValues( ) // @todo @continue_here ploidy division & integrate in graph
+bool PartialQuarry::setPloidyValues( )
 {
     for( size_t uiY = 0; uiY < NUM_COORD_SYSTEMS; uiY++ )
     {
-        vvFlatValues[ uiY ].clear( );
+        vvPloidyValues[ uiY ].clear( );
 
-        if( vvBinValues[ uiY ].size( ) > 0 )
+        if( vvFlatValues[ uiY ].size( ) > 0 )
         {
             // take size from fst replicate (sizes are equal anyways)
-            vvFlatValues[ uiY ].reserve( vvBinValues[ uiY ][ 0 ].size( ) );
+            vvPloidyValues[ uiY ].reserve( vvFlatValues[ uiY ][ 0 ].size( ) );
 
             for( size_t uiI = 0; uiI < vBinCoordsIce[ uiY ].size( ); uiI++ )
             {
-                vvFlatValues[ uiY ].push_back( { 0, 0 } );
-                for( size_t uiJ = 0; uiJ < 2; uiJ++ )
-                {
-                    std::vector<size_t> vCollected;
-                    vCollected.reserve( vInGroup[ uiJ ].size( ) );
-                    for( size_t uiX : vInGroup[ uiJ ] )
-                    {
-                        CANCEL_RETURN;
-                        vCollected.push_back( vvBinValues[ uiY ][ uiX ][ uiI ] );
-                    }
-
-                    vvFlatValues[ uiY ].back( )[ uiJ ] = getFlatValue( vCollected );
-                }
-            }
-
-            for( size_t uiJ = 0; uiJ < 2; uiJ++ )
-            {
-                std::vector<size_t> vCollected;
-                vCollected.reserve( vInGroup[ uiJ ].size( ) );
-                for( size_t uiX : vInGroup[ uiJ ] )
-                {
-                    CANCEL_RETURN;
-                    vCollected.push_back( vActiveReplicatesTotal[ uiX ] );
-                }
-
-                vvFlatTotal[ uiY ][ uiJ ] = getFlatValue( vCollected );
+                vvPloidyValues[ uiY ].push_back( {
+                    ploidyCorrect( vvFlatValues[ uiY ][ uiI ][ 0 ], vBinCoordsIce[ uiY ][ uiI ][ 0 ] ),
+                    ploidyCorrect( vvFlatValues[ uiY ][ uiI ][ 1 ], vBinCoordsIce[ uiY ][ uiI ][ 1 ] ),
+                } );
             }
         }
     }
@@ -590,7 +571,7 @@ void PartialQuarry::regReplicates( )
                                /*.fFunc=*/&PartialQuarry::setDatasetIdPerRepl,
                                /*.vIncomingFunctions =*/{ NodeNames::ActiveReplicates, NodeNames::ActiveChrom },
                                /*.vIncomingSession =*/{ { "replicates", "by_name" } },
-                               /*.vSessionsIncomingInPrevious =*/{ { "contigs", "list" } },
+                               /*.vSessionsIncomingInPrevious =*/{ { "contigs", "ploidy_list" } },
                                /*bHidden =*/true } );
 
     registerNode( NodeNames::IntersectionType,
@@ -649,6 +630,14 @@ void PartialQuarry::regReplicates( )
                   ComputeNode{ /*.sNodeName =*/"flat_bins",
                                /*.fFunc=*/&PartialQuarry::setFlatValues,
                                /*.vIncomingFunctions =*/{ NodeNames::BinValues, NodeNames::InGroup },
+                               /*.vIncomingSession =*/{ },
+                               /*.vSessionsIncomingInPrevious =*/{ },
+                               /*bHidden =*/false } );
+
+    registerNode( NodeNames::PloidyValues,
+                  ComputeNode{ /*.sNodeName =*/"ploidy_corr",
+                               /*.fFunc=*/&PartialQuarry::setPloidyValues,
+                               /*.vIncomingFunctions =*/{ NodeNames::FlatValues },
                                /*.vIncomingSession =*/{ },
                                /*.vSessionsIncomingInPrevious =*/{ },
                                /*bHidden =*/false } );

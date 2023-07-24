@@ -343,7 +343,7 @@ bool PartialQuarry::getSamples( const GetSamplesMode& rMode, const size_t uiNumS
             {
                 case GetSamplesMode::OneAnnotation:
                     vChromIdForSampleIdx.emplace_back( uiMaxSamples, uiI );
-                    uiMaxSamples += pIndices->vAnno.numIntervals( uiFistAnnoIdx + rActiveChrom.uiId );
+                    uiMaxSamples += pIndices->vAnno.numIntervals( uiFistAnnoIdx + rActiveChrom.uiPloidyId );
                     break;
                 case GetSamplesMode::Bins:
                     vChromIdForSampleIdx.emplace_back( uiMaxSamples, uiI );
@@ -377,7 +377,7 @@ bool PartialQuarry::getSamples( const GetSamplesMode& rMode, const size_t uiNumS
         assert( rIt != vChromIdForSampleIdx.begin( ) );
         const size_t uiChrom = ( rIt - 1 )->second;
 
-        const size_t uiChr = this->vActiveChromosomes[ uiColumn ][ uiChrom ].uiId;
+        const size_t uiChr = this->vActiveChromosomes[ uiColumn ][ uiChrom ].uiPloidyId;
 
         switch( rMode )
         {
@@ -389,17 +389,21 @@ bool PartialQuarry::getSamples( const GetSamplesMode& rMode, const size_t uiNumS
                     const size_t uiAnnoStart = rIntervalIt->uiAnnoStart / uiDividend;
                     const size_t uiAnnoEnd = std::max( uiAnnoStart + 1, rIntervalIt->uiAnnoEnd / uiDividend );
                     vSeenDescIds.insert( uiDescId );
-                    rOut.push_back( AnnoCoord{ /*{*/ /*.uiChromosome =*/uiChrom, /*.uiIndexPos =*/uiAnnoStart,
-                                               /*.uiIndexSize =*/uiAnnoEnd - uiAnnoStart /*}*/,
-                                               /*.uiAnnoId =*/uiVal } );
+                    rOut.push_back(
+                        AnnoCoord{ /*{*/ /*.uiChromosome =*/uiChrom, /*.uiIndexPos =*/uiAnnoStart,
+                                   /*.uiIndexSize =*/uiAnnoEnd - uiAnnoStart,
+                                   /* .uiPloidyId =*/this->vActiveChromosomes[ uiColumn ][ uiChrom ].uiPloidyId, /*}*/
+                                   /*.uiAnnoId =*/uiVal } );
                 }
                 break;
             }
             case GetSamplesMode::Bins:
-                rOut.push_back( AnnoCoord{ /*{*/ /*.uiChromosome =*/uiChrom,
-                                           /*.uiIndexPos =*/( uiVal - ( rIt - 1 )->first ) * uiBinSize,
-                                           /*.uiIndexSize =*/uiBinSize /*}*/,
-                                           /*.uiAnnoId =*/0 } );
+                rOut.push_back(
+                    AnnoCoord{ /*{*/ /*.uiChromosome =*/uiChrom,
+                               /*.uiIndexPos =*/( uiVal - ( rIt - 1 )->first ) * uiBinSize,
+                               /*.uiIndexSize =*/uiBinSize,
+                               /* .uiPloidyId =*/this->vActiveChromosomes[ uiColumn ][ uiChrom ].uiPloidyId, /*}*/
+                               /*.uiAnnoId =*/0 } );
                 break;
 
                 // case GetSamplesMode::BinnedAnno:
@@ -536,8 +540,9 @@ bool PartialQuarry::setRadiclSeqCoverage( )
                     const size_t uiChrX = bAxisIsCol != bSymPart ? rAxis.uiChromosome : rSample.uiChromosome;
                     const size_t uiChrY = bAxisIsCol != bSymPart ? rSample.uiChromosome : rAxis.uiChromosome;
 
-                    size_t uiDataSetId = getDatasetIdfromReplAndChr( uiRepl, vActiveChromosomes[ 0 ][ uiChrX ].uiId,
-                                                                     vActiveChromosomes[ 1 ][ uiChrY ].uiId );
+                    size_t uiDataSetId =
+                        getDatasetIdfromReplAndChr( uiRepl, vActiveChromosomes[ 0 ][ uiChrX ].uiPloidyId,
+                                                    vActiveChromosomes[ 1 ][ uiChrY ].uiPloidyId );
 
                     const size_t uiXMin = bAxisIsCol != bSymPart ? rAxis.uiIndexPos : rSample.uiIndexPos;
                     const size_t uiXMax = bAxisIsCol != bSymPart ? rAxis.uiIndexPos + rAxis.uiIndexSize
@@ -712,8 +717,8 @@ bool PartialQuarry::setRnaAssociatedBackground( )
                         }
                         size_t iDataSetId =
                             getDatasetIdfromReplAndChr( uiRepl,
-                                                        vActiveChromosomes[ bAxisIsCol ? 0 : 1 ][ uiChrX ].uiId,
-                                                        vActiveChromosomes[ bAxisIsCol ? 1 : 0 ][ uiChrY ].uiId );
+                                                        vActiveChromosomes[ bAxisIsCol ? 0 : 1 ][ uiChrX ].uiPloidyId,
+                                                        vActiveChromosomes[ bAxisIsCol ? 1 : 0 ][ uiChrY ].uiPloidyId );
 
                         vBackgroundGridSeq.back( ) += pIndices->count(
                             iDataSetId,
@@ -1047,8 +1052,8 @@ bool PartialQuarry::setDistDepDecayRemoved( )
     {
         for( size_t uiY = 0; uiY < NUM_COORD_SYSTEMS; uiY++ )
         {
-            vvNormalizedDDD[ uiY ].resize( vvFlatValues[ uiY ].size( ) );
-            assert( vBinCoordsIce[ uiY ].size( ) <= vvFlatValues[ uiY ].size( ) );
+            vvNormalizedDDD[ uiY ].resize( vvPloidyValues[ uiY ].size( ) );
+            assert( vBinCoordsIce[ uiY ].size( ) <= vvPloidyValues[ uiY ].size( ) );
             for( size_t uiI = 0; uiI < vBinCoordsIce[ uiY ].size( ); uiI++ )
                 for( size_t uiJ = 0; uiJ < 2; uiJ++ )
                     if( vBinCoordsIce[ uiY ][ uiI ][ uiJ ].uiDecayCoordIndex != std::numeric_limits<size_t>::max( ) )
@@ -1056,7 +1061,7 @@ bool PartialQuarry::setDistDepDecayRemoved( )
                         CANCEL_RETURN;
                         if( vvFlatDecay[ uiY ][ vBinCoordsIce[ 0 ][ uiI ][ uiJ ].uiDecayCoordIndex ][ uiJ ] > 0 )
                             vvNormalizedDDD[ uiY ][ uiI ][ uiJ ] =
-                                (double)vvFlatValues[ uiY ][ uiI ][ uiJ ] /
+                                (double)vvPloidyValues[ uiY ][ uiI ][ uiJ ] /
                                 (double)vvFlatDecay[ uiY ][ vBinCoordsIce[ 0 ][ uiI ][ uiJ ].uiDecayCoordIndex ][ uiJ ];
                         else
                             vvNormalizedDDD[ uiY ][ uiI ][ uiJ ] = 0;
@@ -1066,10 +1071,10 @@ bool PartialQuarry::setDistDepDecayRemoved( )
     else
         for( size_t uiY = 0; uiY < 3; uiY++ )
         {
-            vvNormalizedDDD[ uiY ].resize( vvFlatValues[ uiY ].size( ) );
+            vvNormalizedDDD[ uiY ].resize( vvPloidyValues[ uiY ].size( ) );
             for( size_t uiI = 0; uiI < vBinCoordsIce[ uiY ].size( ); uiI++ )
                 for( size_t uiJ = 0; uiJ < 2; uiJ++ )
-                    vvNormalizedDDD[ uiY ][ uiI ][ uiJ ] = (double)vvFlatValues[ uiY ][ uiI ][ uiJ ];
+                    vvNormalizedDDD[ uiY ][ uiI ][ uiJ ] = (double)vvPloidyValues[ uiY ][ uiI ][ uiJ ];
         }
     END_RETURN;
 }
@@ -1199,7 +1204,7 @@ void PartialQuarry::regNormalization( )
     registerNode( NodeNames::DistDepDecayRemoved,
                   ComputeNode{ /*.sNodeName =*/"dist_dep_dec_normalized_bins",
                                /*.fFunc =*/&PartialQuarry::setDistDepDecayRemoved,
-                               /*.vIncomingFunctions =*/{ NodeNames::FlatValues, NodeNames::FlatDecay },
+                               /*.vIncomingFunctions =*/{ NodeNames::PloidyValues, NodeNames::FlatDecay },
                                /*.vIncomingSession =*/{ },
                                /*.vSessionsIncomingInPrevious =*/{ { "settings", "normalization", "ddd" } },
                                /*bHidden =*/false } );

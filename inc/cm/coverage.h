@@ -54,7 +54,7 @@ size_t PartialQuarry::getMaxCoverageFromRepl( const size_t uiChromId, const size
     std::vector<std::tuple<size_t, int64_t, size_t, size_t>> vHeap;
     for( size_t uiI = 0; uiI < vActiveChromosomes[ bCol ? 1 : 0 ].size( ); uiI++ )
     {
-        size_t uiId = vActiveChromosomes[ bCol ? 1 : 0 ][ uiI ].uiId;
+        size_t uiId = vActiveChromosomes[ bCol ? 1 : 0 ][ uiI ].uiPloidyId;
         const size_t uiDatasetId = getDatasetIdfromReplAndChr( uiRepl, bCol != bSymPart ? uiChromId : uiId,
                                                                bCol != bSymPart ? uiId : uiChromId );
         if( uiDatasetId != std::numeric_limits<size_t>::max( ) )
@@ -91,9 +91,9 @@ size_t PartialQuarry::getMaxCoverageFromRepl( const AxisCoord& xCoords, const si
                                               size_t uiCoverageGetMaxBinSize, bool bCol, bool bSymPart )
 {
 
-    return getMaxCoverageFromRepl( vActiveChromosomes[ bCol ? 0 : 1 ][ xCoords.uiChromosome ].uiId, xCoords.uiIndexPos,
-                                   xCoords.uiIndexPos + xCoords.uiIndexSize, uiRep, uiCoverageGetMaxBinSize, bCol,
-                                   bSymPart );
+    return getMaxCoverageFromRepl( vActiveChromosomes[ bCol ? 0 : 1 ][ xCoords.uiChromosome ].uiPloidyId,
+                                   xCoords.uiIndexPos, xCoords.uiIndexPos + xCoords.uiIndexSize, uiRep,
+                                   uiCoverageGetMaxBinSize, bCol, bSymPart );
 }
 
 size_t PartialQuarry::getCoverageFromRepl( const size_t uiChromId, const size_t uiFrom, const size_t uiTo,
@@ -102,7 +102,7 @@ size_t PartialQuarry::getCoverageFromRepl( const size_t uiChromId, const size_t 
     size_t uiRet = 0;
     for( size_t uiI = 0; uiI < vActiveChromosomes[ bCol ? 1 : 0 ].size( ); uiI++ )
     {
-        size_t uiId = vActiveChromosomes[ bCol ? 1 : 0 ][ uiI ].uiId;
+        size_t uiId = vActiveChromosomes[ bCol ? 1 : 0 ][ uiI ].uiPloidyId;
         const size_t uiDatasetId = getDatasetIdfromReplAndChr( uiRepl, bCol != bSymPart ? uiChromId : uiId,
                                                                bCol != bSymPart ? uiId : uiChromId );
 
@@ -125,8 +125,8 @@ size_t PartialQuarry::getCoverageFromRepl( const size_t uiChromId, const size_t 
 }
 size_t PartialQuarry::getCoverageFromRepl( const AxisCoord& xCoords, const size_t uiRepl, bool bCol, bool bSymPart )
 {
-    return getCoverageFromRepl( vActiveChromosomes[ bCol ? 0 : 1 ][ xCoords.uiChromosome ].uiId, xCoords.uiIndexPos,
-                                xCoords.uiIndexPos + xCoords.uiIndexSize, uiRepl, bCol, bSymPart );
+    return getCoverageFromRepl( vActiveChromosomes[ bCol ? 0 : 1 ][ xCoords.uiChromosome ].uiPloidyId,
+                                xCoords.uiIndexPos, xCoords.uiIndexPos + xCoords.uiIndexSize, uiRepl, bCol, bSymPart );
 }
 
 bool PartialQuarry::setCoverageValues( )
@@ -153,7 +153,7 @@ bool PartialQuarry::setCoverageValues( )
                 {
                     CANCEL_RETURN;
 
-                    int64_t iDataSetId = uiFstDatasetId + vActiveChromosomes[ uiJ ][ xCoords.uiChromosome ].uiId;
+                    int64_t iDataSetId = uiFstDatasetId + vActiveChromosomes[ uiJ ][ xCoords.uiChromosome ].uiPloidyId;
                     uiVal = pIndices->count(
                         iDataSetId,
                         { xCoords.uiIndexPos, 0, uiMapQMin, uiFromAnnoFilter[ uiJ ], ui1DFromStrandFilter, 0 },
@@ -816,7 +816,7 @@ bool PartialQuarry::setRankedSlicesCDS( )
 
             const AnnoCoord& rSample = vGridSeqSamples[ vSorted[ uiI ][ uiX ] ];
             const std::string& sChromName = this->vActiveChromosomes[ 0 ][ rSample.uiChromosome ].sName;
-            const size_t uiChromId = this->vActiveChromosomes[ 0 ][ rSample.uiChromosome ].uiId;
+            const size_t uiChromId = this->vActiveChromosomes[ 0 ][ rSample.uiChromosome ].uiPloidyId;
 
             const auto rIntervalIt = pIndices->vAnno.get( uiFistAnnoIdx + uiChromId, rSample.uiAnnoId );
 

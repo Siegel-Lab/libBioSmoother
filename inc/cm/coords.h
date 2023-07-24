@@ -36,7 +36,6 @@ axisCoordsHelper( size_t uiBinSize, size_t uiScreenStartPos, size_t uiScreenEndP
     vRet.reserve( 2 * ( uiScreenEndPos - uiScreenStartPos ) / uiBinSize );
     size_t uiCurrScreenPos = uiScreenStartPos;
     size_t uiChromosomeStartPos = 0;
-    size_t uiChr = 0;
     for( size_t uiI = 0; uiI < vChromosomes.size( ); uiI++ )
     {
         size_t uiChromosomeEndPos = uiChromosomeStartPos + vChromosomes[ uiI ].uiLength;
@@ -92,14 +91,14 @@ axisCoordsHelper( size_t uiBinSize, size_t uiScreenStartPos, size_t uiScreenEndP
             }
             if( bAddBin )
                 vRet.push_back( AxisCoord{ //{
-                                           /* .uiChromosome =*/uiI, //
+                                           /* .uiChromosome =*/vChromosomes[ uiI ].uiId, //
                                            /* .uiIndexPos =*/uiIndexPos, //
                                            /* .uiIndexSize =*/uiCurrBinSize, //
-                                           /* .uiPloidyId =*/vChromosomes[uiI].uiPloidyId, //
-                                           //},
+                                           /* .uiPloidyId =*/vChromosomes[ uiI ].uiPloidyId, //
+                                                                                             //},
                                            /*.uiScreenPos =*/uiCurrScreenPos, //
                                            /*.uiScreenSize =*/uiCurrBinSize, //
-                                           /*.uiRegionIdx =*/uiChr, //
+                                           /*.uiRegionIdx =*/uiI, //
                                            /*.uiIdx =*/vRet.size( ) } );
             bool bIncScreenPos;
             switch( iSmallerBins )
@@ -129,14 +128,14 @@ axisCoordsHelper( size_t uiBinSize, size_t uiScreenStartPos, size_t uiScreenEndP
             vRet2.push_back( AxisRegion{
                 //{
                 // {
-                /*  .uiChromosome =*/uiI, //
+                /*  .uiChromosome =*/vChromosomes[ uiI ].uiId, //
                 /*  .uiIndexPos =*/uiStartChromPos, //
                 /*  .uiIndexSize =*/uiItrEndPos - uiStartChromPos, //
-                /*  .uiPloidyId =*/vChromosomes[uiI].uiPloidyId, //
+                /*  .uiPloidyId =*/vChromosomes[ uiI ].uiPloidyId, //
                 // },
                 /* .uiScreenPos =*/uiStartScreenPos, //
                 /* .uiScreenSize =*/uiCurrScreenPos - uiStartScreenPos, //
-                /* .uiRegionIdx =*/uiChr, //
+                /* .uiRegionIdx =*/uiI, //
                 /* .uiIdx =*/vRet2.size( ), //
                 //},
                 /*.uiCoordStartIdx =*/uiStartIdx, //
@@ -152,7 +151,6 @@ axisCoordsHelper( size_t uiBinSize, size_t uiScreenStartPos, size_t uiScreenEndP
 
         if( uiScreenEndPos <= uiChromosomeStartPos )
             break;
-        ++uiChr;
     }
 
     return std::make_pair( vRet, vRet2 );
@@ -188,7 +186,6 @@ annoCoordsHelper( size_t uiBinSize, size_t uiScreenStartPos, size_t uiScreenEndP
     vRet.reserve( 2 * ( uiScreenEndPos - uiScreenStartPos ) / uiBinSize );
     size_t uiCurrScreenPos = uiScreenStartPos;
     size_t uiChromosomeStartPos = 0;
-    size_t uiChr = 0;
     for( size_t uiI = 0; uiI < vChromosomes.size( ); uiI++ )
     {
         if( bCancel )
@@ -333,14 +330,14 @@ annoCoordsHelper( size_t uiBinSize, size_t uiScreenStartPos, size_t uiScreenEndP
 
                 vRet.push_back( AxisCoord{
                     /*{*/
-                    /* .uiChromosome =*/uiI, //
+                    /* .uiChromosome =*/vChromosomes[ uiI ].uiId, //
                     /* .uiIndexPos =*/uiIndexPos, //
                     /* .uiIndexSize =*/uiCurrIndexSize, //
-                    /* .uiPloidyId =*/vChromosomes[uiI].uiPloidyId, //
+                    /* .uiPloidyId =*/vChromosomes[ uiI ].uiPloidyId, //
                     /*},*/
                     /*.uiScreenPos =*/uiCurrScreenPos, //
                     /*.uiScreenSize =*/uiCurrScreenSize, //
-                    /*.uiRegionIdx =*/uiChr, //
+                    /*.uiRegionIdx =*/uiI, //
                     /*.uiIdx =*/vRet.size( ), //
                 } );
                 if( iAnnoInMultipleBins != 2 && vRet2.size( ) > 0 && vRet2.back( ).uiChromosome == uiI &&
@@ -355,14 +352,14 @@ annoCoordsHelper( size_t uiBinSize, size_t uiScreenStartPos, size_t uiScreenEndP
                     vRet2.push_back( AxisRegion{
                         /*{*/
                         /* {*/
-                        /*  .uiChromosome =*/uiI, //
+                        /*  .uiChromosome =*/vChromosomes[ uiI ].uiId, //
                         /*  .uiIndexPos =*/uiIndexPos, //
                         /*  .uiIndexSize =*/uiCurrIndexSize, //
-                        /* .uiPloidyId =*/vChromosomes[uiI].uiPloidyId, //
+                        /* .uiPloidyId =*/vChromosomes[ uiI ].uiPloidyId, //
                         /* },*/
                         /* .uiScreenPos =*/uiCurrScreenPos, //
                         /* .uiScreenSize =*/uiCurrScreenSize, //
-                        /* .uiRegionIdx =*/uiChr, //
+                        /* .uiRegionIdx =*/uiI, //
                         /* .uiIdx =*/vRet2.size( ), //
                         /*},*/
                         /*.uiCoordStartIdx =*/vRet.size( ) - 1, //
@@ -391,7 +388,6 @@ annoCoordsHelper( size_t uiBinSize, size_t uiScreenStartPos, size_t uiScreenEndP
                 }
             }
         }
-        ++uiChr;
         uiChromosomeStartPos += uiChromSize;
     }
 
@@ -411,23 +407,28 @@ size_t multiple_anno( std::string sVal )
     throw std::logic_error( "unknown multiple_annos_in_bin value" );
 }
 
-std::vector<ChromDesc> activeChromList( json xChromLen, json xChromDisp, const std::vector<std::string>& xChromOrder,
-                                        const json xPloidyMap, const json xPloidyGroups )
+std::vector<ChromDesc> activeChromList( std::map<std::string, size_t>& xChromLen,  
+                                        const std::vector<std::string>& xChromDisp,
+                                        const std::vector<std::string>& xPloidyOrder,
+                                        const std::vector<std::string>& xChromOrder,
+                                        std::map<std::string, std::string>& xPloidyMap,
+                                        std::map<std::string, size_t>& xPloidyGroups )
 {
     std::vector<ChromDesc> vRet;
     vRet.reserve( xChromDisp.size( ) );
-    for( auto& xChrom : xChromDisp )
+    for( const std::string& sReadableName : xChromDisp )
     {
-        std::string sReadableName = xChrom.get<std::string>( );
         const std::string sDatasetName = xPloidyMap[ sReadableName ];
+        size_t uiPloidyId =
+            (size_t)( std::find( xPloidyOrder.begin( ), xPloidyOrder.end( ), sDatasetName ) - xPloidyOrder.begin( ) );
         size_t uiIdx =
-            (size_t)( std::find( xChromOrder.begin( ), xChromOrder.end( ), sDatasetName ) - xChromOrder.begin( ) );
+            (size_t)( std::find( xChromOrder.begin( ), xChromOrder.end( ), sReadableName ) - xChromOrder.begin( ) );
         vRet.emplace_back( ChromDesc{ /*.sName =*/sReadableName,
-                                      /*.uiUnadjustedLength =*/xChromLen[ sDatasetName ].get<size_t>( ),
+                                      /*.uiUnadjustedLength =*/xChromLen[ sDatasetName ],
                                       /*uiLength =*/0,
                                       /*uiId = */ uiIdx,
-                                      /*uiPloidyId = */ vRet.size(),
-                                      /*sPloidyGroupId = */xPloidyGroups[sDatasetName] } );
+                                      /*uiPloidyId = */ uiPloidyId,
+                                      /*uiPloidyGroupId = */ xPloidyGroups[ sReadableName ] } );
     }
     return vRet;
 }
@@ -436,7 +437,7 @@ bool PartialQuarry::setLCS( )
 {
     uiLogestCommonSuffix = 0;
 
-    if( getValue<json>( { "contigs", "list" } ).size( ) > 1 )
+    if( getValue<json>( { "contigs", "ploidy_list" } ).size( ) > 1 )
     {
         char cLast = '_';
         bool bContinue = true;
@@ -444,7 +445,7 @@ bool PartialQuarry::setLCS( )
         {
             ++uiLogestCommonSuffix;
             bool bFirst = true;
-            for( auto& rChr : getValue<json>( { "contigs", "list" } ) )
+            for( auto& rChr : getValue<json>( { "contigs", "ploidy_list" } ) )
             {
                 CANCEL_RETURN;
                 std::string sChr = rChr.get<std::string>( );
@@ -498,7 +499,7 @@ bool PartialQuarry::setCanvasSize( )
             {
                 CANCEL_RETURN;
 
-                size_t iDataSetId = uiFistAnnoIdx + xChr.uiId;
+                size_t iDataSetId = uiFistAnnoIdx + xChr.uiPloidyId;
 
                 switch( iAnnoInMultipleBins )
                 {
@@ -548,7 +549,7 @@ bool PartialQuarry::setTicks( )
                 uiRunningStart += rDesc.uiLength;
             else
             {
-                size_t iDataSetId = uiFistAnnoIdx + rDesc.uiId;
+                size_t iDataSetId = uiFistAnnoIdx + rDesc.uiPloidyId;
                 if( bSqueeze )
                     uiRunningStart += pIndices->vAnno.numIntervals( iDataSetId );
                 else
@@ -658,28 +659,27 @@ const std::array<size_t, 2> PartialQuarry::getCanvasSize( const std::function<vo
     return vCanvasSize;
 }
 
-template<typename T>
-bool set_overlap(const std::set<T>& rA, const std::set<T>& rB)
+template <typename T> bool set_overlap( const std::set<T>& rA, const std::set<T>& rB )
 {
-    for (const auto& rVal : rA)
-        if (rB.find(rVal) != rB.end())
+    for( const auto& rVal : rA )
+        if( rB.find( rVal ) != rB.end( ) )
             return true;
     return false;
 }
 
-bool ploidyValid(const ChromDesc& rA, const ChromDesc& rB, std::map<size_t, std::set<std::string>> vBaseToGroup)
+bool ploidyValid( const ChromDesc& rA, const ChromDesc& rB, std::map<size_t, std::set<size_t>> vActualToGroup )
 {
-    // interactions within the same base contig but from different ploidy normalized contigs are never considered
-    if(rA.uiId == rB.uiId && rA.uiPloidyId != rB.uiPloidyId)
+    // interactions within the same actual contig but from different ploidy corrected contigs are never considered
+    if( rA.uiPloidyId == rB.uiPloidyId && rA.uiId != rB.uiId )
         return false;
     // interactions within the same group are always considered
     // this also catches all cis interactions (as these are within the same group)
-    if(rA.sPloidyGroupId == rB.sPloidyGroupId)
+    if( rA.uiPloidyGroupId == rB.uiPloidyGroupId )
         return true;
 
     // interactions that are from contigs that do not share any groups
-    if (!set_overlap(vBaseToGroup[rA.uiId], vBaseToGroup[rB.uiId]))
-        return true;
+    //if( !set_overlap( vActualToGroup[ rA.uiId ], vActualToGroup[ rB.uiId ] ) )
+    //    return true;
 
     return false;
 }
@@ -687,52 +687,50 @@ bool ploidyValid(const ChromDesc& rA, const ChromDesc& rB, std::map<size_t, std:
 bool PartialQuarry::setActiveChrom( )
 {
     auto vPloidyList = getValue<std::vector<std::string>>( { "contigs", "ploidy_list" } );
-    auto xPoidyMap = getValue<json>( { "contigs", "ploidy_map" } );
-    auto xPloidyGroups = getValue<json>( { "contigs", "ploidy_groups" } );
+    auto vList = getValue<std::vector<std::string>>( { "contigs", "list" } );
+    auto xPloidyMap = getValue<std::map<std::string, std::string>>( { "contigs", "ploidy_map" } );
+    auto xPloidyGroups = getValue<std::map<std::string, size_t>>( { "contigs", "ploidy_groups" } );
+    auto vLengths = getValue<std::map<std::string, size_t>>( { "contigs", "lengths" } );
     for( bool bX : { true, false } )
-        this->vActiveChromosomes[ bX ? 0 : 1 ] =
-            activeChromList( getValue<json>( { "contigs", "lengths" } ),
-                             getValue<json>( { "contigs", bX ? "displayed_on_x" : "displayed_on_y" } ), vPloidyList,
-                             xPoidyMap, xPloidyCounts, xPloidyGroups );
-    
-    std::vector<ChromDesc> vFullChromosomeList = activeChromList( getValue<json>( { "contigs", "lengths" } ),
-                             getValue<json>( { "contigs", "list" } ), vPloidyList,
-                             xPoidyMap, xPloidyCounts, xPloidyGroups );
+        this->vActiveChromosomes[ bX ? 0 : 1 ] = activeChromList(
+            vLengths, getValue<std::vector<std::string>>( { "contigs", bX ? "displayed_on_x" : "displayed_on_y" } ),
+            vPloidyList, vList, xPloidyMap, xPloidyGroups );
+
+    std::vector<ChromDesc> vFullChromosomeList =
+        activeChromList( vLengths, vList, vPloidyList, vList, xPloidyMap, xPloidyGroups );
     // compute ploidy counts
-    this->vPloidyCounts.clear();
-    uiFullContigListSize = vFullChromosomeList.size();
-    this->vPloidyCounts.resize( vFullChromosomeList.size( ) * vFullChromosomeList.size( ) );
-    std::vector<size_t> vBaseContigs;
-    std::map<size_t, std::set<std::string>> vBaseToGroup;
-    std::map<size_t, std::vector<size_t>> vBaseToActual;
-    vBaseToGroup.reserve(vFullChromosomeList.size());
-    vBaseContigs.reserve(vFullChromosomeList.size());
-    for(auto& rChr : vFullChromosomeList)
+    this->vPloidyCounts.clear( );
+    uiFullContigListSize = vFullChromosomeList.size( );
+    this->vPloidyCounts.resize( uiFullContigListSize * uiFullContigListSize );
+    std::set<size_t> vBaseContigs;
+    std::map<size_t, std::set<size_t>> vActualToGroup;
+    std::map<size_t, std::vector<size_t>> vActualToCorrected;
+    for( auto& rChr : vFullChromosomeList )
     {
-        vBaseToGroup[rChr.uiId].add(rChr.sPloidyGroupId);
-        vBaseToActual[rChr.uiId].push_back(rChr.uiPloidyId);
-        vBaseContigs.push_back(rChr.uiId);
+        vActualToGroup[ rChr.uiId ].insert( rChr.uiPloidyGroupId );
+        vActualToCorrected[ rChr.uiPloidyId ].push_back( rChr.uiId );
+        vBaseContigs.insert( rChr.uiPloidyId );
     }
-    for(size_t uiX : vBaseContigs)
-        for(size_t uiY : vBaseContigs)
+    for( size_t uiX : vBaseContigs )
+        for( size_t uiY : vBaseContigs )
         {
             size_t uiValidSpots = 0;
-            for(size_t uiXAct : vBaseToActual[uiX])
-                for(size_t uiYAct : vBaseToActual[uiY])
-                    if(ploidyValid(vFullChromosomeList[uiXAct], vFullChromosomeList[uiYAct], vBaseToGroup))
+            for( size_t uiXAct : vActualToCorrected[ uiX ] )
+                for( size_t uiYAct : vActualToCorrected[ uiY ] )
+                    if( ploidyValid( vFullChromosomeList[ uiXAct ], vFullChromosomeList[ uiYAct ], vActualToGroup ) )
                         uiValidSpots += 1;
 
-            for(size_t uiXAct : vBaseToActual[uiX])
-                for(size_t uiYAct : vBaseToActual[uiY])
+            for( size_t uiXAct : vActualToCorrected[ uiX ] )
+                for( size_t uiYAct : vActualToCorrected[ uiY ] )
                 {
-                    size_t uiIdx = uiXAct + uiYAct * vFullChromosomeList.size();
-                    if(ploidyValid(vFullChromosomeList[uiXAct], vFullChromosomeList[uiYAct], vBaseToGroup))
-                        this->vPloidyCounts[uiIdx] = uiValidSpots;
+                    size_t uiIdx = uiXAct + uiYAct * uiFullContigListSize;
+                    if( ploidyValid( vFullChromosomeList[ uiXAct ], vFullChromosomeList[ uiYAct ], vActualToGroup ) )
+                        this->vPloidyCounts[ uiIdx ] = uiValidSpots;
                     else
-                        this->vPloidyCounts[uiIdx] = 0;
+                        this->vPloidyCounts[ uiIdx ] = 0;
                 }
         }
-    
+
     END_RETURN;
 }
 
@@ -990,7 +988,7 @@ template <typename out_t, typename in_t> const out_t makeAsymBin( const in_t& xX
                                 /*.uiYAxisIdx =*/xY.uiIdx,
 
                                 /*.uiPloidyIdX =*/xX.uiPloidyId,
-                                /*.uiPloidyIdY =*/xY.uiPloidyId  } };
+                                /*.uiPloidyIdY =*/xY.uiPloidyId } };
 }
 
 template <typename out_t, typename in_t>
@@ -1428,7 +1426,7 @@ void PartialQuarry::regCoords( )
                   ComputeNode{ /*.sNodeName =*/"longest_common_substring",
                                /*.fFunc =*/&PartialQuarry::setLCS,
                                /*.vIncomingFunctions =*/{ },
-                               /*.vIncomingSession =*/{ { "contigs", "list" } },
+                               /*.vIncomingSession =*/{ { "contigs", "ploidy_list" } },
                                /*.vSessionsIncomingInPrevious =*/{ },
                                /*bHidden =*/true } );
 
