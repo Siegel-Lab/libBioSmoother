@@ -82,6 +82,7 @@
             "spinner_min_restricted": true,
             "spinner_max_restricted": false
         },
+        "ploidy_correct": true,
         "grid_seq_annotation": "gene",
         "grid_seq_axis_is_column": true,
         "radicl_seq_axis_is_column": true,

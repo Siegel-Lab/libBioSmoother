@@ -239,6 +239,7 @@ class Quarry(PartialQuarry):
         ploidy_map = {}
         ploidy_list = []
         ploidy_groups = {}
+        curr_ploidy_group = set()
         group_count = 1
         with open(ploidy_file, "r") as len_file:
             for line in len_file:
@@ -247,6 +248,7 @@ class Quarry(PartialQuarry):
                     # if whole line is '-'
                     if all(c == "-" for c in line):
                         group_count += 1
+                        curr_ploidy_group = set()
                         continue
                     chr_from, chr_to = line.split()
                     if chr_to in ploidy_map:
@@ -263,9 +265,17 @@ class Quarry(PartialQuarry):
                             "does not occur in the dataset. It will be ignored.",
                         )
                         continue
+                    if chr_from in curr_ploidy_group:
+                        print(
+                            "WARNING: The source contig name",
+                            chr_from,
+                            "occurs multiple times in the same ploidy group. Is this really what you want?",
+                        )
+                        continue
                     ploidy_map[chr_to] = chr_from
                     ploidy_list.append(chr_to)
                     ploidy_groups[chr_to] = group_count
+                    curr_ploidy_group.add(chr_from)
         self.set_value(["contigs", "list"], ploidy_list)
         self.set_value(["contigs", "displayed_on_x"], ploidy_list)
         self.set_value(["contigs", "displayed_on_y"], ploidy_list)

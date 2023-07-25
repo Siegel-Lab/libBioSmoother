@@ -681,6 +681,7 @@ bool PartialQuarry::setActiveChrom( )
     auto xPloidyMap = getValue<std::map<std::string, std::string>>( { "contigs", "ploidy_map" } );
     auto xPloidyGroups = getValue<std::map<std::string, size_t>>( { "contigs", "ploidy_groups" } );
     auto vLengths = getValue<std::map<std::string, size_t>>( { "contigs", "lengths" } );
+    auto bCorrect = getValue<bool>( { "settings", "normalization", "ploidy_correct" } );
     for( bool bX : { true, false } )
         this->vActiveChromosomes[ bX ? 0 : 1 ] = activeChromList(
             vLengths, getValue<std::vector<std::string>>( { "contigs", bX ? "displayed_on_x" : "displayed_on_y" } ),
@@ -716,10 +717,10 @@ bool PartialQuarry::setActiveChrom( )
                 {
                     size_t uiIdx = uiXCorr + uiyCorr * uiFullContigListSize;
                     if( ploidyValid( vFullChromosomeList[ uiXCorr ], vFullChromosomeList[ uiyCorr ], 
-                                     vPloidy ) )
+                                     vPloidy ) && bCorrect )
                         this->vPloidyCounts[ uiIdx ] = uiValidSpots;
                     else
-                        this->vPloidyCounts[ uiIdx ] = 0;
+                        this->vPloidyCounts[ uiIdx ] = bCorrect ? 0 : 1;
                 }
         }
 
@@ -1441,7 +1442,8 @@ void PartialQuarry::regCoords( )
                                  { "contigs", "list" },
                                  { "contigs", "ploidy_list" },
                                  { "contigs", "ploidy_map" },
-                                 { "contigs", "ploidy_groups" } },
+                                 { "contigs", "ploidy_groups" },
+                                 { "settings", "normalization", "ploidy_correct" } },
                                /*.vSessionsIncomingInPrevious =*/{ },
                                /*bHidden =*/true } );
 
