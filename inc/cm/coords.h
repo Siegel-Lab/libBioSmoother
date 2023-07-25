@@ -663,37 +663,13 @@ const std::array<size_t, 2> PartialQuarry::getCanvasSize( const std::function<vo
     return vCanvasSize;
 }
 
-template <typename T> bool set_overlap( const std::set<T>& rA, const std::set<T>& rB )
-{
-    for( const auto& rVal : rA )
-        if( rB.count( rVal ) > 0 )
-            return true;
-    return false;
-}
 
-bool ploidyValid( const ChromDesc& rA, const ChromDesc& rB, std::map<size_t, std::set<size_t>>& vActualToGroup )
+bool ploidyValid( const ChromDesc& rA, const ChromDesc& rB, std::map<size_t, size_t>& vPloidy )
 {
-    // interactions within the same actual contig but from different ploidy corrected contigs are never considered
-    if( rA.uiActualContigId == rB.uiActualContigId && rA.uiCorrectedContigId != rB.uiCorrectedContigId )
-        return false;
-    // interactions within the same group are always considered
-    // this also catches all cis interactions (as these are within the same group)
+    if( vPloidy[rA.uiActualContigId] == 1 && vPloidy[rB.uiActualContigId] == 1 )
+        return true;
     if( rA.uiPloidyGroupId == rB.uiPloidyGroupId )
         return true;
-
-    // interactions that are from contigs that do not share any groups
-    if( !set_overlap( vActualToGroup[ rA.uiActualContigId ], vActualToGroup[ rB.uiActualContigId ] ) )
-    {
-        // std::cout << "rA.uiCorrectedContigId: " << rA.uiCorrectedContigId << " rB.uiCorrectedContigId: " 
-        //           << rB.uiCorrectedContigId << " vCorrectedToGroup[ rA.uiCorrectedContigId ]: ";
-        // for(const auto& rX : vCorrectedToGroup[ rA.uiCorrectedContigId ])
-        //     std::cout << rX << " ";
-        // std::cout << " vCorrectedToGroup[ rB.uiCorrectedContigId ]: ";
-        // for(const auto& rX : vCorrectedToGroup[ rB.uiCorrectedContigId ])
-        //     std::cout << rX << " ";
-        // std::cout << std::endl;
-        return true;
-    }
 
     return false;
 }
@@ -717,11 +693,11 @@ bool PartialQuarry::setActiveChrom( )
     uiFullContigListSize = vFullChromosomeList.size( );
     this->vPloidyCounts.resize( uiFullContigListSize * uiFullContigListSize );
     std::set<size_t> vActualContigs;
-    std::map<size_t, std::set<size_t>> vActualToGroup;
+    std::map<size_t, size_t> vPloidy;
     std::map<size_t, std::vector<size_t>> vActualToCorrected;
     for( auto& rChr : vFullChromosomeList )
     {
-        vActualToGroup[ rChr.uiActualContigId ].insert( rChr.uiPloidyGroupId );
+        vPloidy[ rChr.uiActualContigId ] += 1;
         vActualToCorrected[ rChr.uiActualContigId ].push_back( rChr.uiCorrectedContigId );
         vActualContigs.insert( rChr.uiActualContigId );
     }
@@ -732,7 +708,7 @@ bool PartialQuarry::setActiveChrom( )
             for( size_t uiXCorr : vActualToCorrected[ uiX ] )
                 for( size_t uiyCorr : vActualToCorrected[ uiY ] )
                     if( ploidyValid( vFullChromosomeList[ uiXCorr ], vFullChromosomeList[ uiyCorr ], 
-                                     vActualToGroup ) )
+                                     vPloidy ) )
                         uiValidSpots += 1;
 
             for( size_t uiXCorr : vActualToCorrected[ uiX ] )
@@ -740,7 +716,7 @@ bool PartialQuarry::setActiveChrom( )
                 {
                     size_t uiIdx = uiXCorr + uiyCorr * uiFullContigListSize;
                     if( ploidyValid( vFullChromosomeList[ uiXCorr ], vFullChromosomeList[ uiyCorr ], 
-                                     vActualToGroup ) )
+                                     vPloidy ) )
                         this->vPloidyCounts[ uiIdx ] = uiValidSpots;
                     else
                         this->vPloidyCounts[ uiIdx ] = 0;
