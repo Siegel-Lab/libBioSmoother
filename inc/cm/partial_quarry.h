@@ -1313,12 +1313,14 @@ class PartialQuarry : public HasSession
         return uiPos;
     }
 
-    std::string substringChr( std::string sChr )
+    std::string substringChr( std::string sChr, size_t uiMaxChar )
     {
         if( sChr.size( ) > uiLogestCommonSuffix + 2 )
-            return sChr.substr( 0, sChr.size( ) - uiLogestCommonSuffix );
-        else
-            return sChr;
+            sChr = sChr.substr( 0, sChr.size( ) - uiLogestCommonSuffix );
+        if( sChr.size( ) > uiMaxChar )
+            sChr = sChr.substr( 0, uiMaxChar > 3 ? uiMaxChar - 3 : 0 ) + "...";
+
+        return sChr;
     }
 
     std::string to_lower( std::string s ) const

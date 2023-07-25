@@ -545,7 +545,7 @@ bool PartialQuarry::setTicks( )
         for( ChromDesc& rDesc : this->vActiveChromosomes[ uiI ] )
         {
             CANCEL_RETURN;
-            vNames.append( substringChr( rDesc.sName ).substr( 0, uiMaxChar ) );
+            vNames.append( substringChr( rDesc.sName, uiMaxChar ) );
             vStartPos.append( uiRunningStart );
             vStartPos2.append( uiRunningStart2 );
             uiRunningStart2 += rDesc.uiLength;
@@ -596,7 +596,7 @@ bool PartialQuarry::setBinCoordsCDS( )
         std::vector<std::string> vShortChrNames;
         vShortChrNames.reserve( vActiveChromosomes[ uiI ].size( ) );
         for( const auto& xChr : vActiveChromosomes[ uiI ] )
-            vShortChrNames.push_back( substringChr( xChr.sName ).substr( 0, uiMaxChar ) );
+            vShortChrNames.push_back( substringChr( xChr.sName, uiMaxChar ) );
 
         pybind11::list vChr;
         pybind11::list vIndexLeft;

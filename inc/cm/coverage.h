@@ -213,6 +213,7 @@ bool PartialQuarry::setTracks( )
         bIsCol = getValue<bool>( { "settings", "normalization", "grid_seq_axis_is_column" } );
     else if( bRadiclNormDisp )
         bIsCol = getValue<bool>( { "settings", "normalization", "radicl_seq_axis_is_column" } );
+    const size_t uiMaxChar = getValue<size_t>( { "settings", "interface", "axis_label_max_char", "val" } );
 
     size_t uiDividend = getValue<size_t>( { "dividend" } );
     for( size_t uiI = 0; uiI < 2; uiI++ )
@@ -289,7 +290,7 @@ bool PartialQuarry::setTracks( )
                 std::string sChromName = vActiveChromosomes[ uiI ][ xCoord.uiChromosome ].sName;
                 if( sChr != "" && sChr != sChromName )
                 {
-                    vChrs.append( substringChr( sChr ) );
+                    vChrs.append( substringChr( sChr, uiMaxChar ) );
 
                     vScreenPoss.append( vScreenPos );
                     vScreenPos = pybind11::list( );
@@ -349,7 +350,7 @@ bool PartialQuarry::setTracks( )
                 }
             }
 
-            vChrs.append( substringChr( sChr ) );
+            vChrs.append( substringChr( sChr, uiMaxChar ) );
             vScreenPoss.append( vScreenPos );
             vIndexStarts.append( vIndexStart );
             vIndexEnds.append( vIndexEnd );
@@ -378,7 +379,7 @@ bool PartialQuarry::setTracks( )
                 std::string sChromName = vActiveChromosomes[ uiI ][ xCoord.uiChromosome ].sName;
                 if( sChr != "" && sChr != sChromName )
                 {
-                    vChrs.append( substringChr( sChr ) );
+                    vChrs.append( substringChr( sChr, uiMaxChar ) );
 
                     vScreenPoss.append( vScreenPos );
                     vScreenPos = pybind11::list( );
@@ -431,7 +432,7 @@ bool PartialQuarry::setTracks( )
                 }
             }
 
-            vChrs.append( substringChr( sChr ) );
+            vChrs.append( substringChr( sChr, uiMaxChar ) );
             vScreenPoss.append( vScreenPos );
             vIndexStarts.append( vIndexStart );
             vIndexEnds.append( vIndexEnd );
@@ -458,7 +459,7 @@ bool PartialQuarry::setTracks( )
                 std::string sChromName = vActiveChromosomes[ uiI ][ xCoord.uiChromosome ].sName;
                 if( sChr != "" && sChr != sChromName )
                 {
-                    vChrs.append( substringChr( sChr ) );
+                    vChrs.append( substringChr( sChr, uiMaxChar ) );
 
                     vScreenPoss.append( vScreenPos );
                     vScreenPos = pybind11::list( );
@@ -511,7 +512,7 @@ bool PartialQuarry::setTracks( )
                 }
             }
 
-            vChrs.append( substringChr( sChr ) );
+            vChrs.append( substringChr( sChr, uiMaxChar ) );
             vScreenPoss.append( vScreenPos );
             vIndexStarts.append( vIndexStart );
             vIndexEnds.append( vIndexEnd );
@@ -539,7 +540,7 @@ bool PartialQuarry::setTracks( )
                 std::string sChromName = vActiveChromosomes[ uiI ][ xCoord.uiChromosome ].sName;
                 if( sChr != "" && sChr != sChromName )
                 {
-                    vChrs.append( substringChr( sChr ) );
+                    vChrs.append( substringChr( sChr, uiMaxChar ) );
 
                     vScreenPoss.append( vScreenPos );
                     vScreenPos = pybind11::list( );
@@ -592,7 +593,7 @@ bool PartialQuarry::setTracks( )
                 }
             }
 
-            vChrs.append( substringChr( sChr ) );
+            vChrs.append( substringChr( sChr, uiMaxChar ) );
             vScreenPoss.append( vScreenPos );
             vIndexStarts.append( vIndexStart );
             vIndexEnds.append( vIndexEnd );
@@ -622,7 +623,7 @@ bool PartialQuarry::setTracks( )
                         std::string sChromName = vActiveChromosomes[ uiI ][ xCoord.uiChromosome ].sName;
                         if( sChr != "" && sChr != sChromName )
                         {
-                            vChrs.append( substringChr( sChr ) );
+                            vChrs.append( substringChr( sChr, uiMaxChar ) );
 
                             vScreenPoss.append( vScreenPos );
                             vScreenPos = pybind11::list( );
@@ -675,7 +676,7 @@ bool PartialQuarry::setTracks( )
                         }
                     }
 
-                vChrs.append( substringChr( sChr ) );
+                vChrs.append( substringChr( sChr, uiMaxChar ) );
                 vScreenPoss.append( vScreenPos );
                 vIndexStarts.append( vIndexStart );
                 vIndexEnds.append( vIndexEnd );
@@ -780,6 +781,7 @@ bool PartialQuarry::setRankedSlicesCDS( )
     const std::string sAnno = getValue<std::string>( { "settings", "normalization", "grid_seq_annotation" } );
     auto uiFistAnnoIdx = getValue<size_t>( { "annotation", "by_name", sAnno } );
     const uint32_t uiDividend = getValue<uint32_t>( { "dividend" } );
+    const size_t uiMaxChar = getValue<size_t>( { "settings", "interface", "axis_label_max_char", "val" } );
     std::array<std::vector<size_t>, 2> vSorted;
 
     for( size_t uiI = 0; uiI < 2; uiI++ )
@@ -820,7 +822,7 @@ bool PartialQuarry::setRankedSlicesCDS( )
 
             const auto rIntervalIt = pIndices->vAnno.get( uiFistAnnoIdx + uiChromId, rSample.uiAnnoId );
 
-            vChrs.append( substringChr( sChromName ) );
+            vChrs.append( substringChr( sChromName, uiMaxChar ) );
             vAnnoDesc.append( pIndices->vAnno.desc( *rIntervalIt ) );
             vSampleId.append( vSorted[ uiI ][ uiX ] );
             vAnnoIdx.append( rSample.uiAnnoId );
@@ -945,7 +947,8 @@ void PartialQuarry::regCoverage( )
                      { { "dividend" },
                        { "settings", "normalization", "grid_seq_axis_is_column" },
                        { "settings", "normalization", "radicl_seq_axis_is_column" },
-                       { "settings", "normalization", "normalize_by" } },
+                       { "settings", "normalization", "normalize_by" },
+                       {"settings", "interface", "axis_label_max_char", "val"} },
                      /*bHidden =*/false } );
 
     registerNode( NodeNames::TrackExport,
@@ -967,7 +970,8 @@ void PartialQuarry::regCoverage( )
             /*.vIncomingFunctions =*/{ NodeNames::RnaAssociatedGenesFilter },
             /*.vIncomingSession =*/{ },
             /*.vSessionsIncomingInPrevious =*/
-            { { "annotation", "by_name" }, { "settings", "normalization", "grid_seq_annotation" }, { "dividend" } },
+            { { "annotation", "by_name" }, { "settings", "normalization", "grid_seq_annotation" }, { "dividend" },
+              {"settings", "interface", "axis_label_max_char", "val"} },
             /*bHidden =*/false } );
 }
 
