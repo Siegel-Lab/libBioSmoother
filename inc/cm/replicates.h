@@ -131,8 +131,8 @@ bool PartialQuarry::setBinValues( )
                     {
                         size_t iDataSetId = getDatasetIdfromReplAndChr(
                             uiRepl,
-                            vActiveChromosomes[ 0 ][ vCoords[ uiI ].uiChromosomeX ].uiPloidyId,
-                            vActiveChromosomes[ 1 ][ vCoords[ uiI ].uiChromosomeY ].uiPloidyId );
+                            vActiveChromosomes[ 0 ][ vCoords[ uiI ].uiChromosomeX ].uiActualContigId,
+                            vActiveChromosomes[ 1 ][ vCoords[ uiI ].uiChromosomeY ].uiActualContigId );
                         vVals[ uiI ] =
                             pIndices->count( iDataSetId,
                                              { vCoords[ uiI ].uiIndexY, vCoords[ uiI ].uiIndexX, uiMapQMin,
@@ -193,8 +193,8 @@ bool PartialQuarry::setDecayValues( )
                     {
                         size_t iDataSetId = getDatasetIdfromReplAndChr(
                             uiRepl,
-                            vActiveChromosomes[ 0 ][ vCoords[ uiI ].uiChromosomeX ].uiPloidyId,
-                            vActiveChromosomes[ 1 ][ vCoords[ uiI ].uiChromosomeY ].uiPloidyId );
+                            vActiveChromosomes[ 0 ][ vCoords[ uiI ].uiChromosomeX ].uiActualContigId,
+                            vActiveChromosomes[ 1 ][ vCoords[ uiI ].uiChromosomeY ].uiActualContigId );
 
                         int64_t iChrX = vActiveChromosomes[ 0 ][ vCoords[ uiI ].uiChromosomeX ].uiLength;
                         int64_t iChrY = vActiveChromosomes[ 1 ][ vCoords[ uiI ].uiChromosomeY ].uiLength;
@@ -433,10 +433,10 @@ bool PartialQuarry::setFlatValues( )
 
 double PartialQuarry::ploidyCorrect( size_t uiVal, const BinCoord& rxPos )
 {
-    if( this->vPloidyCounts[ rxPos.uiId + rxPos.uiYAxisIdx * uiFullContigListSize ] == 0 )
+    if( this->vPloidyCounts[ rxPos.uiChromIdX + rxPos.uiChromIdY * uiFullContigListSize ] == 0 )
         return 0;
     return ( (double)uiVal ) /
-           ( (double)this->vPloidyCounts[ rxPos.uiXAxisIdx + rxPos.uiYAxisIdx * uiFullContigListSize ] );
+           ( (double)this->vPloidyCounts[ rxPos.uiChromIdX + rxPos.uiChromIdY * uiFullContigListSize ] );
 }
 
 bool PartialQuarry::setPloidyValues( )

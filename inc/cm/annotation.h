@@ -115,7 +115,7 @@ bool PartialQuarry::setAnnotationValues( )
             {
                 CANCEL_RETURN;
 
-                size_t iDataSetId = uiFistAnnoIdx + vActiveChromosomes[ uiX ][ xRegion.uiChromosome ].uiPloidyId;
+                size_t iDataSetId = uiFistAnnoIdx + vActiveChromosomes[ uiX ][ xRegion.uiChromosome ].uiActualContigId;
 
                 uiTotalCount += pIndices->vAnno.count( iDataSetId, xRegion.uiIndexPos,
                                                        ( xRegion.uiIndexPos + xRegion.uiIndexSize ), false, false );
@@ -131,7 +131,7 @@ bool PartialQuarry::setAnnotationValues( )
                 std::vector<size_t> vEndPos;
                 for( AxisRegion& xRegion : vAxisRegions[ uiX ] )
                 {
-                    size_t iDataSetId = uiFistAnnoIdx + vActiveChromosomes[ uiX ][ xRegion.uiChromosome ].uiPloidyId;
+                    size_t iDataSetId = uiFistAnnoIdx + vActiveChromosomes[ uiX ][ xRegion.uiChromosome ].uiActualContigId;
                     for( auto& xAnno : pIndices->vAnno.query( iDataSetId, xRegion.uiIndexPos,
                                                               xRegion.uiIndexPos + xRegion.uiIndexSize, false, false ) )
                     {
@@ -186,7 +186,7 @@ bool PartialQuarry::setAnnotationValues( )
                 vAnnotationValues[ uiX ].back( ).first.reserve( vAxisCords[ uiX ].size( ) );
                 for( AxisCoord& xCoords : vAxisCords[ uiX ] )
                 {
-                    const size_t uiChrIdx = vActiveChromosomes[ uiX ][ xCoords.uiChromosome ].uiPloidyId;
+                    const size_t uiChrIdx = vActiveChromosomes[ uiX ][ xCoords.uiChromosome ].uiActualContigId;
                     int64_t iDataSetId = uiFistAnnoIdx + uiChrIdx;
                     vAnnotationValues[ uiX ].back( ).first.push_back( pIndices->vAnno.count(
                         iDataSetId, xCoords.uiIndexPos, ( xCoords.uiIndexPos + xCoords.uiIndexSize ), false, false ) );

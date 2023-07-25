@@ -26,8 +26,8 @@ struct ChromDesc
     std::string sName;
     size_t uiUnadjustedLength;
     size_t uiLength;
-    size_t uiId;
-    size_t uiPloidyId;
+    size_t uiCorrectedContigId;
+    size_t uiActualContigId;
     size_t uiPloidyGroupId;
 };
 
@@ -36,7 +36,8 @@ struct IndexCoord
     size_t uiChromosome;
     size_t uiIndexPos;
     size_t uiIndexSize;
-    size_t uiPloidyId;
+    size_t uiActualContigId;
+    size_t uiChromId;
 };
 
 struct AnnoCoord : IndexCoord
@@ -88,7 +89,8 @@ struct BinCoordBase // @todo @continue_here this should carry the ploidy Id as w
     size_t uiScreenW, uiScreenH;
     size_t uiIndexW, uiIndexH;
     size_t uiXAxisIdx, uiYAxisIdx;
-    size_t uiPloidyIdX, uiPloidyIdY;
+    size_t uiActualContigIdX, uiActualContigIdY;
+    size_t uiChromIdX, uiChromIdY;
 };
 
 struct BinCoord : BinCoordBase
