@@ -243,11 +243,11 @@ class Quarry(PartialQuarry):
         with open(ploidy_file, "r") as len_file:
             for line in len_file:
                 line = line[:-1].strip()
-                # if whole line is '-'
-                if all(c == "-" for c in line):
-                    group_count += 1
-                    continue
                 if len(line) > 0 and line[0] != "#":
+                    # if whole line is '-'
+                    if all(c == "-" for c in line):
+                        group_count += 1
+                        continue
                     chr_from, chr_to = line.split()
                     if chr_to in ploidy_map:
                         print(
