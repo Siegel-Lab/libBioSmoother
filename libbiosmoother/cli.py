@@ -14,9 +14,25 @@ from .parameters import list_parameters, values_for_parameter, open_valid_json
 from .test import test
 from .benchmark_runtime import benchmark_runtime
 
+try:
+    import cProfile
+
+    HAS_CPROFILE = True
+except ImportError:
+    HAS_CPROFILE = False
+from datetime import datetime
+
+
+def get_path(prefix):
+    for possible in [prefix, prefix + ".smoother_index"]:
+        if os.path.exists(possible) and os.path.isdir(possible):
+            return possible
+    raise RuntimeError("the given index", prefix, "does not exist.")
+
 
 def init(args):
-    Indexer(args.index_prefix, strict=True).create_session(
+    path = args.index_prefix.replace(".smoother_index", "")
+    Indexer(path, strict=True).create_session(
         args.chr_len,
         args.dividend,
         args.anno_path,
@@ -27,144 +43,170 @@ def init(args):
 
 
 def reset(args):
-    for possible in [args.index_prefix, args.index_prefix + ".smoother_index"]:
-        if os.path.exists(possible) and os.path.isdir(possible):
-            with open_default_json() as default_settings_file:
-                default_settings = json.load(default_settings_file)
-            with open(possible + "/default_session.json", "r") as default_session_file:
-                default_session = json.load(default_session_file)
-            default_session["settings"] = default_settings
-            with open(possible + "/session.json", "w") as session_file:
-                json.dump(default_session, session_file)
-            return
-    raise RuntimeError("the given index", args.index_prefix, "does not exist.")
+    possible = get_path(args.index_prefix)
+    with open_default_json() as default_settings_file:
+        default_settings = json.load(default_settings_file)
+    with open(possible + "/default_session.json", "r") as default_session_file:
+        default_session = json.load(default_session_file)
+    default_session["settings"] = default_settings
+    with open(possible + "/session.json", "w") as session_file:
+        json.dump(default_session, session_file)
+
+
+def w_perf(func, args):
+    if args.perf:
+        if HAS_CPROFILE:
+            with cProfile.Profile() as pr:
+                func()
+                print("Profile:")
+                pr.print_stats("tottime")
+                pr.dump_stats(
+                    get_path(args.index_prefix)
+                    + "/profile."
+                    + datetime.now().strftime("%Y.%m.%d_%H.%M.%S")
+                )
+        else:
+            raise RuntimeError("cProfile is not installed. Cannot write profile.")
+    else:
+        func()
 
 
 def repl(args):
-    Indexer(args.index_prefix).add_replicate(
-        args.path,
-        args.name,
-        args.group,
-        args.no_groups,
-        args.keep_points,
-        args.only_points,
-        args.no_map_q,
-        args.no_multi_map,
-        args.no_cat,
-        not args.strand,
-        args.shekelyan,
-        args.force_upper_triangle,
-        args.columns,
-    )
+    idx = Indexer(get_path(args.index_prefix))
+
+    def run():
+        idx.add_replicate(
+            args.path,
+            args.name,
+            args.group,
+            args.no_groups,
+            args.keep_points,
+            args.only_points,
+            args.no_map_q,
+            args.no_multi_map,
+            args.no_cat,
+            not args.strand,
+            args.shekelyan,
+            args.force_upper_triangle,
+            args.columns,
+        )
+        if args.ploidy_file is not None:
+            idx.set_ploidy_list(args.ploidy_file)
+
+    w_perf(run, args)
 
 
 def norm(args):
-    Indexer(args.index_prefix).add_normalization(
-        args.path,
-        args.name,
-        args.group,
-        args.no_groups,
-        args.keep_points,
-        args.only_points,
-        args.no_map_q,
-        args.no_multi_map,
-        args.no_cat,
-        not args.strand,
-        args.shekelyan,
-        args.columns,
-    )
+    idx = Indexer(get_path(args.index_prefix))
+
+    def run():
+        idx.add_normalization(
+            args.path,
+            args.name,
+            args.group,
+            args.no_groups,
+            args.keep_points,
+            args.only_points,
+            args.no_map_q,
+            args.no_multi_map,
+            args.no_cat,
+            not args.strand,
+            args.shekelyan,
+            args.columns,
+        )
+
+    w_perf(run, args)
 
 
 def export_smoother(args):
-    session = Quarry(args.index_prefix)
-    if args.export_prefix is not None:
-        session.set_value(["settings", "export", "prefix"], args.export_prefix)
-    if args.export_selection is not None:
-        session.set_value(["settings", "export", "selection"], args.export_selection)
-    if args.export_size is not None:
-        session.set_value(["settings", "export", "size", "val"], args.export_size)
+    session = Quarry(get_path(args.index_prefix))
 
-    if args.export_format is not None:
-        if "tsv" in args.export_format:
-            export_tsv(session)
-        if "svg" in args.export_format:
-            export_svg(session)
-        if "png" in args.export_format:
-            export_png(session)
-    else:
-        if session.get_value(["settings", "export", "export_format"]) == "tsv":
-            export_tsv(session)
-        if session.get_value(["settings", "export", "export_format"]) == "svg":
-            export_svg(session)
-        if session.get_value(["settings", "export", "export_format"]) == "png":
-            export_png(session)
+    def run():
+        if args.export_prefix is not None:
+            session.set_value(["settings", "export", "prefix"], args.export_prefix)
+        if args.export_selection is not None:
+            session.set_value(
+                ["settings", "export", "selection"], args.export_selection
+            )
+        if args.export_size is not None:
+            session.set_value(["settings", "export", "size", "val"], args.export_size)
+
+        if args.export_format is not None:
+            if "tsv" in args.export_format:
+                export_tsv(session)
+            if "svg" in args.export_format:
+                export_svg(session)
+            if "png" in args.export_format:
+                export_png(session)
+        else:
+            if session.get_value(["settings", "export", "export_format"]) == "tsv":
+                export_tsv(session)
+            if session.get_value(["settings", "export", "export_format"]) == "svg":
+                export_svg(session)
+            if session.get_value(["settings", "export", "export_format"]) == "png":
+                export_png(session)
+
+    w_perf(run, args)
 
 
 def set_smoother(args):
-    for possible in [args.index_prefix, args.index_prefix + ".smoother_index"]:
-        if os.path.exists(possible) and os.path.isdir(possible):
-            with open(possible + "/session.json", "r") as in_file:
-                json_file = json.load(in_file)
-                tmp = json_file
-                keys = args.name.split(".")
-                for key in keys[:-1]:
-                    tmp = tmp[key]
-                if isinstance(tmp[keys[-1]], bool):
-                    tmp[keys[-1]] = bool(args.val)
-                elif isinstance(tmp[keys[-1]], float):
-                    tmp[keys[-1]] = float(args.val)
-                elif isinstance(tmp[keys[-1]], int):
-                    tmp[keys[-1]] = int(args.val)
-                elif isinstance(tmp[keys[-1]], str):
-                    tmp[keys[-1]] = str(args.val)
-                else:
-                    print("Error: can only set string, int, bool and float values.")
-            with open(possible + "/session.json", "w") as out_file:
-                json.dump(json_file, out_file)
-                return
-    raise RuntimeError("the given index", args.index_prefix, "does not exist.")
+    possible = get_path(args.index_prefix)
+    with open(possible + "/session.json", "r") as in_file:
+        json_file = json.load(in_file)
+        tmp = json_file
+        keys = args.name.split(".")
+        for key in keys[:-1]:
+            tmp = tmp[key]
+        if isinstance(tmp[keys[-1]], bool):
+            tmp[keys[-1]] = bool(args.val)
+        elif isinstance(tmp[keys[-1]], float):
+            tmp[keys[-1]] = float(args.val)
+        elif isinstance(tmp[keys[-1]], int):
+            tmp[keys[-1]] = int(args.val)
+        elif isinstance(tmp[keys[-1]], str):
+            tmp[keys[-1]] = str(args.val)
+        else:
+            print("Error: can only set string, int, bool and float values.")
+    with open(possible + "/session.json", "w") as out_file:
+        json.dump(json_file, out_file)
 
 
 def get_smoother(args):
-    for possible in [args.index_prefix, args.index_prefix + ".smoother_index"]:
-        if os.path.exists(possible) and os.path.isdir(possible):
-            with open(possible + "/session.json", "r") as in_file:
-                json_file = json.load(in_file)
-                tmp = json_file
-                for key in args.name.split("."):
-                    tmp = tmp[key]
-                print(tmp)
-                return
-    raise RuntimeError("the given index", args.index_prefix, "does not exist.")
+    possible = get_path(args.index_prefix)
+    with open(possible + "/session.json", "r") as in_file:
+        json_file = json.load(in_file)
+        tmp = json_file
+        for key in args.name.split("."):
+            tmp = tmp[key]
+        print(tmp)
 
 
 def info_smoother(args):
     with open_valid_json() as valid_file:
         valid_json = json.load(valid_file)
-        for possible in [args.index_prefix, args.index_prefix + ".smoother_index"]:
-            if os.path.exists(possible) and os.path.isdir(possible):
-                with open(possible + "/session.json", "r") as in_file:
-                    json_file = json.load(in_file)
-                    for p in list_parameters(json_file, valid_json):
-                        print(
-                            ".".join(p),
-                            values_for_parameter(p, json_file, valid_json),
-                            sep="\t",
-                        )
-                    return
-    raise RuntimeError("the given index", args.index_prefix, "does not exist.")
+        possible = get_path(args.index_prefix)
+        with open(possible + "/session.json", "r") as in_file:
+            json_file = json.load(in_file)
+            for p in list_parameters(json_file, valid_json):
+                print(
+                    ".".join(p),
+                    values_for_parameter(p, json_file, valid_json),
+                    sep="\t",
+                )
 
 
 def test_smoother(args):
-    test(Quarry(args.index_prefix), args.seed, args.skip_first)
+    test(Quarry(get_path(args.index_prefix)), args.seed, args.skip_first)
 
 
 def benchmark_runtime_smoother(args):
-    benchmark_runtime(Quarry(args.index_prefix), args.num_experiments, args.outfile)
+    benchmark_runtime(
+        Quarry(get_path(args.index_prefix)), args.num_experiments, args.outfile
+    )
 
 
 def ploidy_smoother(args):
-    Quarry(args.index_prefix).set_ploidy_list(args.ploidy_file)
+    Quarry(get_path(args.index_prefix)).set_ploidy_list(args.ploidy_file)
 
 
 def add_parsers(main_parser):
@@ -287,11 +329,15 @@ def add_parsers(main_parser):
         help="Mirror all interactions to the upper triangle. (default: off)",
     )
     repl_parser.set_defaults(func=repl)
+    repl_parser.add_argument("--perf", help=argparse.SUPPRESS, action="store_true")
     repl_parser.add_argument(
         "--keep_points", help=argparse.SUPPRESS, action="store_true"
     )
     repl_parser.add_argument(
         "--only_points", help=argparse.SUPPRESS, action="store_true"
+    )
+    repl_parser.add_argument(
+        "--ploidy_file", help="File that specifies the ploidy for each chromosome."
     )
     repl_parser.add_argument("--shekelyan", help=argparse.SUPPRESS, action="store_true")
     repl_parser.add_argument("--no_groups", help=argparse.SUPPRESS, action="store_true")
@@ -467,7 +513,7 @@ def add_parsers(main_parser):
     )
     ploidy_parser.add_argument(
         "ploidy_file",
-        help="Prefix that was used to create the index (see the init subcommand).",
+        help="File that specifies the ploidy for each chromosome.",
     )
     ploidy_parser.set_defaults(func=ploidy_smoother)
 

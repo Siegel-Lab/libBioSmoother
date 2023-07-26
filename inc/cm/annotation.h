@@ -131,7 +131,8 @@ bool PartialQuarry::setAnnotationValues( )
                 std::vector<size_t> vEndPos;
                 for( AxisRegion& xRegion : vAxisRegions[ uiX ] )
                 {
-                    size_t iDataSetId = uiFistAnnoIdx + vActiveChromosomes[ uiX ][ xRegion.uiChromosome ].uiActualContigId;
+                    size_t iDataSetId =
+                        uiFistAnnoIdx + vActiveChromosomes[ uiX ][ xRegion.uiChromosome ].uiActualContigId;
                     for( auto& xAnno : pIndices->vAnno.query( iDataSetId, xRegion.uiIndexPos,
                                                               xRegion.uiIndexPos + xRegion.uiIndexSize, false, false ) )
                     {

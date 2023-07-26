@@ -3,6 +3,7 @@ import errno
 import os
 import fileinput
 import sys
+import gzip
 
 TEST_FAC = 100000
 MAX_READS_IM_MEM = 10000
@@ -17,9 +18,8 @@ def simplified_filepath(path):
 
 
 def read_xa_tag(tags):
-    if tags[:5] == "XA:Z:":
-        tags = tags[5:]
-    if tags == "notag" or len(tags) == 0:
+    tags.replace("XA:Z:", "")
+    if len(tags) == 0 or tags == "notag":
         return []
     l = []
     for tag in tags.split(";"):
@@ -382,7 +382,9 @@ class ChrOrderHeatmapIterator:
     def itr_cell(self, chr_x, chr_y):
         if chr_x in self.chrs and chr_y in self.chrs[chr_x]:
             if self.in_file[chr_x][chr_y]:
-                with open(self.prefix + "." + chr_x + "." + chr_y, "r") as in_file:
+                with gzip.open(
+                    self.prefix + "." + chr_x + "." + chr_y, "rt"
+                ) as in_file:
                     for line in in_file:
                         yield line.split()
             for tup in self.chrs[chr_x][chr_y]:
@@ -451,9 +453,9 @@ def chr_order_heatmap(
         )
 
         if len(chrs[chr_1][chr_2]) >= MAX_READS_IM_MEM:
-            with open(
+            with gzip.open(
                 prefix + "." + chr_1 + "." + chr_2,
-                "a" if in_file[chr_1][chr_2] else "w",
+                "at" if in_file[chr_1][chr_2] else "wt",
             ) as out_file:
                 for tup in chrs[chr_1][chr_2]:
                     out_file.write("\t".join([str(x) for x in tup]) + "\n")
@@ -477,7 +479,7 @@ class ChrOrderCoverageIterator:
     def itr_cell(self, chr_):
         if chr_ in self.chrs:
             if self.in_file[chr_]:
-                with open(self.prefix + "." + chr_, "r") as in_file:
+                with gzip.open(self.prefix + "." + chr_, "rt") as in_file:
                     for line in in_file:
                         yield line.split()
             for tup in self.chrs[chr_]:
@@ -533,8 +535,8 @@ def chr_order_coverage(
         )
 
         if len(chrs[chrs_[0]]) >= MAX_READS_IM_MEM:
-            with open(
-                prefix + "." + chrs_[0], "a" if in_file[chrs_[0]] else "w"
+            with gzip.open(
+                prefix + "." + chrs_[0], "at" if in_file[chrs_[0]] else "wt"
             ) as out_file:
                 for tup in chrs[chrs_[0]]:
                     out_file.write("\t".join([str(x) for x in tup]) + "\n")
@@ -551,7 +553,7 @@ def get_filesize(path):
 
 
 def parse_annotations(annotation_file):
-    with open(annotation_file, "r") as in_file_1:
+    with fileinput.input(annotation_file) as in_file_1:
         for line in in_file_1:
             if line[0] == "#":
                 continue

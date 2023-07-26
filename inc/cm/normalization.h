@@ -389,26 +389,27 @@ bool PartialQuarry::getSamples( const GetSamplesMode& rMode, const size_t uiNumS
                     const size_t uiAnnoStart = rIntervalIt->uiAnnoStart / uiDividend;
                     const size_t uiAnnoEnd = std::max( uiAnnoStart + 1, rIntervalIt->uiAnnoEnd / uiDividend );
                     vSeenDescIds.insert( uiDescId );
-                    rOut.push_back(
-                        AnnoCoord{ /*{*/
-                                   /*.uiChromosome =*/uiChrom, /*.uiIndexPos =*/uiAnnoStart,
-                                   /*.uiIndexSize =*/uiAnnoEnd - uiAnnoStart,
-                                   /* .uiActualContigId =*/this->vActiveChromosomes[ uiColumn ][ uiChrom ].uiActualContigId,
-                                   /* .uiChromId =*/this->vActiveChromosomes[ uiColumn ][ uiChrom ].uiCorrectedContigId,
-                                   /*}*/
-                                   /*.uiAnnoId =*/uiVal } );
+                    rOut.push_back( AnnoCoord{
+                        /*{*/
+                        /*.uiChromosome =*/uiChrom, /*.uiIndexPos =*/uiAnnoStart,
+                        /*.uiIndexSize =*/uiAnnoEnd - uiAnnoStart,
+                        /* .uiActualContigId =*/this->vActiveChromosomes[ uiColumn ][ uiChrom ].uiActualContigId,
+                        /* .uiChromId =*/this->vActiveChromosomes[ uiColumn ][ uiChrom ].uiCorrectedContigId,
+                        /*}*/
+                        /*.uiAnnoId =*/uiVal } );
                 }
                 break;
             }
             case GetSamplesMode::Bins:
-                rOut.push_back( AnnoCoord{ /*{*/
-                                           /*.uiChromosome =*/uiChrom,
-                                           /*.uiIndexPos =*/( uiVal - ( rIt - 1 )->first ) * uiBinSize,
-                                           /*.uiIndexSize =*/uiBinSize,
-                                           /* .uiActualContigId =*/this->vActiveChromosomes[ uiColumn ][ uiChrom ].uiActualContigId,
-                                           /* .uiChromId =*/this->vActiveChromosomes[ uiColumn ][ uiChrom ].uiCorrectedContigId,
-                                           /*}*/
-                                           /*.uiAnnoId =*/0 } );
+                rOut.push_back(
+                    AnnoCoord{ /*{*/
+                               /*.uiChromosome =*/uiChrom,
+                               /*.uiIndexPos =*/( uiVal - ( rIt - 1 )->first ) * uiBinSize,
+                               /*.uiIndexSize =*/uiBinSize,
+                               /* .uiActualContigId =*/this->vActiveChromosomes[ uiColumn ][ uiChrom ].uiActualContigId,
+                               /* .uiChromId =*/this->vActiveChromosomes[ uiColumn ][ uiChrom ].uiCorrectedContigId,
+                               /*}*/
+                               /*.uiAnnoId =*/0 } );
                 break;
 
                 // case GetSamplesMode::BinnedAnno:
@@ -720,10 +721,10 @@ bool PartialQuarry::setRnaAssociatedBackground( )
                             uiChrX = rSample.uiChromosome;
                             uiChrY = rAxis.uiChromosome;
                         }
-                        size_t iDataSetId =
-                            getDatasetIdfromReplAndChr( uiRepl,
-                                                        vActiveChromosomes[ bAxisIsCol ? 0 : 1 ][ uiChrX ].uiActualContigId,
-                                                        vActiveChromosomes[ bAxisIsCol ? 1 : 0 ][ uiChrY ].uiActualContigId );
+                        size_t iDataSetId = getDatasetIdfromReplAndChr(
+                            uiRepl,
+                            vActiveChromosomes[ bAxisIsCol ? 0 : 1 ][ uiChrX ].uiActualContigId,
+                            vActiveChromosomes[ bAxisIsCol ? 1 : 0 ][ uiChrY ].uiActualContigId );
 
                         vBackgroundGridSeq.back( ) += pIndices->count(
                             iDataSetId,

@@ -55,8 +55,9 @@ size_t PartialQuarry::getMaxCoverageFromRepl( const size_t uiChromId, const size
     for( size_t uiI = 0; uiI < vActiveChromosomes[ bCol ? 1 : 0 ].size( ); uiI++ )
     {
         size_t uiCorrectedContigId = vActiveChromosomes[ bCol ? 1 : 0 ][ uiI ].uiCorrectedContigId;
-        const size_t uiDatasetId = getDatasetIdfromReplAndChr( uiRepl, bCol != bSymPart ? uiChromId : uiCorrectedContigId,
-                                                               bCol != bSymPart ? uiCorrectedContigId : uiChromId );
+        const size_t uiDatasetId =
+            getDatasetIdfromReplAndChr( uiRepl, bCol != bSymPart ? uiChromId : uiCorrectedContigId,
+                                        bCol != bSymPart ? uiCorrectedContigId : uiChromId );
         if( uiDatasetId != std::numeric_limits<size_t>::max( ) )
             vHeap.push_back( makeHeapTuple( bCol, bSymPart, uiFrom, uiTo, uiDatasetId, 0,
                                             vActiveChromosomes[ bCol ? 1 : 0 ][ uiI ].uiLength ) );
@@ -103,8 +104,9 @@ size_t PartialQuarry::getCoverageFromRepl( const size_t uiChromId, const size_t 
     for( size_t uiI = 0; uiI < vActiveChromosomes[ bCol ? 1 : 0 ].size( ); uiI++ )
     {
         size_t uiCorrectedContigId = vActiveChromosomes[ bCol ? 1 : 0 ][ uiI ].uiActualContigId;
-        const size_t uiDatasetId = getDatasetIdfromReplAndChr( uiRepl, bCol != bSymPart ? uiChromId : uiCorrectedContigId,
-                                                               bCol != bSymPart ? uiCorrectedContigId : uiChromId );
+        const size_t uiDatasetId =
+            getDatasetIdfromReplAndChr( uiRepl, bCol != bSymPart ? uiChromId : uiCorrectedContigId,
+                                        bCol != bSymPart ? uiCorrectedContigId : uiChromId );
 
         if( uiDatasetId != std::numeric_limits<size_t>::max( ) )
         {
@@ -153,7 +155,8 @@ bool PartialQuarry::setCoverageValues( )
                 {
                     CANCEL_RETURN;
 
-                    int64_t iDataSetId = uiFstDatasetId + vActiveChromosomes[ uiJ ][ xCoords.uiChromosome ].uiActualContigId;
+                    int64_t iDataSetId =
+                        uiFstDatasetId + vActiveChromosomes[ uiJ ][ xCoords.uiChromosome ].uiActualContigId;
                     uiVal = pIndices->count(
                         iDataSetId,
                         { xCoords.uiIndexPos, 0, uiMapQMin, uiFromAnnoFilter[ uiJ ], ui1DFromStrandFilter, 0 },
@@ -942,13 +945,13 @@ void PartialQuarry::regCoverage( )
                      { { "settings", "normalization", "display_ice_remainder" },
                        { "settings", "normalization", "grid_seq_display_background" },
                        { "settings", "normalization", "ice_show_bias" },
-                       { "settings", "normalization", "radicl_seq_display_coverage" } },
+                       { "settings", "normalization", "radicl_seq_display_coverage" },
+                       { "settings", "interface", "axis_label_max_char", "val" } },
                      /*.vSessionsIncomingInPrevious =*/
                      { { "dividend" },
                        { "settings", "normalization", "grid_seq_axis_is_column" },
                        { "settings", "normalization", "radicl_seq_axis_is_column" },
-                       { "settings", "normalization", "normalize_by" },
-                       {"settings", "interface", "axis_label_max_char", "val"} },
+                       { "settings", "normalization", "normalize_by" } },
                      /*bHidden =*/false } );
 
     registerNode( NodeNames::TrackExport,
@@ -968,10 +971,9 @@ void PartialQuarry::regCoverage( )
             /*.sNodeName =*/"ranked_slices_cds",
             /*.fFunc =*/&PartialQuarry::setRankedSlicesCDS,
             /*.vIncomingFunctions =*/{ NodeNames::RnaAssociatedGenesFilter },
-            /*.vIncomingSession =*/{ },
+            /*.vIncomingSession =*/{ { "settings", "interface", "axis_label_max_char", "val" } },
             /*.vSessionsIncomingInPrevious =*/
-            { { "annotation", "by_name" }, { "settings", "normalization", "grid_seq_annotation" }, { "dividend" },
-              {"settings", "interface", "axis_label_max_char", "val"} },
+            { { "annotation", "by_name" }, { "settings", "normalization", "grid_seq_annotation" }, { "dividend" } },
             /*bHidden =*/false } );
 }
 

@@ -170,6 +170,8 @@ class Indexer:
                 "lengths": {},
                 "displayed_on_x": [],
                 "displayed_on_y": [],
+                "displayed_on_x_ploidy": [],
+                "displayed_on_y_ploidy": [],
                 "genome_size": 0,
                 "annotation_coordinates": "",
             },
@@ -191,6 +193,8 @@ class Indexer:
                     )
                     self.append_session(["contigs", "displayed_on_x"], chr_name)
                     self.append_session(["contigs", "displayed_on_y"], chr_name)
+                    self.append_session(["contigs", "displayed_on_x_ploidy"], chr_name)
+                    self.append_session(["contigs", "displayed_on_y_ploidy"], chr_name)
                     self.set_session(
                         ["contigs", "genome_size"],
                         self.session_default["contigs"]["genome_size"] + int(chr_len),

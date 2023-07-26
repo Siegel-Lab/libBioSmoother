@@ -23,6 +23,14 @@
             "chr_1_B",
             "chr_2_B"
         ],
+        "displayed_on_x_ploidy": [
+            "chr_1",
+            "chr_2"
+        ],
+        "displayed_on_y_ploidy": [
+            "chr_1",
+            "chr_2"
+        ],
         "genome_size": 60,
         "annotation_coordinates": "gene",
         "ploidy_map": {

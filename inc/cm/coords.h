@@ -96,7 +96,7 @@ axisCoordsHelper( size_t uiBinSize, size_t uiScreenStartPos, size_t uiScreenEndP
                                            /* .uiIndexSize =*/uiCurrBinSize, //
                                            /* .uiActualContigId =*/vChromosomes[ uiI ].uiActualContigId, //
                                            /* .uiChromId =*/vChromosomes[ uiI ].uiCorrectedContigId, //
-                                                                                      //},
+                                                                                                     //},
                                            /*.uiScreenPos =*/uiCurrScreenPos, //
                                            /*.uiScreenSize =*/uiCurrBinSize, //
                                            /*.uiRegionIdx =*/uiI, //
@@ -666,7 +666,7 @@ const std::array<size_t, 2> PartialQuarry::getCanvasSize( const std::function<vo
 
 bool ploidyValid( const ChromDesc& rA, const ChromDesc& rB, std::map<size_t, size_t>& vPloidy )
 {
-    if( vPloidy[rA.uiActualContigId] == 1 && vPloidy[rB.uiActualContigId] == 1 )
+    if( vPloidy[ rA.uiActualContigId ] == 1 && vPloidy[ rB.uiActualContigId ] == 1 )
         return true;
     if( rA.uiPloidyGroupId == rB.uiPloidyGroupId )
         return true;
@@ -676,16 +676,20 @@ bool ploidyValid( const ChromDesc& rA, const ChromDesc& rB, std::map<size_t, siz
 
 bool PartialQuarry::setActiveChrom( )
 {
-    auto vPloidyList = getValue<std::vector<std::string>>( { "contigs", "ploidy_list" } );
-    auto vList = getValue<std::vector<std::string>>( { "contigs", "list" } );
     auto xPloidyMap = getValue<std::map<std::string, std::string>>( { "contigs", "ploidy_map" } );
     auto xPloidyGroups = getValue<std::map<std::string, size_t>>( { "contigs", "ploidy_groups" } );
     auto vLengths = getValue<std::map<std::string, size_t>>( { "contigs", "lengths" } );
+    auto bPloidyCords = getValue<bool>( { "settings", "normalization", "ploidy_coords" } );
+    auto vList = getValue<std::vector<std::string>>( { "contigs", bPloidyCords ? "list" : "ploidy_list" } );
+    std::string sPloidySuffix = bPloidyCords ? "" : "_ploidy";
+    auto vPloidyList = getValue<std::vector<std::string>>( { "contigs", "ploidy_list" } );
     auto bCorrect = getValue<bool>( { "settings", "normalization", "ploidy_correct" } );
     for( bool bX : { true, false } )
-        this->vActiveChromosomes[ bX ? 0 : 1 ] = activeChromList(
-            vLengths, getValue<std::vector<std::string>>( { "contigs", bX ? "displayed_on_x" : "displayed_on_y" } ),
-            vPloidyList, vList, xPloidyMap, xPloidyGroups );
+        this->vActiveChromosomes[ bX ? 0 : 1 ] =
+            activeChromList( vLengths,
+                             getValue<std::vector<std::string>>( { "contigs", bX ? "displayed_on_x" + sPloidySuffix
+                                                                                 : "displayed_on_y" + sPloidySuffix } ),
+                             vPloidyList, vList, xPloidyMap, xPloidyGroups );
 
     std::vector<ChromDesc> vFullChromosomeList =
         activeChromList( vLengths, vList, vPloidyList, vList, xPloidyMap, xPloidyGroups );
@@ -708,16 +712,15 @@ bool PartialQuarry::setActiveChrom( )
             size_t uiValidSpots = 0;
             for( size_t uiXCorr : vActualToCorrected[ uiX ] )
                 for( size_t uiyCorr : vActualToCorrected[ uiY ] )
-                    if( ploidyValid( vFullChromosomeList[ uiXCorr ], vFullChromosomeList[ uiyCorr ], 
-                                     vPloidy ) )
+                    if( ploidyValid( vFullChromosomeList[ uiXCorr ], vFullChromosomeList[ uiyCorr ], vPloidy ) )
                         uiValidSpots += 1;
 
             for( size_t uiXCorr : vActualToCorrected[ uiX ] )
                 for( size_t uiyCorr : vActualToCorrected[ uiY ] )
                 {
                     size_t uiIdx = uiXCorr + uiyCorr * uiFullContigListSize;
-                    if( ploidyValid( vFullChromosomeList[ uiXCorr ], vFullChromosomeList[ uiyCorr ], 
-                                     vPloidy ) && bCorrect )
+                    if( ploidyValid( vFullChromosomeList[ uiXCorr ], vFullChromosomeList[ uiyCorr ], vPloidy ) &&
+                        bCorrect )
                         this->vPloidyCounts[ uiIdx ] = uiValidSpots;
                     else
                         this->vPloidyCounts[ uiIdx ] = bCorrect ? 0 : 1;
@@ -1438,12 +1441,15 @@ void PartialQuarry::regCoords( )
                                /*.vIncomingSession =*/
                                { { "contigs", "displayed_on_x" },
                                  { "contigs", "displayed_on_y" },
+                                 { "contigs", "displayed_on_x_ploidy" },
+                                 { "contigs", "displayed_on_y_ploidy" },
                                  { "contigs", "lengths" },
                                  { "contigs", "list" },
                                  { "contigs", "ploidy_list" },
                                  { "contigs", "ploidy_map" },
                                  { "contigs", "ploidy_groups" },
-                                 { "settings", "normalization", "ploidy_correct" } },
+                                 { "settings", "normalization", "ploidy_correct" },
+                                 { "settings", "normalization", "ploidy_coords" } },
                                /*.vSessionsIncomingInPrevious =*/{ },
                                /*bHidden =*/true } );
 

@@ -529,8 +529,7 @@ bool PartialQuarry::setDecayCDS( )
                 vActiveChromosomes[ uiJ ][ vDistDepDecCoords[ 0 ][ uiI ][ uiJ ].uiChromosomeX ].sName;
             std::string sChromNameY =
                 vActiveChromosomes[ uiJ ][ vDistDepDecCoords[ 0 ][ uiI ][ uiJ ].uiChromosomeY ].sName;
-            vChrs.append( substringChr( sChromNameX, uiMaxChar ) + " - " +
-                          substringChr( sChromNameY, uiMaxChar ) +
+            vChrs.append( substringChr( sChromNameX, uiMaxChar ) + " - " + substringChr( sChromNameY, uiMaxChar ) +
                           ( uiJ == 0 ? ", Group A" : ", Group B" ) );
             vXs.append( vX );
             vYs.append( vY );
