@@ -676,11 +676,23 @@ bool ploidyValid( const ChromDesc& rA, const ChromDesc& rB, std::map<size_t, siz
 
 bool PartialQuarry::setActiveChrom( )
 {
-    auto xPloidyMap = getValue<std::map<std::string, std::string>>( { "contigs", "ploidy_map" } );
-    auto xPloidyGroups = getValue<std::map<std::string, size_t>>( { "contigs", "ploidy_groups" } );
-    auto vLengths = getValue<std::map<std::string, size_t>>( { "contigs", "lengths" } );
     auto bPloidyCords = getValue<bool>( { "settings", "normalization", "ploidy_coords" } );
+
+    std::map<std::string, std::string> xPloidyMap;
+    std::map<std::string, size_t> xPloidyGroups;
     auto vList = getValue<std::vector<std::string>>( { "contigs", bPloidyCords ? "list" : "ploidy_list" } );
+    if(bPloidyCords)
+    {
+        xPloidyMap = getValue<std::map<std::string, std::string>>( { "contigs", "ploidy_map" } );
+        xPloidyGroups = getValue<std::map<std::string, size_t>>( { "contigs", "ploidy_groups" } );
+    }
+    else
+        for( const auto& sChr : vList )
+        {
+            xPloidyMap[ sChr ] = sChr;
+            xPloidyGroups[ sChr ] = 0;
+        }
+    auto vLengths = getValue<std::map<std::string, size_t>>( { "contigs", "lengths" } );
     std::string sPloidySuffix = bPloidyCords ? "" : "_ploidy";
     auto vPloidyList = getValue<std::vector<std::string>>( { "contigs", "ploidy_list" } );
     auto bCorrect = getValue<bool>( { "settings", "normalization", "ploidy_correct" } );

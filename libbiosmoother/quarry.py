@@ -45,7 +45,7 @@ except ImportError:
     import importlib_resources as pkg_resources  # pyright: ignore missing import
 import json
 import sys
-
+import fileinput
 
 def open_default_json():
     return (pkg_resources.files("libbiosmoother") / "conf" / "default.json").open("r")
@@ -235,53 +235,56 @@ class Quarry(PartialQuarry):
         # trigger the cpp copy constructor
         return Quarry(super(PartialQuarry, self))
 
-    def set_ploidy_list(self, ploidy_file):
+    def set_ploidy_itr(self, ploidy_iterator):
         ploidy_map = {}
         ploidy_list = []
         ploidy_groups = {}
         curr_ploidy_group = set()
         group_count = 1
-        with open(ploidy_file, "r") as len_file:
-            for line in len_file:
-                line = line[:-1].strip()
-                if len(line) > 0 and line[0] != "#":
-                    # if whole line is '-'
-                    if all(c == "-" for c in line):
-                        group_count += 1
-                        curr_ploidy_group = set()
-                        continue
-                    chr_from, chr_to = line.split()
-                    if chr_to in ploidy_map:
-                        print(
-                            "ERROR: The target contig name",
-                            chr_to,
-                            "occurs multiple times in the input file. Hence, the given ploidy file is not valid and will be ignored.",
-                        )
-                        return
-                    if chr_from not in self.get_value(["contigs", "ploidy_list"]):
-                        print(
-                            "WARNING: The source contig name",
-                            chr_from,
-                            "does not occur in the dataset. It will be ignored.",
-                        )
-                        continue
-                    if chr_from in curr_ploidy_group:
-                        print(
-                            "WARNING: The source contig name",
-                            chr_from,
-                            "occurs multiple times in the same ploidy group. Is this really what you want?",
-                        )
-                        continue
-                    ploidy_map[chr_to] = chr_from
-                    ploidy_list.append(chr_to)
-                    ploidy_groups[chr_to] = group_count
-                    curr_ploidy_group.add(chr_from)
+        for line in ploidy_iterator:
+            line = line[:-1].strip()
+            if len(line) > 0 and line[0] != "#":
+                # if whole line is '-'
+                if all(c == "-" for c in line):
+                    group_count += 1
+                    curr_ploidy_group = set()
+                    continue
+                chr_from, chr_to = line.split()
+                if chr_to in ploidy_map:
+                    print(
+                        "ERROR: The target contig name",
+                        chr_to,
+                        "occurs multiple times in the input file. Hence, the given ploidy file is not valid and will be ignored.",
+                    )
+                    return
+                if chr_from not in self.get_value(["contigs", "ploidy_list"]):
+                    print(
+                        "WARNING: The source contig name",
+                        chr_from,
+                        "does not occur in the dataset. It will be ignored.",
+                    )
+                    continue
+                if chr_from in curr_ploidy_group:
+                    print(
+                        "WARNING: The source contig name",
+                        chr_from,
+                        "occurs multiple times in the same ploidy group. Is this really what you want?",
+                    )
+                    continue
+                ploidy_map[chr_to] = chr_from
+                ploidy_list.append(chr_to)
+                ploidy_groups[chr_to] = group_count
+                curr_ploidy_group.add(chr_from)
         self.set_value(["contigs", "list"], ploidy_list)
         self.set_value(["contigs", "displayed_on_x"], ploidy_list)
         self.set_value(["contigs", "displayed_on_y"], ploidy_list)
         self.set_value(["contigs", "ploidy_map"], ploidy_map)
         self.set_value(["contigs", "ploidy_groups"], ploidy_groups)
         self.save_session()
+
+    def set_ploidy_list(self, ploidy_file):
+        with fileinput.input(ploidy_file) as file:
+            self.set_ploidy_itr(file)
 
     @staticmethod
     def get_libSps_version():

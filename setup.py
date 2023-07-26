@@ -9,7 +9,7 @@ import sysconfig
 from setuptools import Extension, setup
 from setuptools.command.build_ext import build_ext
 
-VERSION = "0.3.0"
+VERSION = "0.3.1"
 
 # Convert distutils Windows platform specifiers to CMake -A arguments
 PLAT_TO_CMAKE = {
