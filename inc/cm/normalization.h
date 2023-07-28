@@ -434,6 +434,9 @@ bool PartialQuarry::getSamples( const GetSamplesMode& rMode, const size_t uiNumS
 bool PartialQuarry::setGridSeqSamples( )
 {
     const std::string sNorm = getValue<std::string>( { "settings", "normalization", "normalize_by" } );
+
+    vGridSeqSamples.clear();
+
     if( sNorm != "grid-seq" )
         END_RETURN;
 
@@ -456,6 +459,9 @@ bool PartialQuarry::setGridSeqSamples( )
 bool PartialQuarry::setRadiclSeqSamples( )
 {
     const std::string sNorm = getValue<std::string>( { "settings", "normalization", "normalize_by" } );
+    
+    vRadiclSeqSamples.clear();
+
     if( sNorm != "radicl-seq" )
         END_RETURN;
 
@@ -478,6 +484,10 @@ bool PartialQuarry::setRadiclSeqSamples( )
 bool PartialQuarry::setRadiclSeqCoverage( )
 {
     const std::string sNorm = getValue<std::string>( { "settings", "normalization", "normalize_by" } );
+    
+    vRadiclSeqCoverage.clear( );
+    vRadiclSeqNumNonEmptyBins.clear( );
+
     if( sNorm != "radicl-seq" )
         END_RETURN;
 
@@ -486,9 +496,7 @@ bool PartialQuarry::setRadiclSeqCoverage( )
     std::vector<size_t> vRawCoverage;
     vRawCoverage.reserve( vActiveReplicates.size( ) );
 
-    vRadiclSeqCoverage.clear( );
     vRadiclSeqCoverage.reserve( vAxisCords[ bAxisIsCol ? 0 : 1 ].size( ) );
-    vRadiclSeqNumNonEmptyBins.clear( );
     vRadiclSeqNumNonEmptyBins.reserve( vAxisCords[ bAxisIsCol ? 0 : 1 ].size( ) );
 
     for( const AxisCoord& rAxis : vAxisCords[ bAxisIsCol ? 0 : 1 ] )
@@ -594,6 +602,9 @@ bool PartialQuarry::setRadiclSeqCoverage( )
 bool PartialQuarry::setGridSeqCoverage( )
 {
     const std::string sNorm = getValue<std::string>( { "settings", "normalization", "normalize_by" } );
+
+    vGridSeqAnnoCoverage.clear( );
+
     if( sNorm != "grid-seq" )
         END_RETURN;
 
@@ -605,7 +616,6 @@ bool PartialQuarry::setGridSeqCoverage( )
 
     CANCEL_RETURN;
 
-    vGridSeqAnnoCoverage.clear( );
     vGridSeqAnnoCoverage.reserve( vGridSeqSamples.size( ) );
 
     // collect & combine replicate data
@@ -653,6 +663,9 @@ bool PartialQuarry::setGridSeqCoverage( )
 
 bool PartialQuarry::setRnaAssociatedGenesFilter( )
 {
+
+    vGridSeqFiltered.clear( );
+
     if( getValue<std::string>( { "settings", "normalization", "normalize_by" } ) != "grid-seq" )
         END_RETURN;
 
@@ -661,7 +674,6 @@ bool PartialQuarry::setRnaAssociatedGenesFilter( )
     const size_t uiDnaMin = getValue<size_t>( { "settings", "normalization", "grid_seq_dna_filter", "val_min" } );
     const size_t uiDnaMax = getValue<size_t>( { "settings", "normalization", "grid_seq_dna_filter", "val_max" } );
 
-    vGridSeqFiltered.clear( );
     vGridSeqFiltered.reserve( vGridSeqAnnoCoverage.size( ) );
 
     for( const auto& vArr : vGridSeqAnnoCoverage )
@@ -677,13 +689,15 @@ bool PartialQuarry::setRnaAssociatedGenesFilter( )
 // @todo-low-prio think about blacking out columns that are not chromatin associated
 bool PartialQuarry::setRnaAssociatedBackground( )
 {
+
+    vBackgroundGridSeq.clear( );
+
     if( getValue<std::string>( { "settings", "normalization", "normalize_by" } ) != "grid-seq" )
         END_RETURN;
 
     const bool bAxisIsCol = getValue<bool>( { "settings", "normalization", "grid_seq_axis_is_column" } );
     const bool bIgnoreCis = getValue<bool>( { "settings", "normalization", "grid_seq_ignore_cis" } );
 
-    vBackgroundGridSeq.clear( );
     vBackgroundGridSeq.reserve( vAxisCords[ bAxisIsCol ? 0 : 1 ].size( ) );
     // for each eligible element
     for( const AxisCoord& rAxis : vAxisCords[ bAxisIsCol ? 0 : 1 ] )
