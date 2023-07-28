@@ -54,10 +54,10 @@ size_t PartialQuarry::getMaxCoverageFromRepl( const size_t uiChromId, const size
     std::vector<std::tuple<size_t, int64_t, size_t, size_t>> vHeap;
     for( size_t uiI = 0; uiI < vActiveChromosomes[ bCol ? 1 : 0 ].size( ); uiI++ )
     {
-        size_t uiCorrectedContigId = vActiveChromosomes[ bCol ? 1 : 0 ][ uiI ].uiCorrectedContigId;
+        size_t uiActualContigId = vActiveChromosomes[ bCol ? 1 : 0 ][ uiI ].uiActualContigId;
         const size_t uiDatasetId =
-            getDatasetIdfromReplAndChr( uiRepl, bCol != bSymPart ? uiChromId : uiCorrectedContigId,
-                                        bCol != bSymPart ? uiCorrectedContigId : uiChromId );
+            getDatasetIdfromReplAndChr( uiRepl, bCol != bSymPart ? uiChromId : uiActualContigId,
+                                        bCol != bSymPart ? uiActualContigId : uiChromId );
         if( uiDatasetId != std::numeric_limits<size_t>::max( ) )
             vHeap.push_back( makeHeapTuple( bCol, bSymPart, uiFrom, uiTo, uiDatasetId, 0,
                                             vActiveChromosomes[ bCol ? 1 : 0 ][ uiI ].uiLength ) );
@@ -103,10 +103,10 @@ size_t PartialQuarry::getCoverageFromRepl( const size_t uiChromId, const size_t 
     size_t uiRet = 0;
     for( size_t uiI = 0; uiI < vActiveChromosomes[ bCol ? 1 : 0 ].size( ); uiI++ )
     {
-        size_t uiCorrectedContigId = vActiveChromosomes[ bCol ? 1 : 0 ][ uiI ].uiActualContigId;
+        size_t uiActualContigId = vActiveChromosomes[ bCol ? 1 : 0 ][ uiI ].uiActualContigId;
         const size_t uiDatasetId =
-            getDatasetIdfromReplAndChr( uiRepl, bCol != bSymPart ? uiChromId : uiCorrectedContigId,
-                                        bCol != bSymPart ? uiCorrectedContigId : uiChromId );
+            getDatasetIdfromReplAndChr( uiRepl, bCol != bSymPart ? uiChromId : uiActualContigId,
+                                        bCol != bSymPart ? uiActualContigId : uiChromId );
 
         if( uiDatasetId != std::numeric_limits<size_t>::max( ) )
         {
@@ -960,7 +960,9 @@ void PartialQuarry::regCoverage( )
                                /*.vIncomingFunctions =*/{ NodeNames::Tracks },
                                /*.vIncomingSession =*/{ },
                                /*.vSessionsIncomingInPrevious =*/
-                               { { "settings", "normalization", "ice_show_bias" },
+                               { { "settings", "normalization", "radicl_seq_display_coverage" },
+                                 { "settings", "normalization", "radicl_seq_axis_is_column" },
+                                 { "settings", "normalization", "ice_show_bias" },
                                  { "settings", "normalization", "normalize_by" },
                                  { "dividend" } },
                                /*bHidden =*/false } );

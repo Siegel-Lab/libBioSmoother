@@ -628,10 +628,10 @@ bool PartialQuarry::setGridSeqCoverage( )
                 for( size_t uiJ = 0; uiJ < 2; uiJ++ )
                 {
                     if( uiK == 0 )
-                        vVals[ uiJ ] = getCoverageFromRepl( rSample.uiChromosome, uiAnnoStart, uiAnnoEnd, uiI,
+                        vVals[ uiJ ] = getCoverageFromRepl( rSample.uiActualContigId, uiAnnoStart, uiAnnoEnd, uiI,
                                                             bAxisIsCol, uiJ != 0 );
                     else
-                        vVals[ uiJ ] = getMaxCoverageFromRepl( rSample.uiChromosome, uiAnnoStart, uiAnnoEnd, uiI,
+                        vVals[ uiJ ] = getMaxCoverageFromRepl( rSample.uiActualContigId, uiAnnoStart, uiAnnoEnd, uiI,
                                                                uiCoverageMaxBinSize, !bAxisIsCol, uiJ != 0 );
                     vVals[ uiJ ] = vVals[ uiJ ] > uiMinuend ? vVals[ uiJ ] - uiMinuend : 0;
                 }

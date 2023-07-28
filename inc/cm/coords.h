@@ -1096,7 +1096,7 @@ bool PartialQuarry::setV4cCoords( )
                     uiL2 = this->vActiveChromosomes[ uiI ][ uiX ].uiLength;
                 else
                 {
-                    int64_t iDataSetId = uiFistAnnoIdx + this->vActiveChromosomes[ uiI ][ uiX ].uiCorrectedContigId;
+                    int64_t iDataSetId = uiFistAnnoIdx + this->vActiveChromosomes[ uiI ][ uiX ].uiActualContigId;
                     if( bSqueeze )
                         uiL2 = pIndices->vAnno.numIntervals( iDataSetId );
                     else
