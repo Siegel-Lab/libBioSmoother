@@ -964,6 +964,8 @@ void PartialQuarry::regCoverage( )
                                  { "settings", "normalization", "radicl_seq_axis_is_column" },
                                  { "settings", "normalization", "ice_show_bias" },
                                  { "settings", "normalization", "normalize_by" },
+                                 { "settings", "normalization", "grid_seq_axis_is_column" },
+                                 { "settings", "normalization", "grid_seq_display_background" },
                                  { "dividend" } },
                                /*bHidden =*/false } );
 

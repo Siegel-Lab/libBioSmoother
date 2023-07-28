@@ -377,6 +377,8 @@ bool PartialQuarry::getSamples( const GetSamplesMode& rMode, const size_t uiNumS
         assert( rIt != vChromIdForSampleIdx.begin( ) );
         const size_t uiChrom = ( rIt - 1 )->second;
 
+
+        assert( uiChrom < this->vActiveChromosomes[ uiColumn ].size( ) );
         const size_t uiChr = this->vActiveChromosomes[ uiColumn ][ uiChrom ].uiActualContigId;
 
         switch( rMode )
@@ -1117,7 +1119,7 @@ void PartialQuarry::regNormalization( )
     registerNode( NodeNames::GridSeqSamples,
                   ComputeNode{ /*.sNodeName =*/"grid_seq_samples",
                                /*.fFunc =*/&PartialQuarry::setGridSeqSamples,
-                               /*.vIncomingFunctions =*/{ NodeNames::ActiveChromLength },
+                               /*.vIncomingFunctions =*/{ NodeNames::AxisCoords },
                                /*.vIncomingSession =*/
                                { { "annotation", "by_name" },
                                  { "settings", "normalization", "normalize_by" },
@@ -1131,7 +1133,7 @@ void PartialQuarry::regNormalization( )
     registerNode( NodeNames::RadiclSeqSamples,
                   ComputeNode{ /*.sNodeName =*/"radicl_seq_samples",
                                /*.fFunc =*/&PartialQuarry::setRadiclSeqSamples,
-                               /*.vIncomingFunctions =*/{ NodeNames::ActiveChromLength },
+                               /*.vIncomingFunctions =*/{ NodeNames::AxisCoords },
                                /*.vIncomingSession =*/
                                { { "settings", "normalization", "normalize_by" },
                                  { "settings", "normalization", "radicl_seq_samples", "val" },
