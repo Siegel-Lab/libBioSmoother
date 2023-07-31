@@ -33,8 +33,23 @@ def read_xa_tag(tags):
     return l
 
 
-def __check_columns(columns, necessary):
+def __check_columns(columns, necessary, synonyms):
     columns = [col.lower() for col in columns]  # ignore capitalization
+
+    # replace synonyms
+    def get_synonym(col):
+        if "[" in col and "]" in col:
+            col = col.replace("[", "").replace("]", "")
+            if col in synonyms:
+                return "[" + synonyms[col] + "]"
+            else:
+                return "[" + col + "]"
+        else:
+            if col in synonyms:
+                return synonyms[col]
+            else:
+                return col
+    columns = [get_synonym(col) for col in columns]
 
     # check invalid optional columns
     for min_def in ["[" + col + "]" for col in necessary]:
@@ -47,9 +62,7 @@ def __check_columns(columns, necessary):
     for min_def in necessary:
         if min_def not in columns:
             raise RuntimeError(
-                "the given columns do not contain at least one of the minimum required columns: "
-                + ", ".join(necessary)
-                + "."
+                "the given columns do not contain " + min_def + ". But this column is always necessary."
             )
 
     # check duplicates
@@ -69,8 +82,8 @@ def __check_columns(columns, necessary):
     return columns
 
 
-def setup_col_converter(columns, col_order, default_values, necessary_columns):
-    columns = __check_columns(columns, necessary_columns)
+def setup_col_converter(columns, col_order, default_values, necessary_columns, synonyms):
+    columns = __check_columns(columns, necessary_columns, synonyms)
     for col in columns:
         col = col.replace("[", "").replace("]", "")
         if col != "." and col not in col_order:
@@ -201,6 +214,12 @@ def parse_heatmap(
             ],
             ["-", ".", "0", ".", "0", "+", "+", "*", "*", "", "", "1"],
             ["chr1", "pos1", "chr2", "pos2"],
+            {
+                "chrom1": "chr1",
+                "chrom2": "chr2",
+                "readname": "readid",
+                "count": "cnt",
+            }
         )
 
         def convert(cols):
@@ -274,6 +293,12 @@ def parse_track(
             ["readid", "chr", "pos", "strand", "mapq", "xa", "cnt"],
             ["-", ".", "0", "+", "*", "", "1"],
             ["chr", "pos"],
+            {
+                "chrom1": "chr1",
+                "chrom2": "chr2",
+                "readname": "readid",
+                "count": "cnt",
+            }
         )
 
         def convert(cols):
