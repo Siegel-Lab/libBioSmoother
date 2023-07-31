@@ -163,7 +163,7 @@ def parse_tsv(
 
             # parse file columns
             read_name, chrs, poss, mapqs, tags, strand, bin_cnt = line_format(
-                line.split()
+                line.split("\t") if "\t" in line else line.split(" ")
             )
 
             cont = False
