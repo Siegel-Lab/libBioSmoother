@@ -52,6 +52,7 @@ def __cat_coords(cp, is_bottom, idx, cds, w_plane, o_plane, categories):
         o_plane,
     )
 
+AXIS_DISTANCE = 3
 
 def __draw_tick_lines(
     d,
@@ -97,7 +98,7 @@ def __draw_tick_lines(
                 )
             if (
                 not labels is None
-                and p > transform[3]
+                and p >= transform[3]
                 and p < transform[3] + transform[2]
             ):
                 label = labels[idx]
@@ -280,7 +281,7 @@ def __draw_heatmap(session, d, sizes, print_callback=lambda s: None):
             offset_x += sizes["coords"]
         if sizes["show_contigs"]:
             offset_x += sizes["contigs"]
-        if sizes["show_axis"] and (sizes["show_secondary_x"] or sizes["show_anno_x"]):
+        if sizes["show_axis"] and (sizes["show_secondary_y"] or sizes["show_anno_y"]):
             offset_x += sizes["axis"]
         offset_y = 0
         if sizes["show_anno_y"]:
@@ -291,7 +292,7 @@ def __draw_heatmap(session, d, sizes, print_callback=lambda s: None):
             offset_y += sizes["coords"]
         if sizes["show_contigs"]:
             offset_y += sizes["contigs"]
-        if sizes["show_axis"] and (sizes["show_secondary_y"] or sizes["show_anno_y"]):
+        if sizes["show_axis"] and (sizes["show_secondary_x"] or sizes["show_anno_x"]):
             offset_y += sizes["axis"]
 
         d.append(
@@ -389,14 +390,16 @@ def __draw_heatmap(session, d, sizes, print_callback=lambda s: None):
 
 
 def __draw_annotation(session, d, sizes, print_callback=lambda s: None):
-    if sizes["show_anno_x"]:
+    if sizes["show_anno_y"]:
         offset = 0
         if sizes["show_coords"]:
             offset += sizes["coords"]
         if sizes["show_contigs"]:
             offset += sizes["contigs"]
 
-        offset_x = offset + sizes["annotation"] + sizes["margin"]
+        offset_x = offset
+        if sizes["show_anno_x"]:
+            offset_x += sizes["annotation"] + sizes["margin"]
         if sizes["show_secondary_x"]:
             offset_x += sizes["secondary"] + sizes["margin"]
         if sizes["show_axis"]:
@@ -452,29 +455,31 @@ def __draw_annotation(session, d, sizes, print_callback=lambda s: None):
                 [x + 0.5 for x in range(len(active_anno_x[2]))],
                 [len(active_anno_x[2]), 0, sizes["annotation"], offset],
                 offset_x - sizes["axis"],
-                offset_x,
+                offset_x - AXIS_DISTANCE,
                 False,
                 labels=active_anno_x[2][::-1],
             )
             d.append(
                 drawSvg.Line(
-                    offset_x,
+                    offset_x - AXIS_DISTANCE,
                     offset,
-                    offset_x,
+                    offset_x - AXIS_DISTANCE,
                     offset + sizes["annotation"],
                     stroke="black",
                     stroke_width=2,
                 )
             )
 
-    if sizes["show_anno_y"]:
+    if sizes["show_anno_x"]:
         offset = 0
         if sizes["show_coords"]:
             offset += sizes["coords"]
         if sizes["show_contigs"]:
             offset += sizes["contigs"]
 
-        offset_x = offset + sizes["annotation"] + sizes["margin"]
+        offset_x = offset
+        if sizes["show_anno_y"]:
+            offset_x += sizes["annotation"] + sizes["margin"]
         if sizes["show_secondary_y"]:
             offset_x += sizes["secondary"] + sizes["margin"]
         if sizes["show_axis"]:
@@ -530,16 +535,16 @@ def __draw_annotation(session, d, sizes, print_callback=lambda s: None):
                 [x + 0.5 for x in range(len(active_anno_y[2]))],
                 [len(active_anno_y[2]), 0, sizes["annotation"], offset],
                 offset_x - sizes["axis"],
-                offset_x,
+                offset_x - AXIS_DISTANCE,
                 True,
                 labels=active_anno_y[2][::-1],
             )
             d.append(
                 drawSvg.Line(
                     offset,
-                    offset_x,
+                    offset_x - AXIS_DISTANCE,
                     offset + sizes["annotation"],
-                    offset_x,
+                    offset_x - AXIS_DISTANCE,
                     stroke="black",
                     stroke_width=2,
                 )
@@ -547,18 +552,23 @@ def __draw_annotation(session, d, sizes, print_callback=lambda s: None):
 
 
 def __draw_secondary(session, d, sizes, print_callback=lambda s: None):
-    if sizes["show_secondary_x"]:
+    if sizes["show_secondary_y"]:
         offset = 0
-        if sizes["show_anno_x"]:
-            offset += sizes["annotation"] + sizes["margin"]
         if sizes["show_coords"]:
             offset += sizes["coords"]
         if sizes["show_contigs"]:
             offset += sizes["contigs"]
 
-        offset_x = offset + sizes["secondary"] + sizes["margin"]
+        offset_x = offset
+        if sizes["show_anno_x"]:
+            offset_x += sizes["annotation"] + sizes["margin"]
+        if sizes["show_secondary_x"]:
+            offset_x += sizes["secondary"] + sizes["margin"]
         if sizes["show_axis"]:
             offset_x += sizes["axis"]
+
+        if sizes["show_anno_y"]:
+            offset += sizes["annotation"] + sizes["margin"]
 
         x_transform, y_transform = __get_transform(
             session, sizes["heatmap"], offset_x, sizes["heatmap"], offset_x
@@ -605,33 +615,39 @@ def __draw_secondary(session, d, sizes, print_callback=lambda s: None):
                 d,
                 active_anno_x,
                 offset_x - sizes["axis"],
-                offset_x,
+                offset_x - AXIS_DISTANCE,
                 False,
                 label_major=True,
             )
             d.append(
                 drawSvg.Line(
-                    offset_x,
+                    offset_x - AXIS_DISTANCE,
                     offset,
-                    offset_x,
+                    offset_x - AXIS_DISTANCE,
                     offset + sizes["annotation"],
                     stroke="black",
                     stroke_width=2,
                 )
             )
 
-    if sizes["show_secondary_y"]:
+    if sizes["show_secondary_x"]:
         offset = 0
-        if sizes["show_anno_y"]:
-            offset += sizes["annotation"] + sizes["margin"]
         if sizes["show_coords"]:
             offset += sizes["coords"]
         if sizes["show_contigs"]:
             offset += sizes["contigs"]
 
-        offset_x = offset + sizes["secondary"] + sizes["margin"]
+        offset_x = offset
+        if sizes["show_anno_y"]:
+            offset_x += sizes["annotation"] + sizes["margin"]
+        if sizes["show_secondary_y"]:
+            offset_x += sizes["secondary"] + sizes["margin"]
         if sizes["show_axis"]:
             offset_x += sizes["axis"]
+
+
+        if sizes["show_anno_x"]:
+            offset += sizes["annotation"] + sizes["margin"]
 
         x_transform, y_transform = __get_transform(
             session, sizes["heatmap"], offset_x, sizes["heatmap"], offset_x
@@ -678,16 +694,16 @@ def __draw_secondary(session, d, sizes, print_callback=lambda s: None):
                 d,
                 active_anno_y,
                 offset_x - sizes["axis"],
-                offset_x,
+                offset_x - AXIS_DISTANCE,
                 True,
                 label_major=True,
             )
             d.append(
                 drawSvg.Line(
                     offset,
-                    offset_x,
+                    offset_x - AXIS_DISTANCE,
                     offset + sizes["annotation"],
-                    offset_x,
+                    offset_x - AXIS_DISTANCE,
                     stroke="black",
                     stroke_width=2,
                 )
@@ -710,7 +726,7 @@ def __draw_coordinates(session, d, sizes, print_callback=lambda s: None):
             offset_heat_x += sizes["coords"]
         if sizes["show_contigs"]:
             offset_heat_x += sizes["contigs"]
-        if sizes["show_axis"] and (sizes["show_secondary_x"] or sizes["show_anno_x"]):
+        if sizes["show_axis"] and (sizes["show_secondary_y"] or sizes["show_anno_y"]):
             offset_heat_x += sizes["axis"]
 
         if sizes["show_anno_y"]:
@@ -721,7 +737,7 @@ def __draw_coordinates(session, d, sizes, print_callback=lambda s: None):
             offset_heat_y += sizes["coords"]
         if sizes["show_contigs"]:
             offset_heat_y += sizes["contigs"]
-        if sizes["show_axis"] and (sizes["show_secondary_y"] or sizes["show_anno_y"]):
+        if sizes["show_axis"] and (sizes["show_secondary_x"] or sizes["show_anno_x"]):
             offset_heat_y += sizes["axis"]
 
         x_transform, y_transform = __get_transform(
@@ -750,7 +766,7 @@ def __draw_coordinates(session, d, sizes, print_callback=lambda s: None):
             d,
             x_transform,
             offset,
-            offset + sizes["coords"],
+            offset + sizes["coords"] - AXIS_DISTANCE,
             True,
             to_readable_pos=to_readable_pos_x,
             label_major=True,
@@ -759,7 +775,7 @@ def __draw_coordinates(session, d, sizes, print_callback=lambda s: None):
             d,
             y_transform,
             offset,
-            offset + sizes["coords"],
+            offset + sizes["coords"] - AXIS_DISTANCE,
             False,
             to_readable_pos=to_readable_pos_y,
             label_major=True,
@@ -767,18 +783,18 @@ def __draw_coordinates(session, d, sizes, print_callback=lambda s: None):
         d.append(
             drawSvg.Line(
                 offset_heat_x,
-                offset + sizes["coords"],
+                offset + sizes["coords"] - AXIS_DISTANCE,
                 offset_heat_x + sizes["heatmap"],
-                offset + sizes["coords"],
+                offset + sizes["coords"] - AXIS_DISTANCE,
                 stroke="black",
                 stroke_width=2,
             )
         )
         d.append(
             drawSvg.Line(
-                offset + sizes["coords"],
+                offset + sizes["coords"] - AXIS_DISTANCE,
                 offset_heat_y,
-                offset + sizes["coords"],
+                offset + sizes["coords"] - AXIS_DISTANCE,
                 offset_heat_y + sizes["heatmap"],
                 stroke="black",
                 stroke_width=2,
@@ -804,7 +820,7 @@ def __draw_contigs(session, d, sizes, print_callback=lambda s: None):
             offset_heat_x += sizes["coords"]
         if sizes["show_contigs"]:
             offset_heat_x += sizes["contigs"]
-        if sizes["show_axis"] and (sizes["show_secondary_x"] or sizes["show_anno_x"]):
+        if sizes["show_axis"] and (sizes["show_secondary_y"] or sizes["show_anno_y"]):
             offset_heat_x += sizes["axis"]
 
         if sizes["show_anno_y"]:
@@ -815,7 +831,7 @@ def __draw_contigs(session, d, sizes, print_callback=lambda s: None):
             offset_heat_y += sizes["coords"]
         if sizes["show_contigs"]:
             offset_heat_y += sizes["contigs"]
-        if sizes["show_axis"] and (sizes["show_secondary_y"] or sizes["show_anno_y"]):
+        if sizes["show_axis"] and (sizes["show_secondary_x"] or sizes["show_anno_x"]):
             offset_heat_y += sizes["axis"]
 
         x_transform, y_transform = __get_transform(
@@ -835,6 +851,45 @@ def __draw_contigs(session, d, sizes, print_callback=lambda s: None):
         ]
         contig_names_x = session.get_contig_ticks(True, print_callback)["contig_names"]
         contig_names_y = session.get_contig_ticks(False, print_callback)["contig_names"]
+        __draw_tick_lines(
+            d,
+            contig_starts_x,
+            x_transform,
+            offset + sizes["contigs"] - 8,
+            offset + sizes["contigs"] - AXIS_DISTANCE,
+            True,
+            labels=None,
+        )
+        __draw_tick_lines(
+            d,
+            contig_starts_y,
+            y_transform,
+            offset + sizes["contigs"] - 8,
+            offset + sizes["contigs"] - AXIS_DISTANCE,
+            False,
+            labels=None,
+        )
+        d.append(
+            drawSvg.Line(
+                offset_heat_x,
+                offset + sizes["contigs"] - AXIS_DISTANCE,
+                offset_heat_x + sizes["heatmap"],
+                offset + sizes["contigs"] - AXIS_DISTANCE,
+                stroke="black",
+                stroke_width=2,
+            )
+        )
+        d.append(
+            drawSvg.Line(
+                offset + sizes["contigs"] - AXIS_DISTANCE,
+                offset_heat_y,
+                offset + sizes["contigs"] - AXIS_DISTANCE,
+                offset_heat_y + sizes["heatmap"],
+                stroke="black",
+                stroke_width=2,
+            )
+        )
+
         __draw_tick_lines(
             d,
             contig_centers_x,
@@ -892,44 +947,61 @@ def __draw_contigs(session, d, sizes, print_callback=lambda s: None):
 def __get_sizes(session):
     return {
         "show_heat": True,
+
         "show_coords": session.get_value(
             ["settings", "interface", "show_hide", "coords"]
         ),
+
         "show_contigs": session.get_value(
             ["settings", "interface", "show_hide", "regs"]
         ),
+
         "show_ident_line": session.get_value(
             ["settings", "interface", "show_hide", "indent_line"]
         ),
+
         "show_axis": session.get_value(["settings", "interface", "show_hide", "axis"]),
+
         "coords": session.get_value(["settings", "export", "coords", "val"]),
+
         "contigs": session.get_value(["settings", "export", "contigs", "val"]),
+
         "axis": session.get_value(["settings", "export", "axis", "val"]),
+
         "show_contig_borders": session.get_value(
             ["settings", "interface", "show_hide", "contig_borders"]
         ),
+
         "show_grid_lines": session.get_value(
             ["settings", "interface", "show_hide", "grid_lines"]
         ),
+
         "heatmap": session.get_value(["settings", "export", "size", "val"]),
+
         "margin": session.get_value(["settings", "export", "margins", "val"]),
+
         "show_anno_x": session.get_value(
             ["settings", "interface", "show_hide", "annotation"]
         )
         and len(session.get_annotation(False, lambda x: None)["anno_name"]) > 0,
+
         "show_anno_y": session.get_value(
             ["settings", "interface", "show_hide", "annotation"]
         )
         and len(session.get_annotation(True, lambda x: None)["anno_name"]) > 0,
+
         "annotation": session.get_value(["settings", "interface", "anno_size", "val"]),
+
         "show_secondary_x": session.get_value(
             ["settings", "interface", "show_hide", "raw"]
         )
-        and len(session.get_tracks(True, lambda x: None)["values"]) > 0,
+        and len(session.get_tracks(False, lambda x: None)["values"]) > 0,
+
         "show_secondary_y": session.get_value(
             ["settings", "interface", "show_hide", "raw"]
         )
-        and len(session.get_tracks(False, lambda x: None)["values"]) > 0,
+        and len(session.get_tracks(True, lambda x: None)["values"]) > 0,
+
         "secondary": session.get_value(["settings", "interface", "raw_size", "val"]),
     }
 
@@ -948,7 +1020,7 @@ def __make_drawing(session, sizes):
         size_x += sizes["coords"]
     if sizes["show_contigs"]:
         size_x += sizes["contigs"]
-    if sizes["show_axis"] and (sizes["show_secondary_x"] or sizes["show_anno_x"]):
+    if sizes["show_axis"] and (sizes["show_secondary_y"] or sizes["show_anno_y"]):
         size_x += sizes["axis"]
 
     size_x -= sizes["margin"]
@@ -963,7 +1035,7 @@ def __make_drawing(session, sizes):
         size_y += sizes["coords"]
     if sizes["show_contigs"]:
         size_y += sizes["contigs"]
-    if sizes["show_axis"] and (sizes["show_secondary_y"] or sizes["show_anno_y"]):
+    if sizes["show_axis"] and (sizes["show_secondary_x"] or sizes["show_anno_x"]):
         size_y += sizes["axis"]
 
     size_y -= sizes["margin"]
