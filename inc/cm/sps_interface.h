@@ -18,11 +18,29 @@ class HasSession
     std::string sFilePrefix;
     json xSession;
 
+    std::string replace(const std::string& sStr, const char cFrom, std::string sTo) {
+        std::string sRet = "";
+        sRet.reserve( sStr.size( ) * 2 );
+        for( const char c : sStr )
+        {
+            if (c == cFrom)
+                sRet += sTo;
+            else
+                sRet += std::string( 1, c );
+        }
+        return sRet;
+    }
+
+    std::string escape(const std::string& sKey)
+    {
+        return replace(replace(sKey, '~', "~0"), '/', "~1");
+    }
+
     std::string toString( std::vector<std::string>& vKeys )
     {
         std::string sPtr = "";
-        for( std::string sKey : vKeys )
-            sPtr += "/" + sKey;
+        for( const std::string& sKey : vKeys )
+            sPtr += "/" + escape(sKey);
         return sPtr;
     }
 
