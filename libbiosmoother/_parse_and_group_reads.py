@@ -415,6 +415,10 @@ class ChrOrderHeatmapIterator:
             for tup in self.chrs[chr_x][chr_y]:
                 yield tup
 
+def __make_filename_save(prefix):
+    for illegal_char in "#%&{}\\<>*?/$!\'\":@+`|= ":
+        prefix = prefix.replace(illegal_char, "_")
+    return prefix
 
 def chr_order_heatmap(
     index_prefix,
@@ -428,7 +432,7 @@ def chr_order_heatmap(
     progress_print=print,
     columns=["chr1", "pos1", "chr2", "pos2"],
 ):
-    prefix = index_prefix + "/.tmp." + dataset_name
+    prefix = index_prefix + "/.tmp." + __make_filename_save(dataset_name)
     chrs = {}
     in_file = {}
     if do_force_upper_triangle:
@@ -522,7 +526,7 @@ def chr_order_coverage(
     progress_print=print,
     columns=["chr", "pos"],
 ):
-    prefix = index_prefix + "/.tmp." + dataset_name
+    prefix = index_prefix + "/.tmp." + __make_filename_save(dataset_name)
     chrs = {}
     in_file = {}
     for (
