@@ -553,7 +553,7 @@ def __draw_annotation(session, d, sizes, print_callback=lambda s: None):
 
 
 def __draw_secondary(session, d, sizes, print_callback=lambda s: None):
-    stroke_width = session.get_value(["settings", "export", "secondary_stroke_width"])
+    stroke_width = session.get_value(["settings", "export", "secondary_stroke_width", "val"])
 
     if sizes["show_secondary_y"]:
         offset = 0
