@@ -235,6 +235,7 @@ def __draw_lines(
     color="c",
     conv_coords_x=__conv_coords,
     conv_coords_y=__conv_coords,
+    stroke_width=2,
 ):
     for (
         xs,
@@ -250,7 +251,7 @@ def __draw_lines(
         ]
         for xf, yf, xt, yt in zip(xs2[:-1], ysy[:-1], xs2[1:], ysy[1:]):
             if not float("NaN") in [xf, yf, xt, yt]:
-                d.append(drawSvg.Line(xf, yf, xt, yt, stroke=c, stroke_width=2))
+                d.append(drawSvg.Line(xf, yf, xt, yt, stroke=c, stroke_width=stroke_width))
 
 
 def __get_transform(session, w_plane, x_plane, h_plane, y_plane):
@@ -552,6 +553,8 @@ def __draw_annotation(session, d, sizes, print_callback=lambda s: None):
 
 
 def __draw_secondary(session, d, sizes, print_callback=lambda s: None):
+    stroke_width = session.get_value(["settings", "export", "secondary_stroke_width"])
+
     if sizes["show_secondary_y"]:
         offset = 0
         if sizes["show_coords"]:
@@ -586,6 +589,7 @@ def __draw_secondary(session, d, sizes, print_callback=lambda s: None):
             x="screen_pos",
             y="values",
             color="colors",
+            stroke_width=stroke_width,
         )
 
         if sizes["show_grid_lines"]:
@@ -665,6 +669,7 @@ def __draw_secondary(session, d, sizes, print_callback=lambda s: None):
             y="screen_pos",
             x="values",
             color="colors",
+            stroke_width=stroke_width,
         )
 
         if sizes["show_grid_lines"]:

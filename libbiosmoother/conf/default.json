@@ -369,6 +369,7 @@
             "spinner_min_restricted": true,
             "spinner_max_restricted": false
         },
-        "export_format": "tsv"
+        "export_format": "tsv",
+        "secondary_stroke_width": 2
     }
 }
