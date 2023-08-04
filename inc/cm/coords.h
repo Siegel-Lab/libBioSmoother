@@ -664,13 +664,22 @@ const std::array<size_t, 2> PartialQuarry::getCanvasSize( const std::function<vo
 }
 
 
-bool ploidyValid( const ChromDesc& rA, const ChromDesc& rB, std::map<size_t, size_t>& vPloidy )
+bool ploidyValid( const ChromDesc& rA, const ChromDesc& rB,
+                  const std::vector<std::vector<bool>>& vvbActualContigsShareGroup )
 {
-    if( vPloidy[ rA.uiActualContigId ] == 1 && vPloidy[ rB.uiActualContigId ] == 1 )
-        return true;
+    // inter-contig interactions are only valid if the are in the same instance
+    // i.e. don't make the diagonal appear outside of the diagonal
+    if( rA.uiActualContigId == rB.uiActualContigId && rA.uiCorrectedContigId != rB.uiCorrectedContigId )
+        return false;
+    // interactions within the same group are valid (except above rule)
     if( rA.uiPloidyGroupId == rB.uiPloidyGroupId )
         return true;
+    
+    // interactions between actual contigs that never share a group are valid (except above)
+    if (!vvbActualContigsShareGroup[rA.uiActualContigId][rB.uiActualContigId])
+        return true;
 
+    // all other interactions are not valid
     return false;
 }
 
@@ -712,11 +721,27 @@ bool PartialQuarry::setActiveChrom( )
     std::set<size_t> vActualContigs;
     std::map<size_t, size_t> vPloidy;
     std::map<size_t, std::vector<size_t>> vActualToCorrected;
+    std::vector<std::vector<bool>> vvbActualContigsShareGroup;
     for( auto& rChr : vFullChromosomeList )
     {
         vPloidy[ rChr.uiActualContigId ] += 1;
         vActualToCorrected[ rChr.uiActualContigId ].push_back( rChr.uiCorrectedContigId );
         vActualContigs.insert( rChr.uiActualContigId );
+    }
+    vvbActualContigsShareGroup.resize( vActualContigs.size( ) );
+    for( size_t uiX : vActualContigs )
+    {
+        vvbActualContigsShareGroup[uiX].resize( vActualContigs.size( ) );
+        for( size_t uiY : vActualContigs )
+        {
+            bool bShareGroup = false;
+            for( size_t uiXCorr : vActualToCorrected[ uiX ] )
+                for( size_t uiyCorr : vActualToCorrected[ uiY ] )
+                    if( vFullChromosomeList[ uiXCorr ].uiPloidyGroupId == vFullChromosomeList[ uiyCorr ].uiPloidyGroupId )
+                        bShareGroup = true;
+
+            vvbActualContigsShareGroup[uiX][uiY] = bShareGroup; 
+        }
     }
     for( size_t uiX : vActualContigs )
         for( size_t uiY : vActualContigs )
@@ -724,14 +749,16 @@ bool PartialQuarry::setActiveChrom( )
             size_t uiValidSpots = 0;
             for( size_t uiXCorr : vActualToCorrected[ uiX ] )
                 for( size_t uiyCorr : vActualToCorrected[ uiY ] )
-                    if( ploidyValid( vFullChromosomeList[ uiXCorr ], vFullChromosomeList[ uiyCorr ], vPloidy ) )
+                    if( ploidyValid( vFullChromosomeList[ uiXCorr ], vFullChromosomeList[ uiyCorr ],
+                                     vvbActualContigsShareGroup ) )
                         uiValidSpots += 1;
 
             for( size_t uiXCorr : vActualToCorrected[ uiX ] )
                 for( size_t uiyCorr : vActualToCorrected[ uiY ] )
                 {
                     size_t uiIdx = uiXCorr + uiyCorr * uiFullContigListSize;
-                    if( ploidyValid( vFullChromosomeList[ uiXCorr ], vFullChromosomeList[ uiyCorr ], vPloidy ) &&
+                    if( ploidyValid( vFullChromosomeList[ uiXCorr ], vFullChromosomeList[ uiyCorr ],
+                                     vvbActualContigsShareGroup ) &&
                         bCorrect )
                         this->vPloidyCounts[ uiIdx ] = uiValidSpots;
                     else
