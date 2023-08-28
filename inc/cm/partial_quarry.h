@@ -1345,25 +1345,24 @@ class PartialQuarry : public HasSession
         size_t uiMaxPos = 0;
         const bool bSqueeze =
             this->xSession[ "settings" ][ "filters" ][ "anno_in_multiple_bins" ].get<std::string>( ) == "squeeze";
-        std::string sCoords = getValue<std::string>( { "contigs", "annotation_coordinates" } );
         const bool bFullGenome =
             bGenomicCoords ||
             !getValue<bool>( { "settings", "filters", bXAxis ? "anno_coords_col" : "anno_coords_row" } );
         size_t uiRunningPos = 0;
+        int64_t iDataSetId = getValue<size_t>(
+            { "annotation", "by_name", getValue<std::string>( { "contigs", "annotation_coordinates" } ) } );
         for( auto xChr : vActiveChromosomes[ bXAxis ? 0 : 1 ] )
         {
             bool bMatch = to_lower( xChr.sName ).find( sName ) != std::string::npos;
             size_t uiLen = 0;
             if( bFullGenome )
                 uiLen = xChr.uiLength;
-            else if( this->xSession[ "annotation" ][ "by_name" ][ sCoords ].contains( xChr.sName ) )
+            else
             {
-                int64_t iDataSetId =
-                    this->xSession[ "annotation" ][ "by_name" ][ sCoords ][ xChr.sName ].get<int64_t>( );
                 if( bSqueeze )
-                    uiLen = pIndices->vAnno.numIntervals( iDataSetId );
+                    uiLen = pIndices->vAnno.numIntervals( iDataSetId + xChr.uiActualContigId );
                 else
-                    uiLen = pIndices->vAnno.totalIntervalSize( iDataSetId );
+                    uiLen = pIndices->vAnno.totalIntervalSize( iDataSetId + xChr.uiActualContigId );
             }
             if( bMatch )
             {
