@@ -435,7 +435,7 @@ bool PartialQuarry::setGridSeqSamples( )
 {
     const std::string sNorm = getValue<std::string>( { "settings", "normalization", "normalize_by" } );
 
-    vGridSeqSamples.clear();
+    vGridSeqSamples.clear( );
 
     if( sNorm != "grid-seq" )
         END_RETURN;
@@ -459,8 +459,8 @@ bool PartialQuarry::setGridSeqSamples( )
 bool PartialQuarry::setRadiclSeqSamples( )
 {
     const std::string sNorm = getValue<std::string>( { "settings", "normalization", "normalize_by" } );
-    
-    vRadiclSeqSamples.clear();
+
+    vRadiclSeqSamples.clear( );
 
     if( sNorm != "radicl-seq" )
         END_RETURN;
@@ -484,7 +484,7 @@ bool PartialQuarry::setRadiclSeqSamples( )
 bool PartialQuarry::setRadiclSeqCoverage( )
 {
     const std::string sNorm = getValue<std::string>( { "settings", "normalization", "normalize_by" } );
-    
+
     vRadiclSeqCoverage.clear( );
     vRadiclSeqNumNonEmptyBins.clear( );
 

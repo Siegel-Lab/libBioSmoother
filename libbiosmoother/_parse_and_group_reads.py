@@ -49,6 +49,7 @@ def __check_columns(columns, necessary, synonyms):
                 return synonyms[col]
             else:
                 return col
+
     columns = [get_synonym(col) for col in columns]
 
     # check invalid optional columns
@@ -62,7 +63,9 @@ def __check_columns(columns, necessary, synonyms):
     for min_def in necessary:
         if min_def not in columns:
             raise RuntimeError(
-                "the given columns do not contain " + min_def + ". But this column is always necessary."
+                "the given columns do not contain "
+                + min_def
+                + ". But this column is always necessary."
             )
 
     # check duplicates
@@ -82,7 +85,9 @@ def __check_columns(columns, necessary, synonyms):
     return columns
 
 
-def setup_col_converter(columns, col_order, default_values, necessary_columns, synonyms):
+def setup_col_converter(
+    columns, col_order, default_values, necessary_columns, synonyms
+):
     columns = __check_columns(columns, necessary_columns, synonyms)
     for col in columns:
         col = col.replace("[", "").replace("]", "")
@@ -219,7 +224,7 @@ def parse_heatmap(
                 "chrom2": "chr2",
                 "readname": "readid",
                 "count": "cnt",
-            }
+            },
         )
 
         def convert(cols):
@@ -298,7 +303,7 @@ def parse_track(
                 "chrom2": "chr2",
                 "readname": "readid",
                 "count": "cnt",
-            }
+            },
         )
 
         def convert(cols):
@@ -415,10 +420,12 @@ class ChrOrderHeatmapIterator:
             for tup in self.chrs[chr_x][chr_y]:
                 yield tup
 
+
 def __make_filename_save(prefix):
-    for illegal_char in "#%&{}\\<>*?/$!\'\":@+`|= ":
+    for illegal_char in "#%&{}\\<>*?/$!'\":@+`|= ":
         prefix = prefix.replace(illegal_char, "_")
     return prefix
+
 
 def chr_order_heatmap(
     index_prefix,

@@ -47,6 +47,7 @@ import json
 import sys
 import fileinput
 
+
 def open_default_json():
     return (pkg_resources.files("libbiosmoother") / "conf" / "default.json").open("r")
 

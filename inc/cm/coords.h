@@ -192,7 +192,7 @@ annoCoordsHelper( size_t uiBinSize, size_t uiScreenStartPos, size_t uiScreenEndP
     {
         if( bCancel )
             return std::make_pair( vRet, vRet2 );
-        int64_t iDataSetId = uiFistAnnoIdx + uiI;
+        int64_t iDataSetId = uiFistAnnoIdx + vChromosomes[ uiI ].uiActualContigId;
 
         size_t uiChromSize;
         switch( iAnnoInMultipleBins )
@@ -441,7 +441,7 @@ bool PartialQuarry::setLCS( )
 {
     uiLogestCommonSuffix = 0;
 
-    if( getValue<json>( { "contigs", "ploidy_list" } ).size( ) > 1 )
+    if( vActiveChromosomes[ 0 ].size( ) > 1 && vActiveChromosomes[ 1 ].size( ) > 1 )
     {
         char cLast = '_';
         bool bContinue = true;
@@ -449,23 +449,28 @@ bool PartialQuarry::setLCS( )
         {
             ++uiLogestCommonSuffix;
             bool bFirst = true;
-            for( auto& rChr : getValue<json>( { "contigs", "ploidy_list" } ) )
+            for( const auto& vList : vActiveChromosomes )
             {
-                CANCEL_RETURN;
-                std::string sChr = rChr.get<std::string>( );
-                if( sChr.size( ) < uiLogestCommonSuffix )
-                {
-                    bContinue = false;
+                if( !bContinue )
                     break;
-                }
-                else if( bFirst )
-                    cLast = sChr[ sChr.size( ) - uiLogestCommonSuffix ];
-                else if( cLast != sChr[ sChr.size( ) - uiLogestCommonSuffix ] )
+                for( const auto& rChr : vList )
                 {
-                    bContinue = false;
-                    break;
+                    CANCEL_RETURN;
+                    std::string sChr = rChr.sName;
+                    if( sChr.size( ) < uiLogestCommonSuffix )
+                    {
+                        bContinue = false;
+                        break;
+                    }
+                    else if( bFirst )
+                        cLast = sChr[ sChr.size( ) - uiLogestCommonSuffix ];
+                    else if( cLast != sChr[ sChr.size( ) - uiLogestCommonSuffix ] )
+                    {
+                        bContinue = false;
+                        break;
+                    }
+                    bFirst = false;
                 }
-                bFirst = false;
             }
         }
         --uiLogestCommonSuffix;
@@ -674,9 +679,9 @@ bool ploidyValid( const ChromDesc& rA, const ChromDesc& rB,
     // interactions within the same group are valid (except above rule)
     if( rA.uiPloidyGroupId == rB.uiPloidyGroupId )
         return true;
-    
+
     // interactions between actual contigs that never share a group are valid (except above)
-    if (!vvbActualContigsShareGroup[rA.uiActualContigId][rB.uiActualContigId])
+    if( !vvbActualContigsShareGroup[ rA.uiActualContigId ][ rB.uiActualContigId ] )
         return true;
 
     // all other interactions are not valid
@@ -690,7 +695,7 @@ bool PartialQuarry::setActiveChrom( )
     std::map<std::string, std::string> xPloidyMap;
     std::map<std::string, size_t> xPloidyGroups;
     auto vList = getValue<std::vector<std::string>>( { "contigs", bPloidyCords ? "list" : "ploidy_list" } );
-    if(bPloidyCords)
+    if( bPloidyCords )
     {
         xPloidyMap = getValue<std::map<std::string, std::string>>( { "contigs", "ploidy_map" } );
         xPloidyGroups = getValue<std::map<std::string, size_t>>( { "contigs", "ploidy_groups" } );
@@ -731,16 +736,17 @@ bool PartialQuarry::setActiveChrom( )
     vvbActualContigsShareGroup.resize( vActualContigs.size( ) );
     for( size_t uiX : vActualContigs )
     {
-        vvbActualContigsShareGroup[uiX].resize( vActualContigs.size( ) );
+        vvbActualContigsShareGroup[ uiX ].resize( vActualContigs.size( ) );
         for( size_t uiY : vActualContigs )
         {
             bool bShareGroup = false;
             for( size_t uiXCorr : vActualToCorrected[ uiX ] )
                 for( size_t uiyCorr : vActualToCorrected[ uiY ] )
-                    if( vFullChromosomeList[ uiXCorr ].uiPloidyGroupId == vFullChromosomeList[ uiyCorr ].uiPloidyGroupId )
+                    if( vFullChromosomeList[ uiXCorr ].uiPloidyGroupId ==
+                        vFullChromosomeList[ uiyCorr ].uiPloidyGroupId )
                         bShareGroup = true;
 
-            vvbActualContigsShareGroup[uiX][uiY] = bShareGroup; 
+            vvbActualContigsShareGroup[ uiX ][ uiY ] = bShareGroup;
         }
     }
     for( size_t uiX : vActualContigs )
@@ -1468,9 +1474,9 @@ void PartialQuarry::regCoords( )
     registerNode( NodeNames::LCS,
                   ComputeNode{ /*.sNodeName =*/"longest_common_substring",
                                /*.fFunc =*/&PartialQuarry::setLCS,
-                               /*.vIncomingFunctions =*/{ },
-                               /*.vIncomingSession =*/{ { "contigs", "ploidy_list" } },
-                               /*.vSessionsIncomingInPrevious =*/{ },
+                               /*.vIncomingFunctions =*/{ NodeNames::ActiveChrom },
+                               /*.vIncomingSession =*/{ },
+                               /*.vSessionsIncomingInPrevious =*/{ { "contigs", "ploidy_list" } },
                                /*bHidden =*/true } );
 
     registerNode( NodeNames::ActiveChrom,

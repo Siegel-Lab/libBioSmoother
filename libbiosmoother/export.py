@@ -52,7 +52,9 @@ def __cat_coords(cp, is_bottom, idx, cds, w_plane, o_plane, categories):
         o_plane,
     )
 
+
 AXIS_DISTANCE = 3
+
 
 def __draw_tick_lines(
     d,
@@ -251,7 +253,9 @@ def __draw_lines(
         ]
         for xf, yf, xt, yt in zip(xs2[:-1], ysy[:-1], xs2[1:], ysy[1:]):
             if not float("NaN") in [xf, yf, xt, yt]:
-                d.append(drawSvg.Line(xf, yf, xt, yt, stroke=c, stroke_width=stroke_width))
+                d.append(
+                    drawSvg.Line(xf, yf, xt, yt, stroke=c, stroke_width=stroke_width)
+                )
 
 
 def __get_transform(session, w_plane, x_plane, h_plane, y_plane):
@@ -553,7 +557,9 @@ def __draw_annotation(session, d, sizes, print_callback=lambda s: None):
 
 
 def __draw_secondary(session, d, sizes, print_callback=lambda s: None):
-    stroke_width = session.get_value(["settings", "export", "secondary_stroke_width", "val"])
+    stroke_width = session.get_value(
+        ["settings", "export", "secondary_stroke_width", "val"]
+    )
 
     if sizes["show_secondary_y"]:
         offset = 0
@@ -648,7 +654,6 @@ def __draw_secondary(session, d, sizes, print_callback=lambda s: None):
             offset_x += sizes["secondary"] + sizes["margin"]
         if sizes["show_axis"]:
             offset_x += sizes["axis"]
-
 
         if sizes["show_anno_x"]:
             offset += sizes["annotation"] + sizes["margin"]
@@ -952,61 +957,44 @@ def __draw_contigs(session, d, sizes, print_callback=lambda s: None):
 def __get_sizes(session):
     return {
         "show_heat": True,
-
         "show_coords": session.get_value(
             ["settings", "interface", "show_hide", "coords"]
         ),
-
         "show_contigs": session.get_value(
             ["settings", "interface", "show_hide", "regs"]
         ),
-
         "show_ident_line": session.get_value(
             ["settings", "interface", "show_hide", "indent_line"]
         ),
-
         "show_axis": session.get_value(["settings", "interface", "show_hide", "axis"]),
-
         "coords": session.get_value(["settings", "export", "coords", "val"]),
-
         "contigs": session.get_value(["settings", "export", "contigs", "val"]),
-
         "axis": session.get_value(["settings", "export", "axis", "val"]),
-
         "show_contig_borders": session.get_value(
             ["settings", "interface", "show_hide", "contig_borders"]
         ),
-
         "show_grid_lines": session.get_value(
             ["settings", "interface", "show_hide", "grid_lines"]
         ),
-
         "heatmap": session.get_value(["settings", "export", "size", "val"]),
-
         "margin": session.get_value(["settings", "export", "margins", "val"]),
-
         "show_anno_x": session.get_value(
             ["settings", "interface", "show_hide", "annotation"]
         )
         and len(session.get_annotation(False, lambda x: None)["anno_name"]) > 0,
-
         "show_anno_y": session.get_value(
             ["settings", "interface", "show_hide", "annotation"]
         )
         and len(session.get_annotation(True, lambda x: None)["anno_name"]) > 0,
-
         "annotation": session.get_value(["settings", "interface", "anno_size", "val"]),
-
         "show_secondary_x": session.get_value(
             ["settings", "interface", "show_hide", "raw"]
         )
         and len(session.get_tracks(False, lambda x: None)["values"]) > 0,
-
         "show_secondary_y": session.get_value(
             ["settings", "interface", "show_hide", "raw"]
         )
         and len(session.get_tracks(True, lambda x: None)["values"]) > 0,
-
         "secondary": session.get_value(["settings", "interface", "raw_size", "val"]),
     }
 
