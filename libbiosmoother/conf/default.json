@@ -128,7 +128,11 @@
             "step": 10,
             "spinner_min_restricted": true,
             "spinner_max_restricted": false
-        }
+        },
+        "ploidy_keep_distinct_group": true,
+        "ploidy_keep_inter_group": true,
+        "ploidy_remove_others": true,
+        "ploidy_remove_intra_instance_contig": true
     },
     "replicates": {
         "in_group": "sum",

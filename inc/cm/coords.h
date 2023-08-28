@@ -670,27 +670,36 @@ const std::array<size_t, 2> PartialQuarry::getCanvasSize( const std::function<vo
 
 
 bool ploidyValid( const ChromDesc& rA, const ChromDesc& rB,
-                  const std::vector<std::vector<bool>>& vvbActualContigsShareGroup )
+                  const std::vector<std::vector<bool>>& vvbActualContigsShareGroup, const bool bKeepDistinctGroup,
+                  const bool bKeepInterGroup, const bool bRemoveOthers, const bool bRemoveIntraInstanceContig )
 {
     // inter-contig interactions are only valid if the are in the same instance
     // i.e. don't make the diagonal appear outside of the diagonal
-    if( rA.uiActualContigId == rB.uiActualContigId && rA.uiCorrectedContigId != rB.uiCorrectedContigId )
+    if( rA.uiActualContigId == rB.uiActualContigId && rA.uiCorrectedContigId != rB.uiCorrectedContigId &&
+        bRemoveIntraInstanceContig )
         return false;
     // interactions within the same group are valid (except above rule)
-    if( rA.uiPloidyGroupId == rB.uiPloidyGroupId )
+    if( rA.uiPloidyGroupId == rB.uiPloidyGroupId && bKeepInterGroup )
         return true;
 
     // interactions between actual contigs that never share a group are valid (except above)
-    if( !vvbActualContigsShareGroup[ rA.uiActualContigId ][ rB.uiActualContigId ] )
+    if( !vvbActualContigsShareGroup[ rA.uiActualContigId ][ rB.uiActualContigId ] && bKeepDistinctGroup )
         return true;
 
     // all other interactions are not valid
-    return false;
+    return !bRemoveOthers;
 }
 
 bool PartialQuarry::setActiveChrom( )
 {
     auto bPloidyCords = getValue<bool>( { "settings", "normalization", "ploidy_coords" } );
+    auto bKeepDistinctGroup =
+        getValue<bool>( { "settings", "normalization", "ploidy_keep_distinct_group" } ); // default: true
+    auto bKeepInterGroup =
+        getValue<bool>( { "settings", "normalization", "ploidy_keep_inter_group" } ); // default: true
+    auto bRemoveOthers = getValue<bool>( { "settings", "normalization", "ploidy_remove_others" } ); // default: true
+    auto bRemoveIntraInstanceContig =
+        getValue<bool>( { "settings", "normalization", "ploidy_remove_intra_instance_contig" } ); // default: true
 
     std::map<std::string, std::string> xPloidyMap;
     std::map<std::string, size_t> xPloidyGroups;
@@ -756,7 +765,8 @@ bool PartialQuarry::setActiveChrom( )
             for( size_t uiXCorr : vActualToCorrected[ uiX ] )
                 for( size_t uiyCorr : vActualToCorrected[ uiY ] )
                     if( ploidyValid( vFullChromosomeList[ uiXCorr ], vFullChromosomeList[ uiyCorr ],
-                                     vvbActualContigsShareGroup ) )
+                                     vvbActualContigsShareGroup, bKeepDistinctGroup, bKeepInterGroup, bRemoveOthers,
+                                     bRemoveIntraInstanceContig ) )
                         uiValidSpots += 1;
 
             for( size_t uiXCorr : vActualToCorrected[ uiX ] )
@@ -764,7 +774,8 @@ bool PartialQuarry::setActiveChrom( )
                 {
                     size_t uiIdx = uiXCorr + uiyCorr * uiFullContigListSize;
                     if( ploidyValid( vFullChromosomeList[ uiXCorr ], vFullChromosomeList[ uiyCorr ],
-                                     vvbActualContigsShareGroup ) &&
+                                     vvbActualContigsShareGroup, bKeepDistinctGroup, bKeepInterGroup, bRemoveOthers,
+                                     bRemoveIntraInstanceContig ) &&
                         bCorrect )
                         this->vPloidyCounts[ uiIdx ] = uiValidSpots;
                     else
@@ -1494,7 +1505,11 @@ void PartialQuarry::regCoords( )
                                  { "contigs", "ploidy_map" },
                                  { "contigs", "ploidy_groups" },
                                  { "settings", "normalization", "ploidy_correct" },
-                                 { "settings", "normalization", "ploidy_coords" } },
+                                 { "settings", "normalization", "ploidy_coords" },
+                                 { "settings", "normalization", "ploidy_keep_distinct_group" },
+                                 { "settings", "normalization", "ploidy_keep_inter_group" },
+                                 { "settings", "normalization", "ploidy_remove_others" },
+                                 { "settings", "normalization", "ploidy_remove_intra_instance_contig" } },
                                /*.vSessionsIncomingInPrevious =*/{ },
                                /*bHidden =*/true } );
 
