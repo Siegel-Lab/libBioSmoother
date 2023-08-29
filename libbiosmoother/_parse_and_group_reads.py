@@ -88,18 +88,25 @@ def __check_columns(columns, necessary, synonyms):
 def setup_col_converter(
     columns, col_order, default_values, necessary_columns, synonyms
 ):
+    have_printed_known_columns = False
     columns = __check_columns(columns, necessary_columns, synonyms)
     for col in columns:
         col = col.replace("[", "").replace("]", "")
         if col != "." and col not in col_order:
             print(
-                "Warning: Unknown column name: "
+                "Warning: Unknown column name: '"
                 + col
-                + ". Known column names are: "
-                + ", ".join("'" + c + "'" for c in col_order)
-                + ", and '.'. This column will be ignored.",
+                + "'. This column will be ignored.",
                 file=sys.stderr,
             )
+            if not have_printed_known_columns:
+                print( 
+                    "Known column names are: "
+                    + ", ".join("'" + c + "'" for c in col_order)
+                    + ", and '.'.",
+                    file=sys.stderr,
+                )
+                have_printed_known_columns = True
     non_opt_cols = sum(1 if "[" not in col and "]" not in col else 0 for col in columns)
     col_converter = {}
     for n in range(non_opt_cols, len(columns) + 1):

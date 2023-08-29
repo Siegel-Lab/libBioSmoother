@@ -500,8 +500,7 @@ bool PartialQuarry::setCanvasSize( )
             size_t iAnnoInMultipleBins =
                 multiple_bins( getValue<std::string>( { "settings", "filters", "anno_in_multiple_bins" } ) );
 
-            auto uiFistAnnoIdx = getValue<size_t>(
-                { "annotation", "by_name", getValue<std::string>( { "contigs", "annotation_coordinates" } ) } );
+            auto uiFistAnnoIdx = getFirstAnnoIdx(uiI == 0);
 
             uiRunningStart = 0;
             for( auto xChr : this->vActiveChromosomes[ uiI ] )
@@ -545,8 +544,7 @@ bool PartialQuarry::setTicks( )
         size_t uiRunningStart2 = 0;
         const bool bAnnoCoords =
             getValue<bool>( { "settings", "filters", uiI == 0 ? "anno_coords_col" : "anno_coords_row" } );
-        auto uiFistAnnoIdx = getValue<size_t>(
-            { "annotation", "by_name", getValue<std::string>( { "contigs", "annotation_coordinates" } ) } );
+        auto uiFistAnnoIdx = getFirstAnnoIdx(uiI == 0);
         for( ChromDesc& rDesc : this->vActiveChromosomes[ uiI ] )
         {
             CANCEL_RETURN;
@@ -826,8 +824,7 @@ std::pair<std::vector<AxisCoord>, std::vector<AxisRegion>> PartialQuarry::setAxi
             multiple_anno( getValue<std::string>( { "settings", "filters", "multiple_annos_in_bin" } ) ),
             multiple_bins( getValue<std::string>( { "settings", "filters", "anno_in_multiple_bins" } ) ),
             this->vActiveChromosomes[ bX ? 0 : 1 ], this->bCancel,
-            getValue<size_t>(
-                { "annotation", "by_name", getValue<std::string>( { "contigs", "annotation_coordinates" } ) } ),
+            getFirstAnnoIdx(bX),
             pIndices->vAnno );
 }
 
@@ -1114,8 +1111,7 @@ bool PartialQuarry::setV4cCoords( )
     {
         const bool bAnnoCoords =
             getValue<bool>( { "settings", "filters", uiI == 0 ? "anno_coords_col" : "anno_coords_row" } );
-        auto uiFistAnnoIdx = getValue<size_t>(
-            { "annotation", "by_name", getValue<std::string>( { "contigs", "annotation_coordinates" } ) } );
+        auto uiFistAnnoIdx = getFirstAnnoIdx(uiI == 0);
         const bool bSqueeze = getValue<std::string>( { "settings", "filters", "anno_in_multiple_bins" } ) == "squeeze";
 
 

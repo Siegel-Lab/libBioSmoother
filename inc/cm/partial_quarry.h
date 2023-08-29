@@ -1331,6 +1331,20 @@ class PartialQuarry : public HasSession
         return ret;
     }
 
+    size_t getFirstAnnoIdx( const bool bXaxis )
+    {
+        const bool bAnnoCoords =
+            getValue<bool>( { "settings", "filters", bXaxis ? "anno_coords_col" : "anno_coords_row" } );
+        if(!bAnnoCoords)
+            return std::numeric_limits<size_t>::max();
+
+        std::string sAnnoCoords = getValue<std::string>( { "contigs", "annotation_coordinates" } );
+        if(sAnnoCoords.size() == 0)
+            return std::numeric_limits<size_t>::max();
+        else
+            return  getValue<size_t>({ "annotation", "by_name", sAnnoCoords });
+    }
+
   public:
     const pybind11::int_ interpretName( std::string sName, bool bXAxis, bool bBottom, bool bGenomicCoords )
     {
@@ -1349,10 +1363,9 @@ class PartialQuarry : public HasSession
             bGenomicCoords ||
             !getValue<bool>( { "settings", "filters", bXAxis ? "anno_coords_col" : "anno_coords_row" } );
         size_t uiRunningPos = 0;
-        int64_t iDataSetId = getValue<size_t>(
-            { "annotation", "by_name", getValue<std::string>( { "contigs", "annotation_coordinates" } ) } );
         for( auto xChr : vActiveChromosomes[ bXAxis ? 0 : 1 ] )
         {
+            int64_t uiFistAnnoIdx = getFirstAnnoIdx(bXAxis);
             bool bMatch = to_lower( xChr.sName ).find( sName ) != std::string::npos;
             size_t uiLen = 0;
             if( bFullGenome )
@@ -1360,9 +1373,9 @@ class PartialQuarry : public HasSession
             else
             {
                 if( bSqueeze )
-                    uiLen = pIndices->vAnno.numIntervals( iDataSetId + xChr.uiActualContigId );
+                    uiLen = pIndices->vAnno.numIntervals( uiFistAnnoIdx + xChr.uiActualContigId );
                 else
-                    uiLen = pIndices->vAnno.totalIntervalSize( iDataSetId + xChr.uiActualContigId );
+                    uiLen = pIndices->vAnno.totalIntervalSize( uiFistAnnoIdx + xChr.uiActualContigId );
             }
             if( bMatch )
             {
