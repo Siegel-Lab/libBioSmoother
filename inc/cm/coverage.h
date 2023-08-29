@@ -780,7 +780,7 @@ bool PartialQuarry::setTrackExport( )
 bool PartialQuarry::setRankedSlicesCDS( )
 {
     const std::string sAnno = getValue<std::string>( { "settings", "normalization", "grid_seq_annotation" } );
-    auto uiFistAnnoIdx = getValue<size_t>( { "annotation", "by_name", sAnno } );
+    auto uiFistAnnoIdx = hasValue({ "annotation", "by_name", sAnno }) ? getValue<size_t>( { "annotation", "by_name", sAnno } ) : 0;
     const uint32_t uiDividend = getValue<uint32_t>( { "dividend" } );
     const size_t uiMaxChar = getValue<size_t>( { "settings", "interface", "axis_label_max_char", "val" } );
     std::array<std::vector<size_t>, 2> vSorted;

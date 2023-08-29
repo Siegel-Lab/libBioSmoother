@@ -380,7 +380,7 @@ double PartialQuarry::getMixedValue( double uiA, double uiB )
         case 6:
             return uiA + uiB;
         case 7:
-            return uiA / uiB;
+            return uiB > 0 ? uiA / uiB : 0;
         default:
             throw std::logic_error( "invalid value for between_group" );
     }

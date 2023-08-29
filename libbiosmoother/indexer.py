@@ -210,7 +210,7 @@ class Indexer:
         )
 
         touch(self.prefix + "/sps.coords")
-        touch(self.prefix + "/sps.datsets")
+        touch(self.prefix + "/sps.datasets")
         touch(self.prefix + "/sps.overlays")
         touch(self.prefix + "/sps.prefix_sums")
 
