@@ -174,7 +174,7 @@ size_t getEvenlyDividableByMaxTwoPowNIn( size_t uiFrom, size_t uiTo )
 class PartialQuarry : public HasSession
 {
   public:
-    size_t uiVerbosity = 1;
+    size_t uiVerbosity = 0;
     bool bAllowCtrlCCancel = false;
 
   private:

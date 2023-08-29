@@ -9,7 +9,7 @@ import sysconfig
 from setuptools import Extension, setup
 from setuptools.command.build_ext import build_ext
 
-VERSION = "0.3.1"
+VERSION = "0.4.0"
 
 # Convert distutils Windows platform specifiers to CMake -A arguments
 PLAT_TO_CMAKE = {
@@ -134,9 +134,9 @@ setup(
     author_email='markus.rainer.schmidt@gmail.com',
     license='MIT',
     url='https://github.com/Siegel-Lab/libBioSmoother',
-    description="On-the-fly processing and visualization of contact mapping data",
+    description="On-the-fly processing and visualization of interactome data",
     long_description="""
-        On-the-fly processing and visualization of contact mapping data
+libBioSmoother is the library behind biosmoother. It takes care of the server-side data processing.
     """,
     packages=["libbiosmoother", "libbiosmoother.conf"],
     ext_modules=[CMakeExtension("libbiosmoothercpp")],
@@ -149,6 +149,8 @@ setup(
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Intended Audience :: Science/Research',
+        'Operating System :: MacOS :: MacOS X',
+        'Operating System :: Microsoft :: Windows',
         'Operating System :: POSIX :: Linux',
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.9',
