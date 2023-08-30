@@ -80,7 +80,7 @@ struct AxisRegion : AxisCoord
     size_t uiNumCoords;
 };
 
-struct BinCoordBase // @todo @continue_here this should carry the ploidy Id as well as the normal id
+struct BinCoordBase
 {
     size_t uiChromosomeX = std::numeric_limits<size_t>::max( );
     size_t uiChromosomeY = std::numeric_limits<size_t>::max( );

@@ -60,7 +60,7 @@ double PartialQuarry::iceGetCount( IceData& rIceData, size_t uiX, size_t uiY, si
     assert( uiY < rIceData.vSliceBias[ 1 ].size( ) );
     size_t uiIdx = uiY + uiX * ( rIceData.vSliceBias[ 1 ].size( ) );
     assert( uiIdx <
-            vvNormalizedDDD[ uiY_ ].size( ) ); // @todo this assert triggered with max coverage per bin columns active
+            vvNormalizedDDD[ uiY_ ].size( ) );
     return vvNormalizedDDD[ uiY_ ][ uiIdx ][ bA ? 0 : 1 ];
 }
 
@@ -70,7 +70,7 @@ double PartialQuarry::iceGetCount( SymmIceData& rIceData, size_t uiX, size_t uiY
     assert( uiY < rIceData.vSliceBias.size( ) );
     size_t uiIdx = uiY + uiX * ( rIceData.vSliceBias.size( ) );
     assert( uiIdx <
-            vvNormalizedDDD[ uiY_ ].size( ) ); // @todo this assert triggered with max coverage per bin columns active
+            vvNormalizedDDD[ uiY_ ].size( ) );
     return vvNormalizedDDD[ uiY_ ][ uiIdx ][ bA ? 0 : 1 ];
 }
 
@@ -553,6 +553,8 @@ bool PartialQuarry::setRadiclSeqCoverage( )
                     CANCEL_RETURN;
                     const bool bSymPart = uiJ != 0;
 
+                    // @todo @fixme check if non-empty count is done on the same axis as the coverage by checking an upper triange index (micro-c) 
+
                     const size_t uiChrX = bAxisIsCol != bSymPart ? rAxis.uiChromosome : rSample.uiChromosome;
                     const size_t uiChrY = bAxisIsCol != bSymPart ? rSample.uiChromosome : rAxis.uiChromosome;
 
@@ -590,7 +592,7 @@ bool PartialQuarry::setRadiclSeqCoverage( )
                 }
 
                 const size_t uiVal = getFlatValue( vCollected );
-                if( uiVal > 0 )
+                if( uiVal != 0 )
                     ++vRadiclSeqNumNonEmptyBins.back( )[ uiJ ];
             }
         }

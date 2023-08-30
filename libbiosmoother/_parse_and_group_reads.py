@@ -272,10 +272,11 @@ def parse_heatmap(
 
 
 def force_upper_triangle(
-    in_filename, test, chr_filter, progress_print=print, parse_func=parse_heatmap
+    in_filename, test, chr_filter, progress_print=print, 
+    columns=["chr1", "pos1", "chr2", "pos2"], parse_func=parse_heatmap
 ):
     for line, read_name, chrs, poss, mapqs, tags, strand, cnt in parse_func(
-        in_filename, test, chr_filter, progress_print
+        in_filename, test, chr_filter, progress_print, columns
     ):
         order = [
             (chr_filter.index(chrs[idx]), poss[idx], idx) for idx in range(len(chrs))
