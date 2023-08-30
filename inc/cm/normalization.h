@@ -40,8 +40,9 @@ bool PartialQuarry::normalizeBinominalTest( )
     for( size_t uiY = 0; uiY < 3; uiY++ )
     {
         std::cout << "Bin Coords: ";
+        size_t uiX = 0;
         for(auto& rBinCoord : vBinCoords[uiY])
-            std::cout << "(" << rBinCoord[0].uiScreenX << ", " << rBinCoord[0].uiScreenY << "), ";
+            std::cout << uiX++ << ": (" << rBinCoord[0].uiScreenX << ", " << rBinCoord[0].uiScreenY << "), ";
         std::cout << std::endl;
         vvNormalized[ uiY ] = normalizeBinominalTestTrampoline(
             vvNormalizedDDD[ uiY ], vRadiclSeqCoverage, vRadiclSeqNumNonEmptyBins, vRadiclSeqSamples.size( ),

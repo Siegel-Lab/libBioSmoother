@@ -93,10 +93,6 @@ class Quarry(PartialQuarry):
     ):
         fac = max_num_interacting_with / samples
 
-        print("num_interactions_total", num_interactions_total)
-        print("num_bins_interacting_with", num_bins_interacting_with)
-        print("bin_values", bin_values)
-
         def bin_test(jdx):
             ret = []
             for idx, val in enumerate(bin_values):
@@ -115,6 +111,7 @@ class Quarry(PartialQuarry):
                     ret.append(binom_test(x, n, p, alternative="greater"))
                 else:
                     ret.append(1)
+                print(idx, ":", x, n, p, i, ret[-1])
             return ret
 
         psx = bin_test(0)
@@ -129,7 +126,6 @@ class Quarry(PartialQuarry):
                 # multipletests(psy, alpha=float("NaN"), method="fdr_bh")[1],
             # )
         ]
-        print("results", results)
         return results
 
     def normalizeCoolerTrampoline(self, bin_values, axis_size):
