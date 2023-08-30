@@ -106,10 +106,11 @@ class Quarry(PartialQuarry):
                     * fac
                 )
                 x = val[jdx]
-                p = 1 / i
                 if i > 0 and HAS_STATS:
+                    p = 1 / i
                     ret.append(binom_test(x, n, p, alternative="greater"))
                 else:
+                    p = "NaN"
                     ret.append(1)
                 print(idx, ":", x, n, p, i, ret[-1])
             return ret
