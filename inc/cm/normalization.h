@@ -553,8 +553,6 @@ bool PartialQuarry::setRadiclSeqCoverage( )
                     CANCEL_RETURN;
                     const bool bSymPart = uiJ != 0;
 
-                    // @todo @fixme check if non-empty count is done on the same axis as the coverage by checking an upper triange index (micro-c) 
-
                     const size_t uiChrX = bAxisIsCol != bSymPart ? rAxis.uiChromosome : rSample.uiChromosome;
                     const size_t uiChrY = bAxisIsCol != bSymPart ? rSample.uiChromosome : rAxis.uiChromosome;
 

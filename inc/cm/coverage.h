@@ -238,12 +238,12 @@ bool PartialQuarry::setTracks( )
                 if( bGridSeqNormDisp )
                     uiVal = (double)vBackgroundGridSeq[ uiX ];
                 else if( bRadiclNormDisp )
-                    uiVal = std::min( (double)vRadiclSeqCoverage[ uiX ][ uiI ],
-                                      (double)vRadiclSeqNumNonEmptyBins[ uiX ][ uiI ] );
+                    uiVal = std::min( (double)vRadiclSeqCoverage[ uiX ][ 0 ],
+                                      (double)vRadiclSeqNumNonEmptyBins[ uiX ][ 0 ] );
                 vvMinMaxTracks[ uiI ][ 0 ] = std::min( vvMinMaxTracks[ uiI ][ 0 ], uiVal );
                 if( bRadiclNormDisp )
-                    uiVal = std::max( (double)vRadiclSeqCoverage[ uiX ][ uiI ],
-                                      (double)vRadiclSeqNumNonEmptyBins[ uiX ][ uiI ] );
+                    uiVal = std::max( (double)vRadiclSeqCoverage[ uiX ][ 0 ],
+                                      (double)vRadiclSeqNumNonEmptyBins[ uiX ][ 0 ] );
                 vvMinMaxTracks[ uiI ][ 1 ] = std::max( vvMinMaxTracks[ uiI ][ 1 ], uiVal );
             }
 
@@ -327,7 +327,7 @@ bool PartialQuarry::setTracks( )
                 if( bGridSeqNormDisp )
                     uiVal = (double)vBackgroundGridSeq[ uiX ];
                 else if( bRadiclNormDisp )
-                    uiVal = (double)vRadiclSeqCoverage[ uiX ][ uiI ];
+                    uiVal = (double)vRadiclSeqCoverage[ uiX ][0];
 
                 // front corner
                 vIndexStart.append( readableBp( xCoord.uiIndexPos * uiDividend ) );
@@ -409,7 +409,7 @@ bool PartialQuarry::setTracks( )
                 }
 
                 sChr = sChromName;
-                const double uiVal = (double)vRadiclSeqNumNonEmptyBins[ uiX ][ uiI ];
+                const double uiVal = (double)vRadiclSeqNumNonEmptyBins[ uiX ][ 0 ]; // @todo should display 0 and 1 separately here. Also for grid seq there is only one value: should it not be split?
 
                 // front corner
                 vIndexStart.append( readableBp( xCoord.uiIndexPos * uiDividend ) );
@@ -756,7 +756,7 @@ bool PartialQuarry::setTrackExport( )
                 if( bGridSeqNormDisp )
                     vValues.push_back( vBackgroundGridSeq[ uiX ] );
                 else if( bRadiclNormDisp )
-                    vValues.push_back( vRadiclSeqCoverage[ uiX ][ uiI ] );
+                    vValues.push_back( vRadiclSeqCoverage[ uiX ][ 0 ] );
             }
             if( bDoIce )
             {

@@ -108,7 +108,7 @@ class Quarry(PartialQuarry):
                 if i > 0 and HAS_STATS:
                     p = 1 / i
                     x = val[jdx]
-                    ret.append(binom_test(x, max(x, n), p, alternative="greater"))
+                    ret.append(binom_test(x, n, p, alternative="greater"))
                 else:
                     ret.append(1)
             return ret
@@ -119,10 +119,11 @@ class Quarry(PartialQuarry):
             return []
         return [
             (1 if x < p_accept else 0, 1 if y < p_accept else 0)
-            for x, y in zip(
-                multipletests(psx, alpha=float("NaN"), method="fdr_bh")[1],
-                multipletests(psy, alpha=float("NaN"), method="fdr_bh")[1],
-            )
+            for x, y in zip(psx, psy)
+            # for x, y in zip(
+                # multipletests(psx, alpha=float("NaN"), method="fdr_bh")[1],
+                # multipletests(psy, alpha=float("NaN"), method="fdr_bh")[1],
+            # )
         ]
 
     def normalizeCoolerTrampoline(self, bin_values, axis_size):
