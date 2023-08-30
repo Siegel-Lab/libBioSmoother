@@ -384,6 +384,8 @@ class Indexer:
         cnt = 0
         first_id = None
         count_matrix_warning_done = False
+        has_upper_triangle = False
+        has_lower_triangle = False
         for idx_x, chr_x in enumerate(contigs):
             anno_ids_x = [
                 self.session_default["annotation"]["by_name"][anno] + idx_x
@@ -445,6 +447,10 @@ class Indexer:
                             file=sys.stderr,
                         )
                         count_matrix_warning_done = True
+                    if idx_x > idx_y or (idx_x == idx_y and pos_1_s > pos_2_s):
+                        has_upper_triangle = True
+                    if idx_x < idx_y or (idx_x == idx_y and pos_1_s < pos_2_s):
+                        has_lower_triangle = True
                     total_reads += 1
                     if no_category:
                         cat_x = [False] * len(
@@ -506,6 +512,12 @@ class Indexer:
                 )
                 if first_id is None:
                     first_id = id
+
+        if has_lower_triangle != has_upper_triangle and first_id == 0:
+            print("Info: Detected an exclusive", "lower" if has_lower_triangle else "upper", 
+                  "triangle matrix. Setting symmetry and axis labels.")
+            self.session["settings"]["interface"]["axis_labels"] = "DNA_DNA"
+            self.session["settings"]["filters"]["symmetry"] = "mirror"
 
         self.set_session(["replicates", "by_name", name, "first_dataset_id"], first_id)
         self.set_session(["replicates", "by_name", name, "num_datasets"], num_itr)
