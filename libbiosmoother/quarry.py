@@ -93,6 +93,10 @@ class Quarry(PartialQuarry):
     ):
         fac = max_num_interacting_with / samples
 
+        print("num_interactions_total", num_interactions_total)
+        print("num_bins_interacting_with", num_bins_interacting_with)
+        print("bin_values", bin_values)
+
         def bin_test(jdx):
             ret = []
             for idx, val in enumerate(bin_values):
