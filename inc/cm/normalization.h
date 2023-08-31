@@ -44,15 +44,15 @@ bool PartialQuarry::normalizeBinominalTest( )
         const auto& rYCoords = pickYCoords( uiY );
         const auto& rXCoords = pickXCoords( uiY );
 
-        vRadiclSeqCoverage[ uiY ].resize( bAxisIsCol ? rXCoords.size() : rYCoords.size() );
-        vRadiclSeqNumNonEmptyBins[ uiY ].resize( bAxisIsCol ? rXCoords.size() : rYCoords.size() );
+        vRadiclSeqCoverage[ uiY ].resize( bAxisIsCol ? rXCoords.size( ) : rYCoords.size( ) );
+        vRadiclSeqNumNonEmptyBins[ uiY ].resize( bAxisIsCol ? rXCoords.size( ) : rYCoords.size( ) );
 
-        for( size_t uiI = 0; uiI < vvPloidyValues[uiY].size( ); uiI++ )
+        for( size_t uiI = 0; uiI < vvPloidyValues[ uiY ].size( ); uiI++ )
         {
             CANCEL_RETURN;
             for( size_t uiJ = 0; uiJ < 2; uiJ++ )
             {
-                size_t uiIdx = bAxisIsCol ? uiI / rYCoords.size() : uiI % rYCoords.size();
+                size_t uiIdx = bAxisIsCol ? uiI / rYCoords.size( ) : uiI % rYCoords.size( );
 
                 vRadiclSeqCoverage[ uiY ][ uiIdx ][ uiJ ] += vvPloidyValues[ uiY ][ uiI ][ uiJ ];
                 if( vvPloidyValues[ uiY ][ uiI ][ uiJ ] > 0 )

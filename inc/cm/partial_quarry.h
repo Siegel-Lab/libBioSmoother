@@ -214,6 +214,7 @@ class PartialQuarry : public HasSession
         TrackExport,
         Scaled,
         Ticks,
+        TrackPrecursor,
         Tracks,
         Palette,
         AnnoFilters,
@@ -819,6 +820,12 @@ class PartialQuarry : public HasSession
     std::vector<std::tuple<std::string, size_t, size_t, std::string, size_t, size_t, double>> vHeatmapExport;
     std::array<std::vector<std::string>, 2> vTrackExportNames;
     std::array<std::vector<std::tuple<std::string, size_t, size_t, std::vector<double>>>, 2> vTrackExport;
+    struct Track
+    {
+        AxisCoord xCoord;
+        std::vector<double> vValues;
+    };
+    std::array<std::vector<Track>, 2> vTrackPercussor;
     std::array<pybind11::dict, 2> xTicksCDS;
     std::array<pybind11::dict, 2> xContigTicksCDS;
     std::array<pybind11::dict, 2> xTracksCDS;
@@ -948,6 +955,8 @@ class PartialQuarry : public HasSession
 
     // coverage.h
     bool setCoverageValues( );
+    // coverage.h
+    bool setTrackPrecursor( );
     // coverage.h
     bool setTracks( );
     // coverage.h

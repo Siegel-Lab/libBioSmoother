@@ -204,6 +204,123 @@ bool PartialQuarry::setTracks( )
 {
     using namespace pybind11::literals;
     pybind11::gil_scoped_acquire acquire;
+    const bool bCenterTracks = getValue<bool>( { "settings", "interface", "center_tracks_on_bins" } );
+    const bool bZeroTracksAtEnd = getValue<bool>( { "settings", "interface", "zero_track_at_ends" } );
+    const bool bConnectOverBorder =
+        getValue<bool>( { "settings", "interface", "connect_tracks_over_contig_borders" } );
+    const size_t uiMaxChar = getValue<size_t>( { "settings", "interface", "axis_label_max_char", "val" } );
+
+    size_t uiDividend = getValue<size_t>( { "dividend" } );
+    for( size_t uiI = 0; uiI < 2; uiI++ )
+    {
+        pybind11::list vChrs;
+        pybind11::list vScreenPoss;
+        pybind11::list vIndexStarts;
+        pybind11::list vIndexEnds;
+        pybind11::list vValues;
+        pybind11::list vColors;
+        pybind11::list vNames;
+
+        size_t uiCnt = 0;
+
+        for( size_t uiJ = 0; uiJ < vTrackExportNames[ uiI ].size( ); uiJ++ )
+        {
+            pybind11::list vScreenPos;
+            pybind11::list vIndexStart;
+            pybind11::list vIndexEnd;
+            pybind11::list vValue;
+            std::string sChr = "";
+
+
+            for( size_t uiX = 0; uiX < vAxisCords[ uiI ].size( ); uiX++ )
+            {
+                CANCEL_RETURN;
+                auto& xCoord = vAxisCords[ uiI ][ uiX ];
+                std::string sChromName = vActiveChromosomes[ uiI ][ xCoord.uiChromosome ].sName;
+                if( sChr != "" && sChr != sChromName )
+                {
+                    vChrs.append( substringChr( sChr, uiMaxChar ) );
+
+                    vScreenPoss.append( vScreenPos );
+                    vScreenPos = pybind11::list( );
+
+                    vIndexStarts.append( vIndexStart );
+                    vIndexStart = pybind11::list( );
+
+                    vIndexEnds.append( vIndexEnd );
+                    vIndexEnd = pybind11::list( );
+
+                    vValues.append( vValue );
+                    vValue = pybind11::list( );
+
+                    vColors.append( vColorPaletteAnnotation[ uiCnt % vColorPaletteAnnotation.size( ) ] );
+
+                    vNames.append( vTrackExportNames[ uiI ][ uiJ ] );
+
+                    ++uiCnt;
+                }
+                if( bZeroTracksAtEnd && uiX == 0 )
+                {
+                    // zero position at start
+                    vIndexStart.append( readableBp( xCoord.uiIndexPos * uiDividend ) );
+                    vIndexEnd.append( readableBp( xCoord.uiIndexPos * uiDividend ) );
+                    vScreenPos.append( xCoord.uiScreenPos );
+                    vValue.append( 0 );
+                }
+
+                sChr = sChromName;
+                double uiVal = vTrackPercussor[ uiI ][ uiX ].vValues[ uiJ ];
+
+                // front corner
+                vIndexStart.append( readableBp( xCoord.uiIndexPos * uiDividend ) );
+                vIndexEnd.append( readableBp( ( xCoord.uiIndexPos + xCoord.uiIndexSize ) * uiDividend ) );
+                vScreenPos.append( xCoord.uiScreenPos );
+                vValue.append( uiVal );
+
+                // rear corner
+                vIndexStart.append( readableBp( xCoord.uiIndexPos * uiDividend ) );
+                vIndexEnd.append( readableBp( ( xCoord.uiIndexPos + xCoord.uiIndexSize ) * uiDividend ) );
+                vScreenPos.append( xCoord.uiScreenPos + xCoord.uiScreenSize );
+                vValue.append( uiVal );
+
+                if( bZeroTracksAtEnd && uiX + 1 == vAxisCords[ uiI ].size( ) )
+                {
+                    // zero position at end
+                    vIndexStart.append( readableBp( ( xCoord.uiIndexPos + xCoord.uiIndexSize ) * uiDividend ) );
+                    vIndexEnd.append( readableBp( ( xCoord.uiIndexPos + xCoord.uiIndexSize ) * uiDividend ) );
+                    vScreenPos.append( xCoord.uiScreenPos + xCoord.uiScreenSize );
+                    vValue.append( 0 );
+                }
+            }
+
+            vChrs.append( substringChr( sChr, uiMaxChar ) );
+            vScreenPoss.append( vScreenPos );
+            vIndexStarts.append( vIndexStart );
+            vIndexEnds.append( vIndexEnd );
+            vValues.append( vValue );
+            vColors.append( vColorPaletteAnnotation[ uiCnt % vColorPaletteAnnotation.size( ) ] );
+            vNames.append( vTrackExportNames[ uiI ][ uiJ ] );
+
+            ++uiCnt;
+        }
+
+        xTracksCDS[ uiI ] = pybind11::dict( "chrs"_a = vChrs,
+                                            "screen_pos"_a = vScreenPoss,
+
+                                            "index_start"_a = vIndexStarts,
+                                            "index_end"_a = vIndexEnds,
+
+                                            "values"_a = vValues,
+
+                                            "colors"_a = vColors,
+                                            "names"_a = vNames );
+    }
+    END_RETURN;
+}
+
+bool PartialQuarry::setTrackPrecursor( )
+{
+
     const std::string sNorm = getValue<std::string>( { "settings", "normalization", "normalize_by" } );
     const bool bGridSeqNormDisp =
         sNorm == "grid-seq" && getValue<bool>( { "settings", "normalization", "grid_seq_display_background" } );
@@ -214,14 +331,14 @@ bool PartialQuarry::setTracks( )
         bIsCol = getValue<bool>( { "settings", "normalization", "grid_seq_axis_is_column" } );
     else if( bRadiclNormDisp )
         bIsCol = getValue<bool>( { "settings", "normalization", "radicl_seq_axis_is_column" } );
-    const size_t uiMaxChar = getValue<size_t>( { "settings", "interface", "axis_label_max_char", "val" } );
+    const bool bIceShowBias = getValue<bool>( { "settings", "normalization", "ice_show_bias" } );
 
     size_t uiDividend = getValue<size_t>( { "dividend" } );
     for( size_t uiI = 0; uiI < 2; uiI++ )
     {
         vvMinMaxTracks[ uiI ][ 0 ] = std::numeric_limits<double>::max( );
         vvMinMaxTracks[ uiI ][ 1 ] = std::numeric_limits<double>::min( );
-        const bool bDoIce = sNorm == "ice" && getValue<bool>( { "settings", "normalization", "ice_show_bias" } );
+        const bool bDoIce = sNorm == "ice" && bIceShowBias;
 
         for( size_t uiX = 0; uiX < vAxisCords[ uiI ].size( ); uiX++ )
         {
@@ -264,449 +381,63 @@ bool PartialQuarry::setTracks( )
                     vvMinMaxTracks[ uiI ][ 0 ] = std::min( vvMinMaxTracks[ uiI ][ 0 ], uiVal );
                     vvMinMaxTracks[ uiI ][ 1 ] = std::max( vvMinMaxTracks[ uiI ][ 1 ], uiVal );
                 }
-        pybind11::list vChrs;
-        pybind11::list vScreenPoss;
-        pybind11::list vIndexStarts;
-        pybind11::list vIndexEnds;
-        pybind11::list vValues;
-        pybind11::list vColors;
-        pybind11::list vNames;
-
-        size_t uiCnt = 0;
-
-        // @todo-low-prio code duplication
-        if( ( bRadiclNormDisp || bGridSeqNormDisp ) && ( bIsCol == ( uiI == 0 ) ) )
-        {
-            pybind11::list vScreenPos;
-            pybind11::list vIndexStart;
-            pybind11::list vIndexEnd;
-            pybind11::list vValue;
-            std::string sChr = "";
 
 
-            for( size_t uiX = 0; uiX < vAxisCords[ uiI ].size( ); uiX++ )
-            {
-                CANCEL_RETURN;
-                auto& xCoord = vAxisCords[ uiI ][ uiX ];
-                std::string sChromName = vActiveChromosomes[ uiI ][ xCoord.uiChromosome ].sName;
-                if( sChr != "" && sChr != sChromName )
-                {
-                    vChrs.append( substringChr( sChr, uiMaxChar ) );
-
-                    vScreenPoss.append( vScreenPos );
-                    vScreenPos = pybind11::list( );
-
-                    vIndexStarts.append( vIndexStart );
-                    vIndexStart = pybind11::list( );
-
-                    vIndexEnds.append( vIndexEnd );
-                    vIndexEnd = pybind11::list( );
-
-                    vValues.append( vValue );
-                    vValue = pybind11::list( );
-
-                    vColors.append( vColorPaletteAnnotation[ uiCnt % vColorPaletteAnnotation.size( ) ] );
-
-                    if( bGridSeqNormDisp )
-                        vNames.append( "background RNA associated elements" );
-                    else if( bRadiclNormDisp )
-                        vNames.append( "datapool coverage" );
-                }
-
-                if( uiX == 0 )
-                {
-                    // zero position at start
-                    vIndexStart.append( readableBp( xCoord.uiIndexPos * uiDividend ) );
-                    vIndexEnd.append( readableBp( xCoord.uiIndexPos * uiDividend ) );
-                    vScreenPos.append( xCoord.uiScreenPos );
-                    vValue.append( vvMinMaxTracks[ uiI ][ 0 ] );
-                }
-
-                sChr = sChromName;
-                double uiVal;
-                if( bGridSeqNormDisp )
-                    uiVal = (double)vBackgroundGridSeq[ uiX ];
-                else if( bRadiclNormDisp )
-                    uiVal = (double)vRadiclSeqCoverage[ 0 ][ uiX ][ 0 ];
-
-                // front corner
-                vIndexStart.append( readableBp( xCoord.uiIndexPos * uiDividend ) );
-                vIndexEnd.append( readableBp( ( xCoord.uiIndexPos + xCoord.uiIndexSize ) * uiDividend ) );
-                vScreenPos.append( xCoord.uiScreenPos );
-                vValue.append( uiVal );
-
-                // rear corner
-                vIndexStart.append( readableBp( xCoord.uiIndexPos * uiDividend ) );
-                vIndexEnd.append( readableBp( ( xCoord.uiIndexPos + xCoord.uiIndexSize ) * uiDividend ) );
-                vScreenPos.append( xCoord.uiScreenPos + xCoord.uiScreenSize );
-                vValue.append( uiVal );
-
-                if( uiX + 1 == vAxisCords[ uiI ].size( ) )
-                {
-                    // zero position at end
-                    vIndexStart.append( readableBp( ( xCoord.uiIndexPos + xCoord.uiIndexSize ) * uiDividend ) );
-                    vIndexEnd.append( readableBp( ( xCoord.uiIndexPos + xCoord.uiIndexSize ) * uiDividend ) );
-                    vScreenPos.append( xCoord.uiScreenPos + xCoord.uiScreenSize );
-                    vValue.append( vvMinMaxTracks[ uiI ][ 0 ] );
-                }
-            }
-
-            vChrs.append( substringChr( sChr, uiMaxChar ) );
-            vScreenPoss.append( vScreenPos );
-            vIndexStarts.append( vIndexStart );
-            vIndexEnds.append( vIndexEnd );
-            vValues.append( vValue );
-            vColors.append( vColorPaletteAnnotation[ uiCnt % vColorPaletteAnnotation.size( ) ] );
-            if( bGridSeqNormDisp )
-                vNames.append( "background RNA associated elements" );
-            else if( bRadiclNormDisp )
-                vNames.append( "datapool coverage" );
-
-            ++uiCnt;
-        }
-        if( bRadiclNormDisp && ( bIsCol == ( uiI == 0 ) ) )
-        {
-            pybind11::list vScreenPos;
-            pybind11::list vIndexStart;
-            pybind11::list vIndexEnd;
-            pybind11::list vValue;
-            std::string sChr = "";
-
-
-            for( size_t uiX = 0; uiX < vAxisCords[ uiI ].size( ); uiX++ )
-            {
-                CANCEL_RETURN;
-                auto& xCoord = vAxisCords[ uiI ][ uiX ];
-                std::string sChromName = vActiveChromosomes[ uiI ][ xCoord.uiChromosome ].sName;
-                if( sChr != "" && sChr != sChromName )
-                {
-                    vChrs.append( substringChr( sChr, uiMaxChar ) );
-
-                    vScreenPoss.append( vScreenPos );
-                    vScreenPos = pybind11::list( );
-
-                    vIndexStarts.append( vIndexStart );
-                    vIndexStart = pybind11::list( );
-
-                    vIndexEnds.append( vIndexEnd );
-                    vIndexEnd = pybind11::list( );
-
-                    vValues.append( vValue );
-                    vValue = pybind11::list( );
-
-                    vColors.append( vColorPaletteAnnotation[ uiCnt % vColorPaletteAnnotation.size( ) ] );
-
-                    vNames.append( "num non-empty bins" );
-                }
-
-                if( uiX == 0 )
-                {
-                    // zero position at start
-                    vIndexStart.append( readableBp( xCoord.uiIndexPos * uiDividend ) );
-                    vIndexEnd.append( readableBp( xCoord.uiIndexPos * uiDividend ) );
-                    vScreenPos.append( xCoord.uiScreenPos );
-                    vValue.append( vvMinMaxTracks[ uiI ][ 0 ] );
-                }
-
-                sChr = sChromName;
-                const double uiVal =
-                    (double)vRadiclSeqNumNonEmptyBins[ 0 ][ uiX ]
-                                                     [ 0 ]; // @todo should display 0 and 1 separately here. Also for
-                                                            // grid seq there is only one value: should it not be split?
-
-                // front corner
-                vIndexStart.append( readableBp( xCoord.uiIndexPos * uiDividend ) );
-                vIndexEnd.append( readableBp( ( xCoord.uiIndexPos + xCoord.uiIndexSize ) * uiDividend ) );
-                vScreenPos.append( xCoord.uiScreenPos );
-                vValue.append( uiVal );
-
-                // rear corner
-                vIndexStart.append( readableBp( xCoord.uiIndexPos * uiDividend ) );
-                vIndexEnd.append( readableBp( ( xCoord.uiIndexPos + xCoord.uiIndexSize ) * uiDividend ) );
-                vScreenPos.append( xCoord.uiScreenPos + xCoord.uiScreenSize );
-                vValue.append( uiVal );
-
-                if( uiX + 1 == vAxisCords[ uiI ].size( ) )
-                {
-                    // zero position at end
-                    vIndexStart.append( readableBp( ( xCoord.uiIndexPos + xCoord.uiIndexSize ) * uiDividend ) );
-                    vIndexEnd.append( readableBp( ( xCoord.uiIndexPos + xCoord.uiIndexSize ) * uiDividend ) );
-                    vScreenPos.append( xCoord.uiScreenPos + xCoord.uiScreenSize );
-                    vValue.append( vvMinMaxTracks[ uiI ][ 0 ] );
-                }
-            }
-
-            vChrs.append( substringChr( sChr, uiMaxChar ) );
-            vScreenPoss.append( vScreenPos );
-            vIndexStarts.append( vIndexStart );
-            vIndexEnds.append( vIndexEnd );
-            vValues.append( vValue );
-            vColors.append( vColorPaletteAnnotation[ uiCnt % vColorPaletteAnnotation.size( ) ] );
-            vNames.append( "num non-empty bins" );
-
-            ++uiCnt;
-        }
+        vTrackExportNames[ uiI ].clear( );
+        vTrackExportNames[ uiI ].reserve( 20 );
 
         for( size_t uiId = 0; uiId < vvCoverageValues[ uiI ].size( ); uiId++ )
+            vTrackExportNames[ uiI ].push_back( vActiveCoverage[ uiI ][ uiId ] );
+        if( bGridSeqNormDisp && ( bIsCol == ( uiI == 0 ) ) )
+            vTrackExportNames[ uiI ].push_back( "background RNA associated elements" );
+        if( bRadiclNormDisp && ( bIsCol == ( uiI == 0 ) ) )
         {
-            pybind11::list vScreenPos;
-            pybind11::list vIndexStart;
-            pybind11::list vIndexEnd;
-            pybind11::list vValue;
-            std::string sChr = "";
-
-
-            for( size_t uiX = 0; uiX < vAxisCords[ uiI ].size( ); uiX++ )
-            {
-                CANCEL_RETURN;
-                auto& xCoord = vAxisCords[ uiI ][ uiX ];
-                std::string sChromName = vActiveChromosomes[ uiI ][ xCoord.uiChromosome ].sName;
-                if( sChr != "" && sChr != sChromName )
-                {
-                    vChrs.append( substringChr( sChr, uiMaxChar ) );
-
-                    vScreenPoss.append( vScreenPos );
-                    vScreenPos = pybind11::list( );
-
-                    vIndexStarts.append( vIndexStart );
-                    vIndexStart = pybind11::list( );
-
-                    vIndexEnds.append( vIndexEnd );
-                    vIndexEnd = pybind11::list( );
-
-                    vValues.append( vValue );
-                    vValue = pybind11::list( );
-
-                    vColors.append( vColorPaletteAnnotation[ uiCnt % vColorPaletteAnnotation.size( ) ] );
-
-                    vNames.append( vActiveCoverage[ uiI ][ uiId ] );
-                }
-
-                if( uiX == 0 )
-                {
-                    // zero position at start
-                    vIndexStart.append( readableBp( xCoord.uiIndexPos * uiDividend ) );
-                    vIndexEnd.append( readableBp( xCoord.uiIndexPos * uiDividend ) );
-                    vScreenPos.append( xCoord.uiScreenPos );
-                    vValue.append( vvMinMaxTracks[ uiI ][ 0 ] );
-                }
-
-                sChr = sChromName;
-                auto uiVal = vvCoverageValues[ uiI ][ uiId ][ uiX ];
-
-                // front corner
-                vIndexStart.append( readableBp( xCoord.uiIndexPos * uiDividend ) );
-                vIndexEnd.append( readableBp( ( xCoord.uiIndexPos + xCoord.uiIndexSize ) * uiDividend ) );
-                vScreenPos.append( xCoord.uiScreenPos );
-                vValue.append( uiVal );
-
-                // rear corner
-                vIndexStart.append( readableBp( xCoord.uiIndexPos * uiDividend ) );
-                vIndexEnd.append( readableBp( ( xCoord.uiIndexPos + xCoord.uiIndexSize ) * uiDividend ) );
-                vScreenPos.append( xCoord.uiScreenPos + xCoord.uiScreenSize );
-                vValue.append( uiVal );
-
-                if( uiX + 1 == vAxisCords[ uiI ].size( ) )
-                {
-                    // zero position at end
-                    vIndexStart.append( readableBp( ( xCoord.uiIndexPos + xCoord.uiIndexSize ) * uiDividend ) );
-                    vIndexEnd.append( readableBp( ( xCoord.uiIndexPos + xCoord.uiIndexSize ) * uiDividend ) );
-                    vScreenPos.append( xCoord.uiScreenPos + xCoord.uiScreenSize );
-                    vValue.append( vvMinMaxTracks[ uiI ][ 0 ] );
-                }
-            }
-
-            vChrs.append( substringChr( sChr, uiMaxChar ) );
-            vScreenPoss.append( vScreenPos );
-            vIndexStarts.append( vIndexStart );
-            vIndexEnds.append( vIndexEnd );
-            vValues.append( vValue );
-            vColors.append( vColorPaletteAnnotation[ uiCnt % vColorPaletteAnnotation.size( ) ] );
-            vNames.append( vActiveCoverage[ uiI ][ uiId ] );
-
-            ++uiCnt;
+            vTrackExportNames[ uiI ].push_back( "coverage A" );
+            vTrackExportNames[ uiI ].push_back( "coverage B" );
+            vTrackExportNames[ uiI ].push_back( "non-empty bins A" );
+            vTrackExportNames[ uiI ].push_back( "non-empty bins B" );
         }
-
-
         if( vFlat4C[ 1 - uiI ].size( ) > 0 )
-        {
-            pybind11::list vScreenPos;
-            pybind11::list vIndexStart;
-            pybind11::list vIndexEnd;
-            pybind11::list vValue;
-            std::string sChr = "";
-
-
-            for( size_t uiX = 0; uiX < vAxisCords[ uiI ].size( ); uiX++ )
-            {
-                CANCEL_RETURN;
-                auto& xCoord = vAxisCords[ uiI ][ uiX ];
-                std::string sChromName = vActiveChromosomes[ uiI ][ xCoord.uiChromosome ].sName;
-                if( sChr != "" && sChr != sChromName )
-                {
-                    vChrs.append( substringChr( sChr, uiMaxChar ) );
-
-                    vScreenPoss.append( vScreenPos );
-                    vScreenPos = pybind11::list( );
-
-                    vIndexStarts.append( vIndexStart );
-                    vIndexStart = pybind11::list( );
-
-                    vIndexEnds.append( vIndexEnd );
-                    vIndexEnd = pybind11::list( );
-
-                    vValues.append( vValue );
-                    vValue = pybind11::list( );
-
-                    vColors.append( vColorPaletteAnnotation[ uiCnt % vColorPaletteAnnotation.size( ) ] );
-
-                    vNames.append( "Virtual 4C" );
-                }
-
-                if( uiX == 0 )
-                {
-                    // zero position at start
-                    vIndexStart.append( readableBp( xCoord.uiIndexPos * uiDividend ) );
-                    vIndexEnd.append( readableBp( xCoord.uiIndexPos * uiDividend ) );
-                    vScreenPos.append( xCoord.uiScreenPos );
-                    vValue.append( vvMinMaxTracks[ uiI ][ 0 ] );
-                }
-
-                sChr = sChromName;
-                auto uiVal = vFlat4C[ 1 - uiI ][ uiX ];
-
-                // front corner
-                vIndexStart.append( readableBp( xCoord.uiIndexPos * uiDividend ) );
-                vIndexEnd.append( readableBp( ( xCoord.uiIndexPos + xCoord.uiIndexSize ) * uiDividend ) );
-                vScreenPos.append( xCoord.uiScreenPos );
-                vValue.append( uiVal );
-
-                // rear corner
-                vIndexStart.append( readableBp( xCoord.uiIndexPos * uiDividend ) );
-                vIndexEnd.append( readableBp( ( xCoord.uiIndexPos + xCoord.uiIndexSize ) * uiDividend ) );
-                vScreenPos.append( xCoord.uiScreenPos + xCoord.uiScreenSize );
-                vValue.append( uiVal );
-
-                if( uiX + 1 == vAxisCords[ uiI ].size( ) )
-                {
-                    // zero position at end
-                    vIndexStart.append( readableBp( ( xCoord.uiIndexPos + xCoord.uiIndexSize ) * uiDividend ) );
-                    vIndexEnd.append( readableBp( ( xCoord.uiIndexPos + xCoord.uiIndexSize ) * uiDividend ) );
-                    vScreenPos.append( xCoord.uiScreenPos + xCoord.uiScreenSize );
-                    vValue.append( vvMinMaxTracks[ uiI ][ 0 ] );
-                }
-            }
-
-            vChrs.append( substringChr( sChr, uiMaxChar ) );
-            vScreenPoss.append( vScreenPos );
-            vIndexStarts.append( vIndexStart );
-            vIndexEnds.append( vIndexEnd );
-            vValues.append( vValue );
-            vColors.append( vColorPaletteAnnotation[ uiCnt % vColorPaletteAnnotation.size( ) ] );
-            vNames.append( "Virtual 4C" );
-
-            ++uiCnt;
-        }
-
+            vTrackExportNames[ uiI ].push_back( "Virtual 4C" );
         for( size_t uiY = 0; uiY < 2; uiY++ )
-            if( getValue<bool>( { "settings", "normalization", "ice_show_bias" } ) &&
-                vIceSliceBias[ 0 ][ uiI ][ uiY ].size( ) > 0 && vInGroup[ uiY ].size( ) > 0 )
+            if( bIceShowBias && vIceSliceBias[ 0 ][ uiI ][ uiY ].size( ) > 0 && vInGroup[ uiY ].size( ) > 0 )
+                vTrackExportNames[ uiI ].push_back( std::string( "ICE Bias " ) + ( uiY == 0 ? "A" : "B" ) );
+
+
+        vTrackPercussor[ uiI ].clear( );
+        vTrackPercussor[ uiI ].reserve( vAxisCords[ uiI ].size( ) );
+
+
+        for( size_t uiX = 0; uiX < vAxisCords[ uiI ].size( ); uiX++ )
+        {
+            CANCEL_RETURN;
+            vTrackPercussor[ uiI ].push_back( Track{ /*.xCoord=*/vAxisCords[ uiI ][uiX], /*.vValues=*/{} } );
+
+            for( size_t uiId = 0; uiId < vvCoverageValues[ uiI ].size( ); uiId++ )
+                vTrackPercussor[ uiI ].back( ).vValues.push_back( (double)vvCoverageValues[ uiI ][ uiId ][ uiX ] );
+
+            if( bGridSeqNormDisp && ( bIsCol == ( uiI == 0 ) ) )
+                vTrackPercussor[ uiI ].back( ).vValues.push_back( (double)vBackgroundGridSeq[ uiX ] );
+            if( bRadiclNormDisp && ( bIsCol == ( uiI == 0 ) ) )
             {
-                pybind11::list vScreenPos;
-                pybind11::list vIndexStart;
-                pybind11::list vIndexEnd;
-                pybind11::list vValue;
-                std::string sChr = "";
-
-
-                for( size_t uiX = 0; uiX < vSampleAxisCoords[ uiI ].size( ); uiX++ )
-                    if( vSampleAxisCoords[ uiI ][ uiX ].uiIdx != SAMPLE_COORD )
-                    {
-                        CANCEL_RETURN;
-                        auto& xCoord = vSampleAxisCoords[ uiI ][ uiX ];
-                        std::string sChromName = vActiveChromosomes[ uiI ][ xCoord.uiChromosome ].sName;
-                        if( sChr != "" && sChr != sChromName )
-                        {
-                            vChrs.append( substringChr( sChr, uiMaxChar ) );
-
-                            vScreenPoss.append( vScreenPos );
-                            vScreenPos = pybind11::list( );
-
-                            vIndexStarts.append( vIndexStart );
-                            vIndexStart = pybind11::list( );
-
-                            vIndexEnds.append( vIndexEnd );
-                            vIndexEnd = pybind11::list( );
-
-                            vValues.append( vValue );
-                            vValue = pybind11::list( );
-
-                            vColors.append( vColorPaletteAnnotation[ uiCnt % vColorPaletteAnnotation.size( ) ] );
-
-                            vNames.append( std::string( "ICE Bias " ) + ( uiY == 0 ? "A" : "B" ) );
-                        }
-
-                        if( uiX == 0 )
-                        {
-                            // zero position at start
-                            vIndexStart.append( readableBp( xCoord.uiIndexPos * uiDividend ) );
-                            vIndexEnd.append( readableBp( xCoord.uiIndexPos * uiDividend ) );
-                            vScreenPos.append( xCoord.uiScreenPos );
-                            vValue.append( vvMinMaxTracks[ uiI ][ 0 ] );
-                        }
-
-                        sChr = sChromName;
-                        auto uiVal = vIceSliceBias[ 0 ][ uiI ][ uiY ][ uiX ];
-
-                        // front corner
-                        vIndexStart.append( readableBp( xCoord.uiIndexPos * uiDividend ) );
-                        vIndexEnd.append( readableBp( ( xCoord.uiIndexPos + xCoord.uiIndexSize ) * uiDividend ) );
-                        vScreenPos.append( xCoord.uiScreenPos );
-                        vValue.append( uiVal );
-
-                        // rear corner
-                        vIndexStart.append( readableBp( xCoord.uiIndexPos * uiDividend ) );
-                        vIndexEnd.append( readableBp( ( xCoord.uiIndexPos + xCoord.uiIndexSize ) * uiDividend ) );
-                        vScreenPos.append( xCoord.uiScreenPos + xCoord.uiScreenSize );
-                        vValue.append( uiVal );
-
-                        if( uiX + 1 == vSampleAxisCoords[ uiI ].size( ) )
-                        {
-                            // zero position at end
-                            vIndexStart.append( readableBp( ( xCoord.uiIndexPos + xCoord.uiIndexSize ) * uiDividend ) );
-                            vIndexEnd.append( readableBp( ( xCoord.uiIndexPos + xCoord.uiIndexSize ) * uiDividend ) );
-                            vScreenPos.append( xCoord.uiScreenPos + xCoord.uiScreenSize );
-                            vValue.append( vvMinMaxTracks[ uiI ][ 0 ] );
-                        }
-                    }
-
-                vChrs.append( substringChr( sChr, uiMaxChar ) );
-                vScreenPoss.append( vScreenPos );
-                vIndexStarts.append( vIndexStart );
-                vIndexEnds.append( vIndexEnd );
-                vValues.append( vValue );
-                vColors.append( vColorPaletteAnnotation[ uiCnt % vColorPaletteAnnotation.size( ) ] );
-                vNames.append( std::string( "ICE Bias " ) + ( uiY == 0 ? "A" : "B" ) );
-
-                ++uiCnt;
+                vTrackPercussor[ uiI ].back( ).vValues.push_back( (double)vRadiclSeqCoverage[ 0 ][ uiX ][ 0 ] );
+                vTrackPercussor[ uiI ].back( ).vValues.push_back( (double)vRadiclSeqCoverage[ 0 ][ uiX ][ 1 ] );
+                vTrackPercussor[ uiI ].back( ).vValues.push_back( (double)vRadiclSeqNumNonEmptyBins[ 0 ][ uiX ][ 0 ] );
+                vTrackPercussor[ uiI ].back( ).vValues.push_back( (double)vRadiclSeqNumNonEmptyBins[ 0 ][ uiX ][ 1 ] );
             }
 
-        assert( uiI < xTracksCDS.size( ) );
-        xTracksCDS[ uiI ] = pybind11::dict( "chrs"_a = vChrs,
-                                            "screen_pos"_a = vScreenPoss,
+            if( vFlat4C[ 1 - uiI ].size( ) > 0 )
+                vTrackPercussor[ uiI ].back( ).vValues.push_back( (double)vFlat4C[ 1 - uiI ][ uiX ] );
 
-                                            "index_start"_a = vIndexStarts,
-                                            "index_end"_a = vIndexEnds,
-
-                                            "values"_a = vValues,
-
-                                            "colors"_a = vColors,
-                                            "names"_a = vNames );
+            for( size_t uiY = 0; uiY < 2; uiY++ )
+                if( bIceShowBias && vIceSliceBias[ 0 ][ uiI ][ uiY ].size( ) > 0 && vInGroup[ uiY ].size( ) > 0 )
+                    vTrackPercussor[ uiI ].back( ).vValues.push_back( (double)vIceSliceBias[ 0 ][ uiI ][ uiY ][ uiX ] );
+        }
     }
     END_RETURN;
 }
 
-bool PartialQuarry::setTrackExport( )
+bool PartialQuarry::setTrackExport( ) // @todo @continue_here -> merge into precursor implementation
 {
     size_t uiDividend = getValue<size_t>( { "dividend" } );
     for( size_t uiI = 0; uiI < 2; uiI++ )
@@ -937,18 +668,30 @@ void PartialQuarry::regCoverage( )
                                { { "settings", "filters", "incomplete_alignments" }, { "dividend" } },
                                /*bHidden =*/false } );
 
+    registerNode( NodeNames::Tracks,
+                  ComputeNode{ /*.sNodeName =*/"coverage_tracks",
+                               /*.fFunc =*/&PartialQuarry::setTracks,
+                               /*.vIncomingFunctions =*/
+                               { NodeNames::TrackPrecursor },
+                               /*.vIncomingSession =*/
+                               { { "settings", "interface", "zero_track_at_ends" },
+                                 { "settings", "interface", "center_tracks_on_bins" },
+                                 { "settings", "interface", "connect_tracks_over_contig_borders" },
+                                 { "settings", "interface", "axis_label_max_char", "val" } },
+                               /*.vSessionsIncomingInPrevious =*/
+                               { { "dividend" } },
+                               /*bHidden =*/false } );
     registerNode(
-        NodeNames::Tracks,
-        ComputeNode{ /*.sNodeName =*/"coverage_tracks",
-                     /*.fFunc =*/&PartialQuarry::setTracks,
+        NodeNames::TrackPrecursor,
+        ComputeNode{ /*.sNodeName =*/"coverage_track_precurser",
+                     /*.fFunc =*/&PartialQuarry::setTrackPrecursor,
                      /*.vIncomingFunctions =*/
                      { NodeNames::LCS, NodeNames::AnnotationColors, NodeNames::CoverageValues, NodeNames::Flat4C },
                      /*.vIncomingSession =*/
                      { { "settings", "normalization", "display_ice_remainder" },
                        { "settings", "normalization", "grid_seq_display_background" },
                        { "settings", "normalization", "ice_show_bias" },
-                       { "settings", "normalization", "radicl_seq_display_coverage" },
-                       { "settings", "interface", "axis_label_max_char", "val" } },
+                       { "settings", "normalization", "radicl_seq_display_coverage" } },
                      /*.vSessionsIncomingInPrevious =*/
                      { { "dividend" },
                        { "settings", "normalization", "grid_seq_axis_is_column" },
