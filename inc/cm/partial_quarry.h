@@ -227,12 +227,11 @@ class PartialQuarry : public HasSession
         RnaAssociatedGenesFilter,
         RnaAssociatedBackground,
         GridSeqSamples,
-        RadiclSeqSamples,
         DatasetIdPerRepl,
         ActiveChromLength,
         V4cCoords,
         Flat4C,
-        IceCoords,
+        SampleCoords,
         BinCoordsCDS,
         SIZE
     };
@@ -749,9 +748,9 @@ class PartialQuarry : public HasSession
     std::vector<size_t> vPloidyCounts;
     size_t uiFullContigListSize;
     std::array<std::vector<AxisCoord>, 2> vAxisCords;
-    std::array<std::vector<AxisCoord>, 2> vIceAxisCoords;
+    std::array<std::vector<AxisCoord>, 2> vSampleAxisCoords;
     std::array<std::vector<AxisCoord>, 2> vV4cCoords;
-    std::array<std::vector<AxisCoord>, 2> vIceV4cCoords;
+    std::array<std::vector<AxisCoord>, 2> vSampleV4cCoords;
     std::array<std::vector<std::array<DecayCoord, 2>>, NUM_COORD_SYSTEMS> vDistDepDecCoords;
     std::array<std::vector<AxisRegion>, 2> vAxisRegions;
     std::array<std::vector<std::vector<size_t>>, 2> vvGridSeqCoverageValues;
@@ -763,7 +762,7 @@ class PartialQuarry : public HasSession
     sps::IntersectionType xIntersect;
     bool bOnlyMMRs = false;
 
-    std::array<std::vector<std::array<BinCoord, 2>>, NUM_COORD_SYSTEMS> vBinCoordsIce;
+    std::array<std::vector<std::array<BinCoord, 2>>, NUM_COORD_SYSTEMS> vBinCoordsSampled;
     std::array<std::vector<std::array<BinCoord, 2>>, NUM_COORD_SYSTEMS> vBinCoords;
 
     std::array<std::vector<std::string>, 2> vActiveCoverage;
@@ -838,9 +837,9 @@ class PartialQuarry : public HasSession
     std::vector<size_t> vBackgroundGridSeq;
 
     std::vector<AnnoCoord> vGridSeqSamples;
-    std::vector<AnnoCoord> vRadiclSeqSamples;
-    std::vector<std::array<size_t, 2>> vRadiclSeqCoverage;
-    std::vector<std::array<size_t, 2>> vRadiclSeqNumNonEmptyBins;
+
+    std::array<std::vector<std::array<size_t, 2>>, NUM_COORD_SYSTEMS> vRadiclSeqCoverage;
+    std::array<std::vector<std::array<size_t, 2>>, NUM_COORD_SYSTEMS> vRadiclSeqNumNonEmptyBins;
 
     std::vector<size_t> vvDatasetIdsPerReplAndChr;
     size_t uiContigListSize;
@@ -917,7 +916,7 @@ class PartialQuarry : public HasSession
     // coords.h
     bool sampleAndMerge( size_t, size_t, const std::vector<AxisCoord>&, std::vector<AxisCoord>& );
     // coords.h
-    bool setIceCoords( );
+    bool setSampleCoords( );
     // coords.h
     bool setLCS( );
     // coords.h
@@ -1013,8 +1012,6 @@ class PartialQuarry : public HasSession
                      std::vector<AnnoCoord>& );
     // normalization.h
     size_t getChromIdxForAnnoIdx( size_t );
-    // normalization.h
-    bool setRadiclSeqSamples( );
     // normalization.h
     bool setICESamples( );
     // normalization.h
@@ -1149,7 +1146,7 @@ class PartialQuarry : public HasSession
     virtual std::vector<std::array<double, 2>>
     normalizeBinominalTestTrampoline( const std::vector<std::array<double, 2>>&,
                                       const std::vector<std::array<size_t, 2>>&,
-                                      const std::vector<std::array<size_t, 2>>&, size_t, size_t, double, bool, size_t )
+                                      const std::vector<std::array<size_t, 2>>&, double, bool, size_t )
     {
         throw std::logic_error( "Function not implemented" );
     }
@@ -1183,16 +1180,14 @@ class PartialQuarry : public HasSession
         uiBinWidth.registerRead( NodeNames::ActiveChromLength );
         uiBinWidth.registerRead( NodeNames::RenderArea );
         uiBinWidth.registerRead( NodeNames::AxisCoords );
-        uiBinWidth.registerRead( NodeNames::IceCoords );
-        uiBinWidth.registerRead( NodeNames::RadiclSeqSamples );
+        uiBinWidth.registerRead( NodeNames::SampleCoords );
         uiBinWidth.registerRead( NodeNames::Normalized );
 
         uiBinHeight.registerWrite( NodeNames::BinSize );
         uiBinHeight.registerRead( NodeNames::ActiveChromLength );
         uiBinHeight.registerRead( NodeNames::RenderArea );
         uiBinHeight.registerRead( NodeNames::AxisCoords );
-        uiBinHeight.registerRead( NodeNames::IceCoords );
-        uiBinHeight.registerRead( NodeNames::RadiclSeqSamples );
+        uiBinHeight.registerRead( NodeNames::SampleCoords );
         uiBinHeight.registerRead( NodeNames::Normalized );
     }
 
@@ -1335,14 +1330,14 @@ class PartialQuarry : public HasSession
     {
         const bool bAnnoCoords =
             getValue<bool>( { "settings", "filters", bXaxis ? "anno_coords_col" : "anno_coords_row" } );
-        if(!bAnnoCoords)
-            return std::numeric_limits<size_t>::max();
+        if( !bAnnoCoords )
+            return std::numeric_limits<size_t>::max( );
 
         std::string sAnnoCoords = getValue<std::string>( { "contigs", "annotation_coordinates" } );
-        if(sAnnoCoords.size() == 0)
-            return std::numeric_limits<size_t>::max();
+        if( sAnnoCoords.size( ) == 0 )
+            return std::numeric_limits<size_t>::max( );
         else
-            return  getValue<size_t>({ "annotation", "by_name", sAnnoCoords });
+            return getValue<size_t>( { "annotation", "by_name", sAnnoCoords } );
     }
 
   public:
@@ -1365,7 +1360,7 @@ class PartialQuarry : public HasSession
         size_t uiRunningPos = 0;
         for( auto xChr : vActiveChromosomes[ bXAxis ? 0 : 1 ] )
         {
-            int64_t uiFistAnnoIdx = getFirstAnnoIdx(bXAxis);
+            int64_t uiFistAnnoIdx = getFirstAnnoIdx( bXAxis );
             bool bMatch = to_lower( xChr.sName ).find( sName ) != std::string::npos;
             size_t uiLen = 0;
             if( bFullGenome )

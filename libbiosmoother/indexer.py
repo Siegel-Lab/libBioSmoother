@@ -514,8 +514,11 @@ class Indexer:
                     first_id = id
 
         if has_lower_triangle != has_upper_triangle and first_id == 0:
-            print("Info: Detected an exclusive", "lower" if has_lower_triangle else "upper", 
-                  "triangle matrix. Setting symmetry and axis labels.")
+            print(
+                "Info: Detected an exclusive",
+                "lower" if has_lower_triangle else "upper",
+                "triangle matrix. Setting symmetry and axis labels.",
+            )
             self.session["settings"]["interface"]["axis_labels"] = "DNA_DNA"
             self.session["settings"]["filters"]["symmetry"] = "mirror"
 

@@ -34,20 +34,56 @@ bool PartialQuarry::doNotNormalize( )
 
 bool PartialQuarry::normalizeBinominalTest( )
 {
-    const bool bIsCol = getValue<bool>( { "settings", "normalization", "radicl_seq_axis_is_column" } );
-    const size_t uiNumBinsInRowTotal =
-        ( vCanvasSize[ bIsCol ? 1 : 0 ] - 1 ) / ( bIsCol ? uiBinHeight.r( ) : uiBinWidth.r( ) ) + 1;
+    const bool bAxisIsCol = getValue<bool>( { "settings", "normalization", "radicl_seq_axis_is_column" } );
+
     for( size_t uiY = 0; uiY < 3; uiY++ )
     {
-        // std::cout << "Bin Coords: ";
-        // size_t uiX = 0;
-        // for(auto& rBinCoord : vBinCoords[uiY])
-        //     std::cout << uiX++ << ": (" << rBinCoord[0].uiScreenX << ", " << rBinCoord[0].uiScreenY << "), ";
-        // std::cout << std::endl;
-        vvNormalized[ uiY ] = normalizeBinominalTestTrampoline(
-            vvNormalizedDDD[ uiY ], vRadiclSeqCoverage, vRadiclSeqNumNonEmptyBins, vRadiclSeqSamples.size( ),
-            uiNumBinsInRowTotal, getValue<double>( { "settings", "normalization", "p_accept", "val" } ), bIsCol,
-            uiY == 2 ? vV4cCoords[ 1 ].size( ) : vAxisCords[ 1 ].size( ) );
+        vRadiclSeqCoverage[ uiY ].clear( );
+        vRadiclSeqNumNonEmptyBins[ uiY ].clear( );
+
+        const auto& rYCoords = pickYCoords( uiY );
+        const auto& rXCoords = pickXCoords( uiY );
+
+        vRadiclSeqCoverage[ uiY ].resize( bAxisIsCol ? rXCoords.size() : rYCoords.size() );
+        vRadiclSeqNumNonEmptyBins[ uiY ].resize( bAxisIsCol ? rXCoords.size() : rYCoords.size() );
+
+        for( size_t uiI = 0; uiI < vvPloidyValues[uiY].size( ); uiI++ )
+        {
+            CANCEL_RETURN;
+            for( size_t uiJ = 0; uiJ < 2; uiJ++ )
+            {
+                size_t uiIdx = bAxisIsCol ? uiI / rYCoords.size() : uiI % rYCoords.size();
+
+                vRadiclSeqCoverage[ uiY ][ uiIdx ][ uiJ ] += vvPloidyValues[ uiY ][ uiI ][ uiJ ];
+                if( vvPloidyValues[ uiY ][ uiI ][ uiJ ] > 0 )
+                    vRadiclSeqNumNonEmptyBins[ uiY ][ uiIdx ][ uiJ ] += 1;
+            }
+        }
+
+        std::vector<std::array<double, 2>> vIntermediate = normalizeBinominalTestTrampoline(
+            vvPloidyValues[ uiY ], vRadiclSeqCoverage[ uiY ], vRadiclSeqNumNonEmptyBins[ uiY ],
+            getValue<double>( { "settings", "normalization", "p_accept", "val" } ), bAxisIsCol, rYCoords.size( ) );
+        CANCEL_RETURN;
+
+        size_t uiH2;
+        if( uiY == 2 )
+            uiH2 = vV4cCoords[ 1 ].size( );
+        else
+            uiH2 = vAxisCords[ 1 ].size( );
+        vvNormalized[ uiY ].resize( vBinCoords[ uiY ].size( ) );
+        for( size_t uiX = 0; uiX < vIntermediate.size( ); uiX++ )
+            for( size_t uiZ = 0; uiZ < 2; uiZ++ )
+            {
+                CANCEL_RETURN;
+                const size_t uiXAxisId = vBinCoordsSampled[ uiY ][ uiX ][ uiZ ].uiXAxisIdx;
+                const size_t uiYAxisId = vBinCoordsSampled[ uiY ][ uiX ][ uiZ ].uiYAxisIdx;
+                if( uiXAxisId != SAMPLE_COORD && uiYAxisId != SAMPLE_COORD )
+                {
+                    const size_t uiX2 = uiYAxisId + uiH2 * uiXAxisId;
+                    assert( uiX2 < vvNormalized[ uiY ].size( ) );
+                    vvNormalized[ uiY ][ uiX2 ][ uiZ ] = vIntermediate[ uiX ][ uiZ ];
+                }
+            }
     }
     CANCEL_RETURN;
     END_RETURN;
@@ -66,8 +102,7 @@ double PartialQuarry::iceGetCount( IceData& rIceData, size_t uiX, size_t uiY, si
     assert( uiX < rIceData.vSliceBias[ 0 ].size( ) );
     assert( uiY < rIceData.vSliceBias[ 1 ].size( ) );
     size_t uiIdx = uiY + uiX * ( rIceData.vSliceBias[ 1 ].size( ) );
-    assert( uiIdx <
-            vvNormalizedDDD[ uiY_ ].size( ) );
+    assert( uiIdx < vvNormalizedDDD[ uiY_ ].size( ) );
     return vvNormalizedDDD[ uiY_ ][ uiIdx ][ bA ? 0 : 1 ];
 }
 
@@ -76,8 +111,7 @@ double PartialQuarry::iceGetCount( SymmIceData& rIceData, size_t uiX, size_t uiY
     assert( uiX < rIceData.vSliceBias.size( ) );
     assert( uiY < rIceData.vSliceBias.size( ) );
     size_t uiIdx = uiY + uiX * ( rIceData.vSliceBias.size( ) );
-    assert( uiIdx <
-            vvNormalizedDDD[ uiY_ ].size( ) );
+    assert( uiIdx < vvNormalizedDDD[ uiY_ ].size( ) );
     return vvNormalizedDDD[ uiY_ ][ uiIdx ][ bA ? 0 : 1 ];
 }
 
@@ -459,149 +493,6 @@ bool PartialQuarry::setGridSeqSamples( )
     // then this cancel_return is necessary to catch the cancelled getSamples
     CANCEL_RETURN;
 
-
-    END_RETURN;
-}
-
-bool PartialQuarry::setRadiclSeqSamples( )
-{
-    const std::string sNorm = getValue<std::string>( { "settings", "normalization", "normalize_by" } );
-
-    vRadiclSeqSamples.clear( );
-
-    if( sNorm != "radicl-seq" )
-        END_RETURN;
-
-
-    const bool bAxisIsCol = getValue<bool>( { "settings", "normalization", "radicl_seq_axis_is_column" } );
-    size_t uiRadiclSeqSamples = getValue<size_t>( { "settings", "normalization", "radicl_seq_samples", "val" } );
-    const bool bAllSamples = getValue<bool>( { "settings", "normalization", "radicl_seq_global" } );
-    if( bAllSamples )
-        uiRadiclSeqSamples = std::numeric_limits<size_t>::max( );
-
-    getSamples( GetSamplesMode::Bins, uiRadiclSeqSamples, "", bAxisIsCol ? uiBinHeight.r( ) : uiBinWidth.r( ),
-                bAxisIsCol, false, vRadiclSeqSamples );
-    // then this cancel_return is necessary to catch the cancelled getSamples
-    CANCEL_RETURN;
-
-
-    END_RETURN;
-}
-
-bool PartialQuarry::setRadiclSeqCoverage( )
-{
-    const std::string sNorm = getValue<std::string>( { "settings", "normalization", "normalize_by" } );
-
-    vRadiclSeqCoverage.clear( );
-    vRadiclSeqNumNonEmptyBins.clear( );
-
-    if( sNorm != "radicl-seq" )
-        END_RETURN;
-
-    const bool bAxisIsCol = getValue<bool>( { "settings", "normalization", "radicl_seq_axis_is_column" } );
-    const size_t uiMinuend = getValue<size_t>( { "settings", "normalization", "min_interactions", "val" } );
-    std::vector<size_t> vRawCoverage;
-    vRawCoverage.reserve( vActiveReplicates.size( ) );
-
-    vRadiclSeqCoverage.reserve( vAxisCords[ bAxisIsCol ? 0 : 1 ].size( ) );
-    vRadiclSeqNumNonEmptyBins.reserve( vAxisCords[ bAxisIsCol ? 0 : 1 ].size( ) );
-
-    for( const AxisCoord& rAxis : vAxisCords[ bAxisIsCol ? 0 : 1 ] )
-    {
-        CANCEL_RETURN;
-        vRawCoverage.clear( );
-
-        // collect raw values
-        for( size_t uiI = 0; uiI < vActiveReplicates.size( ); uiI++ )
-        {
-            CANCEL_RETURN;
-
-            std::array<size_t, 2> vVals;
-            for( size_t uiJ = 0; uiJ < 2; uiJ++ )
-            {
-                CANCEL_RETURN;
-                vVals[ uiJ ] = getCoverageFromRepl( rAxis, uiI, bAxisIsCol, uiJ != 0 );
-                vVals[ uiJ ] = vVals[ uiJ ] > uiMinuend ? vVals[ uiJ ] - uiMinuend : 0;
-            }
-
-            vRawCoverage.push_back( symmetry( vVals[ 0 ], vVals[ 1 ] ) );
-        }
-
-        // combine raw values
-        std::array<size_t, 2> vVals;
-        for( size_t uiJ = 0; uiJ < 2; uiJ++ )
-        {
-            std::vector<size_t> vCollected;
-            vCollected.reserve( vInGroup[ uiJ ].size( ) );
-            for( size_t uiX : vInGroup[ uiJ ] )
-            {
-                CANCEL_RETURN;
-                vCollected.push_back( vRawCoverage[ uiX ] );
-            }
-
-            vVals[ uiJ ] = getFlatValue( vCollected );
-        }
-        vRadiclSeqCoverage.push_back( vVals );
-
-        vRadiclSeqNumNonEmptyBins.push_back( { 0, 0 } );
-        for( const AnnoCoord& rSample : vRadiclSeqSamples )
-        {
-            CANCEL_RETURN;
-            vRawCoverage.clear( );
-
-            // collect raw values
-            for( size_t uiRepl = 0; uiRepl < vActiveReplicates.size( ); uiRepl++ )
-            {
-                CANCEL_RETURN;
-
-                std::array<size_t, 2> vVals;
-                for( size_t uiJ = 0; uiJ < 2; uiJ++ )
-                {
-                    CANCEL_RETURN;
-                    const bool bSymPart = uiJ != 0;
-
-                    const size_t uiChrX = bAxisIsCol != bSymPart ? rAxis.uiChromosome : rSample.uiChromosome;
-                    const size_t uiChrY = bAxisIsCol != bSymPart ? rSample.uiChromosome : rAxis.uiChromosome;
-
-                    size_t uiDataSetId =
-                        getDatasetIdfromReplAndChr( uiRepl, vActiveChromosomes[ 0 ][ uiChrX ].uiActualContigId,
-                                                    vActiveChromosomes[ 1 ][ uiChrY ].uiActualContigId );
-
-                    const size_t uiXMin = bAxisIsCol != bSymPart ? rAxis.uiIndexPos : rSample.uiIndexPos;
-                    const size_t uiXMax = bAxisIsCol != bSymPart ? rAxis.uiIndexPos + rAxis.uiIndexSize
-                                                                 : rSample.uiIndexPos + rSample.uiIndexSize;
-                    const size_t uiYMin = bAxisIsCol != bSymPart ? rSample.uiIndexPos : rAxis.uiIndexPos;
-                    const size_t uiYMax = bAxisIsCol != bSymPart ? rSample.uiIndexPos + rSample.uiIndexSize
-                                                                 : rAxis.uiIndexPos + rAxis.uiIndexSize;
-
-                    vVals[ uiJ ] = pIndices->count(
-                        uiDataSetId,
-                        { uiYMin, uiXMin, uiMapQMin, uiFromAnnoFilter[ uiJ ], uiFromSameStrandFilter,
-                          uiFromYStrandFilter },
-                        { uiYMax, uiXMax, uiMapQMax, uiToAnnoFilter[ uiJ ], uiToSameStrandFilter, uiToYStrandFilter },
-                        xIntersect, bOnlyMMRs, 0 );
-                    vVals[ uiJ ] = vVals[ uiJ ] > uiMinuend ? vVals[ uiJ ] - uiMinuend : 0;
-                }
-
-                vRawCoverage.push_back( symmetry( vVals[ 0 ], vVals[ 1 ] ) );
-            }
-            // @todo-low-prio code duplication...
-            for( size_t uiJ = 0; uiJ < 2; uiJ++ )
-            {
-                std::vector<size_t> vCollected;
-                vCollected.reserve( vInGroup[ uiJ ].size( ) );
-                for( size_t uiX : vInGroup[ uiJ ] )
-                {
-                    CANCEL_RETURN;
-                    vCollected.push_back( vRawCoverage[ uiX ] );
-                }
-
-                const size_t uiVal = getFlatValue( vCollected );
-                if( uiVal != 0 )
-                    ++vRadiclSeqNumNonEmptyBins.back( )[ uiJ ];
-            }
-        }
-    }
 
     END_RETURN;
 }
@@ -1026,9 +917,9 @@ bool PartialQuarry::normalizeIC( )
         for( size_t uiX = 0; uiX < vvNormalizedDDD[ uiY ].size( ); uiX++ )
             for( size_t uiZ = 0; uiZ < 2; uiZ++ )
             {
-                const size_t uiXAxisId = vBinCoordsIce[ uiY ][ uiX ][ uiZ ].uiXAxisIdx;
-                const size_t uiYAxisId = vBinCoordsIce[ uiY ][ uiX ][ uiZ ].uiYAxisIdx;
-                if( uiXAxisId != ICE_SAMPLE_COORD && uiYAxisId != ICE_SAMPLE_COORD )
+                const size_t uiXAxisId = vBinCoordsSampled[ uiY ][ uiX ][ uiZ ].uiXAxisIdx;
+                const size_t uiYAxisId = vBinCoordsSampled[ uiY ][ uiX ][ uiZ ].uiYAxisIdx;
+                if( uiXAxisId != SAMPLE_COORD && uiYAxisId != SAMPLE_COORD )
                 {
                     const size_t uiX2 = uiYAxisId + uiH2 * uiXAxisId;
                     assert( uiX2 < vvNormalized[ uiY ].size( ) );
@@ -1082,16 +973,18 @@ bool PartialQuarry::setDistDepDecayRemoved( )
         for( size_t uiY = 0; uiY < NUM_COORD_SYSTEMS; uiY++ )
         {
             vvNormalizedDDD[ uiY ].resize( vvPloidyValues[ uiY ].size( ) );
-            assert( vBinCoordsIce[ uiY ].size( ) <= vvPloidyValues[ uiY ].size( ) );
-            for( size_t uiI = 0; uiI < vBinCoordsIce[ uiY ].size( ); uiI++ )
+            assert( vBinCoordsSampled[ uiY ].size( ) <= vvPloidyValues[ uiY ].size( ) );
+            for( size_t uiI = 0; uiI < vBinCoordsSampled[ uiY ].size( ); uiI++ )
                 for( size_t uiJ = 0; uiJ < 2; uiJ++ )
-                    if( vBinCoordsIce[ uiY ][ uiI ][ uiJ ].uiDecayCoordIndex != std::numeric_limits<size_t>::max( ) )
+                    if( vBinCoordsSampled[ uiY ][ uiI ][ uiJ ].uiDecayCoordIndex !=
+                        std::numeric_limits<size_t>::max( ) )
                     {
                         CANCEL_RETURN;
-                        if( vvFlatDecay[ uiY ][ vBinCoordsIce[ 0 ][ uiI ][ uiJ ].uiDecayCoordIndex ][ uiJ ] > 0 )
+                        if( vvFlatDecay[ uiY ][ vBinCoordsSampled[ 0 ][ uiI ][ uiJ ].uiDecayCoordIndex ][ uiJ ] > 0 )
                             vvNormalizedDDD[ uiY ][ uiI ][ uiJ ] =
                                 (double)vvPloidyValues[ uiY ][ uiI ][ uiJ ] /
-                                (double)vvFlatDecay[ uiY ][ vBinCoordsIce[ 0 ][ uiI ][ uiJ ].uiDecayCoordIndex ][ uiJ ];
+                                (double)
+                                    vvFlatDecay[ uiY ][ vBinCoordsSampled[ 0 ][ uiI ][ uiJ ].uiDecayCoordIndex ][ uiJ ];
                         else
                             vvNormalizedDDD[ uiY ][ uiI ][ uiJ ] = 0;
                     }
@@ -1101,7 +994,7 @@ bool PartialQuarry::setDistDepDecayRemoved( )
         for( size_t uiY = 0; uiY < 3; uiY++ )
         {
             vvNormalizedDDD[ uiY ].resize( vvPloidyValues[ uiY ].size( ) );
-            for( size_t uiI = 0; uiI < vBinCoordsIce[ uiY ].size( ); uiI++ )
+            for( size_t uiI = 0; uiI < vBinCoordsSampled[ uiY ].size( ); uiI++ )
                 for( size_t uiJ = 0; uiJ < 2; uiJ++ )
                     vvNormalizedDDD[ uiY ][ uiI ][ uiJ ] = (double)vvPloidyValues[ uiY ][ uiI ][ uiJ ];
         }
@@ -1122,8 +1015,7 @@ void PartialQuarry::regNormalization( )
                   ComputeNode{ /*.sNodeName =*/"normalized_bins",
                                /*.fFunc =*/&PartialQuarry::setNormalized,
                                /*.vIncomingFunctions =*/
-                               { NodeNames::DistDepDecayRemoved, NodeNames::RnaAssociatedBackground,
-                                 NodeNames::RadiclSeqCoverage },
+                               { NodeNames::DistDepDecayRemoved, NodeNames::RnaAssociatedBackground },
                                /*.vIncomingSession =*/
                                { { "settings", "normalization", "p_accept", "val" },
                                  { "settings", "normalization", "ice_symmetric_bias" },
@@ -1133,7 +1025,6 @@ void PartialQuarry::regNormalization( )
                                  { "settings", "normalization", "normalize_by" },
                                  { "settings", "normalization", "grid_seq_axis_is_column" },
                                  { "settings", "normalization", "ice_local" },
-                                 { "settings", "normalization", "radicl_seq_samples", "val" },
                                  { "settings", "normalization", "radicl_seq_axis_is_column" } },
                                /*bHidden =*/false } );
 
@@ -1150,27 +1041,6 @@ void PartialQuarry::regNormalization( )
                                  { "settings", "normalization", "grid_seq_global" } },
                                /*.vSessionsIncomingInPrevious =*/{ { "dividend" } },
                                /*bHidden =*/false } );
-
-    registerNode( NodeNames::RadiclSeqSamples,
-                  ComputeNode{ /*.sNodeName =*/"radicl_seq_samples",
-                               /*.fFunc =*/&PartialQuarry::setRadiclSeqSamples,
-                               /*.vIncomingFunctions =*/{ NodeNames::AxisCoords },
-                               /*.vIncomingSession =*/
-                               { { "settings", "normalization", "normalize_by" },
-                                 { "settings", "normalization", "radicl_seq_samples", "val" },
-                                 { "settings", "normalization", "radicl_seq_global" },
-                                 { "settings", "normalization", "radicl_seq_axis_is_column" } },
-                               /*.vSessionsIncomingInPrevious =*/{ { "dividend" } },
-                               /*bHidden =*/false } );
-    // registerNode( NodeNames::ICESamples,
-    //               ComputeNode{ /*.sNodeName =*/ "ice_samples",
-    //                            /*.fFunc=*/ &PartialQuarry::setICESamples,
-    //                            /*.vIncomingFunctions =*/ { NodeNames::ActiveChromLength },
-    //                            /*.vIncomingSession =*/ { { "dividend" },
-    //                                                  { "settings", "normalization", "normalize_by" },
-    //                                                  { "settings", "normalization", "hi_c_samples", "val" } },
-    //                            /*.vSessionsIncomingInPrevious =*/ {},
-    //                           /*bHidden =*/false } );
 
     registerNode( NodeNames::GridSeqCoverage,
                   ComputeNode{ /*.sNodeName =*/"grid_seq_coverage",
@@ -1190,20 +1060,6 @@ void PartialQuarry::regNormalization( )
                                  { "settings", "normalization", "grid_seq_samples", "val" },
                                  { "annotation", "by_name" },
                                  { "dividend" } },
-                               /*bHidden =*/false } );
-    registerNode( NodeNames::RadiclSeqCoverage,
-                  ComputeNode{ /*.sNodeName =*/"radicl_coverage",
-                               /*.fFunc =*/&PartialQuarry::setRadiclSeqCoverage,
-                               /*.vIncomingFunctions =*/
-                               { NodeNames::ActiveReplicates, NodeNames::MappingQuality, NodeNames::AxisCoords,
-                                 NodeNames::RadiclSeqSamples, NodeNames::IntersectionType, NodeNames::Directionality },
-                               /*.vIncomingSession =*/
-                               { { "replicates", "by_name" },
-
-                                 { "settings", "normalization", "min_interactions", "val" } },
-                               /*.vSessionsIncomingInPrevious =*/
-                               { { "settings", "normalization", "normalize_by" },
-                                 { "settings", "normalization", "radicl_seq_axis_is_column" } },
                                /*bHidden =*/false } );
 
     registerNode( NodeNames::RnaAssociatedGenesFilter,

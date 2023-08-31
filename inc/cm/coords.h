@@ -3,7 +3,7 @@
 
 #pragma once
 
-#define ICE_SAMPLE_COORD std::numeric_limits<size_t>::max( )
+#define SAMPLE_COORD std::numeric_limits<size_t>::max( )
 
 namespace cm
 {
@@ -500,7 +500,7 @@ bool PartialQuarry::setCanvasSize( )
             size_t iAnnoInMultipleBins =
                 multiple_bins( getValue<std::string>( { "settings", "filters", "anno_in_multiple_bins" } ) );
 
-            auto uiFistAnnoIdx = getFirstAnnoIdx(uiI == 0);
+            auto uiFistAnnoIdx = getFirstAnnoIdx( uiI == 0 );
 
             uiRunningStart = 0;
             for( auto xChr : this->vActiveChromosomes[ uiI ] )
@@ -544,7 +544,7 @@ bool PartialQuarry::setTicks( )
         size_t uiRunningStart2 = 0;
         const bool bAnnoCoords =
             getValue<bool>( { "settings", "filters", uiI == 0 ? "anno_coords_col" : "anno_coords_row" } );
-        auto uiFistAnnoIdx = getFirstAnnoIdx(uiI == 0);
+        auto uiFistAnnoIdx = getFirstAnnoIdx( uiI == 0 );
         for( ChromDesc& rDesc : this->vActiveChromosomes[ uiI ] )
         {
             CANCEL_RETURN;
@@ -823,9 +823,7 @@ std::pair<std::vector<AxisCoord>, std::vector<AxisRegion>> PartialQuarry::setAxi
             smaller_bin_to_num( getValue<std::string>( { "settings", "filters", "cut_off_bin" } ) ),
             multiple_anno( getValue<std::string>( { "settings", "filters", "multiple_annos_in_bin" } ) ),
             multiple_bins( getValue<std::string>( { "settings", "filters", "anno_in_multiple_bins" } ) ),
-            this->vActiveChromosomes[ bX ? 0 : 1 ], this->bCancel,
-            getFirstAnnoIdx(bX),
-            pIndices->vAnno );
+            this->vActiveChromosomes[ bX ? 0 : 1 ], this->bCancel, getFirstAnnoIdx( bX ), pIndices->vAnno );
 }
 
 bool PartialQuarry::setAxisCoords( )
@@ -1111,7 +1109,7 @@ bool PartialQuarry::setV4cCoords( )
     {
         const bool bAnnoCoords =
             getValue<bool>( { "settings", "filters", uiI == 0 ? "anno_coords_col" : "anno_coords_row" } );
-        auto uiFistAnnoIdx = getFirstAnnoIdx(uiI == 0);
+        auto uiFistAnnoIdx = getFirstAnnoIdx( uiI == 0 );
         const bool bSqueeze = getValue<std::string>( { "settings", "filters", "anno_in_multiple_bins" } ) == "squeeze";
 
 
@@ -1211,9 +1209,9 @@ const std::vector<AxisCoord>& PartialQuarry::pickXCoords( const size_t uiI )
     switch( uiI )
     {
         case 1:
-            return vIceV4cCoords[ 0 ];
+            return vSampleV4cCoords[ 0 ];
         default:
-            return vIceAxisCoords[ 0 ];
+            return vSampleAxisCoords[ 0 ];
     }
 }
 
@@ -1222,9 +1220,9 @@ const std::vector<AxisCoord>& PartialQuarry::pickYCoords( const size_t uiI )
     switch( uiI )
     {
         case 2:
-            return vIceV4cCoords[ 1 ];
+            return vSampleV4cCoords[ 1 ];
         default:
-            return vIceAxisCoords[ 1 ];
+            return vSampleAxisCoords[ 1 ];
     }
 }
 
@@ -1238,8 +1236,8 @@ bool PartialQuarry::setBinCoords( )
         const auto& rYCoords = pickYCoords( uiI );
         vBinCoords[ uiI ].clear( );
         vBinCoords[ uiI ].reserve( rXCoords.size( ) * rYCoords.size( ) );
-        vBinCoordsIce[ uiI ].clear( );
-        vBinCoordsIce[ uiI ].reserve( rXCoords.size( ) * rYCoords.size( ) );
+        vBinCoordsSampled[ uiI ].clear( );
+        vBinCoordsSampled[ uiI ].reserve( rXCoords.size( ) * rYCoords.size( ) );
         for( const AxisCoord& xX : rXCoords )
             for( const AxisCoord& xY : rYCoords )
             {
@@ -1251,9 +1249,9 @@ bool PartialQuarry::setBinCoords( )
                 else
                     xCoords = { BinCoord{ }, BinCoord{} };
 
-                if( xX.uiIdx != ICE_SAMPLE_COORD && xY.uiIdx != ICE_SAMPLE_COORD )
+                if( xX.uiIdx != SAMPLE_COORD && xY.uiIdx != SAMPLE_COORD )
                     vBinCoords[ uiI ].push_back( xCoords );
-                vBinCoordsIce[ uiI ].push_back( xCoords );
+                vBinCoordsSampled[ uiI ].push_back( xCoords );
             }
     }
     END_RETURN;
@@ -1268,10 +1266,10 @@ bool PartialQuarry::setDecayCoords( )
     {
         for( size_t uiY = 0; uiY < NUM_COORD_SYSTEMS; uiY++ )
         {
-            vDistDepDecCoords[ uiY ].reserve( vBinCoordsIce[ uiY ].size( ) );
+            vDistDepDecCoords[ uiY ].reserve( vBinCoordsSampled[ uiY ].size( ) );
 
             std::map<std::array<DecayCoord, 2>, size_t> vPtr;
-            for( std::array<BinCoord, 2>& vCoords : vBinCoordsIce[ uiY ] )
+            for( std::array<BinCoord, 2>& vCoords : vBinCoordsSampled[ uiY ] )
             {
                 CANCEL_RETURN;
 
@@ -1279,7 +1277,7 @@ bool PartialQuarry::setDecayCoords( )
                 for( size_t uiI = 0; uiI < 2; uiI++ )
                 {
                     if( vCoords[ uiI ].uiChromosomeX != std::numeric_limits<size_t>::max( ) &&
-                        vCoords[ uiI ].uiXAxisIdx != ICE_SAMPLE_COORD && vCoords[ uiI ].uiYAxisIdx != ICE_SAMPLE_COORD )
+                        vCoords[ uiI ].uiXAxisIdx != SAMPLE_COORD && vCoords[ uiI ].uiYAxisIdx != SAMPLE_COORD )
                     {
                         assert( vCoords[ uiI ].uiChromosomeX < vActiveChromosomes[ 0 ].size( ) );
                         assert( vCoords[ uiI ].uiChromosomeY < vActiveChromosomes[ 1 ].size( ) );
@@ -1360,10 +1358,10 @@ bool PartialQuarry::sampleAndMerge( size_t uiNumSamples, size_t uiI, const std::
                     /* .uiActualContigId =*/this->vActiveChromosomes[ uiI ][ uiX ].uiActualContigId, //
                     /* .uiChromId =*/this->vActiveChromosomes[ uiI ][ uiX ].uiCorrectedContigId, //
                     //},
-                    /*.uiScreenPos =*/ICE_SAMPLE_COORD, //
-                    /*.uiScreenSize =*/ICE_SAMPLE_COORD, //
-                    /*.uiRegionIdx =*/ICE_SAMPLE_COORD, //
-                    /*.uiIdx =*/ICE_SAMPLE_COORD //
+                    /*.uiScreenPos =*/SAMPLE_COORD, //
+                    /*.uiScreenSize =*/SAMPLE_COORD, //
+                    /*.uiRegionIdx =*/SAMPLE_COORD, //
+                    /*.uiIdx =*/SAMPLE_COORD //
                 } );
                 uiNextPos += std::max( uiSize, uiGenomeSize / uiNumSamples );
             }
@@ -1410,34 +1408,55 @@ bool PartialQuarry::sampleAndMerge( size_t uiNumSamples, size_t uiI, const std::
     END_RETURN;
 }
 
-bool PartialQuarry::setIceCoords( )
+bool PartialQuarry::setSampleCoords( )
 {
     for( size_t uiI = 0; uiI < 2; uiI++ )
     {
-        vIceAxisCoords[ uiI ].clear( );
-        vIceV4cCoords[ uiI ].clear( );
+        vSampleAxisCoords[ uiI ].clear( );
+        vSampleV4cCoords[ uiI ].clear( );
     }
 
-    if( getValue<std::string>( { "settings", "normalization", "normalize_by" } ) != "ice" ||
-        getValue<bool>( { "settings", "normalization", "ice_local" } ) )
+    std::string sNormBy = getValue<std::string>( { "settings", "normalization", "normalize_by" } );
+
+    if( sNormBy == "ice" && !getValue<bool>( { "settings", "normalization", "ice_local" } ) )
+    {
+        const size_t uiNumCoords = getValue<size_t>( { "settings", "normalization", "num_ice_bins", "val" } );
+
+        for( size_t uiI = 0; uiI < 2; uiI++ )
+        {
+            sampleAndMerge( uiNumCoords, uiI, vAxisCords[ uiI ], vSampleAxisCoords[ uiI ] );
+            sampleAndMerge( uiNumCoords, 1 - uiI, vV4cCoords[ uiI ], vSampleV4cCoords[ uiI ] );
+            CANCEL_RETURN;
+        }
+    }
+    else if( sNormBy == "radicl-seq" && !getValue<bool>( { "settings", "normalization", "radicl_local" } ) )
+    {
+        const bool bAxisIsCol = getValue<bool>( { "settings", "normalization", "radicl_seq_axis_is_column" } );
+        size_t uiRadiclSeqSamples = getValue<size_t>( { "settings", "normalization", "radicl_seq_samples", "val" } );
+
+        for( size_t uiI = 0; uiI < 2; uiI++ )
+        {
+            if( ( uiI == 1 ) == bAxisIsCol )
+            {
+                sampleAndMerge( uiRadiclSeqSamples, uiI, vAxisCords[ uiI ], vSampleAxisCoords[ uiI ] );
+                sampleAndMerge( uiRadiclSeqSamples, 1 - uiI, vV4cCoords[ uiI ], vSampleV4cCoords[ uiI ] );
+            }
+            else
+            {
+                vSampleAxisCoords[ uiI ] = vAxisCords[ uiI ];
+                vSampleV4cCoords[ uiI ] = vV4cCoords[ uiI ];
+            }
+            CANCEL_RETURN;
+        }
+    }
+    else
     {
         for( size_t uiI = 0; uiI < 2; uiI++ )
         {
-            vIceAxisCoords[ uiI ] = vAxisCords[ uiI ];
-            vIceV4cCoords[ uiI ] = vV4cCoords[ uiI ];
+            vSampleAxisCoords[ uiI ] = vAxisCords[ uiI ];
+            vSampleV4cCoords[ uiI ] = vV4cCoords[ uiI ];
         }
-        END_RETURN;
     }
-
-    const size_t uiNumCoords = getValue<size_t>( { "settings", "normalization", "num_ice_bins", "val" } );
-
-    for( size_t uiI = 0; uiI < 2; uiI++ )
-    {
-        sampleAndMerge( uiNumCoords, uiI, vAxisCords[ uiI ], vIceAxisCoords[ uiI ] );
-        sampleAndMerge( uiNumCoords, 1 - uiI, vV4cCoords[ uiI ], vIceV4cCoords[ uiI ] );
-        CANCEL_RETURN;
-    }
-
     END_RETURN;
 }
 
@@ -1623,28 +1642,31 @@ void PartialQuarry::regCoords( )
                                /*.vSessionsIncomingInPrevious =*/{ },
                                /*bHidden =*/true } );
 
-    registerNode( NodeNames::IceCoords,
-                  ComputeNode{ /*.sNodeName =*/"ice_coords",
-                               /*.fFunc =*/&PartialQuarry::setIceCoords,
+    registerNode( NodeNames::SampleCoords,
+                  ComputeNode{ /*.sNodeName =*/"sample_coords",
+                               /*.fFunc =*/&PartialQuarry::setSampleCoords,
                                /*.vIncomingFunctions =*/
                                { NodeNames::V4cCoords },
                                /*.vIncomingSession =*/
                                { { "settings", "normalization", "normalize_by" },
                                  { "settings", "normalization", "ice_local" },
-                                 { "settings", "normalization", "num_ice_bins", "val" } },
+                                 { "settings", "normalization", "num_ice_bins", "val" },
+                                 { "settings", "normalization", "radicl_local" },
+                                 { "settings", "normalization", "radicl_seq_axis_is_column" },
+                                 { "settings", "normalization", "radicl_seq_samples", "val" } },
                                /*.vSessionsIncomingInPrevious =*/{ },
                                /*bHidden =*/false } );
 
-    registerNode(
-        NodeNames::BinCoords,
-        ComputeNode{ /*.sNodeName =*/"bin_coords",
-                     /*.fFunc =*/&PartialQuarry::setBinCoords,
-                     /*.vIncomingFunctions =*/
-                     { NodeNames::AnnoFilters, NodeNames::IntersectionType, NodeNames::Symmetry, NodeNames::IceCoords },
-                     /*.vIncomingSession =*/
-                     { { "settings", "filters", "min_diag_dist", "val" } },
-                     /*.vSessionsIncomingInPrevious =*/{ { "dividend" } },
-                     /*bHidden =*/false } );
+    registerNode( NodeNames::BinCoords,
+                  ComputeNode{ /*.sNodeName =*/"bin_coords",
+                               /*.fFunc =*/&PartialQuarry::setBinCoords,
+                               /*.vIncomingFunctions =*/
+                               { NodeNames::AnnoFilters, NodeNames::IntersectionType, NodeNames::Symmetry,
+                                 NodeNames::SampleCoords },
+                               /*.vIncomingSession =*/
+                               { { "settings", "filters", "min_diag_dist", "val" } },
+                               /*.vSessionsIncomingInPrevious =*/{ { "dividend" } },
+                               /*bHidden =*/false } );
 
     registerNode( NodeNames::AnnoFilters,
                   ComputeNode{ /*.sNodeName =*/"anno_filters",

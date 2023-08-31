@@ -1,5 +1,5 @@
 {
-    "smoother_config_file_version": 0.1,
+    "smoother_config_file_version": 0.2,
     "display_name": "Default",
     "normalization": {
         "normalize_by": "dont",
@@ -92,7 +92,7 @@
         "grid_seq_global": false,
         "ddd_all_samples": false,
         "radicl_seq_display_coverage": true,
-        "radicl_seq_global": false,
+        "radicl_local": false,
         "ice_show_bias": false,
         "ice_local": false,
         "grid_seq_max_bin_size": {

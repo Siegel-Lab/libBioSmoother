@@ -119,9 +119,9 @@ bool PartialQuarry::setBinValues( )
         for( size_t uiRepl = 0; uiRepl < vActiveReplicates.size( ); uiRepl++ )
         {
             vvBinValues[ uiY ].emplace_back( );
-            vvBinValues[ uiY ].back( ).reserve( vBinCoordsIce[ uiY ].size( ) );
+            vvBinValues[ uiY ].back( ).reserve( vBinCoordsSampled[ uiY ].size( ) );
 
-            for( const std::array<BinCoord, 2>& vCoords : vBinCoordsIce[ uiY ] )
+            for( const std::array<BinCoord, 2>& vCoords : vBinCoordsSampled[ uiY ] )
             {
                 std::array<size_t, 2> vVals;
                 CANCEL_RETURN;
@@ -397,7 +397,7 @@ bool PartialQuarry::setFlatValues( )
             // take size from fst replicate (sizes are equal anyways)
             vvFlatValues[ uiY ].reserve( vvBinValues[ uiY ][ 0 ].size( ) );
 
-            for( size_t uiI = 0; uiI < vBinCoordsIce[ uiY ].size( ); uiI++ )
+            for( size_t uiI = 0; uiI < vBinCoordsSampled[ uiY ].size( ); uiI++ )
             {
                 vvFlatValues[ uiY ].push_back( { 0, 0 } );
                 for( size_t uiJ = 0; uiJ < 2; uiJ++ )
@@ -450,11 +450,11 @@ bool PartialQuarry::setPloidyValues( )
             // take size from fst replicate (sizes are equal anyways)
             vvPloidyValues[ uiY ].reserve( vvFlatValues[ uiY ][ 0 ].size( ) );
 
-            for( size_t uiI = 0; uiI < vBinCoordsIce[ uiY ].size( ); uiI++ )
+            for( size_t uiI = 0; uiI < vBinCoordsSampled[ uiY ].size( ); uiI++ )
             {
                 vvPloidyValues[ uiY ].push_back( {
-                    ploidyCorrect( vvFlatValues[ uiY ][ uiI ][ 0 ], vBinCoordsIce[ uiY ][ uiI ][ 0 ] ),
-                    ploidyCorrect( vvFlatValues[ uiY ][ uiI ][ 1 ], vBinCoordsIce[ uiY ][ uiI ][ 1 ] ),
+                    ploidyCorrect( vvFlatValues[ uiY ][ uiI ][ 0 ], vBinCoordsSampled[ uiY ][ uiI ][ 0 ] ),
+                    ploidyCorrect( vvFlatValues[ uiY ][ uiI ][ 1 ], vBinCoordsSampled[ uiY ][ uiI ][ 1 ] ),
                 } );
             }
         }

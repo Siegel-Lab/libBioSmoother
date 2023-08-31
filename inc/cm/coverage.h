@@ -238,12 +238,12 @@ bool PartialQuarry::setTracks( )
                 if( bGridSeqNormDisp )
                     uiVal = (double)vBackgroundGridSeq[ uiX ];
                 else if( bRadiclNormDisp )
-                    uiVal = std::min( (double)vRadiclSeqCoverage[ uiX ][ 0 ],
-                                      (double)vRadiclSeqNumNonEmptyBins[ uiX ][ 0 ] );
+                    uiVal = std::min( (double)vRadiclSeqCoverage[ 0 ][ uiX ][ 0 ],
+                                      (double)vRadiclSeqNumNonEmptyBins[ 0 ][ uiX ][ 0 ] );
                 vvMinMaxTracks[ uiI ][ 0 ] = std::min( vvMinMaxTracks[ uiI ][ 0 ], uiVal );
                 if( bRadiclNormDisp )
-                    uiVal = std::max( (double)vRadiclSeqCoverage[ uiX ][ 0 ],
-                                      (double)vRadiclSeqNumNonEmptyBins[ uiX ][ 0 ] );
+                    uiVal = std::max( (double)vRadiclSeqCoverage[ 0 ][ uiX ][ 0 ],
+                                      (double)vRadiclSeqNumNonEmptyBins[ 0 ][ uiX ][ 0 ] );
                 vvMinMaxTracks[ uiI ][ 1 ] = std::max( vvMinMaxTracks[ uiI ][ 1 ], uiVal );
             }
 
@@ -255,9 +255,9 @@ bool PartialQuarry::setTracks( )
             }
         }
 
-        for( size_t uiX = 0; uiX < vIceAxisCoords[ uiI ].size( ); uiX++ )
+        for( size_t uiX = 0; uiX < vSampleAxisCoords[ uiI ].size( ); uiX++ )
             for( size_t uiY = 0; uiY < 2; uiY++ )
-                if( bDoIce && vIceAxisCoords[ uiI ][ uiY ].uiIdx != ICE_SAMPLE_COORD &&
+                if( bDoIce && vSampleAxisCoords[ uiI ][ uiY ].uiIdx != SAMPLE_COORD &&
                     vIceSliceBias[ 0 ][ uiI ][ uiY ].size( ) > 0 && vInGroup[ uiY ].size( ) > 0 )
                 {
                     auto uiVal = vIceSliceBias[ 0 ][ uiI ][ uiY ][ uiX ];
@@ -327,7 +327,7 @@ bool PartialQuarry::setTracks( )
                 if( bGridSeqNormDisp )
                     uiVal = (double)vBackgroundGridSeq[ uiX ];
                 else if( bRadiclNormDisp )
-                    uiVal = (double)vRadiclSeqCoverage[ uiX ][0];
+                    uiVal = (double)vRadiclSeqCoverage[ 0 ][ uiX ][ 0 ];
 
                 // front corner
                 vIndexStart.append( readableBp( xCoord.uiIndexPos * uiDividend ) );
@@ -409,7 +409,10 @@ bool PartialQuarry::setTracks( )
                 }
 
                 sChr = sChromName;
-                const double uiVal = (double)vRadiclSeqNumNonEmptyBins[ uiX ][ 0 ]; // @todo should display 0 and 1 separately here. Also for grid seq there is only one value: should it not be split?
+                const double uiVal =
+                    (double)vRadiclSeqNumNonEmptyBins[ 0 ][ uiX ]
+                                                     [ 0 ]; // @todo should display 0 and 1 separately here. Also for
+                                                            // grid seq there is only one value: should it not be split?
 
                 // front corner
                 vIndexStart.append( readableBp( xCoord.uiIndexPos * uiDividend ) );
@@ -616,11 +619,11 @@ bool PartialQuarry::setTracks( )
                 std::string sChr = "";
 
 
-                for( size_t uiX = 0; uiX < vIceAxisCoords[ uiI ].size( ); uiX++ )
-                    if( vIceAxisCoords[ uiI ][ uiX ].uiIdx != ICE_SAMPLE_COORD )
+                for( size_t uiX = 0; uiX < vSampleAxisCoords[ uiI ].size( ); uiX++ )
+                    if( vSampleAxisCoords[ uiI ][ uiX ].uiIdx != SAMPLE_COORD )
                     {
                         CANCEL_RETURN;
-                        auto& xCoord = vIceAxisCoords[ uiI ][ uiX ];
+                        auto& xCoord = vSampleAxisCoords[ uiI ][ uiX ];
                         std::string sChromName = vActiveChromosomes[ uiI ][ xCoord.uiChromosome ].sName;
                         if( sChr != "" && sChr != sChromName )
                         {
@@ -667,7 +670,7 @@ bool PartialQuarry::setTracks( )
                         vScreenPos.append( xCoord.uiScreenPos + xCoord.uiScreenSize );
                         vValue.append( uiVal );
 
-                        if( uiX + 1 == vIceAxisCoords[ uiI ].size( ) )
+                        if( uiX + 1 == vSampleAxisCoords[ uiI ].size( ) )
                         {
                             // zero position at end
                             vIndexStart.append( readableBp( ( xCoord.uiIndexPos + xCoord.uiIndexSize ) * uiDividend ) );
@@ -756,7 +759,7 @@ bool PartialQuarry::setTrackExport( )
                 if( bGridSeqNormDisp )
                     vValues.push_back( vBackgroundGridSeq[ uiX ] );
                 else if( bRadiclNormDisp )
-                    vValues.push_back( vRadiclSeqCoverage[ uiX ][ 0 ] );
+                    vValues.push_back( vRadiclSeqCoverage[ 0 ][ uiX ][ 0 ] );
             }
             if( bDoIce )
             {
@@ -780,7 +783,8 @@ bool PartialQuarry::setTrackExport( )
 bool PartialQuarry::setRankedSlicesCDS( )
 {
     const std::string sAnno = getValue<std::string>( { "settings", "normalization", "grid_seq_annotation" } );
-    auto uiFistAnnoIdx = hasValue({ "annotation", "by_name", sAnno }) ? getValue<size_t>( { "annotation", "by_name", sAnno } ) : 0;
+    auto uiFistAnnoIdx =
+        hasValue( { "annotation", "by_name", sAnno } ) ? getValue<size_t>( { "annotation", "by_name", sAnno } ) : 0;
     const uint32_t uiDividend = getValue<uint32_t>( { "dividend" } );
     const size_t uiMaxChar = getValue<size_t>( { "settings", "interface", "axis_label_max_char", "val" } );
     std::array<std::vector<size_t>, 2> vSorted;

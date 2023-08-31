@@ -85,34 +85,25 @@ class Quarry(PartialQuarry):
         bin_values,
         num_interactions_total,
         num_bins_interacting_with,
-        samples,
-        max_num_interacting_with,
         p_accept,
         is_col,
         grid_height,
     ):
-        fac = max_num_interacting_with / samples
-
         def bin_test(jdx):
             ret = []
             for idx, val in enumerate(bin_values):
                 n = num_interactions_total[
                     (idx // grid_height if is_col else idx % grid_height)
                 ][jdx]
-                i = (
-                    num_bins_interacting_with[
-                        (idx // grid_height if is_col else idx % grid_height)
-                    ][jdx]
-                    * fac
-                )
+                i = num_bins_interacting_with[
+                    (idx // grid_height if is_col else idx % grid_height)
+                ][jdx]
                 x = val[jdx]
                 if i > 0 and HAS_STATS:
                     p = 1 / i
-                    ret.append(binom_test(x, n, p, alternative="greater"))
+                    ret.append(binom_test(x, max(x, n), p, alternative="greater"))
                 else:
-                    p = "NaN"
                     ret.append(1)
-                # print(idx, ":", x, n, p, i, ret[-1])
             return ret
 
         psx = bin_test(0)
