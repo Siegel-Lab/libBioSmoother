@@ -39,11 +39,11 @@ bool PartialQuarry::normalizeBinominalTest( )
         ( vCanvasSize[ bIsCol ? 1 : 0 ] - 1 ) / ( bIsCol ? uiBinHeight.r( ) : uiBinWidth.r( ) ) + 1;
     for( size_t uiY = 0; uiY < 3; uiY++ )
     {
-        std::cout << "Bin Coords: ";
-        size_t uiX = 0;
-        for(auto& rBinCoord : vBinCoords[uiY])
-            std::cout << uiX++ << ": (" << rBinCoord[0].uiScreenX << ", " << rBinCoord[0].uiScreenY << "), ";
-        std::cout << std::endl;
+        // std::cout << "Bin Coords: ";
+        // size_t uiX = 0;
+        // for(auto& rBinCoord : vBinCoords[uiY])
+        //     std::cout << uiX++ << ": (" << rBinCoord[0].uiScreenX << ", " << rBinCoord[0].uiScreenY << "), ";
+        // std::cout << std::endl;
         vvNormalized[ uiY ] = normalizeBinominalTestTrampoline(
             vvNormalizedDDD[ uiY ], vRadiclSeqCoverage, vRadiclSeqNumNonEmptyBins, vRadiclSeqSamples.size( ),
             uiNumBinsInRowTotal, getValue<double>( { "settings", "normalization", "p_accept", "val" } ), bIsCol,

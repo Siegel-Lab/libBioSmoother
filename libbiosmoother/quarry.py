@@ -112,7 +112,7 @@ class Quarry(PartialQuarry):
                 else:
                     p = "NaN"
                     ret.append(1)
-                print(idx, ":", x, n, p, i, ret[-1])
+                # print(idx, ":", x, n, p, i, ret[-1])
             return ret
 
         psx = bin_test(0)
@@ -121,11 +121,11 @@ class Quarry(PartialQuarry):
             return []
         results = [
             (1 if x < p_accept else 0, 1 if y < p_accept else 0)
-            for x, y in zip(psx, psy)
-            # for x, y in zip(
-                # multipletests(psx, alpha=float("NaN"), method="fdr_bh")[1],
-                # multipletests(psy, alpha=float("NaN"), method="fdr_bh")[1],
-            # )
+            # for x, y in zip(psx, psy)
+            for x, y in zip(
+                multipletests(psx, alpha=float("NaN"), method="fdr_bh")[1],
+                multipletests(psy, alpha=float("NaN"), method="fdr_bh")[1],
+            )
         ]
         return results
 
