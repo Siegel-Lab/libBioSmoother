@@ -237,7 +237,7 @@ bool PartialQuarry::setTracks( )
                 CANCEL_RETURN;
                 auto& xCoord = vAxisCords[ uiI ][ uiX ];
                 std::string sChromName = vActiveChromosomes[ uiI ][ xCoord.uiChromosome ].sName;
-                if( sChr != "" && sChr != sChromName )
+                if( sChr != "" && sChr != sChromName && !bConnectOverBorder )
                 {
                     vChrs.append( substringChr( sChr, uiMaxChar ) );
 
@@ -257,7 +257,6 @@ bool PartialQuarry::setTracks( )
 
                     vNames.append( vTrackExportNames[ uiI ][ uiJ ] );
 
-                    ++uiCnt;
                 }
                 if( bZeroTracksAtEnd && uiX == 0 )
                 {
@@ -269,19 +268,30 @@ bool PartialQuarry::setTracks( )
                 }
 
                 sChr = sChromName;
-                double uiVal = vTrackPercussor[ uiI ][ uiX ].vValues[ uiJ ];
+                double uiVal = vTrackPrecursor[ uiI ][ uiX ].vValues[ uiJ ];
 
-                // front corner
-                vIndexStart.append( readableBp( xCoord.uiIndexPos * uiDividend ) );
-                vIndexEnd.append( readableBp( ( xCoord.uiIndexPos + xCoord.uiIndexSize ) * uiDividend ) );
-                vScreenPos.append( xCoord.uiScreenPos );
-                vValue.append( uiVal );
+                if (bCenterTracks)
+                {
+                    // center
+                    vIndexStart.append( readableBp( xCoord.uiIndexPos * uiDividend ) );
+                    vIndexEnd.append( readableBp( ( xCoord.uiIndexPos + xCoord.uiIndexSize ) * uiDividend ) );
+                    vScreenPos.append( xCoord.uiScreenPos + xCoord.uiScreenSize / 2 );
+                    vValue.append( uiVal );
+                }
+                else
+                {
+                    // front corner
+                    vIndexStart.append( readableBp( xCoord.uiIndexPos * uiDividend ) );
+                    vIndexEnd.append( readableBp( ( xCoord.uiIndexPos + xCoord.uiIndexSize ) * uiDividend ) );
+                    vScreenPos.append( xCoord.uiScreenPos );
+                    vValue.append( uiVal );
 
-                // rear corner
-                vIndexStart.append( readableBp( xCoord.uiIndexPos * uiDividend ) );
-                vIndexEnd.append( readableBp( ( xCoord.uiIndexPos + xCoord.uiIndexSize ) * uiDividend ) );
-                vScreenPos.append( xCoord.uiScreenPos + xCoord.uiScreenSize );
-                vValue.append( uiVal );
+                    // rear corner
+                    vIndexStart.append( readableBp( xCoord.uiIndexPos * uiDividend ) );
+                    vIndexEnd.append( readableBp( ( xCoord.uiIndexPos + xCoord.uiIndexSize ) * uiDividend ) );
+                    vScreenPos.append( xCoord.uiScreenPos + xCoord.uiScreenSize );
+                    vValue.append( uiVal );
+                }
 
                 if( bZeroTracksAtEnd && uiX + 1 == vAxisCords[ uiI ].size( ) )
                 {
@@ -333,7 +343,6 @@ bool PartialQuarry::setTrackPrecursor( )
         bIsCol = getValue<bool>( { "settings", "normalization", "radicl_seq_axis_is_column" } );
     const bool bIceShowBias = getValue<bool>( { "settings", "normalization", "ice_show_bias" } );
 
-    size_t uiDividend = getValue<size_t>( { "dividend" } );
     for( size_t uiI = 0; uiI < 2; uiI++ )
     {
         vvMinMaxTracks[ uiI ][ 0 ] = std::numeric_limits<double>::max( );
@@ -404,108 +413,56 @@ bool PartialQuarry::setTrackPrecursor( )
                 vTrackExportNames[ uiI ].push_back( std::string( "ICE Bias " ) + ( uiY == 0 ? "A" : "B" ) );
 
 
-        vTrackPercussor[ uiI ].clear( );
-        vTrackPercussor[ uiI ].reserve( vAxisCords[ uiI ].size( ) );
+        vTrackPrecursor[ uiI ].clear( );
+        vTrackPrecursor[ uiI ].reserve( vAxisCords[ uiI ].size( ) );
 
 
         for( size_t uiX = 0; uiX < vAxisCords[ uiI ].size( ); uiX++ )
         {
             CANCEL_RETURN;
-            vTrackPercussor[ uiI ].push_back( Track{ /*.xCoord=*/vAxisCords[ uiI ][uiX], /*.vValues=*/{} } );
+            vTrackPrecursor[ uiI ].push_back( Track{ /*.xCoord=*/vAxisCords[ uiI ][uiX], /*.vValues=*/{} } );
 
             for( size_t uiId = 0; uiId < vvCoverageValues[ uiI ].size( ); uiId++ )
-                vTrackPercussor[ uiI ].back( ).vValues.push_back( (double)vvCoverageValues[ uiI ][ uiId ][ uiX ] );
+                vTrackPrecursor[ uiI ].back( ).vValues.push_back( (double)vvCoverageValues[ uiI ][ uiId ][ uiX ] );
 
             if( bGridSeqNormDisp && ( bIsCol == ( uiI == 0 ) ) )
-                vTrackPercussor[ uiI ].back( ).vValues.push_back( (double)vBackgroundGridSeq[ uiX ] );
+                vTrackPrecursor[ uiI ].back( ).vValues.push_back( (double)vBackgroundGridSeq[ uiX ] );
             if( bRadiclNormDisp && ( bIsCol == ( uiI == 0 ) ) )
             {
-                vTrackPercussor[ uiI ].back( ).vValues.push_back( (double)vRadiclSeqCoverage[ 0 ][ uiX ][ 0 ] );
-                vTrackPercussor[ uiI ].back( ).vValues.push_back( (double)vRadiclSeqCoverage[ 0 ][ uiX ][ 1 ] );
-                vTrackPercussor[ uiI ].back( ).vValues.push_back( (double)vRadiclSeqNumNonEmptyBins[ 0 ][ uiX ][ 0 ] );
-                vTrackPercussor[ uiI ].back( ).vValues.push_back( (double)vRadiclSeqNumNonEmptyBins[ 0 ][ uiX ][ 1 ] );
+                vTrackPrecursor[ uiI ].back( ).vValues.push_back( (double)vRadiclSeqCoverage[ 0 ][ uiX ][ 0 ] );
+                vTrackPrecursor[ uiI ].back( ).vValues.push_back( (double)vRadiclSeqCoverage[ 0 ][ uiX ][ 1 ] );
+                vTrackPrecursor[ uiI ].back( ).vValues.push_back( (double)vRadiclSeqNumNonEmptyBins[ 0 ][ uiX ][ 0 ] );
+                vTrackPrecursor[ uiI ].back( ).vValues.push_back( (double)vRadiclSeqNumNonEmptyBins[ 0 ][ uiX ][ 1 ] );
             }
 
             if( vFlat4C[ 1 - uiI ].size( ) > 0 )
-                vTrackPercussor[ uiI ].back( ).vValues.push_back( (double)vFlat4C[ 1 - uiI ][ uiX ] );
+                vTrackPrecursor[ uiI ].back( ).vValues.push_back( (double)vFlat4C[ 1 - uiI ][ uiX ] );
 
             for( size_t uiY = 0; uiY < 2; uiY++ )
                 if( bIceShowBias && vIceSliceBias[ 0 ][ uiI ][ uiY ].size( ) > 0 && vInGroup[ uiY ].size( ) > 0 )
-                    vTrackPercussor[ uiI ].back( ).vValues.push_back( (double)vIceSliceBias[ 0 ][ uiI ][ uiY ][ uiX ] );
+                    vTrackPrecursor[ uiI ].back( ).vValues.push_back( (double)vIceSliceBias[ 0 ][ uiI ][ uiY ][ uiX ] );
         }
     }
     END_RETURN;
 }
 
-bool PartialQuarry::setTrackExport( ) // @todo @continue_here -> merge into precursor implementation
+bool PartialQuarry::setTrackExport( )
 {
     size_t uiDividend = getValue<size_t>( { "dividend" } );
     for( size_t uiI = 0; uiI < 2; uiI++ )
     {
         vTrackExport[ uiI ].clear( );
         vTrackExport[ uiI ].reserve( vAxisCords[ uiI ].size( ) );
-        vTrackExportNames[ uiI ].clear( );
-        vTrackExportNames[ uiI ].reserve( vvCoverageValues[ uiI ].size( ) + 1 );
-
-
-        const std::string sNorm = getValue<std::string>( { "settings", "normalization", "normalize_by" } );
-        const bool bGridSeqNormDisp =
-            sNorm == "grid-seq" && getValue<bool>( { "settings", "normalization", "grid_seq_display_background" } );
-        const bool bRadiclNormDisp =
-            sNorm == "radicl-seq" && getValue<bool>( { "settings", "normalization", "radicl_seq_display_coverage" } );
-        bool bIsCol;
-        if( bGridSeqNormDisp )
-            bIsCol = getValue<bool>( { "settings", "normalization", "grid_seq_axis_is_column" } );
-        else if( bRadiclNormDisp )
-            bIsCol = getValue<bool>( { "settings", "normalization", "radicl_seq_axis_is_column" } );
-
-        const bool bDoIce = sNorm == "ice" && getValue<bool>( { "settings", "normalization", "ice_show_bias" } );
-
-
-        for( size_t uiId = 0; uiId < vvCoverageValues[ uiI ].size( ); uiI++ )
-            vTrackExportNames[ uiI ].push_back( vActiveCoverage[ uiI ][ uiId ] );
-        if( ( bRadiclNormDisp || bGridSeqNormDisp ) && ( bIsCol == ( uiI == 0 ) ) )
-        {
-            if( bGridSeqNormDisp )
-                vTrackExportNames[ uiI ].push_back( "Associated_slices_background" );
-            else if( bRadiclNormDisp )
-                vTrackExportNames[ uiI ].push_back( "Binominal_test_coverage" );
-        }
-        if( bDoIce )
-        {
-            if( vInGroup[ 0 ].size( ) > 0 )
-                vTrackExportNames[ uiI ].push_back( "ICE_bias_A" );
-            if( vInGroup[ 1 ].size( ) > 1 )
-                vTrackExportNames[ uiI ].push_back( "ICE_bias_B" );
-        }
 
         for( size_t uiX = 0; uiX < vAxisCords[ uiI ].size( ); uiX++ )
         {
             CANCEL_RETURN;
-            std::vector<double> vValues;
-            for( size_t uiId = 0; uiId < vvCoverageValues[ uiI ].size( ); uiI++ )
-                vValues.push_back( vvCoverageValues[ uiI ][ uiId ][ uiX ] );
-            if( ( bRadiclNormDisp || bGridSeqNormDisp ) && ( bIsCol == ( uiI == 0 ) ) )
-            {
-                if( bGridSeqNormDisp )
-                    vValues.push_back( vBackgroundGridSeq[ uiX ] );
-                else if( bRadiclNormDisp )
-                    vValues.push_back( vRadiclSeqCoverage[ 0 ][ uiX ][ 0 ] );
-            }
-            if( bDoIce )
-            {
-                if( vInGroup[ 0 ].size( ) > 0 )
-                    vValues.push_back( vIceSliceBias[ 0 ][ uiI ][ 0 ][ uiX ] );
-                if( vInGroup[ 1 ].size( ) > 0 )
-                    vValues.push_back( vIceSliceBias[ 0 ][ uiI ][ 1 ][ uiX ] );
-            }
-
             auto& xCoord = vAxisCords[ uiI ][ uiX ];
             std::string sChromName = vActiveChromosomes[ uiI ][ xCoord.uiChromosome ].sName;
             vTrackExport[ uiI ].emplace_back( sChromName,
                                               xCoord.uiIndexPos * uiDividend,
                                               ( xCoord.uiIndexPos + xCoord.uiIndexSize ) * uiDividend,
-                                              vValues );
+                                              vTrackPrecursor[uiI][uiX].vValues );
         }
     }
     END_RETURN;

@@ -825,7 +825,7 @@ class PartialQuarry : public HasSession
         AxisCoord xCoord;
         std::vector<double> vValues;
     };
-    std::array<std::vector<Track>, 2> vTrackPercussor;
+    std::array<std::vector<Track>, 2> vTrackPrecursor;
     std::array<pybind11::dict, 2> xTicksCDS;
     std::array<pybind11::dict, 2> xContigTicksCDS;
     std::array<pybind11::dict, 2> xTracksCDS;

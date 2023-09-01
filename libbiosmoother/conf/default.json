@@ -300,7 +300,8 @@
         },
         "connect_tracks_over_contig_borders": false,
         "center_tracks_on_bins": false,
-        "zero_track_at_ends": false
+        "zero_track_at_ends": false,
+        "tracks_log_scale": false
     },
     "filters": {
         "mapping_q": {
