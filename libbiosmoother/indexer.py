@@ -525,6 +525,15 @@ class Indexer:
         self.set_session(["replicates", "by_name", name, "first_dataset_id"], first_id)
         self.set_session(["replicates", "by_name", name, "num_datasets"], num_itr)
         self.set_session(["replicates", "by_name", name, "total_reads"], total_reads)
+        self.set_session(["replicates", "by_name", name, "no_map_q"], no_map_q)
+        self.set_session(["replicates", "by_name", name, "no_groups"], no_groups)
+        self.set_session(["replicates", "by_name", name, "no_multi_map"], no_multi_map)
+        self.set_session(["replicates", "by_name", name, "no_category"], no_category)
+        self.set_session(["replicates", "by_name", name, "no_strand"], no_strand)
+        self.set_session(["replicates", "by_name", name, "shekelyan"], shekelyan)
+        self.set_session(["replicates", "by_name", name, "force_upper_triangle"], force_upper_triangle)
+        self.set_session(["replicates", "by_name", name, "has_upper_triangle"], has_upper_triangle)
+        self.set_session(["replicates", "by_name", name, "has_lower_triangle"], has_lower_triangle)
         if total_reads == 0:
             print(
                 "WARNING: the total number of reads that were added to the index is zero! Something seems off..."
