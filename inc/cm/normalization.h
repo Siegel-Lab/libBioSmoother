@@ -640,14 +640,7 @@ bool PartialQuarry::setRnaAssociatedBackground( )
                             vActiveChromosomes[ bAxisIsCol ? 0 : 1 ][ uiChrX ].uiActualContigId,
                             vActiveChromosomes[ bAxisIsCol ? 1 : 0 ][ uiChrY ].uiActualContigId );
 
-                        vBackgroundGridSeq.back( ) += pIndices->count(
-                            iDataSetId,
-                            { uiStartY, uiStartX, uiMapQMin, uiFromAnnoFilter[ 0 ], uiFromSameStrandFilter,
-                              uiFromYStrandFilter },
-                            { uiEndY, uiEndX, uiMapQMax, uiToAnnoFilter[ 0 ], uiToSameStrandFilter, uiToYStrandFilter },
-                            xIntersect,
-                            bOnlyMMRs,
-                            0 );
+                        vBackgroundGridSeq.back( ) += indexCount(iDataSetId, uiStartY, uiStartX, uiEndY, uiEndX, true);
                     }
                 }
             }

@@ -162,6 +162,7 @@ PYBIND11_MODULE( libbiosmoothercpp, m )
     m.attr( "LIB_BIO_SMOOTHER_CPP_BUILD_TIME" ) = LIB_BIO_SMOOTHER_CPP_BUILD_TIME;
     m.attr( "SPS_VERSION" ) = SPS_VERSION;
     m.attr( "SPS_BUILD_TIME" ) = SPS_BUILD_TIME;
+    m.attr( "MAX_NUM_FILTER_ANNOTATIONS" ) = MAX_NUM_FILTER_ANNOTATIONS;
 
 #ifdef NDEBUG
     m.attr( "DEBUG" ) = false;

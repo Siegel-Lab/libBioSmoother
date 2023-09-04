@@ -788,8 +788,8 @@ class PartialQuarry : public HasSession
 
     std::string sBackgroundColor;
 
-    std::array<size_t, 2> uiFromAnnoFilter;
-    std::array<size_t, 2> uiToAnnoFilter;
+    std::array<size_t, MAX_NUM_FILTER_ANNOTATIONS * 2> uiFromAnnoFilter;
+    std::array<size_t, MAX_NUM_FILTER_ANNOTATIONS * 2> uiToAnnoFilter;
     size_t uiFromSameStrandFilter;
     size_t uiToSameStrandFilter;
     size_t ui1DFromStrandFilter;
@@ -853,6 +853,48 @@ class PartialQuarry : public HasSession
 
     size_t uiIceFilterIgnoreDiags;
     std::array<std::array<std::array<std::vector<double>, 2>, 2>, NUM_COORD_SYSTEMS> vIceSliceBias;
+
+    size_t indexCount(size_t iDataSetId, size_t uiXs, size_t uiYs, size_t uiXe, size_t uiYe, bool bIsNotMirrored)
+    {
+        std::array<coordinate_t, interface_t::D - interface_t::O> vFrom;
+        vFrom[0] = uiXs;
+        vFrom[1] = uiYs;
+        vFrom[2] = uiMapQMin;
+        vFrom[interface_t::D - interface_t::O - 2] = uiFromSameStrandFilter;
+        vFrom[interface_t::D - interface_t::O - 1] = uiFromYStrandFilter;
+        std::array<coordinate_t, interface_t::D - interface_t::O> vTo;
+        vTo[0] = uiXe;
+        vTo[1] = uiYe;
+        vTo[2] = uiMapQMax;
+        vTo[interface_t::D - interface_t::O - 2] = uiToSameStrandFilter;
+        vTo[interface_t::D - interface_t::O - 1] = uiToYStrandFilter;
+
+        return pIndices->count( iDataSetId, vFrom, vTo, xIntersect, bOnlyMMRs, 0 );
+    }
+
+    size_t index1DCount(size_t iDataSetId, size_t uiXs, size_t uiXe, )
+    {
+        std::array<coordinate_t, interface_t::D - interface_t::O> vFrom;
+        vFrom[0] = uiXs;
+        vFrom[1] = 0;
+        vFrom[2] = uiMapQMin;
+        vFrom[interface_t::D - interface_t::O - 2] = ui1DFromStrandFilter;
+        vFrom[interface_t::D - interface_t::O - 1] = 0;
+        std::array<coordinate_t, interface_t::D - interface_t::O> vTo;
+        vTo[0] = uiXe;
+        vTo[1] = 1;
+        vTo[2] = uiMapQMax;
+        vTo[interface_t::D - interface_t::O - 2] = ui1DToStrandFilter;
+        vTo[interface_t::D - interface_t::O - 1] = 1;
+
+        for(size_t uiI = 0; uiI < MAX_NUM_FILTER_ANNOTATIONS * 2; uiI++)
+        {
+            vFrom[3 + uiI] = uiFromAnnoFilter[uiI];
+            vTo[3 + uiI] = uiToAnnoFilter[uiI];
+        }
+
+        return pIndices->count( iDataSetId, vFrom, vTo, xIntersect, bOnlyMMRs, 0 );
+    }
 
     size_t getDatasetIdfromReplAndChr( size_t uiRepl, size_t uiChrX, size_t uiChrY )
     {

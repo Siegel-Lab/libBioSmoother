@@ -38,10 +38,8 @@ std::tuple<size_t, int64_t, size_t, size_t> PartialQuarry::makeHeapTuple( bool b
     const coordinate_t uiXMax = bCol != bSymPart ? uiTo : uiEnd;
     const coordinate_t uiYMin = bCol != bSymPart ? uiStart : uiFrom;
     const coordinate_t uiYMax = bCol != bSymPart ? uiEnd : uiTo;
-    const size_t uiCount = pIndices->count(
-        iDataSetId, { uiYMin, uiXMin, uiMapQMin, uiFromAnnoFilter[ 0 ], uiFromSameStrandFilter, uiFromYStrandFilter },
-        { uiYMax, uiXMax, uiMapQMax, uiToAnnoFilter[ 0 ], uiToSameStrandFilter, uiToYStrandFilter }, xIntersect,
-        bOnlyMMRs, 0 );
+    
+    const size_t uiCount = indexCount(iDataSetId, uiXMin, uiYMin, uiYMax, uiXMax, !bSymPart);
 
     return std::make_tuple( uiCount, iDataSetId, uiStart, uiEnd );
 }
@@ -112,11 +110,7 @@ size_t PartialQuarry::getCoverageFromRepl( const size_t uiChromId, const size_t 
             const size_t uiXMax = bCol != bSymPart ? uiTo : vActiveChromosomes[ bCol ? 1 : 0 ][ uiI ].uiLength;
             const size_t uiYMin = bCol != bSymPart ? 0 : uiFrom;
             const size_t uiYMax = bCol != bSymPart ? vActiveChromosomes[ bCol ? 1 : 0 ][ uiI ].uiLength : uiTo;
-            uiRet += pIndices->count(
-                uiDatasetId,
-                { uiYMin, uiXMin, uiMapQMin, uiFromAnnoFilter[ 0 ], uiFromSameStrandFilter, uiFromYStrandFilter },
-                { uiYMax, uiXMax, uiMapQMax, uiToAnnoFilter[ 0 ], uiToSameStrandFilter, uiToYStrandFilter }, xIntersect,
-                bOnlyMMRs, 0 );
+            uiRet += indexCount(iDataSetId, uiYMin, uiXMin, uiYMax, uiXMax, !bSymPart);
         }
     }
 
@@ -155,14 +149,9 @@ bool PartialQuarry::setCoverageValues( )
 
                     int64_t iDataSetId =
                         uiFstDatasetId + vActiveChromosomes[ uiJ ][ xCoords.uiChromosome ].uiActualContigId;
-                    uiVal = pIndices->count(
-                        iDataSetId,
-                        { xCoords.uiIndexPos, 0, uiMapQMin, uiFromAnnoFilter[ uiJ ], ui1DFromStrandFilter, 0 },
-                        { xCoords.uiIndexPos + xCoords.uiIndexSize, 1, uiMapQMax, uiToAnnoFilter[ uiJ ],
-                          ui1DToStrandFilter, 1 },
-                        xIntersect,
-                        bOnlyMMRs,
-                        0 );
+                        
+                    // @todo think about symmetry setting here
+                    uiVal = index1DCount(iDataSetId, xCoords.uiIndexPos, xCoords.uiIndexPos + xCoords.uiIndexSize);
                 }
                 else
                     uiVal = 0;

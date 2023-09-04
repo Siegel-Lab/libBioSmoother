@@ -5,6 +5,14 @@ set(CMAKE_TRY_COMPILE_TARGET_TYPE "STATIC_LIBRARY")
 # only adjust major and minor version - patch is taken from git commit number
 project("libBioSmootherCpp" VERSION ${LIB_BIO_SMOOTHER_VERSION})
 
+##############
+# PARAMETERS #
+##############
+
+
+set(MAX_NUM_FILTER_ANNOTATIONS "3" CACHE STRING "The maximal number of filter annotations an index can hold.")
+
+
 # disallow in-source builds
 if("${PROJECT_SOURCE_DIR}" STREQUAL "${PROJECT_BINARY_DIR}")
   message(SEND_ERROR "In-source builds are not allowed.")
@@ -66,6 +74,7 @@ if(WITH_STXXL)
 endif(WITH_STXXL)
 
 pybind11_add_module( libbiosmoothercpp src/main.cpp )
+target_compile_definitions( libbiosmoothercpp PRIVATE MAX_NUM_FILTER_ANNOTATIONS=${MAX_NUM_FILTER_ANNOTATIONS} )
 target_include_directories( libbiosmoothercpp PUBLIC inc )
 target_include_directories( libbiosmoothercpp PUBLIC contrib/inc )
 target_include_directories( libbiosmoothercpp PUBLIC ${CMAKE_BINARY_DIR}/generated/inc/ )

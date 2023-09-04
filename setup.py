@@ -56,6 +56,10 @@ class CMakeBuild(build_ext):
             f"-DPython_INCLUDE_DIR={sysconfig.get_path('include')}",
             f"-DLIB_BIO_SMOOTHER_VERSION={VERSION}",
         ]
+        if "LIB_BIO_SMOOTHER_MAX_NUM_FILTER_ANNOTATIONS" in os.environ:
+            cmake_args.append(
+                "-DMAX_NUM_FILTER_ANNOTATIONS=" + os.environ["LIB_BIO_SMOOTHER_MAX_NUM_FILTER_ANNOTATIONS"]
+            )
         build_args = []
         # Adding CMake arguments set as environment variable
         # (needed e.g. to build for ARM OSx on conda-forge)

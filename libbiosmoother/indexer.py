@@ -4,6 +4,7 @@ from ._import_lib_bio_smoother_cpp import (
     LIB_BIO_SMOOTHER_CPP_VERSION,
     SPS_BUILD_TIME,
     LIB_BIO_SMOOTHER_CPP_BUILD_TIME,
+    MAX_NUM_FILTER_ANNOTATIONS,
 )
 from ._parse_and_group_reads import *
 import json
@@ -233,6 +234,15 @@ class Indexer:
             for anno in filterable_annotations:
                 if anno in sorted_list:
                     existing_filterable_annotations.append(anno)
+            if len(existing_filterable_annotations) > MAX_NUM_FILTER_ANNOTATIONS:
+                print(
+                    "ERROR: The number of filterable annotations is limited to",
+                    MAX_NUM_FILTER_ANNOTATIONS,
+                    "but",
+                    len(existing_filterable_annotations),
+                    "were found.",
+                )
+                exit()
             self.set_session(
                 ["annotation", "filterable"], existing_filterable_annotations
             )
@@ -287,37 +297,6 @@ class Indexer:
             name not in self.session_default["replicates"]["list"]
             and name not in self.session_default["coverage"]["list"]
         )
-
-    def __get_cat_indices_1d(self, cats, val):
-        doubles = -1
-        no_anno = True
-        idx_list = []
-        for idx, c in enumerate(cats):
-            if c:
-                no_anno = False
-                idx_list.append((idx * 3 + 1, val))
-                doubles += 1
-        if no_anno:
-            return [(len(cats) * 3, val)]
-        if doubles > 0:
-            idx_list.append((len(cats) * 3 + 1, -doubles * val))
-        return idx_list
-
-    def __get_cat_indices_2d(self, cat_x, cat_y, val):
-        doubles = -1
-        no_anno = True
-        cat_to_idx = {True: {True: 1, False: 0}, False: {True: 2}}
-        idx_list = []
-        for idx, (cx, cy) in enumerate(zip(cat_x, cat_y)):
-            if cx or cy:
-                no_anno = False
-                idx_list.append((cat_to_idx[cx][cy] + idx * 3, val))
-                doubles += 1
-        if no_anno:
-            return [(max(len(cat_x), len(cat_y)) * 3, val)]
-        if doubles > 0:
-            idx_list.append((max(len(cat_x), len(cat_y)) * 3 + 1, -doubles * val))
-        return idx_list
 
     def get_map_q_thresholds(self):
         t_dict = {0: 0}
@@ -453,21 +432,19 @@ class Indexer:
                         has_lower_triangle = True
                     total_reads += 1
                     if no_category:
-                        cat_x = [False] * len(
-                            self.session_default["annotation"]["filterable"]
-                        )
+                        cat_x = [0] * len(MAX_NUM_FILTER_ANNOTATIONS)
                         cat_y = cat_x
                     else:
-                        cat_x = self.indices.anno.get_categories(
+                        cat_x = [0 if x else 1 for x in self.indices.anno.get_categories(
                             [int(x) for x in pos_1_l.split(",")],
                             self.session_default["dividend"],
                             anno_ids_x,
-                        )
-                        cat_y = self.indices.anno.get_categories(
+                        )] + [0] * (MAX_NUM_FILTER_ANNOTATIONS - len(anno_ids_x))
+                        cat_y = [0 if x else 1 for x in self.indices.anno.get_categories(
                             [int(x) for x in pos_2_l.split(",")],
                             self.session_default["dividend"],
                             anno_ids_y,
-                        )
+                        )] + [0] * (MAX_NUM_FILTER_ANNOTATIONS - len(anno_ids_y))
                     act_pos_1_s = int(pos_2_s) // self.session_default["dividend"]
                     act_pos_2_s = int(pos_1_s) // self.session_default["dividend"]
                     if no_multi_map:
@@ -487,26 +464,25 @@ class Indexer:
                         y_strand_idx = 0 if bool(strand_1) else 1
                     bin_cnt = int(bin_cnt)
 
-                    for cat_idx, val in self.__get_cat_indices_2d(
-                        cat_x, cat_y, bin_cnt
-                    ):
-                        start = [
-                            act_pos_1_s,
-                            act_pos_2_s,
-                            MAP_Q_MAX - map_q - 1,
-                            cat_idx,
-                            same_strand_idx,
-                            y_strand_idx,
-                        ]
-                        end = [
-                            act_pos_1_e,
-                            act_pos_2_e,
-                            MAP_Q_MAX - map_q - 1,
-                            cat_idx,
-                            same_strand_idx,
-                            y_strand_idx,
-                        ]
-                        self.indices.insert(start, end, val)
+                    cat_pos = zip(cat_x, cat_y)
+
+                    start = [
+                        act_pos_1_s,
+                        act_pos_2_s,
+                        MAP_Q_MAX - map_q - 1,
+                        *cat_pos,
+                        same_strand_idx,
+                        y_strand_idx,
+                    ]
+                    end = [
+                        act_pos_1_e,
+                        act_pos_2_e,
+                        MAP_Q_MAX - map_q - 1,
+                        *cat_pos,
+                        same_strand_idx,
+                        y_strand_idx,
+                    ]
+                    self.indices.insert(start, end, bin_cnt)
                 id = self.indices.generate(
                     fac=-2 if shekelyan else -1, verbosity=GENERATE_VERBOSITY
                 )
