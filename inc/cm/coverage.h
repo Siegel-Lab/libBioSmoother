@@ -39,7 +39,7 @@ std::tuple<size_t, int64_t, size_t, size_t> PartialQuarry::makeHeapTuple( bool b
     const coordinate_t uiYMin = bCol != bSymPart ? uiStart : uiFrom;
     const coordinate_t uiYMax = bCol != bSymPart ? uiEnd : uiTo;
 
-    const size_t uiCount = indexCount( iDataSetId, uiXMin, uiYMin, uiYMax, uiXMax, !bSymPart );
+    const size_t uiCount = indexCount( iDataSetId, uiYMin, uiXMin, uiYMax, uiXMax, !bSymPart );
 
     return std::make_tuple( uiCount, iDataSetId, uiStart, uiEnd );
 }

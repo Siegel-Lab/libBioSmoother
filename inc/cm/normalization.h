@@ -1041,7 +1041,7 @@ void PartialQuarry::regNormalization( )
                                /*.fFunc =*/&PartialQuarry::setGridSeqCoverage,
                                /*.vIncomingFunctions =*/
                                { NodeNames::ActiveReplicates, NodeNames::MappingQuality, NodeNames::Directionality,
-                                 NodeNames::GridSeqSamples, NodeNames::AxisCoords },
+                                 NodeNames::GridSeqSamples },
                                /*.vIncomingSession =*/
                                { { "settings", "normalization", "grid_seq_filter_intersection" },
                                  { "settings", "normalization", "grid_seq_max_bin_size", "val" },

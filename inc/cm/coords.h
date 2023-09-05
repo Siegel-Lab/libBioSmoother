@@ -1683,7 +1683,8 @@ void PartialQuarry::regCoords( )
                                /*.fFunc =*/&PartialQuarry::setAnnoFilters,
                                /*.vIncomingFunctions =*/{ NodeNames::ActiveChromLength },
                                /*.vIncomingSession =*/
-                               { { "annotation", "filter_present_x" },
+                               { { "annotation", "filterable" },
+                                 { "annotation", "filter_present_x" },
                                  { "annotation", "filter_present_y" },
                                  { "annotation", "filter_absent_x" },
                                  { "annotation", "filter_absent_y" } },
