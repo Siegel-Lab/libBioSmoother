@@ -425,9 +425,9 @@ class Indexer:
                         )
                         count_matrix_warning_done = True
                     if idx_x > idx_y or (idx_x == idx_y and pos_1_s > pos_2_s):
-                        has_upper_triangle = True
-                    if idx_x < idx_y or (idx_x == idx_y and pos_1_s < pos_2_s):
                         has_lower_triangle = True
+                    if idx_x < idx_y or (idx_x == idx_y and pos_1_s < pos_2_s):
+                        has_upper_triangle = True
                     total_reads += 1
                     if no_category:
                         cat_x = [0] * len(MAX_NUM_FILTER_ANNOTATIONS)
@@ -643,12 +643,12 @@ class Indexer:
                     count_matrix_warning_done = True
                 total_reads += 1
                 if no_category:
-                    cat = [False] * len(
+                    cat = [0] * len(
                         self.session_default["annotation"]["filterable"]
                     )
                 else:
                     cat = self.indices.anno.get_categories(
-                        [int(x) for x in pos_1_l.split(",")],
+                        [0 if x else 1 for x in pos_1_l.split(",")],
                         self.session_default["dividend"],
                         anno_ids,
                     )
@@ -668,24 +668,24 @@ class Indexer:
                     strand_idx = 0 if bool(strand_1) else 1
                 bin_cnt = int(bin_cnt)
 
-                for cat_idx, val in self.__get_cat_indices_1d(cat, bin_cnt):
-                    start = [
-                        act_pos_1_s,
-                        0,
-                        MAP_Q_MAX - map_q - 1,
-                        cat_idx,
-                        strand_idx,
-                        0,
-                    ]
-                    end = [
-                        act_pos_1_e,
-                        0,
-                        MAP_Q_MAX - map_q - 1,
-                        cat_idx,
-                        strand_idx,
-                        0,
-                    ]
-                    self.indices.insert(start, end, val)
+                cat_pos = [item for sublist in zip(cat, [0] * len(cat)) for item in sublist]
+                start = [
+                    act_pos_1_s,
+                    0,
+                    MAP_Q_MAX - map_q - 1,
+                    *cat_pos,
+                    strand_idx,
+                    0,
+                ]
+                end = [
+                    act_pos_1_e,
+                    0,
+                    MAP_Q_MAX - map_q - 1,
+                    *cat_pos,
+                    strand_idx,
+                    0,
+                ]
+                self.indices.insert(start, end, bin_cnt)
             id = self.indices.generate(
                 fac=-2 if shekelyan else -1, verbosity=GENERATE_VERBOSITY
             )

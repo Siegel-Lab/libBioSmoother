@@ -869,16 +869,20 @@ class PartialQuarry : public HasSession
         vTo[ interface_t::D - interface_t::O - 2 ] = uiToSameStrandFilter;
         vTo[ interface_t::D - interface_t::O - 1 ] = uiToYStrandFilter;
 
-        for( size_t uiI = 0; uiI < MAX_NUM_FILTER_ANNOTATIONS * 2; uiI++ )
+        for( size_t uiI = 0; uiI < MAX_NUM_FILTER_ANNOTATIONS; uiI++ )
         {
-            vFrom[ 3 + uiI ] = uiFromAnnoFilter[ uiI ];
-            vTo[ 3 + uiI ] = uiToAnnoFilter[ uiI ];
+            vFrom[ 3 + uiI * 2 ] = uiFromAnnoFilter[ uiI * 2 + (bIsNotMirrored ? 0 : 1) ];
+            vFrom[ 3 + uiI * 2 + 1 ] = uiFromAnnoFilter[ uiI * 2 + (bIsNotMirrored ? 1 : 0) ];
+
+
+            vTo[ 3 + uiI * 2 ] = uiToAnnoFilter[ uiI * 2 + (bIsNotMirrored ? 0 : 1) ];
+            vTo[ 3 + uiI * 2 + 1] = uiToAnnoFilter[ uiI * 2 + (bIsNotMirrored ? 1 : 0) ];
         }
 
         return pIndices->count( iDataSetId, vFrom, vTo, xIntersect, bOnlyMMRs, 0 );
     }
 
-    size_t index1DCount( size_t iDataSetId, size_t uiXs, size_t uiXe )
+    size_t index1DCount( size_t iDataSetId, size_t uiXs, size_t uiXe, bool bDisplayedOnCol )
     {
         std::array<coordinate_t, interface_t::D - interface_t::O> vFrom;
         vFrom[ 0 ] = uiXs;
@@ -893,10 +897,10 @@ class PartialQuarry : public HasSession
         vTo[ interface_t::D - interface_t::O - 2 ] = ui1DToStrandFilter;
         vTo[ interface_t::D - interface_t::O - 1 ] = 1;
 
-        for( size_t uiI = 0; uiI < MAX_NUM_FILTER_ANNOTATIONS * 2; uiI++ )
+        for( size_t uiI = 0; uiI < MAX_NUM_FILTER_ANNOTATIONS; uiI++ )
         {
-            vFrom[ 3 + uiI ] = uiFromAnnoFilter[ uiI ];
-            vTo[ 3 + uiI ] = uiToAnnoFilter[ uiI ];
+            vFrom[ 3 + uiI * 2 ] = uiFromAnnoFilter[ uiI * 2 + (bDisplayedOnCol ? 0 : 1) ];
+            vTo[ 3 + uiI * 2 ] = uiToAnnoFilter[ uiI * 2 + (bDisplayedOnCol ? 0 : 1) ];
         }
 
 

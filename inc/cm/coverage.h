@@ -150,8 +150,7 @@ bool PartialQuarry::setCoverageValues( )
                     int64_t iDataSetId =
                         uiFstDatasetId + vActiveChromosomes[ uiJ ][ xCoords.uiChromosome ].uiActualContigId;
 
-                    // @todo think about symmetry setting here
-                    uiVal = index1DCount( iDataSetId, xCoords.uiIndexPos, xCoords.uiIndexPos + xCoords.uiIndexSize );
+                    uiVal = index1DCount( iDataSetId, xCoords.uiIndexPos, xCoords.uiIndexPos + xCoords.uiIndexSize, uiJ == 0 );
                 }
                 else
                     uiVal = 0;
