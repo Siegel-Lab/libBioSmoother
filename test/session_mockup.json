@@ -169,9 +169,10 @@
         ],
         "visible_x": [],
         "visible_y": [],
-        "filter": "gene",
-        "filter_row": false,
-        "filter_col": true,
+        "filter_present_x": ["gene"],
+        "filter_present_y": ["gene"],
+        "filter_absent_x": [],
+        "filter_absent_y": [],
         "by_name":{
             "gene": {
                 "chr1": 0,

@@ -38,8 +38,8 @@ std::tuple<size_t, int64_t, size_t, size_t> PartialQuarry::makeHeapTuple( bool b
     const coordinate_t uiXMax = bCol != bSymPart ? uiTo : uiEnd;
     const coordinate_t uiYMin = bCol != bSymPart ? uiStart : uiFrom;
     const coordinate_t uiYMax = bCol != bSymPart ? uiEnd : uiTo;
-    
-    const size_t uiCount = indexCount(iDataSetId, uiXMin, uiYMin, uiYMax, uiXMax, !bSymPart);
+
+    const size_t uiCount = indexCount( iDataSetId, uiXMin, uiYMin, uiYMax, uiXMax, !bSymPart );
 
     return std::make_tuple( uiCount, iDataSetId, uiStart, uiEnd );
 }
@@ -110,7 +110,7 @@ size_t PartialQuarry::getCoverageFromRepl( const size_t uiChromId, const size_t 
             const size_t uiXMax = bCol != bSymPart ? uiTo : vActiveChromosomes[ bCol ? 1 : 0 ][ uiI ].uiLength;
             const size_t uiYMin = bCol != bSymPart ? 0 : uiFrom;
             const size_t uiYMax = bCol != bSymPart ? vActiveChromosomes[ bCol ? 1 : 0 ][ uiI ].uiLength : uiTo;
-            uiRet += indexCount(iDataSetId, uiYMin, uiXMin, uiYMax, uiXMax, !bSymPart);
+            uiRet += indexCount( uiDatasetId, uiYMin, uiXMin, uiYMax, uiXMax, !bSymPart );
         }
     }
 
@@ -149,9 +149,9 @@ bool PartialQuarry::setCoverageValues( )
 
                     int64_t iDataSetId =
                         uiFstDatasetId + vActiveChromosomes[ uiJ ][ xCoords.uiChromosome ].uiActualContigId;
-                        
+
                     // @todo think about symmetry setting here
-                    uiVal = index1DCount(iDataSetId, xCoords.uiIndexPos, xCoords.uiIndexPos + xCoords.uiIndexSize);
+                    uiVal = index1DCount( iDataSetId, xCoords.uiIndexPos, xCoords.uiIndexPos + xCoords.uiIndexSize );
                 }
                 else
                     uiVal = 0;
@@ -195,8 +195,7 @@ bool PartialQuarry::setTracks( )
     pybind11::gil_scoped_acquire acquire;
     const bool bCenterTracks = getValue<bool>( { "settings", "interface", "center_tracks_on_bins" } );
     const bool bZeroTracksAtEnd = getValue<bool>( { "settings", "interface", "zero_track_at_ends" } );
-    const bool bConnectOverBorder =
-        getValue<bool>( { "settings", "interface", "connect_tracks_over_contig_borders" } );
+    const bool bConnectOverBorder = getValue<bool>( { "settings", "interface", "connect_tracks_over_contig_borders" } );
     const size_t uiMaxChar = getValue<size_t>( { "settings", "interface", "axis_label_max_char", "val" } );
 
     size_t uiDividend = getValue<size_t>( { "dividend" } );
@@ -245,7 +244,6 @@ bool PartialQuarry::setTracks( )
                     vColors.append( vColorPaletteAnnotation[ uiCnt % vColorPaletteAnnotation.size( ) ] );
 
                     vNames.append( vTrackExportNames[ uiI ][ uiJ ] );
-
                 }
                 if( bZeroTracksAtEnd && uiX == 0 )
                 {
@@ -259,7 +257,7 @@ bool PartialQuarry::setTracks( )
                 sChr = sChromName;
                 double uiVal = vTrackPrecursor[ uiI ][ uiX ].vValues[ uiJ ];
 
-                if (bCenterTracks)
+                if( bCenterTracks )
                 {
                     // center
                     vIndexStart.append( readableBp( xCoord.uiIndexPos * uiDividend ) );
@@ -409,7 +407,7 @@ bool PartialQuarry::setTrackPrecursor( )
         for( size_t uiX = 0; uiX < vAxisCords[ uiI ].size( ); uiX++ )
         {
             CANCEL_RETURN;
-            vTrackPrecursor[ uiI ].push_back( Track{ /*.xCoord=*/vAxisCords[ uiI ][uiX], /*.vValues=*/{} } );
+            vTrackPrecursor[ uiI ].push_back( Track{ /*.xCoord=*/vAxisCords[ uiI ][ uiX ], /*.vValues=*/{} } );
 
             for( size_t uiId = 0; uiId < vvCoverageValues[ uiI ].size( ); uiId++ )
                 vTrackPrecursor[ uiI ].back( ).vValues.push_back( (double)vvCoverageValues[ uiI ][ uiId ][ uiX ] );
@@ -451,7 +449,7 @@ bool PartialQuarry::setTrackExport( )
             vTrackExport[ uiI ].emplace_back( sChromName,
                                               xCoord.uiIndexPos * uiDividend,
                                               ( xCoord.uiIndexPos + xCoord.uiIndexSize ) * uiDividend,
-                                              vTrackPrecursor[uiI][uiX].vValues );
+                                              vTrackPrecursor[ uiI ][ uiX ].vValues );
         }
     }
     END_RETURN;

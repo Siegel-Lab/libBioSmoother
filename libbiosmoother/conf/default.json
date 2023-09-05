@@ -1,5 +1,5 @@
 {
-    "smoother_config_file_version": 0.2,
+    "smoother_config_file_version": 0.3,
     "display_name": "Default",
     "normalization": {
         "normalize_by": "dont",
@@ -330,9 +330,7 @@
         "cut_off_bin": "larger",
         "show_contig_smaller_than_bin": false,
         "anno_coords_col": false,
-        "anno_coords_row": false,
-        "anno_filter_row": false,
-        "anno_filter_col": false
+        "anno_coords_row": false
     },
     "export": {
         "prefix": "export",

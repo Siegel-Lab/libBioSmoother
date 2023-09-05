@@ -854,41 +854,51 @@ size_t PartialQuarry::getAnnoListId( std::string sAnno )
 
 bool PartialQuarry::setAnnoFilters( )
 {
+
+    std::vector<std::string> vFilterPresentX =
+        getValue<std::vector<std::string>>( { "annotation", "filter_present_x" } );
+    std::vector<std::string> vFilterPresentY =
+        getValue<std::vector<std::string>>( { "annotation", "filter_present_y" } );
+    std::vector<std::string> vFilterAbsentX = getValue<std::vector<std::string>>( { "annotation", "filter_absent_x" } );
+    std::vector<std::string> vFilterAbsentY = getValue<std::vector<std::string>>( { "annotation", "filter_absent_y" } );
+
     const std::string sCoordAnno = getValue<std::string>( { "contigs", "annotation_coordinates" } );
     const bool bAnnoCoordsRow = getValue<bool>( { "settings", "filters", "anno_coords_row" } );
     const bool bAnnoCoordsCol = getValue<bool>( { "settings", "filters", "anno_coords_col" } );
+    if( bAnnoCoordsCol )
+        vFilterAbsentX.push_back( sCoordAnno );
+    if( bAnnoCoordsRow )
+        vFilterAbsentY.push_back( sCoordAnno );
 
-    const std::string sFilterAnno = getValue<std::string>( { "annotation", "filter" } );
-    const bool bFilterAnnoRow = getValue<bool>( { "settings", "filters", "anno_filter_row" } );
-    const bool bFilterAnnoCol = getValue<bool>( { "settings", "filters", "anno_filter_col" } );
+    std::sort( vFilterPresentX.begin( ), vFilterPresentX.end( ) );
+    std::sort( vFilterPresentY.begin( ), vFilterPresentY.end( ) );
+    std::sort( vFilterAbsentX.begin( ), vFilterAbsentX.end( ) );
+    std::sort( vFilterAbsentY.begin( ), vFilterAbsentY.end( ) );
 
-    const bool bCoords = bAnnoCoordsRow || bAnnoCoordsCol;
-    const bool bFilter = ( bFilterAnnoRow || bFilterAnnoCol ) && ( !bCoords || sCoordAnno == sFilterAnno );
+    std::vector<std::string> vFilterable = getValue<std::vector<std::string>>( { "annotation", "filterable" } );
 
-    const bool bOneOf = bCoords || bFilter;
-    const bool bRow = bOneOf && ( bAnnoCoordsRow || ( bFilter && bFilterAnnoRow ) );
-    const bool bCol = bOneOf && ( bAnnoCoordsCol || ( bFilter && bFilterAnnoCol ) );
-
-    if( bOneOf )
+    for( size_t uiI = 0; uiI < MAX_NUM_FILTER_ANNOTATIONS; uiI++ )
     {
-        const size_t uiAnnotationFilterIdx = getAnnoListId( bCoords ? sCoordAnno : sFilterAnno );
-        const std::array<std::array<size_t, 2>, 2> vvAF{
-            /*x false*/ std::array<size_t, 2>{ /*y false*/ 0, /*y true*/ 0 },
-            /*x true */ std::array<size_t, 2>{ /*y false*/ 1, /*y true*/ 1 } };
-        const std::array<std::array<size_t, 2>, 2> vvAT{
-            /*x false*/ std::array<size_t, 2>{ /*y false*/ 3, /*y true*/ 2 },
-            /*x true */ std::array<size_t, 2>{ /*y false*/ 3, /*y true*/ 2 } };
-        uiFromAnnoFilter[ 0 ] = uiAnnotationFilterIdx * 3 + vvAF[ bRow ][ bCol ];
-        uiFromAnnoFilter[ 1 ] = uiAnnotationFilterIdx * 3 + vvAF[ bCol ][ bRow ];
-        uiToAnnoFilter[ 0 ] = uiAnnotationFilterIdx * 3 + vvAT[ bRow ][ bCol ];
-        uiToAnnoFilter[ 1 ] = uiAnnotationFilterIdx * 3 + vvAT[ bCol ][ bRow ];
-    }
-    else
-    {
-        uiFromAnnoFilter[ 0 ] = 0;
-        uiFromAnnoFilter[ 1 ] = 0;
-        uiToAnnoFilter[ 0 ] = getValue<json>( { "annotation", "filterable" } ).size( ) * 3 + 2;
-        uiToAnnoFilter[ 1 ] = getValue<json>( { "annotation", "filterable" } ).size( ) * 3 + 2;
+        if( uiI >= vFilterable.size( ) )
+        {
+            uiFromAnnoFilter[ uiI * 2 ] = 0;
+            uiFromAnnoFilter[ uiI * 2 + 1 ] = 0;
+
+            uiToAnnoFilter[ uiI * 2 ] = 2;
+            uiToAnnoFilter[ uiI * 2 + 1 ] = 2;
+        }
+        else
+        {
+            uiFromAnnoFilter[ uiI * 2 ] =
+                std::binary_search( vFilterPresentX.begin( ), vFilterPresentX.end( ), vFilterable[ uiI ] ) ? 1 : 0;
+            uiFromAnnoFilter[ uiI * 2 + 1 ] =
+                std::binary_search( vFilterPresentY.begin( ), vFilterPresentY.end( ), vFilterable[ uiI ] ) ? 1 : 0;
+
+            uiToAnnoFilter[ uiI * 2 ] =
+                std::binary_search( vFilterAbsentX.begin( ), vFilterAbsentX.end( ), vFilterable[ uiI ] ) ? 1 : 2;
+            uiToAnnoFilter[ uiI * 2 + 1 ] =
+                std::binary_search( vFilterAbsentY.begin( ), vFilterAbsentY.end( ), vFilterable[ uiI ] ) ? 1 : 2;
+        }
     }
 
     END_RETURN;
@@ -1673,10 +1683,10 @@ void PartialQuarry::regCoords( )
                                /*.fFunc =*/&PartialQuarry::setAnnoFilters,
                                /*.vIncomingFunctions =*/{ NodeNames::ActiveChromLength },
                                /*.vIncomingSession =*/
-                               { { "annotation", "filter" },
-                                 { "settings", "filters", "anno_filter_row" },
-                                 { "settings", "filters", "anno_filter_col" },
-                                 { "annotation", "filterable" } },
+                               { { "annotation", "filter_present_x" },
+                                 { "annotation", "filter_present_y" },
+                                 { "annotation", "filter_absent_x" },
+                                 { "annotation", "filter_absent_y" } },
                                /*.vSessionsIncomingInPrevious =*/
                                { { "contigs", "annotation_coordinates" },
                                  { "settings", "filters", "anno_coords_row" },

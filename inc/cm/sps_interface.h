@@ -105,9 +105,10 @@ template <bool CACHED> class SpsInterface : public HasSession
     using anno_t = AnnotationDescIndex<DiskVecGenerator>;
     anno_t vAnno;
 
-  private:
     static const size_t D = 7 + MAX_NUM_FILTER_ANNOTATIONS * 2;
     static const size_t O = 2;
+
+  private:
     static const size_t uiBiasAccuracy = 1000000;
     static const size_t uiOrthotopePower = 10;
 #ifdef WITH_STXXL

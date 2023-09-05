@@ -133,9 +133,9 @@ bool PartialQuarry::setBinValues( )
                             uiRepl,
                             vActiveChromosomes[ 0 ][ vCoords[ uiI ].uiChromosomeX ].uiActualContigId,
                             vActiveChromosomes[ 1 ][ vCoords[ uiI ].uiChromosomeY ].uiActualContigId );
-                        vVals[ uiI ] = indexCount(iDataSetId, vCoords[ uiI ].uiIndexY, vCoords[ uiI ].uiIndexX, 
-                                                  vCoords[ uiI ].uiIndexY + vCoords[ uiI ].uiIndexH,
-                                                  vCoords[ uiI ].uiIndexX + vCoords[ uiI ].uiIndexW, uiI == 0);
+                        vVals[ uiI ] = indexCount( iDataSetId, vCoords[ uiI ].uiIndexY, vCoords[ uiI ].uiIndexX,
+                                                   vCoords[ uiI ].uiIndexY + vCoords[ uiI ].uiIndexH,
+                                                   vCoords[ uiI ].uiIndexX + vCoords[ uiI ].uiIndexW, uiI == 0 );
                     }
                     else
                         vVals[ uiI ] = { };
@@ -229,7 +229,7 @@ bool PartialQuarry::setDecayValues( )
                                     size_t uiXe = std::max( uiXs + 1, (size_t)( iMyTop - iCornerPos ) / 2 );
                                     // assert( uiYe <= (size_t)iChrX );
                                     // assert( uiXe <= (size_t)iChrY );
-                                    vvVals.push_back( indexCount(iDataSetId, uiXs, uiYs, uiXe, uiYe, uiI == 0) );
+                                    vvVals.push_back( indexCount( iDataSetId, uiXs, uiYs, uiXe, uiYe, uiI == 0 ) );
 
                                     if( vvVals.back( ) > uiMinuend )
                                         vvVals.back( ) -= uiMinuend;

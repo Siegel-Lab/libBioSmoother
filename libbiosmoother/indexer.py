@@ -158,7 +158,10 @@ class Indexer:
                 "by_name": {},
                 "visible_x": [],
                 "visible_y": [],
-                "filter": None,
+                "filter_present_x": [],
+                "filter_present_y": [],
+                "filter_absent_x": [],
+                "filter_absent_y": [],
             },
         )
         self.set_session(
@@ -251,12 +254,8 @@ class Indexer:
                     ["contigs", "annotation_coordinates"],
                     existing_filterable_annotations[0],
                 )
-                self.set_session(
-                    ["annotation", "filter"], existing_filterable_annotations[0]
-                )
             else:
                 self.set_session(["contigs", "annotation_coordinates"], "")
-                self.set_session(["annotation", "filter"], "")
             for name, anno_by_chrom in sorted_list.items():
                 if name not in self.session_default["annotation"]["list"]:
                     self.append_session(["annotation", "list"], name)
@@ -284,7 +283,6 @@ class Indexer:
                     raise RuntimeError("annotation with this name already exists")
         else:
             self.set_session(["contigs", "annotation_coordinates"], "")
-            self.set_session(["annotation", "filter"], "")
 
         with open_default_json() as default_file:
             default_json = json.load(default_file)
@@ -435,16 +433,22 @@ class Indexer:
                         cat_x = [0] * len(MAX_NUM_FILTER_ANNOTATIONS)
                         cat_y = cat_x
                     else:
-                        cat_x = [0 if x else 1 for x in self.indices.anno.get_categories(
-                            [int(x) for x in pos_1_l.split(",")],
-                            self.session_default["dividend"],
-                            anno_ids_x,
-                        )] + [0] * (MAX_NUM_FILTER_ANNOTATIONS - len(anno_ids_x))
-                        cat_y = [0 if x else 1 for x in self.indices.anno.get_categories(
-                            [int(x) for x in pos_2_l.split(",")],
-                            self.session_default["dividend"],
-                            anno_ids_y,
-                        )] + [0] * (MAX_NUM_FILTER_ANNOTATIONS - len(anno_ids_y))
+                        cat_x = [
+                            0 if x else 1
+                            for x in self.indices.anno.get_categories(
+                                [int(x) for x in pos_1_l.split(",")],
+                                self.session_default["dividend"],
+                                anno_ids_x,
+                            )
+                        ] + [0] * (MAX_NUM_FILTER_ANNOTATIONS - len(anno_ids_x))
+                        cat_y = [
+                            0 if x else 1
+                            for x in self.indices.anno.get_categories(
+                                [int(x) for x in pos_2_l.split(",")],
+                                self.session_default["dividend"],
+                                anno_ids_y,
+                            )
+                        ] + [0] * (MAX_NUM_FILTER_ANNOTATIONS - len(anno_ids_y))
                     act_pos_1_s = int(pos_2_s) // self.session_default["dividend"]
                     act_pos_2_s = int(pos_1_s) // self.session_default["dividend"]
                     if no_multi_map:
@@ -464,7 +468,7 @@ class Indexer:
                         y_strand_idx = 0 if bool(strand_1) else 1
                     bin_cnt = int(bin_cnt)
 
-                    cat_pos = zip(cat_x, cat_y)
+                    cat_pos = [item for sublist in zip(cat_x, cat_y) for item in sublist]
 
                     start = [
                         act_pos_1_s,
@@ -507,9 +511,16 @@ class Indexer:
         self.set_session(["replicates", "by_name", name, "no_category"], no_category)
         self.set_session(["replicates", "by_name", name, "no_strand"], no_strand)
         self.set_session(["replicates", "by_name", name, "shekelyan"], shekelyan)
-        self.set_session(["replicates", "by_name", name, "force_upper_triangle"], force_upper_triangle)
-        self.set_session(["replicates", "by_name", name, "has_upper_triangle"], has_upper_triangle)
-        self.set_session(["replicates", "by_name", name, "has_lower_triangle"], has_lower_triangle)
+        self.set_session(
+            ["replicates", "by_name", name, "force_upper_triangle"],
+            force_upper_triangle,
+        )
+        self.set_session(
+            ["replicates", "by_name", name, "has_upper_triangle"], has_upper_triangle
+        )
+        self.set_session(
+            ["replicates", "by_name", name, "has_lower_triangle"], has_lower_triangle
+        )
         if total_reads == 0:
             print(
                 "WARNING: the total number of reads that were added to the index is zero! Something seems off..."
