@@ -91,7 +91,7 @@ axisCoordsHelper( size_t uiBinSize, size_t uiScreenStartPos, size_t uiScreenEndP
             }
             if( bAddBin )
                 vRet.push_back( AxisCoord{ //{
-                                           /* .uiChromosome =*/vChromosomes[ uiI ].uiCorrectedContigId, //
+                                           /* .uiChromosome =*/uiI, //
                                            /* .uiIndexPos =*/uiIndexPos, //
                                            /* .uiIndexSize =*/uiCurrBinSize, //
                                            /* .uiActualContigId =*/vChromosomes[ uiI ].uiActualContigId, //
@@ -129,7 +129,7 @@ axisCoordsHelper( size_t uiBinSize, size_t uiScreenStartPos, size_t uiScreenEndP
             vRet2.push_back( AxisRegion{
                 //{
                 // {
-                /*  .uiChromosome =*/vChromosomes[ uiI ].uiCorrectedContigId, //
+                /*  .uiChromosome =*/ uiI , //
                 /*  .uiIndexPos =*/uiStartChromPos, //
                 /*  .uiIndexSize =*/uiItrEndPos - uiStartChromPos, //
                 /*  .uiActualContigId =*/vChromosomes[ uiI ].uiActualContigId, //
@@ -332,7 +332,7 @@ annoCoordsHelper( size_t uiBinSize, size_t uiScreenStartPos, size_t uiScreenEndP
 
                 vRet.push_back( AxisCoord{
                     /*{*/
-                    /* .uiChromosome =*/vChromosomes[ uiI ].uiCorrectedContigId, //
+                    /* .uiChromosome =*/ uiI , //
                     /* .uiIndexPos =*/uiIndexPos, //
                     /* .uiIndexSize =*/uiCurrIndexSize, //
                     /* .uiActualContigId =*/vChromosomes[ uiI ].uiActualContigId, //
@@ -355,7 +355,7 @@ annoCoordsHelper( size_t uiBinSize, size_t uiScreenStartPos, size_t uiScreenEndP
                     vRet2.push_back( AxisRegion{
                         /*{*/
                         /* {*/
-                        /*  .uiChromosome =*/vChromosomes[ uiI ].uiCorrectedContigId, //
+                        /*  .uiChromosome =*/ uiI, //
                         /*  .uiIndexPos =*/uiIndexPos, //
                         /*  .uiIndexSize =*/uiCurrIndexSize, //
                         /* .uiActualContigId =*/vChromosomes[ uiI ].uiActualContigId, //
