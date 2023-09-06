@@ -430,7 +430,7 @@ class Indexer:
                         has_upper_triangle = True
                     total_reads += 1
                     if no_category:
-                        cat_x = [0] * len(MAX_NUM_FILTER_ANNOTATIONS)
+                        cat_x = [0] * MAX_NUM_FILTER_ANNOTATIONS
                         cat_y = cat_x
                     else:
                         cat_x = [
