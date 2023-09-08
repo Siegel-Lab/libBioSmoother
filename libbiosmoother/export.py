@@ -29,7 +29,7 @@ def __conv_coords(
     p, is_bottom, idx, cds, w_cds, o_cds, w_plane, o_plane, none_for_oob=False
 ):
     x = w_plane * (p - o_cds) / w_cds + o_plane
-    if none_for_oob and (x < o_plane or x >= o_plane + w_plane):
+    if none_for_oob and (x < o_plane or x > o_plane + w_plane):
         return None
     return max(min(x, o_plane + w_plane), o_plane)
 
@@ -100,7 +100,7 @@ def __draw_tick_lines(
                 )
             if (
                 not labels is None
-                and p >= transform[3]
+                and p > transform[3]
                 and p < transform[3] + transform[2]
             ):
                 label = labels[idx]
