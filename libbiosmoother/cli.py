@@ -158,7 +158,7 @@ def set_smoother(args):
         for key in keys[:-1]:
             tmp = tmp[key]
         if isinstance(tmp[keys[-1]], bool):
-            tmp[keys[-1]] = bool(args.val)
+            tmp[keys[-1]] = (args.val == "true")
         elif isinstance(tmp[keys[-1]], float):
             tmp[keys[-1]] = float(args.val)
         elif isinstance(tmp[keys[-1]], int):
