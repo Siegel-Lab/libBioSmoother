@@ -900,7 +900,9 @@ class PartialQuarry : public HasSession
         for( size_t uiI = 0; uiI < MAX_NUM_FILTER_ANNOTATIONS; uiI++ )
         {
             vFrom[ 3 + uiI * 2 ] = uiFromAnnoFilter[ uiI * 2 + ( bDisplayedOnCol ? 0 : 1 ) ];
+            vFrom[ 3 + uiI * 2 + 1 ] = 0;
             vTo[ 3 + uiI * 2 ] = uiToAnnoFilter[ uiI * 2 + ( bDisplayedOnCol ? 0 : 1 ) ];
+            vTo[ 3 + uiI * 2 + 1 ] = 2;
         }
 
 
