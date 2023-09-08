@@ -514,7 +514,7 @@ def add_parsers(main_parser):
     )
     bench_parser.set_defaults(func=benchmark_runtime_smoother)
 
-    ploidy_parser = main_parser.add_parser("ploidy")
+    ploidy_parser = main_parser.add_parser("ploidy", help="Add a ploidy file to the index.")
     ploidy_parser.add_argument(
         "index_prefix",
         help="Prefix that was used to create the index (see the init subcommand).",
