@@ -434,6 +434,7 @@ def add_parsers(main_parser):
         "--export_size",
         help="The size of the heatmap to be exported",
     )
+    export_parser.add_argument("--perf", help=argparse.SUPPRESS, action="store_true")
     export_parser.set_defaults(func=export_smoother)
 
     set_parser = main_parser.add_parser("set", help="Set a parameter to a value.")

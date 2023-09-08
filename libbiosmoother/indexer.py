@@ -468,7 +468,9 @@ class Indexer:
                         y_strand_idx = 0 if bool(strand_1) else 1
                     bin_cnt = int(bin_cnt)
 
-                    cat_pos = [item for sublist in zip(cat_x, cat_y) for item in sublist]
+                    cat_pos = [
+                        item for sublist in zip(cat_x, cat_y) for item in sublist
+                    ]
 
                     start = [
                         act_pos_1_s,
@@ -643,9 +645,7 @@ class Indexer:
                     count_matrix_warning_done = True
                 total_reads += 1
                 if no_category:
-                    cat = [0] * len(
-                        self.session_default["annotation"]["filterable"]
-                    )
+                    cat = [0] * len(self.session_default["annotation"]["filterable"])
                 else:
                     cat = self.indices.anno.get_categories(
                         [0 if x else 1 for x in pos_1_l.split(",")],
@@ -668,7 +668,9 @@ class Indexer:
                     strand_idx = 0 if bool(strand_1) else 1
                 bin_cnt = int(bin_cnt)
 
-                cat_pos = [item for sublist in zip(cat, [0] * len(cat)) for item in sublist]
+                cat_pos = [
+                    item for sublist in zip(cat, [0] * len(cat)) for item in sublist
+                ]
                 start = [
                     act_pos_1_s,
                     0,

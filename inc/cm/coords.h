@@ -129,7 +129,7 @@ axisCoordsHelper( size_t uiBinSize, size_t uiScreenStartPos, size_t uiScreenEndP
             vRet2.push_back( AxisRegion{
                 //{
                 // {
-                /*  .uiChromosome =*/ uiI , //
+                /*  .uiChromosome =*/uiI, //
                 /*  .uiIndexPos =*/uiStartChromPos, //
                 /*  .uiIndexSize =*/uiItrEndPos - uiStartChromPos, //
                 /*  .uiActualContigId =*/vChromosomes[ uiI ].uiActualContigId, //
@@ -332,7 +332,7 @@ annoCoordsHelper( size_t uiBinSize, size_t uiScreenStartPos, size_t uiScreenEndP
 
                 vRet.push_back( AxisCoord{
                     /*{*/
-                    /* .uiChromosome =*/ uiI , //
+                    /* .uiChromosome =*/uiI, //
                     /* .uiIndexPos =*/uiIndexPos, //
                     /* .uiIndexSize =*/uiCurrIndexSize, //
                     /* .uiActualContigId =*/vChromosomes[ uiI ].uiActualContigId, //
@@ -355,7 +355,7 @@ annoCoordsHelper( size_t uiBinSize, size_t uiScreenStartPos, size_t uiScreenEndP
                     vRet2.push_back( AxisRegion{
                         /*{*/
                         /* {*/
-                        /*  .uiChromosome =*/ uiI, //
+                        /*  .uiChromosome =*/uiI, //
                         /*  .uiIndexPos =*/uiIndexPos, //
                         /*  .uiIndexSize =*/uiCurrIndexSize, //
                         /* .uiActualContigId =*/vChromosomes[ uiI ].uiActualContigId, //
@@ -1428,34 +1428,17 @@ bool PartialQuarry::setSampleCoords( )
 
     std::string sNormBy = getValue<std::string>( { "settings", "normalization", "normalize_by" } );
 
-    if( sNormBy == "ice" && !getValue<bool>( { "settings", "normalization", "ice_local" } ) )
+    if( ( sNormBy == "ice" && !getValue<bool>( { "settings", "normalization", "ice_local" } ) ) ||
+        ( sNormBy == "radicl-seq" && !getValue<bool>( { "settings", "normalization", "radicl_local" } ) ) )
     {
-        const size_t uiNumCoords = getValue<size_t>( { "settings", "normalization", "num_ice_bins", "val" } );
+        const size_t uiNumCoords =
+            sNormBy == "ice" ? getValue<size_t>( { "settings", "normalization", "num_ice_bins", "val" } )
+                             : getValue<size_t>( { "settings", "normalization", "radicl_seq_samples", "val" } );
 
         for( size_t uiI = 0; uiI < 2; uiI++ )
         {
             sampleAndMerge( uiNumCoords, uiI, vAxisCords[ uiI ], vSampleAxisCoords[ uiI ] );
             sampleAndMerge( uiNumCoords, 1 - uiI, vV4cCoords[ uiI ], vSampleV4cCoords[ uiI ] );
-            CANCEL_RETURN;
-        }
-    }
-    else if( sNormBy == "radicl-seq" && !getValue<bool>( { "settings", "normalization", "radicl_local" } ) )
-    {
-        const bool bAxisIsCol = getValue<bool>( { "settings", "normalization", "radicl_seq_axis_is_column" } );
-        size_t uiRadiclSeqSamples = getValue<size_t>( { "settings", "normalization", "radicl_seq_samples", "val" } );
-
-        for( size_t uiI = 0; uiI < 2; uiI++ )
-        {
-            if( ( uiI == 1 ) == bAxisIsCol )
-            {
-                sampleAndMerge( uiRadiclSeqSamples, uiI, vAxisCords[ uiI ], vSampleAxisCoords[ uiI ] );
-                sampleAndMerge( uiRadiclSeqSamples, 1 - uiI, vV4cCoords[ uiI ], vSampleV4cCoords[ uiI ] );
-            }
-            else
-            {
-                vSampleAxisCoords[ uiI ] = vAxisCords[ uiI ];
-                vSampleV4cCoords[ uiI ] = vV4cCoords[ uiI ];
-            }
             CANCEL_RETURN;
         }
     }
