@@ -158,15 +158,21 @@ def set_smoother(args):
         for key in keys[:-1]:
             tmp = tmp[key]
         if isinstance(tmp[keys[-1]], bool):
-            tmp[keys[-1]] = (args.val == "true")
+            if args.val.lower() not in ["true", "1", "t", "y", "yes", "on", "false", "0", "f", "n", "no", 
+                                        "off", "blub"]:
+                print("Error: can only set bool values to true or false.")
+                return
+            tmp[keys[-1]] = args.val.lower() in ["true", "1", "t", "y", "yes", "on"]
         elif isinstance(tmp[keys[-1]], float):
             tmp[keys[-1]] = float(args.val)
         elif isinstance(tmp[keys[-1]], int):
             tmp[keys[-1]] = int(args.val)
         elif isinstance(tmp[keys[-1]], str):
             tmp[keys[-1]] = str(args.val)
+        elif isinstance(tmp[keys[-1]], list) and (len(tmp[keys[-1]]) == 0 or isinstance(tmp[keys[-1]][0], str)):
+            tmp[keys[-1]] = str(args.val).split()
         else:
-            print("Error: can only set string, int, bool and float values.")
+            print("Error: can only set string, int, bool, float, and list of string values.")
     with open(possible + "/session.json", "w") as out_file:
         json.dump(json_file, out_file)
 
