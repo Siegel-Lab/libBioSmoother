@@ -75,10 +75,10 @@
             "spinner_max_restricted": false
         },
         "radicl_seq_samples": {
-            "min": 100,
-            "max": 10000,
-            "val": 1000,
-            "step": 100,
+            "min": 10,
+            "max": 1000,
+            "val": 100,
+            "step": 10,
             "spinner_min_restricted": true,
             "spinner_max_restricted": false
         },

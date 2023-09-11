@@ -9,18 +9,7 @@ project("libBioSmootherCpp" VERSION ${LIB_BIO_SMOOTHER_VERSION})
 # PARAMETERS #
 ##############
 
-
-if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-    set(DEFAULT_NUM_FILTER_ANNOTATIONS "3")
-elseif (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
-    set(DEFAULT_NUM_FILTER_ANNOTATIONS "3")
-elseif (CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
-    set(DEFAULT_NUM_FILTER_ANNOTATIONS "1")
-else()
-    set(DEFAULT_NUM_FILTER_ANNOTATIONS "3")
-endif()
-
-set(MAX_NUM_FILTER_ANNOTATIONS ${DEFAULT_NUM_FILTER_ANNOTATIONS} CACHE STRING "The maximal number of filter annotations an index can hold.")
+set(MAX_NUM_FILTER_ANNOTATIONS "3" CACHE STRING "The maximal number of filter annotations an index can hold.")
 
 
 # disallow in-source builds

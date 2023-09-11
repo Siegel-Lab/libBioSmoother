@@ -175,6 +175,11 @@ PYBIND11_MODULE( libbiosmoothercpp, m )
 #else
     m.attr( "WITH_STXXL" ) = false;
 #endif
+#ifdef UNROLL_FOR_ALL_COMBINATIONS
+    m.attr( "UNROLL_FOR_ALL_COMBINATIONS" ) = true;
+#else
+    m.attr( "UNROLL_FOR_ALL_COMBINATIONS" ) = false;
+#endif
 
     m.attr( "COMPILER_ID" ) = CXX_COMPILER_ID;
 

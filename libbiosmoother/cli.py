@@ -2,6 +2,8 @@ from ._import_lib_bio_smoother_cpp import (
     SPS_VERSION,
     LIB_BIO_SMOOTHER_CPP_VERSION,
     COMPILER_ID,
+    WITH_STXXL,
+    UNROLL_FOR_ALL_COMBINATIONS,
 )
 from importlib.metadata import version
 import argparse

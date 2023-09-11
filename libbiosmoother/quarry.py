@@ -101,7 +101,7 @@ class Quarry(PartialQuarry):
                 x = val[jdx]
                 if i > 0 and HAS_STATS:
                     p = 1 / i
-                    ret.append(binom_test(x, max(x, n), p, alternative="greater"))
+                    ret.append(binom_test(x, n, p, alternative="greater"))
                 else:
                     ret.append(1)
             return ret
