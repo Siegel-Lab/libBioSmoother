@@ -380,7 +380,7 @@ class Indexer:
                     chr_y + ".",
                     cnt,
                     "of",
-                    num_itr,
+                    str(num_itr) + ":",
                     str(round(100 * cnt / num_itr, 2)) + "%",
                 )
                 for (
@@ -607,7 +607,7 @@ class Indexer:
                 chr_x + ".",
                 cnt,
                 "of",
-                num_itr,
+                str(num_itr) + ":",
                 str(round(100 * cnt / num_itr, 2)) + "%",
             )
             for (

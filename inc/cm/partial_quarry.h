@@ -224,7 +224,6 @@ class PartialQuarry : public HasSession
         Directionality,
         RankedSlicesCDS,
         GridSeqCoverage,
-        RadiclSeqCoverage,
         RnaAssociatedGenesFilter,
         RnaAssociatedBackground,
         GridSeqSamples,
@@ -902,7 +901,7 @@ class PartialQuarry : public HasSession
             vFrom[ 3 + uiI * 2 ] = uiFromAnnoFilter[ uiI * 2 + ( bDisplayedOnCol ? 0 : 1 ) ];
             vFrom[ 3 + uiI * 2 + 1 ] = 0;
             vTo[ 3 + uiI * 2 ] = uiToAnnoFilter[ uiI * 2 + ( bDisplayedOnCol ? 0 : 1 ) ];
-            vTo[ 3 + uiI * 2 + 1 ] = 2;
+            vTo[ 3 + uiI * 2 + 1 ] = 1;
         }
 
 
@@ -1092,8 +1091,6 @@ class PartialQuarry : public HasSession
     bool normalizeSize( size_t );
     // normalization.h
     bool normalizeBinominalTest( );
-    // normalization.h
-    bool setRadiclSeqCoverage( );
     // normalization.h
     bool normalizeGridSeq( );
     // normalization.h

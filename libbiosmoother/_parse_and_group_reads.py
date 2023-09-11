@@ -193,7 +193,7 @@ def parse_tsv(
                 if s not in ["+", "-"]:
                     raise RuntimeError("Invalid strand: " + s + "in line: " + line)
             strand = [s == "+" for s in strand]
-            bin_cnt = int(bin_cnt)
+            bin_cnt = int(float(bin_cnt))
 
             cnt += 1
 
