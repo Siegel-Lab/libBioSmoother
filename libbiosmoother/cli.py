@@ -216,6 +216,8 @@ def ploidy_smoother(args):
 
 
 def add_parsers(main_parser):
+    def fmt_defaults(defaults):
+        return " (default: " + " ".join(str(x) for x in defaults) + ")"
     init_parser = main_parser.add_parser("init", help="Create a new index.")
     init_parser.add_argument(
         "index_prefix",
@@ -231,21 +233,24 @@ def add_parsers(main_parser):
         nargs="?",
         default="",
     )
+    defaults = ["gene"]
     init_parser.add_argument(
         "-f",
         "--filterable_annotations",
         nargs="*",
         type=str,
-        default=["gene"],
-        help="Pick the annotations that can be used as filters in smoother. (default: %(default)s)",
+        default=defaults,
+        help="Pick the annotations that can be used as filters in smoother." + fmt_defaults(defaults),
     )
+    defaults=[3, 30]
     init_parser.add_argument(
         "-m",
         "--map_q_thresholds",
         nargs="*",
         type=int,
-        default=[3, 30],
-        help="Pick several thresholds, that can then be used to filter reads by mapping quality. (default: %(default)s)",
+        default=defaults,
+        help="Pick several thresholds, that can then be used to filter reads by mapping quality." + 
+             fmt_defaults(defaults),
     )
     init_parser.add_argument(
         "-d",
@@ -306,11 +311,7 @@ def add_parsers(main_parser):
         action="store_true",
         help="Do store strand information. (default: off)",
     )
-    repl_parser.add_argument(
-        "-C",
-        "--columns",
-        nargs="*",
-        default=[
+    defaults=[
             "[readID]",
             "chr1",
             "pos1",
@@ -324,9 +325,14 @@ def add_parsers(main_parser):
             "[xa1]",
             "[xa2]",
             "[cnt]",
-        ],
+        ]
+    repl_parser.add_argument(
+        "-C",
+        "--columns",
+        nargs="*",
+        default=defaults,
         # type=str,
-        help="How columns of the input file should be interpreted. Valid column names are: 'readId', 'chr1', 'chr2', 'pos1', 'pos2', 'strand1', 'strand2', 'mapq1', 'mapq2', 'xa1', 'xa2', 'cnt', and '.'. At a minimum 'chr1', 'chr2', 'pos1' and 'pos2' need to be defined. Column names in squared brackets indicate optional columns (e.g. '[mapq1] [mapq2]'). Specify the columns as a space separated list: '-C chr1 pos1 [xa1]'. Optional columns can be omitted in the input file on a row-by-row basis. If there are multiple optional columns, they are ignored starting from the back. If '.' or '[.]' is given as a column name, that column of the input file will be ignored. If a row in the input file contains more than the given columns, the superfluous columns will be ignored. Lines in the input file that start with '#columns:' will also change this parameter for any following lines. (default: %(default)s)",
+        help="How columns of the input file should be interpreted. Valid column names are: 'readId', 'chr1', 'chr2', 'pos1', 'pos2', 'strand1', 'strand2', 'mapq1', 'mapq2', 'xa1', 'xa2', 'cnt', and '.'. At a minimum 'chr1', 'chr2', 'pos1' and 'pos2' need to be defined. Column names in squared brackets indicate optional columns (e.g. '[mapq1] [mapq2]'). Specify the columns as a space separated list: '-C chr1 pos1 [xa1]'. Optional columns can be omitted in the input file on a row-by-row basis. If there are multiple optional columns, they are ignored starting from the back. If '.' or '[.]' is given as a column name, that column of the input file will be ignored. If a row in the input file contains more than the given columns, the superfluous columns will be ignored. Lines in the input file that start with '#columns:' will also change this parameter for any following lines." + fmt_defaults(defaults),
     )
     repl_parser.add_argument(
         "-u",
@@ -352,6 +358,7 @@ def add_parsers(main_parser):
         "track",
         help="Add a normalization track to an index, using external sequencing data.",
     )
+    norm_parser.add_argument("--perf", help=argparse.SUPPRESS, action="store_true")
     norm_parser.add_argument(
         "index_prefix",
         help="Prefix that was used to create the index (see the init subcommand).",
@@ -398,13 +405,14 @@ def add_parsers(main_parser):
         action="store_true",
         help="Do store strand information. (default: off)",
     )
+    defaults=["[readID]", "chr", "pos", "[strand]", "[mapq]", "[xa]", "[cnt]"]
     norm_parser.add_argument(
         "-C",
         "--columns",
         nargs="*",
-        default=["[readID]", "chr", "pos", "[strand]", "[mapq]", "[xa]", "[cnt]"],
+        default=defaults,
         type=str,
-        help="How columns of the input file should be interpreted. Valid column names are: 'readId', 'chr', 'pos', 'strand', 'mapq', 'xa', 'cnt', and '.'. At a minimum 'chr' and 'pos'. Column names in squared brackets indicate optional columns (e.g. '[mapq] [xa]'). Specify the columns as a space separated list: '-C chr1 pos1 [xa1]'. Optional columns can be omitted in the input file on a row-by-row basis. If there are multiple optional columns they are ignored starting from the back. If '.' or '[.]' is given as a column name, that column of the input file will be ignored. If a row in the input file contains more than the given columns, the superfluous columns will be ignored. Lines in the input file that start with '#columns:' will also change this parameter for any following lines. (default: %(default)s)",
+        help="How columns of the input file should be interpreted. Valid column names are: 'readId', 'chr', 'pos', 'strand', 'mapq', 'xa', 'cnt', and '.'. At a minimum 'chr' and 'pos'. Column names in squared brackets indicate optional columns (e.g. '[mapq] [xa]'). Specify the columns as a space separated list: '-C chr1 pos1 [xa1]'. Optional columns can be omitted in the input file on a row-by-row basis. If there are multiple optional columns they are ignored starting from the back. If '.' or '[.]' is given as a column name, that column of the input file will be ignored. If a row in the input file contains more than the given columns, the superfluous columns will be ignored. Lines in the input file that start with '#columns:' will also change this parameter for any following lines." + fmt_defaults(defaults),
     )
     norm_parser.add_argument("--shekelyan", help=argparse.SUPPRESS, action="store_true")
     norm_parser.add_argument("--no_groups", help=argparse.SUPPRESS, action="store_true")

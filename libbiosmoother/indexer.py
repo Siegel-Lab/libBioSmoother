@@ -645,13 +645,13 @@ class Indexer:
                     count_matrix_warning_done = True
                 total_reads += 1
                 if no_category:
-                    cat = [0] * len(self.session_default["annotation"]["filterable"])
+                    cat = [0] * MAX_NUM_FILTER_ANNOTATIONS
                 else:
                     cat = self.indices.anno.get_categories(
                         [0 if x else 1 for x in pos_1_l.split(",")],
                         self.session_default["dividend"],
                         anno_ids,
-                    )
+                    ) + [0] * (MAX_NUM_FILTER_ANNOTATIONS - len(anno_ids))
 
                 act_pos_1_s = int(pos_1_s) // self.session_default["dividend"]
                 if no_multi_map:
