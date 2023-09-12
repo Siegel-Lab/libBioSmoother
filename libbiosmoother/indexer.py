@@ -110,7 +110,6 @@ class Indexer:
         self.set_session(
             ["version"],
             {
-                "pip_lib_sps_version": version("libsps"),
                 "lib_sps_version": SPS_VERSION,
                 "lib_sps_build_time": SPS_BUILD_TIME,
                 "pip_lib_bio_smoother_version": version("libbiosmoother"),
