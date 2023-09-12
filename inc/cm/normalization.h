@@ -1027,13 +1027,12 @@ void PartialQuarry::regNormalization( )
                                /*.fFunc =*/&PartialQuarry::setGridSeqSamples,
                                /*.vIncomingFunctions =*/{ NodeNames::AxisCoords },
                                /*.vIncomingSession =*/
-                               { { "annotation", "by_name" },
-                                 { "settings", "normalization", "normalize_by" },
+                               { { "settings", "normalization", "normalize_by" },
                                  { "settings", "normalization", "grid_seq_annotation" },
                                  { "settings", "normalization", "grid_seq_samples", "val" },
                                  { "settings", "normalization", "grid_seq_axis_is_column" },
                                  { "settings", "normalization", "grid_seq_global" } },
-                               /*.vSessionsIncomingInPrevious =*/{ { "dividend" } },
+                               /*.vSessionsIncomingInPrevious =*/{ { "annotation", "by_name" }, { "dividend" } },
                                /*bHidden =*/false } );
 
     registerNode( NodeNames::GridSeqCoverage,

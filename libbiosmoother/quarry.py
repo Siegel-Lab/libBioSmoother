@@ -89,6 +89,8 @@ class Quarry(PartialQuarry):
         is_col,
         grid_height,
     ):
+        if grid_height == 0 or len(bin_values) == 0:
+            return []
         def bin_test(jdx):
             ret = []
             for idx, val in enumerate(bin_values):
@@ -106,19 +108,37 @@ class Quarry(PartialQuarry):
                     ret.append(1)
             return ret
 
-        psx = bin_test(0)
-        psy = bin_test(1)
-        if len(psx) == 0 or len(psy) == 0:
+        def split_list(l):
+            grid_width = len(l) // grid_height
+            assert grid_height * grid_width == len(l)
+            ret_l = [[] for _ in range(grid_width if is_col else grid_height)]
+            for idx, val in enumerate(l):
+                ret_l[idx // grid_height if is_col else idx % grid_height].append(val)
+            assert len(l) == sum(len(x) for x in ret_l)
+            return ret_l
+        
+        def combine_list(l):
+            ret_l = []
+            if is_col:
+                for val in l:
+                    ret_l.extend(val)
+            else:
+                for val in zip(*l):
+                    ret_l.extend(val)
+            assert len(ret_l) == sum(len(x) for x in l)
+            return ret_l
+
+        def p_val_correction(ll):
+            return [multipletests(l, alpha=float("NaN"), method="fdr_bh")[1] for l in ll]
+    
+        def binarization(ll):
+            return [[1 if x < p_accept else 0 for x in l] for l in ll]
+
+        ret_x = combine_list(binarization(p_val_correction(split_list(bin_test(0)))))
+        ret_y = combine_list(binarization(p_val_correction(split_list(bin_test(1)))))
+        if len(ret_x) == 0 or len(ret_y) == 0:
             return []
-        results = [
-            (1 if x < p_accept else 0, 1 if y < p_accept else 0)
-            # for x, y in zip(psx, psy)
-            for x, y in zip(
-                multipletests(psx, alpha=float("NaN"), method="fdr_bh")[1],
-                multipletests(psy, alpha=float("NaN"), method="fdr_bh")[1],
-            )
-        ]
-        return results
+        return list(zip(ret_x, ret_y))
 
     def normalizeCoolerTrampoline(self, bin_values, axis_size):
         return icing(bin_values, axis_size)
