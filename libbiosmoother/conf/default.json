@@ -377,9 +377,17 @@
         },
         "export_format": "tsv",
         "secondary_stroke_width": {
-            "max": 10,
+            "max": 50,
             "min": 1,
             "val": 2,
+            "step": 1,
+            "spinner_min_restricted": true,
+            "spinner_max_restricted": false
+        },
+        "spacing": {
+            "max": 100,
+            "min": 1,
+            "val": 3,
             "step": 1,
             "spinner_min_restricted": true,
             "spinner_max_restricted": false

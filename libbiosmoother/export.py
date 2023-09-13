@@ -53,8 +53,6 @@ def __cat_coords(cp, is_bottom, idx, cds, w_plane, o_plane, categories):
     )
 
 
-AXIS_DISTANCE = 3
-
 
 def __draw_tick_lines(
     d,
@@ -461,15 +459,15 @@ def __draw_annotation(session, d, sizes, print_callback=lambda s: None):
                 [x + 0.5 for x in range(len(active_anno_x[2]))],
                 [len(active_anno_x[2]), 0, sizes["annotation"], offset],
                 offset_x - sizes["axis"],
-                offset_x - AXIS_DISTANCE,
+                offset_x - sizes["spacing"],
                 False,
                 labels=active_anno_x[2][::-1],
             )
             d.append(
                 drawSvg.Line(
-                    offset_x - AXIS_DISTANCE,
+                    offset_x - sizes["spacing"],
                     offset,
-                    offset_x - AXIS_DISTANCE,
+                    offset_x - sizes["spacing"],
                     offset + sizes["annotation"],
                     stroke="black",
                     stroke_width=2,
@@ -541,16 +539,16 @@ def __draw_annotation(session, d, sizes, print_callback=lambda s: None):
                 [x + 0.5 for x in range(len(active_anno_y[2]))],
                 [len(active_anno_y[2]), 0, sizes["annotation"], offset],
                 offset_x - sizes["axis"],
-                offset_x - AXIS_DISTANCE,
+                offset_x - sizes["spacing"],
                 True,
                 labels=active_anno_y[2][::-1],
             )
             d.append(
                 drawSvg.Line(
                     offset,
-                    offset_x - AXIS_DISTANCE,
+                    offset_x - sizes["spacing"],
                     offset + sizes["annotation"],
-                    offset_x - AXIS_DISTANCE,
+                    offset_x - sizes["spacing"],
                     stroke="black",
                     stroke_width=2,
                 )
@@ -626,15 +624,15 @@ def __draw_secondary(session, d, sizes, print_callback=lambda s: None):
                 d,
                 active_anno_x,
                 offset_x - sizes["axis"],
-                offset_x - AXIS_DISTANCE,
+                offset_x - sizes["spacing"],
                 False,
                 label_major=True,
             )
             d.append(
                 drawSvg.Line(
-                    offset_x - AXIS_DISTANCE,
+                    offset_x - sizes["spacing"],
                     offset,
-                    offset_x - AXIS_DISTANCE,
+                    offset_x - sizes["spacing"],
                     offset + sizes["annotation"],
                     stroke="black",
                     stroke_width=2,
@@ -705,16 +703,16 @@ def __draw_secondary(session, d, sizes, print_callback=lambda s: None):
                 d,
                 active_anno_y,
                 offset_x - sizes["axis"],
-                offset_x - AXIS_DISTANCE,
+                offset_x - sizes["spacing"],
                 True,
                 label_major=True,
             )
             d.append(
                 drawSvg.Line(
                     offset,
-                    offset_x - AXIS_DISTANCE,
+                    offset_x - sizes["spacing"],
                     offset + sizes["annotation"],
-                    offset_x - AXIS_DISTANCE,
+                    offset_x - sizes["spacing"],
                     stroke="black",
                     stroke_width=2,
                 )
@@ -777,7 +775,7 @@ def __draw_coordinates(session, d, sizes, print_callback=lambda s: None):
             d,
             x_transform,
             offset,
-            offset + sizes["coords"] - AXIS_DISTANCE,
+            offset + sizes["coords"] - sizes["spacing"],
             True,
             to_readable_pos=to_readable_pos_x,
             label_major=True,
@@ -786,7 +784,7 @@ def __draw_coordinates(session, d, sizes, print_callback=lambda s: None):
             d,
             y_transform,
             offset,
-            offset + sizes["coords"] - AXIS_DISTANCE,
+            offset + sizes["coords"] - sizes["spacing"],
             False,
             to_readable_pos=to_readable_pos_y,
             label_major=True,
@@ -794,18 +792,18 @@ def __draw_coordinates(session, d, sizes, print_callback=lambda s: None):
         d.append(
             drawSvg.Line(
                 offset_heat_x,
-                offset + sizes["coords"] - AXIS_DISTANCE,
+                offset + sizes["coords"] - sizes["spacing"],
                 offset_heat_x + sizes["heatmap"],
-                offset + sizes["coords"] - AXIS_DISTANCE,
+                offset + sizes["coords"] - sizes["spacing"],
                 stroke="black",
                 stroke_width=2,
             )
         )
         d.append(
             drawSvg.Line(
-                offset + sizes["coords"] - AXIS_DISTANCE,
+                offset + sizes["coords"] - sizes["spacing"],
                 offset_heat_y,
-                offset + sizes["coords"] - AXIS_DISTANCE,
+                offset + sizes["coords"] - sizes["spacing"],
                 offset_heat_y + sizes["heatmap"],
                 stroke="black",
                 stroke_width=2,
@@ -867,7 +865,7 @@ def __draw_contigs(session, d, sizes, print_callback=lambda s: None):
             contig_starts_x,
             x_transform,
             offset + sizes["contigs"] - 8,
-            offset + sizes["contigs"] - AXIS_DISTANCE,
+            offset + sizes["contigs"] - sizes["spacing"],
             True,
             labels=None,
         )
@@ -876,25 +874,25 @@ def __draw_contigs(session, d, sizes, print_callback=lambda s: None):
             contig_starts_y,
             y_transform,
             offset + sizes["contigs"] - 8,
-            offset + sizes["contigs"] - AXIS_DISTANCE,
+            offset + sizes["contigs"] - sizes["spacing"],
             False,
             labels=None,
         )
         d.append(
             drawSvg.Line(
                 offset_heat_x,
-                offset + sizes["contigs"] - AXIS_DISTANCE,
+                offset + sizes["contigs"] - sizes["spacing"],
                 offset_heat_x + sizes["heatmap"],
-                offset + sizes["contigs"] - AXIS_DISTANCE,
+                offset + sizes["contigs"] - sizes["spacing"],
                 stroke="black",
                 stroke_width=2,
             )
         )
         d.append(
             drawSvg.Line(
-                offset + sizes["contigs"] - AXIS_DISTANCE,
+                offset + sizes["contigs"] - sizes["spacing"],
                 offset_heat_y,
-                offset + sizes["contigs"] - AXIS_DISTANCE,
+                offset + sizes["contigs"] - sizes["spacing"],
                 offset_heat_y + sizes["heatmap"],
                 stroke="black",
                 stroke_width=2,
@@ -997,6 +995,7 @@ def __get_sizes(session):
         )
         and len(session.get_tracks(True, lambda x: None)["values"]) > 0,
         "secondary": session.get_value(["settings", "interface", "raw_size", "val"]),
+        "spacing": session.get_value(["settings", "export", "spacing", "val"]),
     }
 
 
