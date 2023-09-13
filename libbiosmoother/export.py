@@ -238,6 +238,7 @@ def __draw_lines(
     conv_coords_x=__conv_coords,
     conv_coords_y=__conv_coords,
     stroke_width=2,
+    stroke_linecap="round",
 ):
     for (
         xs,
@@ -254,7 +255,7 @@ def __draw_lines(
         for xf, yf, xt, yt in zip(xs2[:-1], ysy[:-1], xs2[1:], ysy[1:]):
             if not float("NaN") in [xf, yf, xt, yt]:
                 d.append(
-                    drawSvg.Line(xf, yf, xt, yt, stroke=c, stroke_width=stroke_width)
+                    drawSvg.Line(xf, yf, xt, yt, stroke=c, stroke_width=stroke_width, stroke_linecap=stroke_linecap) 
                 )
 
 

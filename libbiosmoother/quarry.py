@@ -301,6 +301,7 @@ class Quarry(PartialQuarry):
     def set_ploidy_list(self, ploidy_file):
         with fileinput.input(ploidy_file) as file:
             self.set_ploidy_itr(file)
+        return self
 
     @staticmethod
     def get_libSps_version():
