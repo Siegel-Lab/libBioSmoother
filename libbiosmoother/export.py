@@ -53,7 +53,6 @@ def __cat_coords(cp, is_bottom, idx, cds, w_plane, o_plane, categories):
     )
 
 
-
 def __draw_tick_lines(
     d,
     tick_lines,
@@ -253,7 +252,15 @@ def __draw_lines(
         for xf, yf, xt, yt in zip(xs2[:-1], ysy[:-1], xs2[1:], ysy[1:]):
             if not float("NaN") in [xf, yf, xt, yt]:
                 d.append(
-                    drawSvg.Line(xf, yf, xt, yt, stroke=c, stroke_width=stroke_width, stroke_linecap=stroke_linecap) 
+                    drawSvg.Line(
+                        xf,
+                        yf,
+                        xt,
+                        yt,
+                        stroke=c,
+                        stroke_width=stroke_width,
+                        stroke_linecap=stroke_linecap,
+                    )
                 )
 
 

@@ -1402,8 +1402,10 @@ class PartialQuarry : public HasSession
     }
 
   public:
-    const pybind11::int_ interpretName( std::string sName, bool bXAxis, bool bBottom, bool bGenomicCoords )
+    const pybind11::int_ interpretName( std::string sName, bool bXAxis, bool bBottom, bool bGenomicCoords,
+                                        const std::function<void( const std::string& )>& fPyPrint )
     {
+        update( NodeNames::CanvasSize, fPyPrint );
         sName = to_lower( sName );
         if( ( bBottom && sName == "*" ) || sName.size( ) == 0 || sName == "start" )
             return pybind11::int_( 0 );

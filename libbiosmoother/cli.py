@@ -153,40 +153,123 @@ def export_smoother(args):
 
 def set_smoother(args):
     possible = get_path(args.index_prefix)
-    with open(possible + "/session.json", "r") as in_file:
-        json_file = json.load(in_file)
-        tmp = json_file
-        keys = args.name.split(".")
-        for key in keys[:-1]:
-            tmp = tmp[key]
-        if isinstance(tmp[keys[-1]], bool):
-            if args.val.lower() not in ["true", "1", "t", "y", "yes", "on", "false", "0", "f", "n", "no", 
-                                        "off", "blub"]:
-                print("Error: can only set bool values to true or false.")
-                return
-            tmp[keys[-1]] = args.val.lower() in ["true", "1", "t", "y", "yes", "on"]
-        elif isinstance(tmp[keys[-1]], float):
-            tmp[keys[-1]] = float(args.val)
-        elif isinstance(tmp[keys[-1]], int):
-            tmp[keys[-1]] = int(args.val)
-        elif isinstance(tmp[keys[-1]], str):
-            tmp[keys[-1]] = str(args.val)
-        elif isinstance(tmp[keys[-1]], list) and (len(tmp[keys[-1]]) == 0 or isinstance(tmp[keys[-1]][0], str)):
-            tmp[keys[-1]] = str(args.val).split()
-        else:
-            print("Error: can only set string, int, bool, float, and list of string values.")
-    with open(possible + "/session.json", "w") as out_file:
-        json.dump(json_file, out_file)
+    if args.name == "area":
+        q = Quarry(possible)
+        new_area = q.interpret_area(
+            args.val,
+            q.get_value(["area", "x_start"]),
+            q.get_value(["area", "y_start"]),
+            q.get_value(["area", "x_end"]),
+            q.get_value(["area", "y_end"]),
+        )
+        if not new_area[0] is None:
+            q.set_value(["area", "x_start"], new_area[0])
+        if not new_area[1] is None:
+            q.set_value(["area", "x_end"], new_area[1])
+        if not new_area[2] is None:
+            q.set_value(["area", "y_start"], new_area[2])
+        if not new_area[3] is None:
+            q.set_value(["area", "y_end"], new_area[3])
+        q.save_session()
+    elif args.name == "settings.interface.v4c.col":
+        q = Quarry(possible)
+        new_range = q.interpret_range(args.val, False)
+        if not new_range[0] is None:
+            q.set_value(["settings", "interface", "v4c", "col_from"], new_range[0])
+        if not new_range[1] is None:
+            q.set_value(["settings", "interface", "v4c", "col_to"], new_range[1])
+        q.save_session()
+    elif args.name == "settings.interface.v4c.row":
+        q = Quarry(possible)
+        new_range = q.interpret_range(args.val, True)
+        if not new_range[0] is None:
+            q.set_value(["settings", "interface", "v4c", "row_from"], new_range[0])
+        if not new_range[1] is None:
+            q.set_value(["settings", "interface", "v4c", "row_to"], new_range[1])
+        q.save_session()
+    else:
+        with open(possible + "/session.json", "r") as in_file:
+            json_file = json.load(in_file)
+            tmp = json_file
+            keys = args.name.split(".")
+            for key in keys[:-1]:
+                tmp = tmp[key]
+            if isinstance(tmp[keys[-1]], bool):
+                if args.val.lower() not in [
+                    "true",
+                    "1",
+                    "t",
+                    "y",
+                    "yes",
+                    "on",
+                    "false",
+                    "0",
+                    "f",
+                    "n",
+                    "no",
+                    "off",
+                    "blub",
+                ]:
+                    print("Error: can only set bool values to true or false.")
+                    return
+                tmp[keys[-1]] = args.val.lower() in ["true", "1", "t", "y", "yes", "on"]
+            elif isinstance(tmp[keys[-1]], float):
+                tmp[keys[-1]] = float(args.val)
+            elif isinstance(tmp[keys[-1]], int):
+                tmp[keys[-1]] = int(args.val)
+            elif isinstance(tmp[keys[-1]], str):
+                tmp[keys[-1]] = str(args.val)
+            elif isinstance(tmp[keys[-1]], list) and (
+                len(tmp[keys[-1]]) == 0 or isinstance(tmp[keys[-1]][0], str)
+            ):
+                tmp[keys[-1]] = str(args.val).split()
+            else:
+                print(
+                    "Error: can only set string, int, bool, float, and list of string values.",
+                    key,
+                    "is neither of those.",
+                )
+        with open(possible + "/session.json", "w") as out_file:
+            json.dump(json_file, out_file)
 
 
 def get_smoother(args):
     possible = get_path(args.index_prefix)
-    with open(possible + "/session.json", "r") as in_file:
-        json_file = json.load(in_file)
-        tmp = json_file
-        for key in args.name.split("."):
-            tmp = tmp[key]
-        print(tmp)
+    if args.name == "area":
+        q = Quarry(possible)
+        print(
+            q.get_readable_area(
+                q.get_value(["area", "x_start"]),
+                q.get_value(["area", "y_start"]),
+                q.get_value(["area", "x_end"]),
+                q.get_value(["area", "y_end"]),
+            )
+        )
+    elif args.name == "settings.interface.v4c.col":
+        q = Quarry(possible)
+        print(
+            q.get_readable_range(
+                q.get_value(["settings", "interface", "v4c", "col_from"]),
+                q.get_value(["settings", "interface", "v4c", "col_to"]),
+                False,
+            )
+        )
+    elif args.name == "settings.interface.v4c.row":
+        q = Quarry(possible)
+        print(
+            q.get_readable_range(
+                q.get_value(["settings", "interface", "v4c", "row_from"]),
+                q.get_value(["settings", "interface", "v4c", "row_to"]),
+                True,
+            )
+        )
+    else:
+        with open(possible + "/session.json", "r") as in_file:
+            json_file = json.load(in_file)
+            tmp = json_file
+            for key in args.name.split("."):
+                tmp = tmp[key]
+            print(tmp)
 
 
 def info_smoother(args):
@@ -220,6 +303,7 @@ def ploidy_smoother(args):
 def add_parsers(main_parser):
     def fmt_defaults(defaults):
         return " (default: " + " ".join(str(x) for x in defaults) + ")"
+
     init_parser = main_parser.add_parser("init", help="Create a new index.")
     init_parser.add_argument(
         "index_prefix",
@@ -242,17 +326,18 @@ def add_parsers(main_parser):
         nargs="*",
         type=str,
         default=defaults,
-        help="Pick the annotations that can be used as filters in smoother." + fmt_defaults(defaults),
+        help="Pick the annotations that can be used as filters in smoother."
+        + fmt_defaults(defaults),
     )
-    defaults=[3, 30]
+    defaults = [3, 30]
     init_parser.add_argument(
         "-m",
         "--map_q_thresholds",
         nargs="*",
         type=int,
         default=defaults,
-        help="Pick several thresholds, that can then be used to filter reads by mapping quality." + 
-             fmt_defaults(defaults),
+        help="Pick several thresholds, that can then be used to filter reads by mapping quality."
+        + fmt_defaults(defaults),
     )
     init_parser.add_argument(
         "-d",
@@ -313,28 +398,29 @@ def add_parsers(main_parser):
         action="store_true",
         help="Do store strand information. (default: off)",
     )
-    defaults=[
-            "[readID]",
-            "chr1",
-            "pos1",
-            "chr2",
-            "pos2",
-            "[strand1]",
-            "[strand2]",
-            "[.]",
-            "[mapq1]",
-            "[mapq2]",
-            "[xa1]",
-            "[xa2]",
-            "[cnt]",
-        ]
+    defaults = [
+        "[readID]",
+        "chr1",
+        "pos1",
+        "chr2",
+        "pos2",
+        "[strand1]",
+        "[strand2]",
+        "[.]",
+        "[mapq1]",
+        "[mapq2]",
+        "[xa1]",
+        "[xa2]",
+        "[cnt]",
+    ]
     repl_parser.add_argument(
         "-C",
         "--columns",
         nargs="*",
         default=defaults,
         # type=str,
-        help="How columns of the input file should be interpreted. Valid column names are: 'readId', 'chr1', 'chr2', 'pos1', 'pos2', 'strand1', 'strand2', 'mapq1', 'mapq2', 'xa1', 'xa2', 'cnt', and '.'. At a minimum 'chr1', 'chr2', 'pos1' and 'pos2' need to be defined. Column names in squared brackets indicate optional columns (e.g. '[mapq1] [mapq2]'). Specify the columns as a space separated list: '-C chr1 pos1 [xa1]'. Optional columns can be omitted in the input file on a row-by-row basis. If there are multiple optional columns, they are ignored starting from the back. If '.' or '[.]' is given as a column name, that column of the input file will be ignored. If a row in the input file contains more than the given columns, the superfluous columns will be ignored. Lines in the input file that start with '#columns:' will also change this parameter for any following lines." + fmt_defaults(defaults),
+        help="How columns of the input file should be interpreted. Valid column names are: 'readId', 'chr1', 'chr2', 'pos1', 'pos2', 'strand1', 'strand2', 'mapq1', 'mapq2', 'xa1', 'xa2', 'cnt', and '.'. At a minimum 'chr1', 'chr2', 'pos1' and 'pos2' need to be defined. Column names in squared brackets indicate optional columns (e.g. '[mapq1] [mapq2]'). Specify the columns as a space separated list: '-C chr1 pos1 [xa1]'. Optional columns can be omitted in the input file on a row-by-row basis. If there are multiple optional columns, they are ignored starting from the back. If '.' or '[.]' is given as a column name, that column of the input file will be ignored. If a row in the input file contains more than the given columns, the superfluous columns will be ignored. Lines in the input file that start with '#columns:' will also change this parameter for any following lines."
+        + fmt_defaults(defaults),
     )
     repl_parser.add_argument(
         "-u",
@@ -407,14 +493,15 @@ def add_parsers(main_parser):
         action="store_true",
         help="Do store strand information. (default: off)",
     )
-    defaults=["[readID]", "chr", "pos", "[strand]", "[mapq]", "[xa]", "[cnt]"]
+    defaults = ["[readID]", "chr", "pos", "[strand]", "[mapq]", "[xa]", "[cnt]"]
     norm_parser.add_argument(
         "-C",
         "--columns",
         nargs="*",
         default=defaults,
         type=str,
-        help="How columns of the input file should be interpreted. Valid column names are: 'readId', 'chr', 'pos', 'strand', 'mapq', 'xa', 'cnt', and '.'. At a minimum 'chr' and 'pos'. Column names in squared brackets indicate optional columns (e.g. '[mapq] [xa]'). Specify the columns as a space separated list: '-C chr1 pos1 [xa1]'. Optional columns can be omitted in the input file on a row-by-row basis. If there are multiple optional columns they are ignored starting from the back. If '.' or '[.]' is given as a column name, that column of the input file will be ignored. If a row in the input file contains more than the given columns, the superfluous columns will be ignored. Lines in the input file that start with '#columns:' will also change this parameter for any following lines." + fmt_defaults(defaults),
+        help="How columns of the input file should be interpreted. Valid column names are: 'readId', 'chr', 'pos', 'strand', 'mapq', 'xa', 'cnt', and '.'. At a minimum 'chr' and 'pos'. Column names in squared brackets indicate optional columns (e.g. '[mapq] [xa]'). Specify the columns as a space separated list: '-C chr1 pos1 [xa1]'. Optional columns can be omitted in the input file on a row-by-row basis. If there are multiple optional columns they are ignored starting from the back. If '.' or '[.]' is given as a column name, that column of the input file will be ignored. If a row in the input file contains more than the given columns, the superfluous columns will be ignored. Lines in the input file that start with '#columns:' will also change this parameter for any following lines."
+        + fmt_defaults(defaults),
     )
     norm_parser.add_argument("--shekelyan", help=argparse.SUPPRESS, action="store_true")
     norm_parser.add_argument("--no_groups", help=argparse.SUPPRESS, action="store_true")
@@ -524,7 +611,9 @@ def add_parsers(main_parser):
     )
     bench_parser.set_defaults(func=benchmark_runtime_smoother)
 
-    ploidy_parser = main_parser.add_parser("ploidy", help="Add a ploidy file to the index.")
+    ploidy_parser = main_parser.add_parser(
+        "ploidy", help="Add a ploidy file to the index."
+    )
     ploidy_parser.add_argument(
         "index_prefix",
         help="Prefix that was used to create the index (see the init subcommand).",

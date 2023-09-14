@@ -145,8 +145,8 @@ bool PartialQuarry::setCoverageValues( )
                 CANCEL_RETURN;
 
                 int64_t iDataSetId = uiFstDatasetId + xCoords.uiActualContigId;
-                size_t uiVal = index1DCount( iDataSetId, xCoords.uiIndexPos, xCoords.uiIndexPos + xCoords.uiIndexSize,
-                                        uiJ == 0 );
+                size_t uiVal =
+                    index1DCount( iDataSetId, xCoords.uiIndexPos, xCoords.uiIndexPos + xCoords.uiIndexSize, uiJ == 0 );
 
                 if( uiVal > uiMinuend )
                     uiVal -= uiMinuend;

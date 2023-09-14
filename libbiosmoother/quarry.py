@@ -91,6 +91,7 @@ class Quarry(PartialQuarry):
     ):
         if grid_height == 0 or len(bin_values) == 0:
             return []
+
         def bin_test(jdx):
             ret = []
             for idx, val in enumerate(bin_values):
@@ -116,7 +117,7 @@ class Quarry(PartialQuarry):
                 ret_l[idx // grid_height if is_col else idx % grid_height].append(val)
             assert len(l) == sum(len(x) for x in ret_l)
             return ret_l
-        
+
         def combine_list(l):
             ret_l = []
             if is_col:
@@ -129,8 +130,10 @@ class Quarry(PartialQuarry):
             return ret_l
 
         def p_val_correction(ll):
-            return [multipletests(l, alpha=float("NaN"), method="fdr_bh")[1] for l in ll]
-    
+            return [
+                multipletests(l, alpha=float("NaN"), method="fdr_bh")[1] for l in ll
+            ]
+
         def binarization(ll):
             return [[1 if x < p_accept else 0 for x in l] for l in ll]
 
@@ -302,6 +305,212 @@ class Quarry(PartialQuarry):
         with fileinput.input(ploidy_file) as file:
             self.set_ploidy_itr(file)
         return self
+
+    def __isint(self, num):
+        try:
+            int(num)
+            return True
+        except ValueError:
+            return False
+
+    def __interpret_number(self, s):
+        if s[-1:] == "b":
+            s = s[:-1]
+        elif s[-2:] == "bp":
+            s = s[:-2]
+        fac = 1
+        if len(s) > 0 and s[-1] == "m":
+            fac = 1000000
+            s = s[:-1]
+        if len(s) > 0 and s[-1] == "k":
+            fac = 1000
+            s = s[:-1]
+        s = s.replace(",", "")
+        if self.__isint(s):
+            return (int(s) * fac) // self.get_value(["dividend"])
+        return None
+
+    def interpret_position(self, s, on_x_axis=True, bot=True, genomic_coords=False):
+        if s.count(":") == 0 and s.count("+-") == 1:
+            x, y = s.split("+-")
+            c = self.__interpret_number(y)
+            if not c is None and bot:
+                c = -c
+            a = self.interpret_name(x, on_x_axis, bot, genomic_coords, lambda x: None)
+            if not a is None and not c is None:
+                return [a + c]
+        elif s.count(":") == 1:
+            x, y = s.split(":")
+            if "+-" in y:
+                y1, y2 = y.split("+-")
+                if len(y1) == 0:
+                    b = 0
+                else:
+                    b = self.__interpret_number(y1)
+                c = self.__interpret_number(y2)
+                if not c is None and bot:
+                    c = -c
+                a = self.interpret_name(
+                    x, on_x_axis, bot if len(y1) == 0 else True, genomic_coords, lambda x: None
+                )
+                if not a is None and not b is None and not c is None:
+                    return [a + b + c]
+            b = self.__interpret_number(y)
+            a = self.interpret_name(x, on_x_axis, True, genomic_coords, lambda x: None)
+            if not a is None and not b is None:
+                return [a + b]
+
+        a = self.__interpret_number(s)
+        if not a is None:
+            return [a]
+
+        if not s is None:
+            a = self.interpret_name(s, on_x_axis, bot, genomic_coords, lambda x: None)
+            if not a is None:
+                return [a]
+
+        return [None]
+
+    def interpret_range(self, s, on_x_axis=True, genomic_coords=False):
+        s = "".join(s.lower().split())
+        if s.count("..") == 1 and s.count("[") <= 1 and s.count("]") <= 1:
+            x, y = s.split("..")
+            if x[:1] == "[":
+                x = x[1:]
+            if y[-1:] == "]":
+                y = y[:-1]
+
+            ret = self.interpret_position(
+                x, on_x_axis, True, genomic_coords=genomic_coords
+            ) + self.interpret_position(
+                y, on_x_axis, False, genomic_coords=genomic_coords
+            )
+        else:
+            if s[:1] == "[":
+                s = s[1:]
+            if s[-1:] == "]":
+                s = s[:-1]
+            ret = self.interpret_position(
+                s, on_x_axis, True, genomic_coords=genomic_coords
+            ) + self.interpret_position(
+                s, on_x_axis, False, genomic_coords=genomic_coords
+            )
+        if not None in ret:
+            ret.sort()
+            if ret[1] <= ret[0]:
+                ret[1] = ret[0] + 1
+        return ret
+
+    def interpret_area(
+        self, s, default_start_x, default_start_y, default_end_x, default_end_y
+    ):
+        # remove all space-like characters
+        s = "".join(s.lower().split())
+        if s.count(";") == 1 and s.count("x=") == 0 and s.count("y=") == 0:
+            x, y = s.split(";")
+            return self.interpret_range(x, True) + self.interpret_range(y, False)
+
+        if s.count("x=") == 1 and s[:2] == "x=" and s.count("y=") == 0:
+            s = s[2:]
+            return self.interpret_range(s, True) + [
+                default_start_y,
+                default_end_y,
+            ]
+
+        if s.count("x=") == 0 and s.count("y=") == 1 and s[:2] == "y=":
+            s = s[2:]
+            return [
+                default_start_x,
+                default_end_x,
+            ] + self.interpret_range(s, True)
+
+        if s.count("x=") == 1 and s.count("y=") == 1:
+            x_pos = s.find("x=")
+            y_pos = s.find("y=")
+            x = s[x_pos + 2 : y_pos] if x_pos < y_pos else s[x_pos + 2 :]
+            y = s[y_pos + 2 : x_pos] if y_pos < x_pos else s[y_pos + 2 :]
+            return self.interpret_range(x, True) + self.interpret_range(y, False)
+
+        return self.interpret_range(s, True) + self.interpret_range(s, False)
+
+    def __to_readable_pos(self, x, genome_end, contig_names, contig_starts, lcs=0):
+        if len(contig_names) == 0 or len(contig_starts) == 0:
+            return "n/a"
+        x = int(x)
+        if x < 0:
+            idx = 0
+        elif x >= genome_end * self.get_value(["dividend"]):
+            idx = len(contig_names) - 1
+            x -= contig_starts[-1] * self.get_value(["dividend"])
+        else:
+            idx = 0
+            for idx, (start, end) in enumerate(
+                zip(contig_starts, contig_starts[1:] + [genome_end])
+            ):
+                if x >= start * self.get_value(
+                    ["dividend"]
+                ) and x < end * self.get_value(["dividend"]):
+                    x -= start * self.get_value(["dividend"])
+                    break
+
+        if x == 0:
+            label = "0 bp"
+        elif x % 1000000 == 0:
+            label = "{:,}".format(x // 1000000) + " Mbp"
+        elif x % 1000 == 0:
+            label = "{:,}".format(x // 1000) + " kbp"
+        else:
+            label = "{:,}".format(x) + " bp"
+
+        if idx >= len(contig_names):
+            return "n/a"
+
+        if lcs != 0:
+            n = contig_names[idx][:-lcs]
+        else:
+            n = contig_names[idx]
+        return n + ": " + label
+
+    def get_readable_range(
+        self, start, end, of_x_axis=True, genomic_coords=False, print=lambda x: None
+    ):
+        lcs = self.get_longest_common_suffix(print)
+        contig_names = self.get_annotation_list(of_x_axis, print)
+        if genomic_coords:
+            contig_starts = self.get_contig_start_list(of_x_axis, print)
+        else:
+            contig_starts = self.get_tick_list(of_x_axis, print)
+        if len(contig_starts) > 0:
+            return (
+                self.__to_readable_pos(
+                    start * int(self.get_value(["dividend"])),
+                    contig_starts[-1],
+                    contig_names,
+                    contig_starts[:-1],
+                    lcs,
+                )
+                + " .. "
+                + self.__to_readable_pos(
+                    end * int(self.get_value(["dividend"])),
+                    contig_starts[-1],
+                    contig_names,
+                    contig_starts[:-1],
+                    lcs,
+                )
+            )
+        else:
+            return "n/a"
+
+    def get_readable_area(
+        self, start_x, start_y, end_x, end_y, genomic_coords=False, print=lambda x: None
+    ):
+        return (
+            "X=["
+            + self.get_readable_range(start_x, end_x, True, genomic_coords, print)
+            + "] Y=["
+            + self.get_readable_range(start_y, end_y, False, genomic_coords, print)
+            + "]"
+        )
 
     @staticmethod
     def get_libSps_version():
