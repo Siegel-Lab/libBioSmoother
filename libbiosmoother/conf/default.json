@@ -1,5 +1,5 @@
 {
-    "smoother_config_file_version": 0.3,
+    "smoother_config_file_version": 0.4,
     "display_name": "Default",
     "normalization": {
         "normalize_by": "dont",
@@ -288,7 +288,8 @@
             "col_to": 10,
             "do_row": false,
             "row_from": 0,
-            "row_to": 10
+            "row_to": 10,
+            "norm_by_viewpoint_size": true
         },
         "axis_label_max_char": {
             "max": 100,
