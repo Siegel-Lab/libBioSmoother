@@ -95,6 +95,22 @@
         "radicl_local": false,
         "ice_show_bias": false,
         "ice_local": false,
+        "ice_ignore_n_diags": {
+            "min": 0,
+            "max": 10,
+            "val": 2,
+            "step": 1,
+            "spinner_min_restricted": true,
+            "spinner_max_restricted": false
+        },
+        "ice_min_nz": {
+            "min": 0,
+            "max": 100,
+            "val": 10,
+            "step": 10,
+            "spinner_min_restricted": true,
+            "spinner_max_restricted": false
+        },
         "grid_seq_max_bin_size": {
             "min": 1000,
             "max": 100000,

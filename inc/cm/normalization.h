@@ -97,19 +97,25 @@ original ICing implementation:
 */
 
 
-double PartialQuarry::iceGetCount( IceData& rIceData, size_t uiX, size_t uiY, size_t uiY_, bool bA )
+double PartialQuarry::iceGetCount( IceData& rIceData, size_t uiX, size_t uiY, size_t uiY_, bool bA,
+                                   size_t uiIgnoreDiags )
 {
     assert( uiX < rIceData.vSliceBias[ 0 ].size( ) );
     assert( uiY < rIceData.vSliceBias[ 1 ].size( ) );
+    if( ( uiX > uiY ? uiX - uiY : uiY - uiX ) < uiIgnoreDiags )
+        return 0;
     size_t uiIdx = uiY + uiX * ( rIceData.vSliceBias[ 1 ].size( ) );
     assert( uiIdx < vvNormalizedDDD[ uiY_ ].size( ) );
     return vvNormalizedDDD[ uiY_ ][ uiIdx ][ bA ? 0 : 1 ];
 }
 
-double PartialQuarry::iceGetCount( SymmIceData& rIceData, size_t uiX, size_t uiY, size_t uiY_, bool bA )
+double PartialQuarry::iceGetCount( SymmIceData& rIceData, size_t uiX, size_t uiY, size_t uiY_, bool bA,
+                                   size_t uiIgnoreDiags )
 {
     assert( uiX < rIceData.vSliceBias.size( ) );
     assert( uiY < rIceData.vSliceBias.size( ) );
+    if( ( uiX > uiY ? uiX - uiY : uiY - uiX ) < uiIgnoreDiags )
+        return 0;
     size_t uiIdx = uiY + uiX * ( rIceData.vSliceBias.size( ) );
     assert( uiIdx < vvNormalizedDDD[ uiY_ ].size( ) );
     return vvNormalizedDDD[ uiY_ ][ uiIdx ][ bA ? 0 : 1 ];
@@ -139,8 +145,25 @@ void PartialQuarry::iceFilter( SymmIceData& /*rIceData*/, size_t /*uiFrom*/, siz
 //     double fMadMax = getValue<double>( { "settings", "normalization", "ice_mad_max", "val" } );
 // }
 
-void PartialQuarry::icePreFilter( IceData& rIceData, bool bCol, size_t uiFrom, size_t uiTo, size_t uiY, bool bA )
+void PartialQuarry::icePreFilter( IceData& rIceData, bool bCol, size_t uiFrom, size_t uiTo, size_t uiY, bool bA,
+                                  size_t uiIgnoreDiags )
 {
+    const size_t uiMinNZ = getValue<size_t>( { "settings", "normalization", "ice_min_nz", "val" } );
+    if( uiMinNZ > 0 )
+    {
+        const size_t uiWSlice = rIceData.vSliceBias[ bCol ? 1 : 0 ].size( );
+        for( size_t uiI = uiFrom; uiI < uiTo; uiI++ )
+        {
+            size_t uiCnt = 0;
+            for( size_t uiJ = 0; uiJ < uiWSlice; uiJ++ )
+                if( iceGetCount( rIceData, bCol ? uiI : uiJ, bCol ? uiJ : uiI, uiY, bA, uiIgnoreDiags ) > 0 )
+                    ++uiCnt;
+            if( uiCnt < uiMinNZ )
+                rIceData.vSliceBias[ bCol ? 0 : 1 ][ uiI ] = 0;
+        }
+    }
+
+
     // filter out rows and columns that have less than 1/4 of their cells filled
     double fFilter = getValue<double>( { "settings", "normalization", "ice_sparse_slice_filter", "val" } ) / 100.0;
     if( fFilter > 0 )
@@ -150,7 +173,7 @@ void PartialQuarry::icePreFilter( IceData& rIceData, bool bCol, size_t uiFrom, s
         {
             size_t uiCnt = 0;
             for( size_t uiJ = 0; uiJ < uiWSlice; uiJ++ )
-                if( iceGetCount( rIceData, bCol ? uiI : uiJ, bCol ? uiJ : uiI, uiY, bA ) > 0 )
+                if( iceGetCount( rIceData, bCol ? uiI : uiJ, bCol ? uiJ : uiI, uiY, bA, uiIgnoreDiags ) > 0 )
                     ++uiCnt;
             if( (double)uiCnt <= uiWSlice * fFilter )
                 rIceData.vSliceBias[ bCol ? 0 : 1 ][ uiI ] = 0;
@@ -159,7 +182,8 @@ void PartialQuarry::icePreFilter( IceData& rIceData, bool bCol, size_t uiFrom, s
 }
 
 
-void PartialQuarry::iceTimesOuterProduct( IceData& rIceData, bool bA, size_t uiFrom, size_t uiTo, size_t uiY )
+void PartialQuarry::iceTimesOuterProduct( IceData& rIceData, bool bA, size_t uiFrom, size_t uiTo, size_t uiY,
+                                          size_t uiIgnoreDiags )
 {
     const size_t uiH = rIceData.vSliceBias[ 1 ].size( );
     for( size_t uiI = uiFrom; uiI < uiTo; uiI++ )
@@ -168,10 +192,11 @@ void PartialQuarry::iceTimesOuterProduct( IceData& rIceData, bool bA, size_t uiF
         assert( uiI % uiH < rIceData.vSliceBias[ 1 ].size( ) );
         assert( uiI < rIceData.vBiases.size( ) );
         rIceData.vBiases[ uiI ] = rIceData.vSliceBias[ 0 ][ uiI / uiH ] * rIceData.vSliceBias[ 1 ][ uiI % uiH ] *
-                                  iceGetCount( rIceData, uiI / uiH, uiI % uiH, uiY, bA );
+                                  iceGetCount( rIceData, uiI / uiH, uiI % uiH, uiY, bA, uiIgnoreDiags );
     }
 }
-void PartialQuarry::iceTimesOuterProduct( SymmIceData& rIceData, bool bA, size_t uiFrom, size_t uiTo, size_t uiY )
+void PartialQuarry::iceTimesOuterProduct( SymmIceData& rIceData, bool bA, size_t uiFrom, size_t uiTo, size_t uiY,
+                                          size_t uiIgnoreDiags )
 {
     const size_t uiH = rIceData.vSliceBias.size( );
     for( size_t uiI = uiFrom; uiI < uiTo; uiI++ )
@@ -179,7 +204,7 @@ void PartialQuarry::iceTimesOuterProduct( SymmIceData& rIceData, bool bA, size_t
         assert( uiI / uiH < rIceData.vSliceBias.size( ) );
         assert( uiI < rIceData.vBiases.size( ) );
         rIceData.vBiases[ uiI ] = rIceData.vSliceBias[ uiI / uiH ] * rIceData.vSliceBias[ uiI % uiH ] *
-                                  iceGetCount( rIceData, uiI / uiH, uiI % uiH, uiY, bA );
+                                  iceGetCount( rIceData, uiI / uiH, uiI % uiH, uiY, bA, uiIgnoreDiags );
     }
 }
 
@@ -721,6 +746,7 @@ bool PartialQuarry::normalizeCoolIC( )
 
 bool PartialQuarry::normalizeSymmIC( )
 {
+    const size_t uiIgnoreDiags = getValue<size_t>( { "settings", "normalization", "ice_ignore_n_diags", "val" } );
     for( size_t uiY = 0; uiY < 3; uiY++ )
     {
         const auto& rXCoords = pickXCoords( uiY );
@@ -748,12 +774,12 @@ bool PartialQuarry::normalizeSymmIC( )
                 double fVar = 0.0;
                 double fMean = 0.0;
 
-                // icePreFilter( xData, 0, xData.vSliceBias.size( ), uiY, uiI == 0 );
+                // icePreFilter( xData, 0, xData.vSliceBias.size( ), uiY, uiI == 0, uiIgnoreDiags );
                 for( size_t uiItr = 0; uiItr < uiMaxIters; uiItr++ )
                 {
                     CANCEL_RETURN;
                     iceFilter( xData, 0, xData.vBiases.size( ) );
-                    iceTimesOuterProduct( xData, uiI == 0, 0, xData.vBiases.size( ), uiY );
+                    iceTimesOuterProduct( xData, uiI == 0, 0, xData.vBiases.size( ), uiY, uiIgnoreDiags );
                     iceMarginalize( xData, 0, xData.vSliceBias.size( ) );
                     fMean = iceNonZeroMarginMean( xData );
                     iceDivByMargin( xData, fMean, 0, xData.vSliceBias.size( ) );
@@ -812,6 +838,7 @@ bool PartialQuarry::normalizeSymmIC( )
 
 bool PartialQuarry::normalizeIC( )
 {
+    const size_t uiIgnoreDiags = getValue<size_t>( { "settings", "normalization", "ice_ignore_n_diags", "val" } );
     for( size_t uiY = 0; uiY < NUM_COORD_SYSTEMS; uiY++ )
     {
         const auto& rXCoords = pickXCoords( uiY );
@@ -839,12 +866,12 @@ bool PartialQuarry::normalizeIC( )
             std::array<double, 2> vVar{ 0, 0 };
             std::array<double, 2> vMean{ 0, 0 };
             for( bool bCol : { true, false } )
-                icePreFilter( xData, bCol, 0, xData.vSliceBias[ bCol ? 0 : 1 ].size( ), uiY, uiI == 0 );
+                icePreFilter( xData, bCol, 0, xData.vSliceBias[ bCol ? 0 : 1 ].size( ), uiY, uiI == 0, uiIgnoreDiags );
             for( size_t uiItr = 0; uiItr < uiMaxIters; uiItr++ )
             {
                 CANCEL_RETURN;
                 iceFilter( xData, 0, xData.vBiases.size( ) );
-                iceTimesOuterProduct( xData, uiI == 0, 0, xData.vBiases.size( ), uiY );
+                iceTimesOuterProduct( xData, uiI == 0, 0, xData.vBiases.size( ), uiY, uiIgnoreDiags );
                 for( bool bCol : { true, false } )
                 {
                     CANCEL_RETURN;

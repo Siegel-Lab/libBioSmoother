@@ -1118,16 +1118,16 @@ class PartialQuarry : public HasSession
     };
 
     // normalization.h
-    double iceGetCount( IceData&, size_t, size_t, size_t, bool );
-    double iceGetCount( SymmIceData&, size_t, size_t, size_t, bool );
+    double iceGetCount( IceData&, size_t, size_t, size_t, bool, size_t );
+    double iceGetCount( SymmIceData&, size_t, size_t, size_t, bool, size_t );
     // normalization.h
-    void icePreFilter( IceData&, bool, size_t, size_t, size_t, bool );
+    void icePreFilter( IceData&, bool, size_t, size_t, size_t, bool, size_t );
     // normalization.h
     void iceFilter( IceData&, size_t, size_t );
     void iceFilter( SymmIceData&, size_t, size_t );
     // normalization.h
-    void iceTimesOuterProduct( IceData&, bool, size_t, size_t, size_t );
-    void iceTimesOuterProduct( SymmIceData&, bool, size_t, size_t, size_t );
+    void iceTimesOuterProduct( IceData&, bool, size_t, size_t, size_t, size_t );
+    void iceTimesOuterProduct( SymmIceData&, bool, size_t, size_t, size_t, size_t );
     // normalization.h
     void iceMarginalize( IceData&, bool, size_t, size_t );
     void iceMarginalize( SymmIceData&, size_t, size_t );
@@ -1529,7 +1529,7 @@ class PartialQuarry : public HasSession
         return sRet + "}";
     }
 
-    std::string getNodeDesc()
+    std::string getNodeDesc( )
     {
         std::string sRet;
         for( size_t uiI = 0; uiI < NodeNames::SIZE; uiI++ )
