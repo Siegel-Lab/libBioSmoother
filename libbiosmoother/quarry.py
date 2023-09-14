@@ -330,13 +330,13 @@ class Quarry(PartialQuarry):
             return (int(s) * fac) // self.get_value(["dividend"])
         return None
 
-    def interpret_position(self, s, on_x_axis=True, bot=True, genomic_coords=False):
+    def interpret_position(self, s, on_x_axis=True, bot=True):
         if s.count(":") == 0 and s.count("+-") == 1:
             x, y = s.split("+-")
             c = self.__interpret_number(y)
             if not c is None and bot:
                 c = -c
-            a = self.interpret_name(x, on_x_axis, bot, genomic_coords, lambda x: None)
+            a = self.interpret_name(x, on_x_axis, bot, lambda x: None)
             if not a is None and not c is None:
                 return [a + c]
         elif s.count(":") == 1:
@@ -351,12 +351,12 @@ class Quarry(PartialQuarry):
                 if not c is None and bot:
                     c = -c
                 a = self.interpret_name(
-                    x, on_x_axis, bot if len(y1) == 0 else True, genomic_coords, lambda x: None
+                    x, on_x_axis, bot if len(y1) == 0 else True, lambda x: None
                 )
                 if not a is None and not b is None and not c is None:
                     return [a + b + c]
             b = self.__interpret_number(y)
-            a = self.interpret_name(x, on_x_axis, True, genomic_coords, lambda x: None)
+            a = self.interpret_name(x, on_x_axis, True, lambda x: None)
             if not a is None and not b is None:
                 return [a + b]
 
@@ -365,13 +365,13 @@ class Quarry(PartialQuarry):
             return [a]
 
         if not s is None:
-            a = self.interpret_name(s, on_x_axis, bot, genomic_coords, lambda x: None)
+            a = self.interpret_name(s, on_x_axis, bot, lambda x: None)
             if not a is None:
                 return [a]
 
         return [None]
 
-    def interpret_range(self, s, on_x_axis=True, genomic_coords=False):
+    def interpret_range(self, s, on_x_axis=True):
         s = "".join(s.lower().split())
         if s.count("..") == 1 and s.count("[") <= 1 and s.count("]") <= 1:
             x, y = s.split("..")
@@ -381,9 +381,9 @@ class Quarry(PartialQuarry):
                 y = y[:-1]
 
             ret = self.interpret_position(
-                x, on_x_axis, True, genomic_coords=genomic_coords
+                x, on_x_axis, True
             ) + self.interpret_position(
-                y, on_x_axis, False, genomic_coords=genomic_coords
+                y, on_x_axis, False
             )
         else:
             if s[:1] == "[":
@@ -391,9 +391,9 @@ class Quarry(PartialQuarry):
             if s[-1:] == "]":
                 s = s[:-1]
             ret = self.interpret_position(
-                s, on_x_axis, True, genomic_coords=genomic_coords
+                s, on_x_axis, True
             ) + self.interpret_position(
-                s, on_x_axis, False, genomic_coords=genomic_coords
+                s, on_x_axis, False
             )
         if not None in ret:
             ret.sort()

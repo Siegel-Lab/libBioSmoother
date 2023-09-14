@@ -1402,24 +1402,21 @@ class PartialQuarry : public HasSession
     }
 
   public:
-    const pybind11::int_ interpretName( std::string sName, bool bXAxis, bool bBottom, bool bGenomicCoords,
+    const pybind11::int_ interpretName( std::string sName, bool bXAxis, bool bBottom,
                                         const std::function<void( const std::string& )>& fPyPrint )
     {
         update( NodeNames::CanvasSize, fPyPrint );
         sName = to_lower( sName );
         if( ( bBottom && sName == "*" ) || sName.size( ) == 0 || sName == "start" )
             return pybind11::int_( 0 );
-        if( !bGenomicCoords && ( ( !bBottom && sName == "*" ) || sName.size( ) == 0 || sName == "end" ) )
+        if( ( !bBottom && sName == "*" ) || sName.size( ) == 0 || sName == "end" )
             return pybind11::int_( vCanvasSize[ bXAxis ? 0 : 1 ] );
-        else if( bGenomicCoords && ( ( !bBottom && sName == "*" ) || sName.size( ) == 0 || sName == "end" ) )
-            return pybind11::int_( getValue<size_t>( { "contigs", "genome_size" } ) );
 
         size_t uiMaxPos = 0;
         const bool bSqueeze =
             this->xSession[ "settings" ][ "filters" ][ "anno_in_multiple_bins" ].get<std::string>( ) == "squeeze";
-        const bool bFullGenome =
-            bGenomicCoords ||
-            !getValue<bool>( { "settings", "filters", bXAxis ? "anno_coords_col" : "anno_coords_row" } );
+        const bool bFullGenome = !getValue<bool>( { "settings", "filters", 
+                                                    bXAxis ? "anno_coords_col" : "anno_coords_row" } );
         size_t uiRunningPos = 0;
         for( auto xChr : vActiveChromosomes[ bXAxis ? 0 : 1 ] )
         {

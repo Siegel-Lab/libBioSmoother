@@ -173,7 +173,7 @@ def set_smoother(args):
         q.save_session()
     elif args.name == "settings.interface.v4c.col":
         q = Quarry(possible)
-        new_range = q.interpret_range(args.val, False)
+        new_range = q.interpret_range(args.val, True)
         if not new_range[0] is None:
             q.set_value(["settings", "interface", "v4c", "col_from"], new_range[0])
         if not new_range[1] is None:
@@ -181,7 +181,7 @@ def set_smoother(args):
         q.save_session()
     elif args.name == "settings.interface.v4c.row":
         q = Quarry(possible)
-        new_range = q.interpret_range(args.val, True)
+        new_range = q.interpret_range(args.val, False)
         if not new_range[0] is None:
             q.set_value(["settings", "interface", "v4c", "row_from"], new_range[0])
         if not new_range[1] is None:
@@ -251,7 +251,7 @@ def get_smoother(args):
             q.get_readable_range(
                 q.get_value(["settings", "interface", "v4c", "col_from"]),
                 q.get_value(["settings", "interface", "v4c", "col_to"]),
-                False,
+                True,
             )
         )
     elif args.name == "settings.interface.v4c.row":
@@ -260,7 +260,7 @@ def get_smoother(args):
             q.get_readable_range(
                 q.get_value(["settings", "interface", "v4c", "row_from"]),
                 q.get_value(["settings", "interface", "v4c", "row_to"]),
-                True,
+                False,
             )
         )
     else:

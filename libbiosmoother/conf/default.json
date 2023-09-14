@@ -299,7 +299,7 @@
             "spinner_max_restricted": false
         },
         "connect_tracks_over_contig_borders": false,
-        "center_tracks_on_bins": false,
+        "center_tracks_on_bins": true,
         "zero_track_at_ends": false,
         "tracks_log_scale": false
     },
