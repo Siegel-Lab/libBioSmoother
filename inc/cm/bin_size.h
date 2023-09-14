@@ -168,6 +168,7 @@ void PartialQuarry::regBinSize( )
 {
     registerNode( NodeNames::BinSize,
                   ComputeNode{ /*.sNodeName =*/"bin_size",
+                               /*.sNodeDesc =*/"Compute the current bin size from the parameters in the settings json.",
                                /*.fFunc =*/&PartialQuarry::setBinSize,
                                /*.vIncomingFunctions =*/{ },
                                /*.vIncomingSession =*/
@@ -190,6 +191,7 @@ void PartialQuarry::regBinSize( )
 
     registerNode( NodeNames::RenderArea,
                   ComputeNode{ /*.sNodeName =*/"render_area",
+                               /*.sNodeDesc =*/"Extract the current render area from the settings json.",
                                /*.fFunc =*/&PartialQuarry::setRenderArea,
                                /*.vIncomingFunctions =*/{ NodeNames::BinSize },
                                /*.vIncomingSession =*/

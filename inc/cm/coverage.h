@@ -566,6 +566,7 @@ void PartialQuarry::regCoverage( )
 {
     registerNode( NodeNames::ActiveCoverage,
                   ComputeNode{ /*.sNodeName =*/"active_coverage",
+                               /*.sNodeDesc =*/"Extract the active tracks form the settings json.",
                                /*.fFunc =*/&PartialQuarry::setActiveCoverage,
                                /*.vIncomingFunctions =*/{ },
                                /*.vIncomingSession =*/
@@ -589,6 +590,7 @@ void PartialQuarry::regCoverage( )
 
     registerNode( NodeNames::CoverageValues,
                   ComputeNode{ /*.sNodeName =*/"coverage_values",
+                               /*.sNodeDesc =*/"Compute bin values for the active tracks.",
                                /*.fFunc =*/&PartialQuarry::setCoverageValues,
                                /*.vIncomingFunctions =*/
                                { NodeNames::ActiveCoverage, NodeNames::AxisCoords, NodeNames::IntersectionType,
@@ -606,6 +608,7 @@ void PartialQuarry::regCoverage( )
 
     registerNode( NodeNames::Tracks,
                   ComputeNode{ /*.sNodeName =*/"coverage_tracks",
+                               /*.sNodeDesc =*/"Generate a python ColumnDataSource representation of the tracks.",
                                /*.fFunc =*/&PartialQuarry::setTracks,
                                /*.vIncomingFunctions =*/
                                { NodeNames::TrackPrecursor },
@@ -620,6 +623,7 @@ void PartialQuarry::regCoverage( )
     registerNode(
         NodeNames::TrackPrecursor,
         ComputeNode{ /*.sNodeName =*/"coverage_track_precurser",
+                     /*.sNodeDesc =*/"Collect all the computed tracks into a single datastructure.",
                      /*.fFunc =*/&PartialQuarry::setTrackPrecursor,
                      /*.vIncomingFunctions =*/
                      { NodeNames::LCS, NodeNames::AnnotationColors, NodeNames::CoverageValues, NodeNames::Flat4C },
@@ -637,6 +641,7 @@ void PartialQuarry::regCoverage( )
 
     registerNode( NodeNames::TrackExport,
                   ComputeNode{ /*.sNodeName =*/"track_export",
+                               /*.sNodeDesc =*/"Generate a python TSV representation to export the tracks.",
                                /*.fFunc =*/&PartialQuarry::setTrackExport,
                                /*.vIncomingFunctions =*/{ NodeNames::Tracks },
                                /*.vIncomingSession =*/{ },
@@ -654,6 +659,9 @@ void PartialQuarry::regCoverage( )
         NodeNames::RankedSlicesCDS,
         ComputeNode{
             /*.sNodeName =*/"ranked_slices_cds",
+            /*.sNodeDesc =*/
+            "Generate a python ColumnDataSource representation of the ranked slices from the Assoc. Slices "
+            "normalization.",
             /*.fFunc =*/&PartialQuarry::setRankedSlicesCDS,
             /*.vIncomingFunctions =*/{ NodeNames::RnaAssociatedGenesFilter },
             /*.vIncomingSession =*/{ { "settings", "interface", "axis_label_max_char", "val" } },

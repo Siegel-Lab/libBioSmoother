@@ -238,6 +238,7 @@ class PartialQuarry : public HasSession
     struct ComputeNode
     {
         std::string sNodeName;
+        std::string sNodeDesc;
         bool ( PartialQuarry::*fFunc )( void );
         std::vector<NodeNames> vIncomingFunctions;
         std::vector<std::vector<std::string>> vIncomingSession;
@@ -1415,8 +1416,8 @@ class PartialQuarry : public HasSession
         size_t uiMaxPos = 0;
         const bool bSqueeze =
             this->xSession[ "settings" ][ "filters" ][ "anno_in_multiple_bins" ].get<std::string>( ) == "squeeze";
-        const bool bFullGenome = !getValue<bool>( { "settings", "filters", 
-                                                    bXAxis ? "anno_coords_col" : "anno_coords_row" } );
+        const bool bFullGenome =
+            !getValue<bool>( { "settings", "filters", bXAxis ? "anno_coords_col" : "anno_coords_row" } );
         size_t uiRunningPos = 0;
         for( auto xChr : vActiveChromosomes[ bXAxis ? 0 : 1 ] )
         {
@@ -1526,6 +1527,14 @@ class PartialQuarry : public HasSession
                     sRet += "\t" + vGraph[ rIncoming ].sNodeName + " -> " + rNode.sNodeName + ";\n";
         }
         return sRet + "}";
+    }
+
+    std::string getNodeDesc()
+    {
+        std::string sRet;
+        for( size_t uiI = 0; uiI < NodeNames::SIZE; uiI++ )
+            sRet += vGraph[ uiI ].sNodeName + ":\t" + vGraph[ uiI ].sNodeDesc + "\n";
+        return sRet;
     }
 
     std::vector<std::pair<std::string, size_t>> getRuntimes( )

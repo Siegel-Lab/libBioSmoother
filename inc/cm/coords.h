@@ -1509,6 +1509,9 @@ void PartialQuarry::regCoords( )
 {
     registerNode( NodeNames::LCS,
                   ComputeNode{ /*.sNodeName =*/"longest_common_substring",
+                               /*.sNodeDesc =*/
+                               "Get the longest common suffix of the active contigs. This is used to remove that "
+                               "suffix from the contig names to make them more readable.",
                                /*.fFunc =*/&PartialQuarry::setLCS,
                                /*.vIncomingFunctions =*/{ NodeNames::ActiveChrom },
                                /*.vIncomingSession =*/{ },
@@ -1517,6 +1520,7 @@ void PartialQuarry::regCoords( )
 
     registerNode( NodeNames::ActiveChrom,
                   ComputeNode{ /*.sNodeName =*/"active_chroms",
+                               /*.sNodeDesc =*/"Extract the active contigs from the settings json.",
                                /*.fFunc =*/&PartialQuarry::setActiveChrom,
                                /*.vIncomingFunctions =*/{ },
                                /*.vIncomingSession =*/
@@ -1540,6 +1544,7 @@ void PartialQuarry::regCoords( )
 
     registerNode( NodeNames::ActiveChromLength,
                   ComputeNode{ /*.sNodeName =*/"active_chroms_length",
+                               /*.sNodeDesc =*/"Compute the lengths of the active contigs.",
                                /*.fFunc =*/&PartialQuarry::setActiveChromLength,
                                /*.vIncomingFunctions =*/{ NodeNames::ActiveChrom, NodeNames::BinSize },
                                /*.vIncomingSession =*/
@@ -1552,30 +1557,35 @@ void PartialQuarry::regCoords( )
 
     registerNode(
         NodeNames::Ticks,
-        ComputeNode{ /*.sNodeName =*/"ticks",
-                     /*.fFunc =*/&PartialQuarry::setTicks,
-                     /*.vIncomingFunctions =*/{ NodeNames::LCS, NodeNames::AnnotationValues, NodeNames::CanvasSize },
-                     /*.vIncomingSession =*/{ },
+        ComputeNode{
+            /*.sNodeName =*/"ticks",
+            /*.sNodeDesc =*/"Generate a python ColumnDataSource representation of the contig start and end positions.",
+            /*.fFunc =*/&PartialQuarry::setTicks,
+            /*.vIncomingFunctions =*/{ NodeNames::LCS, NodeNames::AnnotationValues, NodeNames::CanvasSize },
+            /*.vIncomingSession =*/{ },
+            /*.vSessionsIncomingInPrevious =*/
+            { { "settings", "interface", "axis_label_max_char", "val" },
+              { "contigs", "annotation_coordinates" },
+              { "settings", "filters", "anno_coords_row" },
+              { "settings", "filters", "anno_coords_col" },
+              { "settings", "filters", "anno_in_multiple_bins" },
+              { "annotation", "by_name" },
+              { "dividend" } },
+            /*bHidden =*/false } );
+    registerNode(
+        NodeNames::BinCoordsCDS,
+        ComputeNode{ /*.sNodeName =*/"bin_coord_cds",
+                     /*.sNodeDesc =*/"Generate a python ColumnDataSource representation of the bin cooridnates.",
+                     /*.fFunc =*/&PartialQuarry::setBinCoordsCDS,
+                     /*.vIncomingFunctions =*/{ NodeNames::AxisCoords },
+                     /*.vIncomingSession =*/{ { "settings", "interface", "axis_label_max_char", "val" } },
                      /*.vSessionsIncomingInPrevious =*/
-                     { { "settings", "interface", "axis_label_max_char", "val" },
-                       { "contigs", "annotation_coordinates" },
-                       { "settings", "filters", "anno_coords_row" },
-                       { "settings", "filters", "anno_coords_col" },
-                       { "settings", "filters", "anno_in_multiple_bins" },
-                       { "annotation", "by_name" },
-                       { "dividend" } },
+                     { { "dividend" } },
                      /*bHidden =*/false } );
-    registerNode( NodeNames::BinCoordsCDS,
-                  ComputeNode{ /*.sNodeName =*/"bin_coord_cds",
-                               /*.fFunc =*/&PartialQuarry::setBinCoordsCDS,
-                               /*.vIncomingFunctions =*/{ NodeNames::AxisCoords },
-                               /*.vIncomingSession =*/{ { "settings", "interface", "axis_label_max_char", "val" } },
-                               /*.vSessionsIncomingInPrevious =*/
-                               { { "dividend" } },
-                               /*bHidden =*/false } );
 
     registerNode( NodeNames::CanvasSize,
                   ComputeNode{ /*.sNodeName =*/"canvas_size",
+                               /*.sNodeDesc =*/"Compute the canvas size.",
                                /*.fFunc =*/&PartialQuarry::setCanvasSize,
                                /*.vIncomingFunctions =*/{ NodeNames::ActiveChromLength },
                                /*.vIncomingSession =*/
@@ -1588,6 +1598,7 @@ void PartialQuarry::regCoords( )
 
     registerNode( NodeNames::AxisCoords,
                   ComputeNode{ /*.sNodeName =*/"axis_coords",
+                               /*.sNodeDesc =*/"compute the bin coordinates for the x and y axis.",
                                /*.fFunc =*/&PartialQuarry::setAxisCoords,
                                /*.vIncomingFunctions =*/{ NodeNames::ActiveChromLength, NodeNames::RenderArea },
                                /*.vIncomingSession =*/
@@ -1607,6 +1618,7 @@ void PartialQuarry::regCoords( )
 
     registerNode( NodeNames::V4cCoords,
                   ComputeNode{ /*.sNodeName =*/"virtual4c_coords",
+                               /*.sNodeDesc =*/"Compute the virtual 4c coordinates for the x and y axis.",
                                /*.fFunc =*/&PartialQuarry::setV4cCoords,
                                /*.vIncomingFunctions =*/{ NodeNames::CanvasSize, NodeNames::AxisCoords },
                                /*.vIncomingSession =*/
@@ -1626,15 +1638,18 @@ void PartialQuarry::regCoords( )
                                },
                                /*bHidden =*/false } );
 
-    registerNode( NodeNames::Symmetry, ComputeNode{ /*.sNodeName =*/"symmetry_setting",
-                                                    /*.fFunc =*/&PartialQuarry::setSymmetry,
-                                                    /*.vIncomingFunctions =*/{ },
-                                                    /*.vIncomingSession =*/{ { "settings", "filters", "symmetry" } },
-                                                    /*.vSessionsIncomingInPrevious =*/{ },
-                                                    /*bHidden =*/true } );
+    registerNode( NodeNames::Symmetry,
+                  ComputeNode{ /*.sNodeName =*/"symmetry_setting",
+                               /*.sNodeDesc =*/"Extract the symmetry setting from the settings json.",
+                               /*.fFunc =*/&PartialQuarry::setSymmetry,
+                               /*.vIncomingFunctions =*/{ },
+                               /*.vIncomingSession =*/{ { "settings", "filters", "symmetry" } },
+                               /*.vSessionsIncomingInPrevious =*/{ },
+                               /*bHidden =*/true } );
 
     registerNode( NodeNames::MappingQuality,
                   ComputeNode{ /*.sNodeName =*/"mapping_quality_setting",
+                               /*.sNodeDesc =*/"Extract the mapping quality setting from the settings json.",
                                /*.fFunc =*/&PartialQuarry::setMappingQuality,
                                /*.vIncomingFunctions =*/{ },
                                /*.vIncomingSession =*/
@@ -1646,6 +1661,7 @@ void PartialQuarry::regCoords( )
 
     registerNode( NodeNames::Directionality,
                   ComputeNode{ /*.sNodeName =*/"directionality_setting",
+                               /*.sNodeDesc =*/"Extract the directionality settin from the settings json.",
                                /*.fFunc =*/&PartialQuarry::setDirectionality,
                                /*.vIncomingFunctions =*/{ },
                                /*.vIncomingSession =*/{ { "settings", "filters", "directionality" } },
@@ -1654,6 +1670,7 @@ void PartialQuarry::regCoords( )
 
     registerNode( NodeNames::SampleCoords,
                   ComputeNode{ /*.sNodeName =*/"sample_coords",
+                               /*.sNodeDesc =*/"Compute the sample bins for ICE and Binomial test normalization.",
                                /*.fFunc =*/&PartialQuarry::setSampleCoords,
                                /*.vIncomingFunctions =*/
                                { NodeNames::V4cCoords },
@@ -1669,6 +1686,7 @@ void PartialQuarry::regCoords( )
 
     registerNode( NodeNames::BinCoords,
                   ComputeNode{ /*.sNodeName =*/"bin_coords",
+                               /*.sNodeDesc =*/"Compute the 2D coorinates of all bins.",
                                /*.fFunc =*/&PartialQuarry::setBinCoords,
                                /*.vIncomingFunctions =*/
                                { NodeNames::AnnoFilters, NodeNames::IntersectionType, NodeNames::Symmetry,
@@ -1680,6 +1698,7 @@ void PartialQuarry::regCoords( )
 
     registerNode( NodeNames::AnnoFilters,
                   ComputeNode{ /*.sNodeName =*/"anno_filters",
+                               /*.sNodeDesc =*/"Extract the annotation filters from the settings json.",
                                /*.fFunc =*/&PartialQuarry::setAnnoFilters,
                                /*.vIncomingFunctions =*/{ NodeNames::ActiveChromLength },
                                /*.vIncomingSession =*/
@@ -1696,6 +1715,7 @@ void PartialQuarry::regCoords( )
 
     registerNode( NodeNames::DecayCoords,
                   ComputeNode{ /*.sNodeName =*/"decay_coords",
+                               /*.sNodeDesc =*/"Compute the samples for the DDD normalization.",
                                /*.fFunc =*/&PartialQuarry::setDecayCoords,
                                /*.vIncomingFunctions =*/{ NodeNames::BinCoords },
                                /*.vIncomingSession =*/

@@ -357,6 +357,7 @@ void PartialQuarry::regAnnotation( )
 {
     registerNode( NodeNames::ActivateAnnotation,
                   ComputeNode{ /*.sNodeName =*/"active_annotation",
+                               /*.sNodeDesc =*/"Extract the ids of the active annotations from the json settings file.",
                                /*.fFunc =*/&PartialQuarry::setActivateAnnotation,
                                /*.vIncomingFunctions =*/{ },
                                /*.vIncomingSession =*/
@@ -366,23 +367,27 @@ void PartialQuarry::regAnnotation( )
                                /*.vSessionsIncomingInPrevious =*/{ },
                                /*bHidden =*/false } );
 
-    registerNode( NodeNames::AnnotationValues,
-                  ComputeNode{ /*.sNodeName =*/"annotation_values",
-                               /*.fFunc =*/&PartialQuarry::setAnnotationValues,
-                               /*.vIncomingFunctions =*/{ NodeNames::ActivateAnnotation, NodeNames::AxisCoords },
-                               /*.vIncomingSession =*/{ { "settings", "interface", "max_detailed_anno_display" } },
-                               /*.vSessionsIncomingInPrevious =*/
-                               { { "settings", "filters", "anno_in_multiple_bins" },
-                                 { "dividend" },
-                                 { "annotation", "by_name" },
-                                 { "settings", "filters", "anno_coords_row" },
-                                 { "settings", "filters", "anno_coords_col" } },
-                               /*bHidden =*/false } );
+    registerNode(
+        NodeNames::AnnotationValues,
+        ComputeNode{
+            /*.sNodeName =*/"annotation_values",
+            /*.sNodeDesc =*/"Query the positions and descriptions of the active annotations form the annotation index.",
+            /*.fFunc =*/&PartialQuarry::setAnnotationValues,
+            /*.vIncomingFunctions =*/{ NodeNames::ActivateAnnotation, NodeNames::AxisCoords },
+            /*.vIncomingSession =*/{ { "settings", "interface", "max_detailed_anno_display" } },
+            /*.vSessionsIncomingInPrevious =*/
+            { { "settings", "filters", "anno_in_multiple_bins" },
+              { "dividend" },
+              { "annotation", "by_name" },
+              { "settings", "filters", "anno_coords_row" },
+              { "settings", "filters", "anno_coords_col" } },
+            /*bHidden =*/false } );
 
     registerNode(
         NodeNames::AnnotationCDS,
         ComputeNode{
             /*.sNodeName =*/"annotation_cds",
+            /*.sNodeDesc =*/"Generate the Python ColumnDataSource representation of the active annotations.",
             /*.fFunc =*/&PartialQuarry::setAnnotationCDS,
             /*.vIncomingFunctions =*/{ NodeNames::AnnotationValues, NodeNames::AnnotationColors, NodeNames::V4cCoords },
             /*.vIncomingSession =*/
@@ -390,17 +395,19 @@ void PartialQuarry::regAnnotation( )
             /*.vSessionsIncomingInPrevious =*/{ { "dividend" } },
             /*bHidden =*/false } );
 
-    registerNode( NodeNames::ActivateAnnotationCDS,
-                  ComputeNode{ /*.sNodeName =*/"active_annotation_cds",
-                               /*.fFunc =*/&PartialQuarry::setActivateAnnotationCDS,
-                               /*.vIncomingFunctions =*/{ NodeNames::ActivateAnnotation },
-                               /*.vIncomingSession =*/
-                               {
-                                   { "settings", "interface", "v4c", "do_col" },
-                                   { "settings", "interface", "v4c", "do_row" },
-                               },
-                               /*.vSessionsIncomingInPrevious =*/{ },
-                               /*bHidden =*/false } );
+    registerNode(
+        NodeNames::ActivateAnnotationCDS,
+        ComputeNode{ /*.sNodeName =*/"active_annotation_cds",
+                     /*.sNodeDesc =*/"Generate a Python list that contains the names of the active annotations.",
+                     /*.fFunc =*/&PartialQuarry::setActivateAnnotationCDS,
+                     /*.vIncomingFunctions =*/{ NodeNames::ActivateAnnotation },
+                     /*.vIncomingSession =*/
+                     {
+                         { "settings", "interface", "v4c", "do_col" },
+                         { "settings", "interface", "v4c", "do_row" },
+                     },
+                     /*.vSessionsIncomingInPrevious =*/{ },
+                     /*bHidden =*/false } );
 }
 
 } // namespace cm

@@ -1007,6 +1007,7 @@ void PartialQuarry::regNormalization( )
 {
     registerNode( NodeNames::Normalized,
                   ComputeNode{ /*.sNodeName =*/"normalized_bins",
+                               /*.sNodeDesc =*/"Normalize the heatmap bins.",
                                /*.fFunc =*/&PartialQuarry::setNormalized,
                                /*.vIncomingFunctions =*/
                                { NodeNames::DistDepDecayRemoved, NodeNames::RnaAssociatedBackground },
@@ -1024,6 +1025,7 @@ void PartialQuarry::regNormalization( )
 
     registerNode( NodeNames::GridSeqSamples,
                   ComputeNode{ /*.sNodeName =*/"grid_seq_samples",
+                               /*.sNodeDesc =*/"Compute the sample bin coordinates for assoc. slices normalizaition.",
                                /*.fFunc =*/&PartialQuarry::setGridSeqSamples,
                                /*.vIncomingFunctions =*/{ NodeNames::AxisCoords },
                                /*.vIncomingSession =*/
@@ -1037,6 +1039,7 @@ void PartialQuarry::regNormalization( )
 
     registerNode( NodeNames::GridSeqCoverage,
                   ComputeNode{ /*.sNodeName =*/"grid_seq_coverage",
+                               /*.sNodeDesc =*/"Compute the coverage of the assoc. slices normalization.",
                                /*.fFunc =*/&PartialQuarry::setGridSeqCoverage,
                                /*.vIncomingFunctions =*/
                                { NodeNames::ActiveReplicates, NodeNames::MappingQuality, NodeNames::Directionality,
@@ -1057,6 +1060,7 @@ void PartialQuarry::regNormalization( )
 
     registerNode( NodeNames::RnaAssociatedGenesFilter,
                   ComputeNode{ /*.sNodeName =*/"rna_associated_genes_filter",
+                               /*.sNodeDesc =*/"Compute the associated annotations of the assoc. slices normalization.",
                                /*.fFunc =*/&PartialQuarry::setRnaAssociatedGenesFilter,
                                /*.vIncomingFunctions =*/{ NodeNames::GridSeqCoverage },
                                /*.vIncomingSession =*/
@@ -1067,20 +1071,23 @@ void PartialQuarry::regNormalization( )
                                /*.vSessionsIncomingInPrevious =*/{ { "settings", "normalization", "normalize_by" } },
                                /*bHidden =*/false } );
 
-    registerNode( NodeNames::RnaAssociatedBackground,
-                  ComputeNode{ /*.sNodeName =*/"rna_associated_background",
-                               /*.fFunc =*/&PartialQuarry::setRnaAssociatedBackground,
-                               /*.vIncomingFunctions =*/{ NodeNames::RnaAssociatedGenesFilter },
-                               /*.vIncomingSession =*/{ { "settings", "normalization", "grid_seq_ignore_cis" } },
-                               /*.vSessionsIncomingInPrevious =*/
-                               { { "settings", "normalization", "normalize_by" },
-                                 { "settings", "normalization", "grid_seq_axis_is_column" },
-                                 { "replicates", "by_name" },
-                                 { "dividend" } },
-                               /*bHidden =*/false } );
+    registerNode(
+        NodeNames::RnaAssociatedBackground,
+        ComputeNode{ /*.sNodeName =*/"rna_associated_background",
+                     /*.sNodeDesc =*/"Compute the RNA associated background of the assoc. slices normalization.",
+                     /*.fFunc =*/&PartialQuarry::setRnaAssociatedBackground,
+                     /*.vIncomingFunctions =*/{ NodeNames::RnaAssociatedGenesFilter },
+                     /*.vIncomingSession =*/{ { "settings", "normalization", "grid_seq_ignore_cis" } },
+                     /*.vSessionsIncomingInPrevious =*/
+                     { { "settings", "normalization", "normalize_by" },
+                       { "settings", "normalization", "grid_seq_axis_is_column" },
+                       { "replicates", "by_name" },
+                       { "dividend" } },
+                     /*bHidden =*/false } );
 
     registerNode( NodeNames::DistDepDecayRemoved,
                   ComputeNode{ /*.sNodeName =*/"dist_dep_dec_normalized_bins",
+                               /*.sNodeDesc =*/"Remove the distance dependent decay from the normalized bins.",
                                /*.fFunc =*/&PartialQuarry::setDistDepDecayRemoved,
                                /*.vIncomingFunctions =*/{ NodeNames::PloidyValues, NodeNames::FlatDecay },
                                /*.vIncomingSession =*/{ },

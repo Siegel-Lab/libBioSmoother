@@ -61,7 +61,7 @@ bool PartialQuarry::setCombined( )
 
 bool PartialQuarry::setFlat4C( )
 {
-    const bool bAverage = getValue<bool>({"settings", "interface", "v4c", "norm_by_viewpoint_size"});
+    const bool bAverage = getValue<bool>( { "settings", "interface", "v4c", "norm_by_viewpoint_size" } );
     for( size_t uiY = 1; uiY < 3; uiY++ )
     {
         const auto& rXCoords = uiY == 1 ? vV4cCoords[ 0 ] : vAxisCords[ 0 ];
@@ -71,7 +71,7 @@ bool PartialQuarry::setFlat4C( )
         if( rXCoords.size( ) > 0 && rYCoords.size( ) > 0 )
         {
             vFlat4C[ uiY - 1 ].reserve( uiY == 1 ? rYCoords.size( ) : rXCoords.size( ) );
-            
+
             size_t uiViewPointSize = 0;
             for( const auto& rCoord : uiY == 1 ? rXCoords : rYCoords )
                 uiViewPointSize += rCoord.uiScreenSize;
@@ -85,7 +85,7 @@ bool PartialQuarry::setFlat4C( )
                     const size_t uiIdx = ( uiY == 1 ? uiJ : uiI ) * rYCoords.size( ) + ( uiY == 1 ? uiI : uiJ );
                     vFlat4C[ uiY - 1 ].back( ) += vCombined[ uiY ][ uiIdx ];
                 }
-                if(bAverage)
+                if( bAverage )
                     vFlat4C[ uiY - 1 ].back( ) /= uiViewPointSize;
             }
         }
@@ -389,6 +389,7 @@ void PartialQuarry::regColors( )
 {
     registerNode( NodeNames::Colors,
                   ComputeNode{ /*.sNodeName =*/"color_palette",
+                               /*.sNodeDesc =*/"Extract the current heatmap color palette from the settings json.",
                                /*.fFunc =*/&PartialQuarry::setColors,
                                /*.vIncomingFunctions =*/{ NodeNames::BetweenGroup },
                                /*.vIncomingSession =*/
@@ -399,18 +400,21 @@ void PartialQuarry::regColors( )
                                /*.vSessionsIncomingInPrevious =*/{ },
                                /*bHidden =*/true } );
 
-    registerNode( NodeNames::AnnotationColors,
-                  ComputeNode{ /*.sNodeName =*/"annotation_color_palette",
-                               /*.fFunc =*/&PartialQuarry::setAnnotationColors,
-                               /*.vIncomingFunctions =*/{ },
-                               /*.vIncomingSession =*/
-                               { { "settings", "interface", "annotation_color_palette" },
-                                 { "settings", "interface", "annotation_color_palette_dark" } },
-                               /*.vSessionsIncomingInPrevious =*/{ },
-                               /*bHidden =*/true } );
+    registerNode(
+        NodeNames::AnnotationColors,
+        ComputeNode{ /*.sNodeName =*/"annotation_color_palette",
+                     /*.sNodeDesc =*/"Extract the current color palette for the annotations from the settings json.",
+                     /*.fFunc =*/&PartialQuarry::setAnnotationColors,
+                     /*.vIncomingFunctions =*/{ },
+                     /*.vIncomingSession =*/
+                     { { "settings", "interface", "annotation_color_palette" },
+                       { "settings", "interface", "annotation_color_palette_dark" } },
+                     /*.vSessionsIncomingInPrevious =*/{ },
+                     /*bHidden =*/true } );
 
     registerNode( NodeNames::Combined,
                   ComputeNode{ /*.sNodeName =*/"combined_bins",
+                               /*.sNodeDesc =*/"Combine the normalized values of the two datapools.",
                                /*.fFunc =*/&PartialQuarry::setCombined,
                                /*.vIncomingFunctions =*/{ NodeNames::Normalized, NodeNames::BetweenGroup },
                                /*.vIncomingSession =*/{ },
@@ -419,14 +423,16 @@ void PartialQuarry::regColors( )
 
     registerNode( NodeNames::Flat4C,
                   ComputeNode{ /*.sNodeName =*/"flat_4c",
+                               /*.sNodeDesc =*/"Flatten the virtual 4C heatmap into a 1D list.",
                                /*.fFunc =*/&PartialQuarry::setFlat4C,
                                /*.vIncomingFunctions =*/{ NodeNames::Combined },
-                               /*.vIncomingSession =*/{ {"settings", "interface", "v4c", "norm_by_viewpoint_size"} },
+                               /*.vIncomingSession =*/{ { "settings", "interface", "v4c", "norm_by_viewpoint_size" } },
                                /*.vSessionsIncomingInPrevious =*/{ },
                                /*bHidden =*/false } );
 
     registerNode( NodeNames::Scaled,
                   ComputeNode{ /*.sNodeName =*/"scaled_bins",
+                               /*.sNodeDesc =*/"Scale the bin values in preparation for coloring.",
                                /*.fFunc =*/&PartialQuarry::setScaled,
                                /*.vIncomingFunctions =*/{ NodeNames::Combined },
                                /*.vIncomingSession =*/{ { "settings", "normalization", "scale" } },
@@ -435,6 +441,7 @@ void PartialQuarry::regColors( )
 
     registerNode( NodeNames::Colored,
                   ComputeNode{ /*.sNodeName =*/"colored_bins",
+                               /*.sNodeDesc =*/"Color the bin values for the heatmap.",
                                /*.fFunc =*/&PartialQuarry::setColored,
                                /*.vIncomingFunctions =*/{ NodeNames::Colors, NodeNames::Scaled },
                                /*.vIncomingSession =*/
@@ -445,29 +452,36 @@ void PartialQuarry::regColors( )
 
     registerNode( NodeNames::HeatmapCDS,
                   ComputeNode{ /*.sNodeName =*/"heatmap_cds",
+                               /*.sNodeDesc =*/"Generate a python ColumnDataSource representation of the heatmap.",
                                /*.fFunc =*/&PartialQuarry::setHeatmapCDS,
                                /*.vIncomingFunctions =*/{ NodeNames::Colored },
                                /*.vIncomingSession =*/{ },
                                /*.vSessionsIncomingInPrevious =*/{ { "dividend" } },
                                /*bHidden =*/false } );
 
-    registerNode( NodeNames::HeatmapExport,
-                  ComputeNode{ /*.sNodeName =*/"heatmap_export",
-                               /*.fFunc =*/&PartialQuarry::setHeatmapExport,
-                               /*.vIncomingFunctions =*/{ NodeNames::Scaled },
-                               /*.vIncomingSession =*/{ },
-                               /*.vSessionsIncomingInPrevious =*/{ { "dividend" } },
-                               /*bHidden =*/false } );
+    registerNode(
+        NodeNames::HeatmapExport,
+        ComputeNode{ /*.sNodeName =*/"heatmap_export",
+                     /*.sNodeDesc =*/"Generate a ptyhon representation for exporting a TSV file of the heatmap.",
+                     /*.fFunc =*/&PartialQuarry::setHeatmapExport,
+                     /*.vIncomingFunctions =*/{ NodeNames::Scaled },
+                     /*.vIncomingSession =*/{ },
+                     /*.vSessionsIncomingInPrevious =*/{ { "dividend" } },
+                     /*bHidden =*/false } );
 
-    registerNode( NodeNames::Palette,
-                  ComputeNode{ /*.sNodeName =*/"rendered_palette",
-                               /*.fFunc =*/&PartialQuarry::setPalette,
-                               /*.vIncomingFunctions =*/{ NodeNames::Scaled, NodeNames::Colors },
-                               /*.vIncomingSession =*/
-                               { { "settings", "normalization", "color_range", "val_max" },
-                                 { "settings", "normalization", "color_range", "val_min" } },
-                               /*.vSessionsIncomingInPrevious =*/{ { "settings", "normalization", "log_base", "val" } },
-                               /*bHidden =*/false } );
+    registerNode(
+        NodeNames::Palette,
+        ComputeNode{
+            /*.sNodeName =*/"rendered_palette",
+            /*.sNodeDesc =*/
+            "Generate a python list with the used color scale (after the log-transformation has been applied).",
+            /*.fFunc =*/&PartialQuarry::setPalette,
+            /*.vIncomingFunctions =*/{ NodeNames::Scaled, NodeNames::Colors },
+            /*.vIncomingSession =*/
+            { { "settings", "normalization", "color_range", "val_max" },
+              { "settings", "normalization", "color_range", "val_min" } },
+            /*.vSessionsIncomingInPrevious =*/{ { "settings", "normalization", "log_base", "val" } },
+            /*bHidden =*/false } );
 }
 
 } // namespace cm

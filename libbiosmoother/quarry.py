@@ -380,9 +380,7 @@ class Quarry(PartialQuarry):
             if y[-1:] == "]":
                 y = y[:-1]
 
-            ret = self.interpret_position(
-                x, on_x_axis, True
-            ) + self.interpret_position(
+            ret = self.interpret_position(x, on_x_axis, True) + self.interpret_position(
                 y, on_x_axis, False
             )
         else:
@@ -390,9 +388,7 @@ class Quarry(PartialQuarry):
                 s = s[1:]
             if s[-1:] == "]":
                 s = s[:-1]
-            ret = self.interpret_position(
-                s, on_x_axis, True
-            ) + self.interpret_position(
+            ret = self.interpret_position(s, on_x_axis, True) + self.interpret_position(
                 s, on_x_axis, False
             )
         if not None in ret:

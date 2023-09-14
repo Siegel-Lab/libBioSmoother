@@ -543,6 +543,7 @@ void PartialQuarry::regReplicates( )
     registerNode(
         NodeNames::ActiveReplicates,
         ComputeNode{ /*.sNodeName =*/"active_replicates_setting",
+                     /*.sNodeDesc =*/"Extract the active replicates from the session json.",
                      /*.fFunc=*/&PartialQuarry::setActiveReplicates,
                      /*.vIncomingFunctions =*/{ },
                      /*.vIncomingSession =*/
@@ -552,6 +553,7 @@ void PartialQuarry::regReplicates( )
 
     registerNode( NodeNames::DatasetIdPerRepl,
                   ComputeNode{ /*.sNodeName =*/"dataset_id_per_repl",
+                               /*.sNodeDesc =*/"Compute the dataset id for each replicate and active contig.",
                                /*.fFunc=*/&PartialQuarry::setDatasetIdPerRepl,
                                /*.vIncomingFunctions =*/{ NodeNames::ActiveReplicates, NodeNames::ActiveChrom },
                                /*.vIncomingSession =*/{ { "replicates", "by_name" } },
@@ -560,6 +562,7 @@ void PartialQuarry::regReplicates( )
 
     registerNode( NodeNames::IntersectionType,
                   ComputeNode{ /*.sNodeName =*/"intersection_type_setting",
+                               /*.sNodeDesc =*/"Extract the intersection type from the session json.",
                                /*.fFunc=*/&PartialQuarry::setIntersectionType,
                                /*.vIncomingFunctions =*/{ },
                                /*.vIncomingSession =*/{ { "settings", "filters", "ambiguous_mapping" } },
@@ -568,6 +571,7 @@ void PartialQuarry::regReplicates( )
 
     registerNode( NodeNames::BinValues,
                   ComputeNode{ /*.sNodeName =*/"bin_values",
+                               /*.sNodeDesc =*/"Compute the values of all bins.",
                                /*.fFunc=*/&PartialQuarry::setBinValues,
                                /*.vIncomingFunctions =*/
                                { NodeNames::BinCoords, NodeNames::DatasetIdPerRepl, NodeNames::MappingQuality,
@@ -581,6 +585,7 @@ void PartialQuarry::regReplicates( )
 
     registerNode( NodeNames::DecayValues,
                   ComputeNode{ /*.sNodeName =*/"decay_values",
+                               /*.sNodeDesc =*/"Compute the coverage of the DDD normalization.",
                                /*.fFunc=*/&PartialQuarry::setDecayValues,
                                /*.vIncomingFunctions =*/
                                { NodeNames::DecayCoords, NodeNames::DatasetIdPerRepl, NodeNames::MappingQuality,
@@ -596,6 +601,7 @@ void PartialQuarry::regReplicates( )
 
     registerNode( NodeNames::InGroup,
                   ComputeNode{ /*.sNodeName =*/"in_group_setting",
+                               /*.sNodeDesc =*/"Extract the in_group setting from the session json.",
                                /*.fFunc=*/&PartialQuarry::setInGroup,
                                /*.vIncomingFunctions =*/{ },
                                /*.vIncomingSession =*/{ { "settings", "replicates", "in_group" } },
@@ -604,6 +610,7 @@ void PartialQuarry::regReplicates( )
 
     registerNode( NodeNames::BetweenGroup,
                   ComputeNode{ /*.sNodeName =*/"between_group_setting",
+                               /*.sNodeDesc =*/"Extract the between_group setting from the session json.",
                                /*.fFunc=*/&PartialQuarry::setBetweenGroup,
                                /*.vIncomingFunctions =*/{ },
                                /*.vIncomingSession =*/{ { "settings", "replicates", "between_group" } },
@@ -612,6 +619,7 @@ void PartialQuarry::regReplicates( )
 
     registerNode( NodeNames::FlatValues,
                   ComputeNode{ /*.sNodeName =*/"flat_bins",
+                               /*.sNodeDesc =*/"Combine the bin values of the datapools.",
                                /*.fFunc=*/&PartialQuarry::setFlatValues,
                                /*.vIncomingFunctions =*/{ NodeNames::BinValues, NodeNames::InGroup },
                                /*.vIncomingSession =*/{ },
@@ -620,6 +628,7 @@ void PartialQuarry::regReplicates( )
 
     registerNode( NodeNames::PloidyValues,
                   ComputeNode{ /*.sNodeName =*/"ploidy_corr",
+                               /*.sNodeDesc =*/"Compute the ploidy corrected bin values.",
                                /*.fFunc=*/&PartialQuarry::setPloidyValues,
                                /*.vIncomingFunctions =*/{ NodeNames::FlatValues },
                                /*.vIncomingSession =*/{ },
@@ -628,6 +637,7 @@ void PartialQuarry::regReplicates( )
 
     registerNode( NodeNames::FlatDecay,
                   ComputeNode{ /*.sNodeName =*/"flat_decay",
+                               /*.sNodeDesc =*/"Combine the DDD coverage of the datapools.",
                                /*.fFunc=*/&PartialQuarry::setFlatDecay,
                                /*.vIncomingFunctions =*/{ NodeNames::DecayValues, NodeNames::InGroup },
                                /*.vIncomingSession =*/{ },
@@ -636,6 +646,7 @@ void PartialQuarry::regReplicates( )
 
     registerNode( NodeNames::DecayCDS,
                   ComputeNode{ /*.sNodeName =*/"decay_cds",
+                               /*.sNodeDesc =*/"Generate a python ColumnDataSource representation of the DDD coverage.",
                                /*.fFunc=*/&PartialQuarry::setDecayCDS,
                                /*.vIncomingFunctions =*/{ NodeNames::FlatDecay, NodeNames::AnnotationColors },
                                /*.vIncomingSession =*/{ { "settings", "interface", "axis_label_max_char", "val" } },

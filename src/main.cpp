@@ -234,6 +234,7 @@ PYBIND11_MODULE( libbiosmoothercpp, m )
         .def( "get_scaled", &cm::PartialQuarry::getScaled ) //
         .def( "get_combined", &cm::PartialQuarry::getCombined ) //
         .def( "get_dot", &cm::PartialQuarry::getDOT ) //
+        .def( "get_node_desc", &cm::PartialQuarry::getNodeDesc ) //
         .def( "get_background_color", &cm::PartialQuarry::getBackgroundColor ) //
         .def( "get_ticks", &cm::PartialQuarry::getTicks ) //
         .def( "get_bin_coords_cds", &cm::PartialQuarry::getBinCoordsCds ) //
