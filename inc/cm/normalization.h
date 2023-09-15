@@ -102,9 +102,15 @@ double PartialQuarry::iceGetCount( IceData& rIceData, size_t uiX, size_t uiY, si
 {
     assert( uiX < rIceData.vSliceBias[ 0 ].size( ) );
     assert( uiY < rIceData.vSliceBias[ 1 ].size( ) );
-    if( ( uiX > uiY ? uiX - uiY : uiY - uiX ) < uiIgnoreDiags )
-        return 0;
     size_t uiIdx = uiY + uiX * ( rIceData.vSliceBias[ 1 ].size( ) );
+    if( vBinCoordsSampled[ uiY_ ][ uiIdx ][ bA ? 0 : 1 ].uiActualContigIdX ==
+        vBinCoordsSampled[ uiY_ ][ uiIdx ][ bA ? 0 : 1 ].uiActualContigIdY )
+    {
+        size_t uiXPos = vBinCoordsSampled[ uiY_ ][ uiIdx ][ bA ? 0 : 1 ].uiIndexX / uiBinWidth.r( );
+        size_t uiYPos = vBinCoordsSampled[ uiY_ ][ uiIdx ][ bA ? 0 : 1 ].uiIndexY / uiBinHeight.r( );
+        if( ( uiXPos > uiYPos ? uiXPos - uiYPos : uiYPos - uiXPos ) < uiIgnoreDiags )
+            return 0;
+    }
     assert( uiIdx < vvNormalizedDDD[ uiY_ ].size( ) );
     return vvNormalizedDDD[ uiY_ ][ uiIdx ][ bA ? 0 : 1 ];
 }
@@ -112,14 +118,20 @@ double PartialQuarry::iceGetCount( IceData& rIceData, size_t uiX, size_t uiY, si
 void PartialQuarry::iceFilter( IceData& /*rIceData*/, size_t /*uiFrom*/, size_t /*uiTo*/ )
 {}
 
-double median(std::vector<double> vX) // @todo @continue_here test median function
+void median_ready_sort( std::vector<double>& vX )
+{
+    std::nth_element( vX.begin( ), vX.begin( ) + vX.size( ) / 2, vX.end( ) );
+    if( vX.size( ) > 0 && vX.size( ) % 2 == 0 )
+        std::nth_element( vX.begin( ), vX.begin( ) + vX.size( ) / 2 - 1, vX.begin( ) + vX.size( ) / 2 );
+}
+double median( const std::vector<double>& vX ) 
 {
     if( vX.size( ) == 0 )
         return 0;
-    else if(vX.size() % 2 == 0)
-        return (vX[vX.size()/2] + vX[vX.size()/2-1])/2;
+    else if( vX.size( ) % 2 == 0 )
+        return ( vX[ vX.size( ) / 2 ] + vX[ vX.size( ) / 2 - 1 ] ) / 2;
     else
-        return vX[vX.size()/2];
+        return vX[ vX.size( ) / 2 ];
 }
 
 void PartialQuarry::icePreFilter( IceData& rIceData, bool bCol, size_t uiFrom, size_t uiTo, size_t uiY, bool bA,
@@ -172,24 +184,24 @@ void PartialQuarry::icePreFilter( IceData& rIceData, bool bCol, size_t uiFrom, s
             vLogMargins.erase(
                 std::remove_if( vLogMargins.begin( ), vLogMargins.end( ), []( double fVal ) { return fVal == 0; } ),
                 vLogMargins.end( ) );
-            std::sort( vLogMargins.begin( ), vLogMargins.end( ) );
+            median_ready_sort(vLogMargins);
 
-            double fMedian = median(vLogMargins);
+            double fMedian = median( vLogMargins );
             for( double& fVal : vMargins )
                 fVal /= fMedian;
 
             for( double& fVal : vLogMargins )
                 fVal = std::log( fVal / fMedian );
 
-            double fLogMedian = median(vLogMargins);
+            double fLogMedian = median( vLogMargins );
             for( double& fVal : vLogMargins )
                 fVal = std::abs( fVal - fLogMedian );
-            std::sort( vLogMargins.begin( ), vLogMargins.end( ) );
-            double fDevLogMedian = median(vLogMargins);
+            median_ready_sort(vLogMargins);
+            double fDevLogMedian = median( vLogMargins );
 
             double fCutOff = std::exp( fLogMedian - fDevLogMedian * ( (double)uiMaxMax ) );
 
-            for( size_t uiI = 0; uiI < rIceData.vSliceBias[ bCol ? 0 : 1 ].size(); uiI++ )
+            for( size_t uiI = 0; uiI < rIceData.vSliceBias[ bCol ? 0 : 1 ].size( ); uiI++ )
                 if( vMargins[ uiI ] < fCutOff )
                     rIceData.vSliceBias[ bCol ? 0 : 1 ][ uiI ] = 0;
         }
