@@ -25,13 +25,14 @@ def icing(bin_values, axis_size):
             "count": bin_values,
         }
     )
+    print("cooler_interface, axis_size:", axis_size)
     cooler.create_cooler(
         ".tmp.cooler", bins, pixels, symmetric_upper=False, triucheck=False
     )
     clr = cooler.Cooler(".tmp.cooler")
     # @todo these 3 filters should be in libbiosmoother not disabled here
     # ignore_diags -> diagonal filter already in there
-    bias, stats = cooler.balance_cooler(clr, mad_max=0, min_nz=0)
+    bias, stats = cooler.balance_cooler(clr)
     ret = []
     for i, v in enumerate(bin_values):
         ret.append(v * bias[i // axis_size] * bias[i % axis_size])

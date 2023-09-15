@@ -111,6 +111,14 @@
             "spinner_min_restricted": true,
             "spinner_max_restricted": false
         },
+        "ice_mad_max": {
+            "min": 0,
+            "max": 100,
+            "val": 5,
+            "step": 1,
+            "spinner_min_restricted": true,
+            "spinner_max_restricted": false
+        },
         "grid_seq_max_bin_size": {
             "min": 1000,
             "max": 100000,
