@@ -120,9 +120,15 @@ void PartialQuarry::iceFilter( IceData& /*rIceData*/, size_t /*uiFrom*/, size_t 
 
 void median_ready_sort( std::vector<double>& vX )
 {
-    std::nth_element( vX.begin( ), vX.begin( ) + vX.size( ) / 2, vX.end( ) );
+    // place the middle element at the center
+    auto xItMiddle = vX.begin( ) + vX.size( ) / 2;
+    std::nth_element( vX.begin( ), xItMiddle, vX.end( ) );
     if( vX.size( ) > 0 && vX.size( ) % 2 == 0 )
-        std::nth_element( vX.begin( ), vX.begin( ) + vX.size( ) / 2 - 1, vX.begin( ) + vX.size( ) / 2 );
+        // if the number of elements is even, the median is the average of the two middle elements
+        // hence we place the element before the middle at the correct position as well
+        // for this we use max_element, since its runtime complexity is O(n) instead of the O(n log n) of nth_element
+        // swap then places the found element at the correct spot.
+        std::swap( *std::max_element( vX.begin( ), xItMiddle ), *(xItMiddle - 1) );
 }
 double median( const std::vector<double>& vX ) 
 {
