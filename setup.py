@@ -9,7 +9,7 @@ import sysconfig
 from setuptools import Extension, setup
 from setuptools.command.build_ext import build_ext
 
-VERSION = "0.5.4"
+VERSION = "0.5.5"
 
 # Convert distutils Windows platform specifiers to CMake -A arguments
 PLAT_TO_CMAKE = {
@@ -163,6 +163,7 @@ libBioSmoother is the library behind biosmoother. It takes care of the server-si
         'scipy',
         'statsmodels',
         'scikit-learn',
+        'drawSvg==1.9.0',
     ],
     entry_points={
         'console_scripts': [
