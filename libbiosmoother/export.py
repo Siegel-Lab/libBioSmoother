@@ -596,12 +596,13 @@ def __draw_secondary(session, d, sizes, print_callback=lambda s: None):
         if sizes["secondary_y_start"] != sizes["secondary_y_end"]:
             min_y = sizes["secondary_y_start"]
             max_y = sizes["secondary_y_end"]
-        active_anno_x = [max_x - min_x, min_x, sizes["secondary"], offset]
-        active_anno_y = [max_y - min_y, min_y, sizes["secondary"], offset]
+        active_anno_x = [max_x - min_x, min_x, sizes["secondary"] - stroke_width, offset + stroke_width/2]
+        active_anno_y = [max_y - min_y, min_y, sizes["secondary"] - stroke_width, offset + stroke_width/2]
 
+        tracks = session.get_tracks(True, print_callback)
         __draw_lines(
             d,
-            session.get_tracks(True, print_callback),
+            tracks,
             x_transform,
             active_anno_x,
             x="screen_pos",
@@ -674,9 +675,15 @@ def __draw_secondary(session, d, sizes, print_callback=lambda s: None):
             session, sizes["heatmap"], offset_x, sizes["heatmap"], offset_x
         )
         min_x, max_x = session.get_min_max_tracks(True, print_callback)
+        if sizes["secondary_x_start"] != sizes["secondary_x_end"]:
+            min_x = sizes["secondary_x_start"]
+            max_x = sizes["secondary_x_end"]
         min_y, max_y = session.get_min_max_tracks(False, print_callback)
-        active_anno_x = [max_x - min_x, min_x, sizes["secondary"], offset]
-        active_anno_y = [max_y - min_y, min_y, sizes["secondary"], offset]
+        if sizes["secondary_y_start"] != sizes["secondary_y_end"]:
+            min_y = sizes["secondary_y_start"]
+            max_y = sizes["secondary_y_end"]
+        active_anno_x = [max_x - min_x, min_x, sizes["secondary"] - stroke_width, offset + stroke_width/2]
+        active_anno_y = [max_y - min_y, min_y, sizes["secondary"] - stroke_width, offset + stroke_width/2]
 
         __draw_lines(
             d,

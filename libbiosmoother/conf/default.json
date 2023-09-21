@@ -15,8 +15,8 @@
         "color_range": {
             "min": 0,
             "max": 1,
-            "val_min": 0,
-            "val_max": 1,
+            "val_min": 0.0,
+            "val_max": 1.0,
             "step": 0.01,
             "spinner_min_restricted": false,
             "spinner_max_restricted": false
@@ -24,7 +24,7 @@
         "log_base": {
             "min": 0,
             "max": 15,
-            "val": 10,
+            "val": 10.0,
             "step": 0.1,
             "spinner_min_restricted": false,
             "spinner_max_restricted": false
@@ -45,7 +45,7 @@
             "spinner_max_restricted": true,
             "spinner_min_restricted": true,
             "step": 1,
-            "val": 10
+            "val": 10.0
         },
         "ddd_samples": {
             "min": 1,
@@ -59,7 +59,7 @@
         "ddd_quantile": {
             "min": 0,
             "max": 100,
-            "val": 80,
+            "val": 80.0,
             "step": 1,
             "spinner_min_restricted": true,
             "spinner_max_restricted": true
@@ -210,7 +210,7 @@
         "zoom_redraw": {
             "min": 0,
             "max": 100,
-            "val": 90,
+            "val": 90.0,
             "step": 1,
             "spinner_min_restricted": true,
             "spinner_max_restricted": true
@@ -218,7 +218,7 @@
         "add_draw_area": {
             "min": 10,
             "max": 500,
-            "val": 20,
+            "val": 20.0,
             "step": 10,
             "spinner_min_restricted": true,
             "spinner_max_restricted": false
@@ -364,7 +364,7 @@
         "size": {
             "max": 5000,
             "min": 10,
-            "val": 800,
+            "val": 800.0,
             "step": 10,
             "spinner_min_restricted": true,
             "spinner_max_restricted": false
@@ -372,7 +372,7 @@
         "coords": {
             "max": 2000,
             "min": 0,
-            "val": 125,
+            "val": 125.0,
             "step": 25,
             "spinner_min_restricted": true,
             "spinner_max_restricted": false
@@ -380,7 +380,7 @@
         "contigs": {
             "max": 2000,
             "min": 0,
-            "val": 125,
+            "val": 125.0,
             "step": 25,
             "spinner_min_restricted": true,
             "spinner_max_restricted": false
@@ -388,7 +388,7 @@
         "axis": {
             "max": 2000,
             "min": 0,
-            "val": 125,
+            "val": 125.0,
             "step": 25,
             "spinner_min_restricted": true,
             "spinner_max_restricted": false
@@ -396,7 +396,7 @@
         "margins": {
             "max": 100,
             "min": 0,
-            "val": 10,
+            "val": 10.0,
             "step": 1,
             "spinner_min_restricted": true,
             "spinner_max_restricted": false
@@ -405,7 +405,7 @@
         "secondary_stroke_width": {
             "max": 50,
             "min": 1,
-            "val": 2,
+            "val": 2.0,
             "step": 1,
             "spinner_min_restricted": true,
             "spinner_max_restricted": false
@@ -413,7 +413,7 @@
         "spacing": {
             "max": 100,
             "min": 1,
-            "val": 3,
+            "val": 3.0,
             "step": 1,
             "spinner_min_restricted": true,
             "spinner_max_restricted": false
@@ -421,8 +421,8 @@
         "secondary_x_range": {
             "min": 0,
             "max": 100,
-            "val_min": 0,
-            "val_max": 0,
+            "val_min": 0.0,
+            "val_max": 0.0,
             "step": 0.1,
             "spinner_min_restricted": false,
             "spinner_max_restricted": false
@@ -430,8 +430,8 @@
         "secondary_y_range": {
             "min": 0,
             "max": 100,
-            "val_min": 0,
-            "val_max": 0,
+            "val_min": 0.0,
+            "val_max": 0.0,
             "step": 0.1,
             "spinner_min_restricted": false,
             "spinner_max_restricted": false

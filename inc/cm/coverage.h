@@ -594,7 +594,8 @@ void PartialQuarry::regCoverage( )
                                /*.fFunc =*/&PartialQuarry::setCoverageValues,
                                /*.vIncomingFunctions =*/
                                { NodeNames::ActiveCoverage, NodeNames::AxisCoords, NodeNames::IntersectionType,
-                                 NodeNames::Symmetry, NodeNames::MappingQuality, NodeNames::Directionality },
+                                 NodeNames::Symmetry, NodeNames::MappingQuality, NodeNames::Directionality,
+                                 NodeNames::AnnoFilters },
                                /*.vIncomingSession =*/
                                { { "settings", "replicates", "coverage_get_max_col" },
                                  { "settings", "replicates", "coverage_get_max_row" },

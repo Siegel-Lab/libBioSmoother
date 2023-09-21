@@ -1711,7 +1711,7 @@ void PartialQuarry::regCoords( )
                                { { "contigs", "annotation_coordinates" },
                                  { "settings", "filters", "anno_coords_row" },
                                  { "settings", "filters", "anno_coords_col" } },
-                               /*bHidden =*/false } );
+                               /*bHidden =*/true } );
 
     registerNode( NodeNames::DecayCoords,
                   ComputeNode{ /*.sNodeName =*/"decay_coords",
