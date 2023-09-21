@@ -17,6 +17,7 @@ def conf_version(in_file_name, cmake_version, out_file_name):
         git_status=""
 
     os.makedirs(os.path.dirname(out_file_name), exist_ok=True)
+    print("Configuring for version:", git_status, cmake_version, git_commit_hash)
 
     # configure the new version file
     out_lines = []
@@ -33,13 +34,15 @@ def conf_version(in_file_name, cmake_version, out_file_name):
     else:
         with open(out_file_name, "r") as in_file:
             lines = in_file.readlines()
-            file_changed = lines == out_lines
+            file_changed = not all(a == b for a, b in zip(lines, out_lines))
 
     if file_changed:
         print("writing new version file")
         with open(out_file_name, "w") as out_file:
             for line in out_lines:
                 out_file.write(line)
+    else:
+        print("version file unchanged")
 
 if __name__ == "__main__":
     conf_version(sys.argv[1], sys.argv[2], sys.argv[3])

@@ -60,9 +60,9 @@ class Quarry(PartialQuarry):
         if sps_in_index != SPS_VERSION:
             print(
                 "WARNING: the version of libSps that was used to create this index is different from the current version.",
-                "This may lead to undefined behavior. Version in index:",
+                "This may lead to undefined behavior.\nVersion in index:",
                 sps_in_index,
-                "current version:",
+                "\nCurrent version:",
                 SPS_VERSION,
                 file=sys.stderr,
             )
@@ -73,9 +73,9 @@ class Quarry(PartialQuarry):
         if lib_bio_smoother_in_index != LIB_BIO_SMOOTHER_CPP_VERSION:
             print(
                 "WARNING: the version of libBioSmoother that was used to create this index is different from the current version.",
-                "This may lead to undefined behavior. Version in index:",
+                "This may lead to undefined behavior.\nVersion in index:",
                 lib_bio_smoother_in_index,
-                "current version:",
+                "\nCurrent version:",
                 LIB_BIO_SMOOTHER_CPP_VERSION,
                 file=sys.stderr,
             )
