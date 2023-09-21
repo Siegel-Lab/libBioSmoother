@@ -589,7 +589,13 @@ def __draw_secondary(session, d, sizes, print_callback=lambda s: None):
             session, sizes["heatmap"], offset_x, sizes["heatmap"], offset_x
         )
         min_x, max_x = session.get_min_max_tracks(True, print_callback)
+        if sizes["secondary_x_start"] != sizes["secondary_x_end"]:
+            min_x = sizes["secondary_x_start"]
+            max_x = sizes["secondary_x_end"]
         min_y, max_y = session.get_min_max_tracks(False, print_callback)
+        if sizes["secondary_y_start"] != sizes["secondary_y_end"]:
+            min_y = sizes["secondary_y_start"]
+            max_y = sizes["secondary_y_end"]
         active_anno_x = [max_x - min_x, min_x, sizes["secondary"], offset]
         active_anno_y = [max_y - min_y, min_y, sizes["secondary"], offset]
 
@@ -1003,6 +1009,11 @@ def __get_sizes(session):
         and len(session.get_tracks(True, lambda x: None)["values"]) > 0,
         "secondary": session.get_value(["settings", "interface", "raw_size", "val"]),
         "spacing": session.get_value(["settings", "export", "spacing", "val"]),
+        "white_background": session.get_value(["settings", "export", "white_background"]),
+        "secondary_x_start": session.get_value(["settings", "export", "secondary_x_range", "val_min"]),
+        "secondary_x_end": session.get_value(["settings", "export", "secondary_x_range", "val_max"]),
+        "secondary_y_start": session.get_value(["settings", "export", "secondary_y_range", "val_min"]),
+        "secondary_y_end": session.get_value(["settings", "export", "secondary_y_range", "val_max"]),
     }
 
 
@@ -1042,15 +1053,16 @@ def __make_drawing(session, sizes):
 
     d = drawSvg.Drawing(size_x, size_y, displayInline=False)
 
-    d.append(
-        drawSvg.Rectangle(
-            0,
-            0,
-            size_x,
-            size_y,
-            fill="#ffffff",
+    if sizes["white_background"]:
+        d.append(
+            drawSvg.Rectangle(
+                0,
+                0,
+                size_x,
+                size_y,
+                fill="#ffffff",
+            )
         )
-    )
 
     return d
 

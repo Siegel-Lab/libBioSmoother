@@ -30,8 +30,6 @@ def icing(bin_values, axis_size):
         ".tmp.cooler", bins, pixels, symmetric_upper=False, triucheck=False
     )
     clr = cooler.Cooler(".tmp.cooler")
-    # @todo these 3 filters should be in libbiosmoother not disabled here
-    # ignore_diags -> diagonal filter already in there
     bias, stats = cooler.balance_cooler(clr)
     ret = []
     for i, v in enumerate(bin_values):
