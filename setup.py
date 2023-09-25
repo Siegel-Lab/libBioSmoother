@@ -135,7 +135,6 @@ setup(
     name="libbiosmoother",
     version=VERSION,
     author='Markus Schmidt',
-    author_email='markus.rainer.schmidt@gmail.com',
     license='MIT',
     url='https://github.com/Siegel-Lab/libBioSmoother',
     description="On-the-fly processing and visualization of interactome data",

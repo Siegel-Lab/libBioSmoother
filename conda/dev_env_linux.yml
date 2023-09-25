@@ -23,6 +23,7 @@ dependencies:
   - pip
   - pip:
     - sphinx-mdinclude
+    - sphinx-argparse
     - psutil
     - drawSvg>=1.9.0
     - statsmodels

@@ -635,7 +635,7 @@ def make_main_parser():
     return parser
 
 
-def main():
+def make_versioned_parser():
     parser = make_main_parser()
     parser.add_argument(
         "-v", "--version", action="version", version=version("libbiosmoother")
@@ -652,6 +652,11 @@ def main():
     parser.add_argument(
         "--compiler_id", action="version", help=argparse.SUPPRESS, version=COMPILER_ID
     )
+    return parser
+
+
+def main():
+    parser = make_versioned_parser()
 
     args = parser.parse_args()
 
