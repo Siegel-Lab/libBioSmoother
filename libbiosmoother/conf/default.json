@@ -51,7 +51,7 @@
             "min": 1,
             "max": 1000,
             "val_min": 1,
-            "val_max": 100,
+            "val_max": 200,
             "step": 10,
             "spinner_min_restricted": true,
             "spinner_max_restricted": false
