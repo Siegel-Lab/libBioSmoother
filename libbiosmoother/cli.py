@@ -183,6 +183,9 @@ def set_smoother(args):
         if not new_range[1] is None:
             q.set_value(["settings", "interface", "v4c", "row_to"], new_range[1])
         q.save_session()
+    elif args.name == ".":
+        with open(possible + "/session.json", "w") as out_file:
+            json.dump(json_file, json.loads(args.val))
     else:
         with open(possible + "/session.json", "r") as in_file:
             json_file = json.load(in_file)
@@ -259,6 +262,10 @@ def get_smoother(args):
                 False,
             )
         )
+    elif args.name == ".":
+        with open(possible + "/session.json", "r") as in_file:
+            json_file = json.load(in_file)
+            print(json_file)
     else:
         with open(possible + "/session.json", "r") as in_file:
             json_file = json.load(in_file)
