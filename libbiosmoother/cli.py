@@ -126,10 +126,6 @@ def export_smoother(args):
     def run():
         if args.export_prefix is not None:
             session.set_value(["settings", "export", "prefix"], args.export_prefix)
-        if args.export_selection is not None:
-            session.set_value(
-                ["settings", "export", "selection"], args.export_selection
-            )
         if args.export_size is not None:
             session.set_value(["settings", "export", "size", "val"], args.export_size)
 
@@ -523,20 +519,13 @@ def add_parsers(main_parser):
         "--export_format",
         choices=["tsv", "svg", "png"],
         nargs="*",
-        help="The format which to export to.",
-    )
-    export_parser.add_argument(
-        "-S",
-        "--export_selection",
-        choices=["heatmap", "col_sec_data", "row_sec_data"],
-        nargs="*",
-        help="Which regions shall be exported",
+        help="The format which to export to. (default: tsv)",
     )
     export_parser.add_argument(
         "-s",
         "--export_size",
         type=int,
-        help="The size of the heatmap to be exported",
+        help="The size of the heatmap to be exported, in pixels. (default: 800)",
     )
     export_parser.add_argument("--perf", help=argparse.SUPPRESS, action="store_true")
     export_parser.set_defaults(func=export_smoother)
