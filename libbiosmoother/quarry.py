@@ -498,8 +498,16 @@ class Quarry(PartialQuarry):
             return "n/a"
 
     def get_readable_area(
-        self, start_x, start_y, end_x, end_y, genomic_coords=False, print=lambda x: None
+        self, start_x=None, start_y=None, end_x=None, end_y=None, genomic_coords=False, print=lambda x: None
     ):
+        if start_x is None:
+            start_x = self.get_value(["area", "x_start"])
+        if start_y is None:
+            start_y = self.get_value(["area", "y_start"])
+        if end_x is None:
+            end_x = self.get_value(["area", "x_end"])
+        if end_y is None:
+            end_y = self.get_value(["area", "y_end"])
         return (
             "X=["
             + self.get_readable_range(start_x, end_x, True, genomic_coords, print)

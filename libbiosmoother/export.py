@@ -9,9 +9,10 @@ except:
     HAS_DRAW_SVG = False
 
 
-def __get_header():
+def __get_header(session):
     return "##libBioSmoother Version: " + Quarry.get_libBioSmoother_version() + "\n" + \
-           "##libSps Version: " + Quarry.get_libSps_version() + "\n"
+           "##libSps Version: " + Quarry.get_libSps_version() + "\n" + \
+           "## " + session.get_readable_area() + "\n"
 
 
 def __conf_session(session):
@@ -278,6 +279,34 @@ def __get_transform(session, w_plane, x_plane, h_plane, y_plane):
 
     return x_transform, y_transform
 
+def __draw_region(session, d, sizes, print_callback=lambda s: None):
+    if sizes["show_region"]:
+        offset_y = 0
+        if sizes["show_anno_y"]:
+            offset_y += sizes["annotation"] + sizes["margin"]
+        if sizes["show_secondary_y"]:
+            offset_y += sizes["secondary"] + sizes["margin"]
+        if sizes["show_coords"]:
+            offset_y += sizes["coords"]
+        if sizes["show_contigs"]:
+            offset_y += sizes["contigs"]
+        if sizes["show_axis"] and (sizes["show_secondary_x"] or sizes["show_anno_x"]):
+            offset_y += sizes["axis"]
+        if sizes["show_heat"]:
+            offset_y += sizes["heatmap"]
+            offset_y += sizes["margin"]
+        
+        d.append(
+            drawSvg.Text(
+                session.get_readable_area(),
+                14,
+                d.width/2,
+                offset_y,
+                font_family="Consolas, sans-serif",
+                text_anchor="middle",
+                dominant_baseline="bottom",
+            )
+        )
 
 def __draw_heatmap(session, d, sizes, print_callback=lambda s: None):
     if sizes["show_heat"]:
@@ -974,6 +1003,9 @@ def __draw_contigs(session, d, sizes, print_callback=lambda s: None):
 def __get_sizes(session):
     return {
         "show_heat": True,
+        "show_region": session.get_value(
+            ["settings", "export", "print_region"]
+        ),
         "show_coords": session.get_value(
             ["settings", "interface", "show_hide", "coords"]
         ),
@@ -1053,6 +1085,8 @@ def __make_drawing(session, sizes):
         size_y += sizes["contigs"]
     if sizes["show_axis"] and (sizes["show_secondary_x"] or sizes["show_anno_x"]):
         size_y += sizes["axis"]
+    if sizes["show_region"]:
+        size_y += 16 * 14 / 12 + sizes["margin"]
 
     size_y -= sizes["margin"]
 
@@ -1081,6 +1115,7 @@ def __draw(session):
     __draw_secondary(session, d, sizes)
     __draw_coordinates(session, d, sizes)
     __draw_contigs(session, d, sizes)
+    __draw_region(session, d, sizes)
     return d
 
 
@@ -1104,14 +1139,14 @@ def get_tsv(session, print_callback=lambda s: None):
     session = __conf_session(session)
     heatmap, tracks = "", ["", ""]
 
-    heatmap = __get_header()
+    heatmap = __get_header(session)
     heatmap += "#chr_x\tstart_x\tend_x\tchr_y\tstart_y\tend_y\tscore\n"
     for tup in session.get_heatmap_export(print_callback):
         heatmap += "\t".join([str(x) for x in tup]) + "\n"
 
     if session.get_value(["settings", "interface", "show_hide", "raw"]):
         for x_axis in [(True), (False)]:
-            tracks[x_axis] = __get_header()
+            tracks[x_axis] = __get_header(session)
             tracks[x_axis] += "#chr_x\tstart_x\tend_x"
             for track in session.get_track_export_names(x_axis, print_callback):
                 tracks[x_axis] += "\t" + track
