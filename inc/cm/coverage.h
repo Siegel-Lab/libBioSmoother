@@ -61,6 +61,7 @@ size_t PartialQuarry::getMaxCoverageFromRepl( const size_t uiChromId, const size
     }
 
     std::make_heap( vHeap.begin( ), vHeap.end( ) );
+    std::pop_heap( vHeap.begin( ), vHeap.end( ) );
 
     while( vHeap.size( ) > 0 && std::get<3>( vHeap.back( ) ) - std::get<2>( vHeap.back( ) ) >
                                     std::max( uiCoverageGetMaxBinSize, (size_t)1 ) )
