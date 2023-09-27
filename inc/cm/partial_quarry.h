@@ -834,6 +834,7 @@ class PartialQuarry : public HasSession
     std::array<pybind11::list, 2> vContigStartList;
     std::array<size_t, 2> vCanvasSize;
     std::array<std::array<double, 2>, 2> vvMinMaxTracks;
+    std::array<std::array<double, 2>, 2> vvMinMaxTracksNonZero;
     double fMax, fMin;
     double fDataMax, fDataMin;
     size_t uiLogestCommonSuffix;
@@ -1328,6 +1329,8 @@ class PartialQuarry : public HasSession
 
     // coverage.h
     const std::array<double, 2> getMinMaxTracks( bool, const std::function<void( const std::string& )>& );
+    // coverage.h
+    const std::array<double, 2> getMinMaxTracksNonZero( bool, const std::function<void( const std::string& )>& );
 
     // coverage.h
     const pybind11::dict getRankedSlices( bool, const std::function<void( const std::string& )>& );

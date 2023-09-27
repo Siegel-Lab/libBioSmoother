@@ -245,6 +245,7 @@ PYBIND11_MODULE( libbiosmoothercpp, m )
         .def( "get_tracks", &cm::PartialQuarry::getTracks ) //
         .def( "get_ranked_slices", &cm::PartialQuarry::getRankedSlices ) //
         .def( "get_min_max_tracks", &cm::PartialQuarry::getMinMaxTracks ) //
+        .def( "get_min_max_tracks_non_zero", &cm::PartialQuarry::getMinMaxTracksNonZero ) //
         .def( "get_bin_size", &cm::PartialQuarry::getBinSize ) //
         .def( "get_annotation_list", &cm::PartialQuarry::getAnnotationList ) //
         .def( "get_track_export", &cm::PartialQuarry::getTrackExport ) //

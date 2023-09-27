@@ -327,6 +327,8 @@ bool PartialQuarry::setTrackPrecursor( )
     {
         vvMinMaxTracks[ uiI ][ 0 ] = std::numeric_limits<double>::max( );
         vvMinMaxTracks[ uiI ][ 1 ] = std::numeric_limits<double>::min( );
+        vvMinMaxTracksNonZero[ uiI ][ 0 ] = std::numeric_limits<double>::max( );
+        vvMinMaxTracksNonZero[ uiI ][ 1 ] = std::numeric_limits<double>::min( );
         const bool bDoIce = sNorm == "ice" && bIceShowBias;
 
         for( size_t uiX = 0; uiX < vAxisCords[ uiI ].size( ); uiX++ )
@@ -337,6 +339,11 @@ bool PartialQuarry::setTrackPrecursor( )
                 auto uiVal = (double)vvCoverageValues[ uiI ][ uiId ][ uiX ];
                 vvMinMaxTracks[ uiI ][ 0 ] = std::min( vvMinMaxTracks[ uiI ][ 0 ], uiVal );
                 vvMinMaxTracks[ uiI ][ 1 ] = std::max( vvMinMaxTracks[ uiI ][ 1 ], uiVal );
+                if(uiVal > 0)
+                {
+                    vvMinMaxTracksNonZero[ uiI ][ 0 ] = std::min( vvMinMaxTracksNonZero[ uiI ][ 0 ], uiVal );
+                    vvMinMaxTracksNonZero[ uiI ][ 1 ] = std::max( vvMinMaxTracksNonZero[ uiI ][ 1 ], uiVal );
+                }
             }
             if( ( bRadiclNormDisp || bGridSeqNormDisp ) && ( bIsCol == ( uiI == 0 ) ) )
             {
@@ -347,10 +354,15 @@ bool PartialQuarry::setTrackPrecursor( )
                     uiVal = std::min( (double)vRadiclSeqCoverage[ 0 ][ uiX ][ 0 ],
                                       (double)vRadiclSeqNumNonEmptyBins[ 0 ][ uiX ][ 0 ] );
                 vvMinMaxTracks[ uiI ][ 0 ] = std::min( vvMinMaxTracks[ uiI ][ 0 ], uiVal );
+                if(uiVal > 0)
+                    vvMinMaxTracksNonZero[ uiI ][ 0 ] = std::min( vvMinMaxTracksNonZero[ uiI ][ 0 ], uiVal );
+                
                 if( bRadiclNormDisp )
                     uiVal = std::max( (double)vRadiclSeqCoverage[ 0 ][ uiX ][ 0 ],
                                       (double)vRadiclSeqNumNonEmptyBins[ 0 ][ uiX ][ 0 ] );
                 vvMinMaxTracks[ uiI ][ 1 ] = std::max( vvMinMaxTracks[ uiI ][ 1 ], uiVal );
+                if(uiVal > 0)
+                    vvMinMaxTracksNonZero[ uiI ][ 1 ] = std::max( vvMinMaxTracksNonZero[ uiI ][ 1 ], uiVal );
             }
 
             if( vFlat4C[ 1 - uiI ].size( ) > 0 )
@@ -358,6 +370,11 @@ bool PartialQuarry::setTrackPrecursor( )
                 auto uiVal = (double)vFlat4C[ 1 - uiI ][ uiX ];
                 vvMinMaxTracks[ uiI ][ 0 ] = std::min( vvMinMaxTracks[ uiI ][ 0 ], uiVal );
                 vvMinMaxTracks[ uiI ][ 1 ] = std::max( vvMinMaxTracks[ uiI ][ 1 ], uiVal );
+                if(uiVal > 0)
+                {
+                    vvMinMaxTracksNonZero[ uiI ][ 0 ] = std::min( vvMinMaxTracksNonZero[ uiI ][ 0 ], uiVal );
+                    vvMinMaxTracksNonZero[ uiI ][ 1 ] = std::max( vvMinMaxTracksNonZero[ uiI ][ 1 ], uiVal );
+                }
             }
         }
 
@@ -369,6 +386,11 @@ bool PartialQuarry::setTrackPrecursor( )
                     auto uiVal = vIceSliceBias[ 0 ][ uiI ][ uiY ][ uiX ];
                     vvMinMaxTracks[ uiI ][ 0 ] = std::min( vvMinMaxTracks[ uiI ][ 0 ], uiVal );
                     vvMinMaxTracks[ uiI ][ 1 ] = std::max( vvMinMaxTracks[ uiI ][ 1 ], uiVal );
+                    if(uiVal > 0)
+                    {
+                        vvMinMaxTracksNonZero[ uiI ][ 0 ] = std::min( vvMinMaxTracksNonZero[ uiI ][ 0 ], uiVal );
+                        vvMinMaxTracksNonZero[ uiI ][ 1 ] = std::max( vvMinMaxTracksNonZero[ uiI ][ 1 ], uiVal );
+                    }
                 }
 
 
@@ -560,6 +582,13 @@ const std::array<double, 2> PartialQuarry::getMinMaxTracks( bool bXAxis,
 {
     update( NodeNames::Tracks, fPyPrint );
     return vvMinMaxTracks[ bXAxis ? 0 : 1 ];
+}
+
+const std::array<double, 2> PartialQuarry::getMinMaxTracksNonZero( bool bXAxis,
+                                                            const std::function<void( const std::string& )>& fPyPrint )
+{
+    update( NodeNames::Tracks, fPyPrint );
+    return vvMinMaxTracksNonZero[ bXAxis ? 0 : 1 ];
 }
 
 
