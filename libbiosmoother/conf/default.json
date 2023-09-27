@@ -360,6 +360,7 @@
     "export": {
         "prefix": "export",
         "do_export_full": false,
+        "export_to_server": false,
         "white_background": true,
         "size": {
             "max": 5000,

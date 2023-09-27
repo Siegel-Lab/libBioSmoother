@@ -9,11 +9,9 @@ except:
     HAS_DRAW_SVG = False
 
 
-def __write_header(out_file):
-    out_file.write(
-        "##libBioSmoother Version: " + Quarry.get_libBioSmoother_version() + "\n"
-    )
-    out_file.write("##libSps Version: " + Quarry.get_libSps_version() + "\n")
+def __get_header():
+    return "##libBioSmoother Version: " + Quarry.get_libBioSmoother_version() + "\n" + \
+           "##libSps Version: " + Quarry.get_libSps_version() + "\n"
 
 
 def __conf_session(session):
@@ -1102,57 +1100,69 @@ def assert_file_is_creatable(session):
         raise RuntimeError("could not create file, does the given folder exist?")
 
 
-def export_tsv(session, print_callback=lambda s: None):
+def get_tsv(session, print_callback=lambda s: None):
     session = __conf_session(session)
+    heatmap, tracks = "", ["", ""]
+
+    heatmap = __get_header()
+    heatmap += "#chr_x\tstart_x\tend_x\tchr_y\tstart_y\tend_y\tscore\n"
+    for tup in session.get_heatmap_export(print_callback):
+        heatmap += "\t".join([str(x) for x in tup]) + "\n"
+
+    if session.get_value(["settings", "interface", "show_hide", "raw"]):
+        for x_axis in [(True), (False)]:
+            tracks[x_axis] = __get_header()
+            tracks[x_axis] += "#chr_x\tstart_x\tend_x"
+            for track in session.get_track_export_names(x_axis, print_callback):
+                tracks[x_axis] += "\t" + track
+            tracks[x_axis] += "\n"
+
+            for tup in session.get_track_export(x_axis, print_callback):
+                tracks[x_axis] += "\t".join(
+                        [
+                            "\t".join([str(y) for y in x])
+                            if isinstance(x, list)
+                            else str(x)
+                            for x in tup
+                        ]
+                    ) + "\n"
+    return heatmap, tracks[0], tracks[1] 
+
+def export_tsv(session, print_callback=lambda s: None):
     assert_file_is_creatable(session)
+    heatmap, track_x, track_y = get_tsv(session, print_callback)
     with open(
         session.get_value(["settings", "export", "prefix"]) + ".heatmap.tsv", "w"
     ) as out_file:
-        __write_header(out_file)
-        out_file.write("#chr_x\tstart_x\tend_x\tchr_y\tstart_y\tend_y\tscore\n")
-        for tup in session.get_heatmap_export(print_callback):
-            out_file.write("\t".join([str(x) for x in tup]) + "\n")
+        out_file.write(heatmap)
+    with open(
+        session.get_value(["settings", "export", "prefix"]) + ".track.x.tsv", "w"
+    ) as out_file:
+        out_file.write(track_x)
+    with open(
+        session.get_value(["settings", "export", "prefix"]) + ".track.y.tsv", "w"
+    ) as out_file:
+        out_file.write(track_y)
 
-    if session.get_value(["settings", "interface", "show_hide", "raw"]):
-        for x_axis, suff in [(True, "x"), (False, "y")]:
-            with open(
-                session.get_value(["settings", "export", "prefix"])
-                + ".track."
-                + suff
-                + ".tsv",
-                "w",
-            ) as out_file:
-                __write_header(out_file)
-                out_file.write("#chr_x\tstart_x\tend_x")
-                for track in session.get_track_export_names(x_axis, print_callback):
-                    out_file.write("\t" + track)
-                out_file.write("\n")
 
-                for tup in session.get_track_export(x_axis, print_callback):
-                    out_file.write(
-                        "\t".join(
-                            [
-                                "\t".join([str(y) for y in x])
-                                if isinstance(x, list)
-                                else str(x)
-                                for x in tup
-                            ]
-                        )
-                        + "\n"
-                    )
-
+def get_png(session):
+    assert_has_draw_svg()
+    return __draw(session).rasterize().pngData
 
 def export_png(session):
-    assert_has_draw_svg()
     assert_file_is_creatable(session)
-    __draw(session).savePng(
-        session.get_value(["settings", "export", "prefix"]) + ".png"
-    )
+    data = get_png(session)
+    with open(session.get_value(["settings", "export", "prefix"]) + ".png", "wb") as out_file:
+        out_file.write(data)
 
+
+def get_svg(session):
+    assert_has_draw_svg()
+    return __draw(session).asSvg()
 
 def export_svg(session):
-    assert_has_draw_svg()
     assert_file_is_creatable(session)
-    __draw(session).saveSvg(
-        session.get_value(["settings", "export", "prefix"]) + ".svg"
-    )
+    data = get_svg(session)
+    
+    with open(session.get_value(["settings", "export", "prefix"]) + ".svg", "w", encoding="utf-8") as out_file:
+        out_file.write(data)
