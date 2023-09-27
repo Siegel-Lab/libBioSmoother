@@ -85,10 +85,19 @@ class HasSession
         return json::parse( this->xSession.dump( ) );
     }
 
+    bool canSave()
+    {
+        std::ofstream o( sFilePrefix + "/session.json" );
+        return o.is_open();
+    }
+
     void saveSession( )
     {
         std::ofstream o( sFilePrefix + "/session.json" );
-        o << xSession << std::endl;
+        if(o.is_open())
+            o << xSession << std::endl;
+        else
+            throw std::runtime_error("Could not save the current session to file.");
     }
 
     HasSession& operator=( const HasSession& rOther )
