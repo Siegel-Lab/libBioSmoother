@@ -39,3 +39,4 @@ test/test_data/*
 dist/*
 wheelhouse/*
 *.backup
+benchmarking/pics/*
