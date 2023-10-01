@@ -1,6 +1,5 @@
 #!/bin/bash
 #SBATCH --cpus-per-task=18
-#SBATCH --mail-user=markus.rainer.schmidt@gmail.com
 #SBATCH --mail-type=END
 #SBATCH --job-name=distiller
 #SBATCH --mem=250G

@@ -24,6 +24,7 @@ except ImportError:
     HAS_CPROFILE = False
 from datetime import datetime
 
+HIDE_SUBCOMMANDS_MANUAL = "SMOOTHER_HIDE_SUBCOMMANDS_MANUAL" in os.environ
 
 def get_path(prefix):
     for possible in [prefix, prefix + ".smoother_index"]:
@@ -307,18 +308,18 @@ def add_parsers(main_parser):
     def fmt_defaults(defaults):
         return " (default: " + " ".join(str(x) for x in defaults) + ")"
 
-    init_parser = main_parser.add_parser("init", help="Create a new index.")
+    init_parser = main_parser.add_parser("init", help="Generate a new index for a given reference genome.")
     init_parser.add_argument(
         "index_prefix",
-        help="Path where the index shall be saved. Note: a folder with multiple files will be created.",
+        help="Path where the index directory will be saved. Note: a folder with multiple files will be created.",
     )
     init_parser.add_argument(
         "chr_len",
-        help="Path to a file that contains the length (in nucleotides) of all chromosomes. The file shall contain 2 tab seperated columns columns: The chromosome names and their size in nucleotides. The order of chromosomes in this files will be used as the display order in the viewer.",
+        help="Path to a 2-column tab separated file containing the chromosome names and their size in nucleotides. The order of chromosomes in this file will determine the order they are displayed in.",
     )
     init_parser.add_argument(
         "anno_path",
-        help="Path to a file that contains the annotations",
+        help="Path to a GFF file containing the annotations of the reference genome.",
         nargs="?",
         default="",
     )
@@ -329,7 +330,7 @@ def add_parsers(main_parser):
         nargs="*",
         type=str,
         default=defaults,
-        help="Pick the annotations that can be used as filters in smoother."
+        help="List the annotations that can be used as filters. The annotations listed must be present in the 'anno_path' GFF file."
         + fmt_defaults(defaults),
     )
     defaults = [3, 30]
@@ -339,7 +340,7 @@ def add_parsers(main_parser):
         nargs="*",
         type=int,
         default=defaults,
-        help="Pick several thresholds, that can then be used to filter reads by mapping quality."
+        help="List several thresholds that can be used to filter reads by mapping quality score."
         + fmt_defaults(defaults),
     )
     init_parser.add_argument(
@@ -347,53 +348,53 @@ def add_parsers(main_parser):
         "--dividend",
         type=int,
         default=10000,
-        help="Divide all coordinates by this number. Larger numbers will reduce the index size and preprocessing time. However, bins with a size below this given number cannot be displayed. (default: %(default)s)",
+        help="Divide all coordinates by this number, this corresponds to the minimal bin size that can be displayed. Larger numbers will reduce the index size and pre-processing time. (default: %(default)s)",
     )
     init_parser.set_defaults(func=init)
     init_parser.add_argument("--test", help=argparse.SUPPRESS, action="store_true")
 
-    reset_parser = main_parser.add_parser("reset", help="Reset session of an index.")
+    reset_parser = main_parser.add_parser("reset", help="Reset a given index with to the default parameters.")
     reset_parser.add_argument(
         "index_prefix",
-        help="Prefix that was used to create the index (see the init subcommand).",
+        help="Path to the index directory generated with the init command.",
     )
     reset_parser.set_defaults(func=reset)
 
     repl_parser = main_parser.add_parser(
-        "repl", help="Add a replicate to a given index."
+        "repl", help="Add data for a sample or replicate to an index."
     )
     repl_parser.add_argument(
         "index_prefix",
-        help="Prefix that was used to create the index (see the init subcommand).",
+        help="Path to the index directory generated with the init command.",
     )
     repl_parser.add_argument(
-        "path", help="Path to the file that contains the aligned reads."
+        "path", help="Path to the input pairs file containing the interactions."
     )
-    repl_parser.add_argument("name", help="Name for the new replicate.")
+    repl_parser.add_argument("name", help="Name for the new replicate or sample.")
     repl_parser.add_argument(
         "-g",
         "--group",
         default="a",
         choices=["a", "b", "both", "neither"],
-        help="Which analysis group to place the new replicate in when opening the interface. (default: %(default)s)",
+        help="Analysis group or condition for the new replicate. This can also be modified in the GUI. Options are: 'a', 'b', 'both', 'neither'. (default: %(default)s)",
     )
     repl_parser.add_argument(
         "-q",
         "--no_map_q",
         action="store_true",
-        help="Do not store mapping quality information. This will make the index faster and smaller. (default: off)",
+        help="Do not store mapping quality information for the replicate/sample. This will make the index smaller. (default: off)",
     )
     repl_parser.add_argument(
         "-m",
         "--no_multi_map",
         action="store_true",
-        help="Do not multi mapping information (reads that map to multiple loci). This will make the index faster and smaller. (default: off)",
+        help="Exclude multi mapping reads from the analysis. For reads mapping to multiple loci only the main mapping position will be kept, and the secondary alignments will be ignored. This will make the index smaller. Note that if multiple alignments are not marked as one primary and other secondary alignments and are thus kept in different lines in the input pairs file, only the first line with a given readID will be kept (default: off)",
     )
     repl_parser.add_argument(
-        "-c",
-        "--no_cat",
+        "-a",
+        "--no_anno",
         action="store_true",
-        help="Do not store category information. (default: off)",
+        help="Do not store annotation information. (default: off)",
     )
     repl_parser.add_argument(
         "-s",
@@ -422,14 +423,14 @@ def add_parsers(main_parser):
         nargs="*",
         default=defaults,
         # type=str,
-        help="How columns of the input file should be interpreted. Valid column names are: 'readId', 'chr1', 'chr2', 'pos1', 'pos2', 'strand1', 'strand2', 'mapq1', 'mapq2', 'xa1', 'xa2', 'cnt', and '.'. At a minimum 'chr1', 'chr2', 'pos1' and 'pos2' need to be defined. Column names in squared brackets indicate optional columns (e.g. '[mapq1] [mapq2]'). Specify the columns as a space separated list: '-C chr1 pos1 [xa1]'. Optional columns can be omitted in the input file on a row-by-row basis. If there are multiple optional columns, they are ignored starting from the back. If '.' or '[.]' is given as a column name, that column of the input file will be ignored. If a row in the input file contains more than the given columns, the superfluous columns will be ignored. Lines in the input file that start with '#columns:' will also change this parameter for any following lines."
+        help="Define the order of columns of the input pairs file. Valid column names are: 'readId', 'chr1', 'chr2', 'pos1', 'pos2', 'strand1', 'strand2', 'mapq1', 'mapq2', 'xa1', 'xa2', 'cnt', and '.'. Specify the columns as a space separated list: '-C chr1 pos1 [xa1]'. Column names in squared brackets indicate optional columns (e.g. '[mapq1] [mapq2]'). Optional columns must not appear in all lines of the input file. 'chr1', 'chr2', 'pos1' and 'pos2' must be defined and cannot be optional columns. If a row in the input file has less columns than defined, optional columns will be ignored starting from the end. If a row in the input file contains more than the given columns, the superfluous columns will be ignored starting from the end. Columns defined as '.' or '[.]' will be ignored. Lines in the input file that start with '#columns:' will change this parameter for all following lines."
         + fmt_defaults(defaults),
     )
     repl_parser.add_argument(
         "-u",
         "--force_upper_triangle",
         action="store_true",
-        help="Mirror all interactions to the upper triangle. (default: off)",
+        help="Move all interactions to the upper triangle and keep the lower triangle empty. Enable this option for symmetric data (e.g., Hi-C) with a non-redundant and non-sorted input pairs file. If the input file has sorted pairs, or the data is asymmetric (e.g., RD-SPRITE) this option is not needed. (default: off)",
     )
     repl_parser.set_defaults(func=repl)
     repl_parser.add_argument("--perf", help=argparse.SUPPRESS, action="store_true")
@@ -447,7 +448,7 @@ def add_parsers(main_parser):
 
     norm_parser = main_parser.add_parser(
         "track",
-        help="Add a normalization track to an index, using external sequencing data.",
+        help="Add a track of uni-dimensional sequencing data that can be used for normalisation on Smoother to an index.",
     )
     norm_parser.add_argument("--perf", help=argparse.SUPPRESS, action="store_true")
     norm_parser.add_argument(
@@ -459,11 +460,11 @@ def add_parsers(main_parser):
     )
     norm_parser.add_argument("name", help="Name for the new normalization track.")
     norm_parser.add_argument(
-        "-g",
-        "--group",
+        "-x",
+        "--axis",
         default="neither",
         choices=["row", "col", "both", "neither"],
-        help="Where to to place the new normalization track when opening the interface. (default: %(default)s)",
+        help="Axis in which the uni-dimensional track will be displayed. This can also be modified interactively. Options are: 'row', 'col', 'both', 'neither' (default: %(default)s)",
     )
     norm_parser.set_defaults(func=norm)
     norm_parser.add_argument(
@@ -476,25 +477,25 @@ def add_parsers(main_parser):
         "-q",
         "--no_map_q",
         action="store_true",
-        help="Do not store mapping quality information. This will make the index faster and smaller. (default: off)",
+        help="Do not store mapping quality information for the replicate/sample. This will make the index smaller. (default: off)",
     )
     norm_parser.add_argument(
         "-m",
         "--no_multi_map",
         action="store_true",
-        help="Do not multi mapping information (reads that map to multiple loci). This will make the index faster and smaller. (default: off)",
+        help="Exclude multi mapping reads from the analysis. For reads mapping to multiple loci only the main mapping position will be kept, and all secondary alignments will be ignored. This will make the index smaller. Note that if multiple alignments are not marked as one primary and other secondary alignments and are thus kept in different lines in the input pairs file, only the first line with a given readID will be kept. (default: off)",
     )
     norm_parser.add_argument(
-        "-c",
-        "--no_cat",
+        "-a",
+        "--no_anno",
         action="store_true",
-        help="Do not store category information. (default: off)",
+        help="Do not store annotation information. This will make the index smaller. (default: off)",
     )
     norm_parser.add_argument(
         "-s",
         "--strand",
         action="store_true",
-        help="Do store strand information. (default: off)",
+        help="Do store strand information. This will make the index larger. (default: off)",
     )
     defaults = ["[readID]", "chr", "pos", "[strand]", "[mapq]", "[xa]", "[cnt]"]
     norm_parser.add_argument(
@@ -503,7 +504,7 @@ def add_parsers(main_parser):
         nargs="*",
         default=defaults,
         type=str,
-        help="How columns of the input file should be interpreted. Valid column names are: 'readId', 'chr', 'pos', 'strand', 'mapq', 'xa', 'cnt', and '.'. At a minimum 'chr' and 'pos'. Column names in squared brackets indicate optional columns (e.g. '[mapq] [xa]'). Specify the columns as a space separated list: '-C chr1 pos1 [xa1]'. Optional columns can be omitted in the input file on a row-by-row basis. If there are multiple optional columns they are ignored starting from the back. If '.' or '[.]' is given as a column name, that column of the input file will be ignored. If a row in the input file contains more than the given columns, the superfluous columns will be ignored. Lines in the input file that start with '#columns:' will also change this parameter for any following lines."
+        help="Define the order of columns of the input file. Valid column names are: 'readId', 'chr', 'pos', 'strand', 'mapq', 'xa', 'cnt', and '.'. Specify the columns as a space separated list: '-C chr pos [xa]'. Column names in squared brackets indicate optional columns (e.g. '[mapq] [xa]'). Optional columns must not appear in all lines of the input file. 'chr' and 'pos' must be defined and cannot be optional columns. If a row in the input file has less columns than defined, optional columns will be ignored starting from the end. If a row in the input file contains more than the given columns, the superfluous columns will be ignored starting from the end. Columns defined as '.' or '[.]' will be ignored. Lines in the input file that start with '#columns:' will change this parameter for all following lines."
         + fmt_defaults(defaults),
     )
     norm_parser.add_argument("--shekelyan", help=argparse.SUPPRESS, action="store_true")
@@ -514,37 +515,37 @@ def add_parsers(main_parser):
     )
     export_parser.add_argument(
         "index_prefix",
-        help="Prefix that was used to create the index (see the init subcommand).",
+        help="Path to the index directory generated with the init command.",
     )
     export_parser.add_argument(
         "-p",
         "--export_prefix",
-        help="Path where the exported file shall be saved",
+        help="Path for the exported files. The appropriate file extension will be added automatically.",
     )
     export_parser.add_argument(
         "-f",
         "--export_format",
         choices=["tsv", "svg", "png"],
         nargs="*",
-        help="The format which to export to. (default: tsv)",
+        help="File format to be exported. Format options are 'tsv', 'svg', 'png'. When exporting in tsv format, 3 files are saved: one for the interactome, and one for each axis. Multiple formats can be exported at once: For example, using the argument '-f tsv png' will export both the tsv text file and a png picture. (Default: tsv)",
     )
     export_parser.add_argument(
         "-s",
         "--export_size",
         type=int,
-        help="The size of the heatmap to be exported, in pixels. (default: 800)",
+        help="Size in pixels of the heatmap. (default: 800)",
     )
     export_parser.add_argument("--perf", help=argparse.SUPPRESS, action="store_true")
     export_parser.set_defaults(func=export_smoother)
 
-    set_parser = main_parser.add_parser("set", help="Set a parameter to a value.")
+    set_parser = main_parser.add_parser("set", help="Set the values of different parameters in an index. This can also be done on in Smootherthe graphical user interface.")
     set_parser.add_argument(
         "index_prefix",
-        help="Prefix that was used to create the index (see the init subcommand).",
+        help="Path to the index directory generated with the init command.",
     )
     set_parser.add_argument(
         "name",
-        help="The name of the parameter to set.",
+        help="The name of the parameter to set. The parameter names can be found in the manual https://biosmoother.readthedocs.io",
     )
     set_parser.add_argument(
         "val",
@@ -552,71 +553,72 @@ def add_parsers(main_parser):
     )
     set_parser.set_defaults(func=set_smoother)
 
-    get_parser = main_parser.add_parser("get", help="Get the value of a parameter.")
+    get_parser = main_parser.add_parser("get", help="Retrieve the value of a parameter from the current session of an index. This can also be done on Smoother")
     get_parser.add_argument(
         "index_prefix",
-        help="Prefix that was used to create the index (see the init subcommand).",
+        help="Path to the index directory generated with the init command.",
     )
     get_parser.add_argument(
         "name",
-        help="The name of the parameter to get.",
+        help="The name of the parameter to get. The parameter names can be found in the manual https://biosmoother.readthedocs.io. If a '.' is given for the name argument, the whole session will be printed. If 'settings' is given for the name argument, all settings will be printed.",
     )
     get_parser.set_defaults(func=get_smoother)
 
-    info_parser = main_parser.add_parser("par_info", argument_default=argparse.SUPPRESS)
-    info_parser.add_argument(
-        "index_prefix",
-        help="Prefix that was used to create the index (see the init subcommand).",
-    )
-    info_parser.add_argument(
-        "-n",
-        "--name",
-        help="The name of the parameter to get.",
-    )
-    info_parser.set_defaults(func=info_smoother)
+    if not HIDE_SUBCOMMANDS_MANUAL:
+        info_parser = main_parser.add_parser("par_info", argument_default=argparse.SUPPRESS)
+        info_parser.add_argument(
+            "index_prefix",
+            help="Prefix that was used to create the index (see the init subcommand).",
+        )
+        info_parser.add_argument(
+            "-n",
+            "--name",
+            help="The name of the parameter to get.",
+        )
+        info_parser.set_defaults(func=info_smoother)
 
-    test_parser = main_parser.add_parser("test", argument_default=argparse.SUPPRESS)
-    test_parser.add_argument(
-        "index_prefix",
-        help="Prefix that was used to create the index (see the init subcommand).",
-    )
-    test_parser.add_argument(
-        "-S", "--seed", help="Seed for random configurations.", default=None, type=int
-    )
-    test_parser.add_argument(
-        "-s", "--skip_first", help="Skip the first x many test", default=0, type=int
-    )
-    test_parser.set_defaults(func=test_smoother)
+        test_parser = main_parser.add_parser("test", argument_default=argparse.SUPPRESS)
+        test_parser.add_argument(
+            "index_prefix",
+            help="Path to the index directory generated with the init command.",
+        )
+        test_parser.add_argument(
+            "-S", "--seed", help="Seed for random configurations.", default=None, type=int
+        )
+        test_parser.add_argument(
+            "-s", "--skip_first", help="Skip the first x many test", default=0, type=int
+        )
+        test_parser.set_defaults(func=test_smoother)
 
-    bench_parser = main_parser.add_parser(
-        "benchmark", argument_default=argparse.SUPPRESS
-    )
-    bench_parser.add_argument(
-        "index_prefix",
-        help="Prefix that was used to create the index (see the init subcommand).",
-    )
-    bench_parser.add_argument(
-        "-N",
-        "--num_experiments",
-        help="Number of samples to take. (default: %(default)s)",
-        default=100,
-        type=int,
-    )
-    bench_parser.add_argument(
-        "-o", "--outfile", help="outputfile", default="benchmark.pickle", type=str
-    )
-    bench_parser.set_defaults(func=benchmark_runtime_smoother)
+        bench_parser = main_parser.add_parser(
+            "benchmark", argument_default=argparse.SUPPRESS
+        )
+        bench_parser.add_argument(
+            "index_prefix",
+            help="Path to the index directory generated with the init command.",
+        )
+        bench_parser.add_argument(
+            "-N",
+            "--num_experiments",
+            help="Number of samples to take. (default: %(default)s)",
+            default=100,
+            type=int,
+        )
+        bench_parser.add_argument(
+            "-o", "--outfile", help="outputfile", default="benchmark.pickle", type=str
+        )
+        bench_parser.set_defaults(func=benchmark_runtime_smoother)
 
     ploidy_parser = main_parser.add_parser(
         "ploidy", help="Add a ploidy file to the index."
     )
     ploidy_parser.add_argument(
         "index_prefix",
-        help="Prefix that was used to create the index (see the init subcommand).",
+        help="Path to the index directory generated with the init command.",
     )
     ploidy_parser.add_argument(
         "ploidy_file",
-        help="File that specifies the ploidy for each chromosome.",
+        help="File that specifies the ploidy for each contig. The format of this file is described in the manual https://biosmoother.readthedocs.io/en/latest/Manual.html#correcting-an-index-for-aneuploidy",
     )
     ploidy_parser.set_defaults(func=ploidy_smoother)
 
@@ -634,7 +636,8 @@ def make_main_parser():
 def make_versioned_parser():
     parser = make_main_parser()
     parser.add_argument(
-        "-v", "--version", action="version", version=version("libbiosmoother")
+        "-v", "--version", action="version", version=version("libbiosmoother"),
+        help="Print libSmoother's version and exit.",
     )
     parser.add_argument(
         "--version_smoother_cpp",
