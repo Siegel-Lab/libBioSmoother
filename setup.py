@@ -137,9 +137,12 @@ setup(
     author='Markus Schmidt',
     license='MIT',
     url='https://github.com/Siegel-Lab/libBioSmoother',
-    description="On-the-fly processing and visualization of interactome data",
+    description="On-the-fly processing of interactome data",
     long_description="""
-libBioSmoother is the library behind biosmoother. It takes care of the server-side data processing.
+libBioSmoother is the library behind BioSmoother. It takes care of the runtime-sensitive server-side data processing.
+libBioSmoother performs on-the-fly analysis (filtering, normalization, and downstream processing) of interactome data (https://en.wikipedia.org/wiki/Chromosome_conformation_capture). See the GitHub repository for more information: https://github.com/Siegel-Lab/libBioSmoother.
+
+libBioSmoother's documentation is available at https://biosmoother.rtfd.io/.
     """,
     packages=["libbiosmoother", "libbiosmoother.conf"],
     ext_modules=[CMakeExtension("libbiosmoothercpp")],
