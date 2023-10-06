@@ -865,9 +865,18 @@ bool PartialQuarry::setAnnoFilters( )
     const std::string sCoordAnno = getValue<std::string>( { "contigs", "annotation_coordinates" } );
     const bool bAnnoCoordsRow = getValue<bool>( { "settings", "filters", "anno_coords_row" } );
     const bool bAnnoCoordsCol = getValue<bool>( { "settings", "filters", "anno_coords_col" } );
-    if( bAnnoCoordsCol )
+
+    std::vector<std::string> vFilterable = getValue<std::vector<std::string>>( { "annotation", "filterable" } );
+
+    const bool bAnnoCoordsIsFilterable = std::find( vFilterable.begin( ), vFilterable.end( ), sCoordAnno ) != vFilterable.end( );
+
+    if( (bAnnoCoordsCol || bAnnoCoordsRow) && bAnnoCoordsIsFilterable && 
+        getValue<std::string>( { "settings", "filters", "multiple_annos_in_bin" } ) == "combine")
+        setError( "Using 'combine' for 'multiple annotations in a bin' in combination with an non-filterable annotation coordinate system, will render wrong interactions. Switch 'multiple annotations in a bin' to another option." );
+    
+    if( bAnnoCoordsCol && bAnnoCoordsIsFilterable )
         vFilterAbsentX.push_back( sCoordAnno );
-    if( bAnnoCoordsRow )
+    if( bAnnoCoordsRow && bAnnoCoordsIsFilterable )
         vFilterAbsentY.push_back( sCoordAnno );
 
     std::sort( vFilterPresentX.begin( ), vFilterPresentX.end( ) );
@@ -875,7 +884,6 @@ bool PartialQuarry::setAnnoFilters( )
     std::sort( vFilterAbsentX.begin( ), vFilterAbsentX.end( ) );
     std::sort( vFilterAbsentY.begin( ), vFilterAbsentY.end( ) );
 
-    std::vector<std::string> vFilterable = getValue<std::vector<std::string>>( { "annotation", "filterable" } );
 
     for( size_t uiI = 0; uiI < MAX_NUM_FILTER_ANNOTATIONS; uiI++ )
     {
@@ -1705,6 +1713,7 @@ void PartialQuarry::regCoords( )
                                { { "annotation", "filterable" },
                                  { "annotation", "filter_present_x" },
                                  { "annotation", "filter_present_y" },
+                                 { "settings", "filters", "multiple_annos_in_bin" },
                                  { "annotation", "filter_absent_x" },
                                  { "annotation", "filter_absent_y" } },
                                /*.vSessionsIncomingInPrevious =*/
