@@ -107,6 +107,7 @@ template <typename v_t> v_t PartialQuarry::symmetry( v_t uiA, v_t uiB )
 
 bool PartialQuarry::setBinValues( )
 {
+    bool bOneFilledBinAtLeast = false;
     for( size_t uiY = 0; uiY < NUM_COORD_SYSTEMS; uiY++ )
     {
         vvBinValues[ uiY ].clear( );
@@ -136,6 +137,8 @@ bool PartialQuarry::setBinValues( )
                         vVals[ uiI ] = indexCount( iDataSetId, vCoords[ uiI ].uiIndexY, vCoords[ uiI ].uiIndexX,
                                                    vCoords[ uiI ].uiIndexY + vCoords[ uiI ].uiIndexH,
                                                    vCoords[ uiI ].uiIndexX + vCoords[ uiI ].uiIndexW, uiI == 0 );
+                        if(vVals[uiI] > 0)
+                            bOneFilledBinAtLeast = true;
                     }
                     else
                         vVals[ uiI ] = { };
@@ -150,6 +153,10 @@ bool PartialQuarry::setBinValues( )
             vActiveReplicatesTotal.push_back( symmetry( uiTot, uiTot ) );
         }
     }
+    
+    if(!bOneFilledBinAtLeast)
+        setError( "All bins are empty." );
+
     END_RETURN;
 }
 

@@ -573,6 +573,7 @@ bool PartialQuarry::setRnaAssociatedBackground( )
 
     const bool bAxisIsCol = getValue<bool>( { "settings", "normalization", "grid_seq_axis_is_column" } );
     const bool bIgnoreCis = getValue<bool>( { "settings", "normalization", "grid_seq_ignore_cis" } );
+    bool bAtLeastOneTransContig = false;
 
     vBackgroundGridSeq.reserve( vAxisCords[ bAxisIsCol ? 0 : 1 ].size( ) );
     // for each eligible element
@@ -585,6 +586,7 @@ bool PartialQuarry::setRnaAssociatedBackground( )
                 const IndexCoord& rSample = vGridSeqSamples[ uiI ];
                 if( rSample.uiChromosome != rAxis.uiChromosome || !bIgnoreCis ) // ignore cis-contigs
                 {
+                    bAtLeastOneTransContig = true;
                     const size_t uiAnnoStart = rSample.uiIndexPos;
                     const size_t uiAnnoEnd = rSample.uiIndexPos + rSample.uiIndexSize;
                     for( size_t uiRepl = 0; uiRepl < vActiveReplicates.size( ); uiRepl++ )
@@ -624,6 +626,9 @@ bool PartialQuarry::setRnaAssociatedBackground( )
                 }
             }
     }
+    
+    if(!bAtLeastOneTransContig && bIgnoreCis)
+        setError( "You are only cis interactions for the assoc. slices normalization; however there was not a single trans interaction in the index. If your genome has only a single contig, you will have to include cis interactions in the normalization." );
 
     END_RETURN;
 }

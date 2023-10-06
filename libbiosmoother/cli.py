@@ -315,7 +315,7 @@ def add_parsers(main_parser):
     )
     init_parser.add_argument(
         "chr_len",
-        help="Path to a 2-column tab separated file containing the chromosome names and their size in nucleotides. The order of chromosomes in this file will determine the order they are displayed in.",
+        help="Path to a 2-column tab separated file containing the chromosome names and their size in basepairs. The order of chromosomes in this file will determine the order they are displayed in.",
     )
     init_parser.add_argument(
         "anno_path",
@@ -388,7 +388,7 @@ def add_parsers(main_parser):
         "-m",
         "--no_multi_map",
         action="store_true",
-        help="Exclude multi mapping reads from the analysis. For reads mapping to multiple loci only the main mapping position will be kept, and the secondary alignments will be ignored. This will make the index smaller. Note that if multiple alignments are not marked as one primary and other secondary alignments and are thus kept in different lines in the input pairs file, only the first line with a given readID will be kept (default: off)",
+        help="Exclude multi mapping reads from the analysis. For reads mapping to multiple loci only the main mapping position will be kept, and the secondary alignments will be ignored. This will make the index smaller. Note that if multiple alignments are not marked as one primary and other secondary alignments (I.e., they are kept in different lines in the input pairs file), only the first line with a given readID will be kept (default: off)",
     )
     repl_parser.add_argument(
         "-a",
@@ -618,7 +618,7 @@ def add_parsers(main_parser):
     )
     ploidy_parser.add_argument(
         "ploidy_file",
-        help="File that specifies the ploidy for each contig. The format of this file is described in the manual https://biosmoother.readthedocs.io/en/latest/Manual.html#correcting-an-index-for-aneuploidy",
+        help="File that specifies the ploidy for each contig. The format of this file is described in the manual: https://biosmoother.rtdf.io",
     )
     ploidy_parser.set_defaults(func=ploidy_smoother)
 
