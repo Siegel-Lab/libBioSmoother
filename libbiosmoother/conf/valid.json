@@ -11,7 +11,7 @@
     },
     "interface": {
         "color_palette": ["Viridis256", "Plasma256", "Turbo256", "Fall", "LowToHigh"],
-        "axis_lables": ["DNA_RNA", "RNA_DNA", "DNA_DNA"]
+        "axis_lables": ["DNA_RNA", "RNA_DNA", "DNA_DNA", "RNA_RNA"]
     },
     "filters": {
         "directionality": ["all", "same", "oppo", "forw", "rev"],
