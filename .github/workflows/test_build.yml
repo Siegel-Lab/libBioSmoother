@@ -139,49 +139,9 @@ jobs:
         path: ./dist
 
 
-  build-mac-m1:
-    runs-on: macos-latest-xl
-    strategy:
-      fail-fast: false
-      matrix:
-          python-version: ["3.8", "3.9", "3.10", "3.11"]
-
-    steps:
-    - name: Set up Python
-      uses: actions/setup-python@v3
-      with:
-        python-version: ${{ matrix.python-version }}
-        
-    - name: Install dependencies
-      run: |
-        pip install --upgrade pip
-        pip install wheel pybind11
-
-    - uses: actions/checkout@v3
-      with:
-        repository: Siegel-Lab/libSps
-        submodules: true
-        #ref: v0.3.7
-
-    - name: Install libSps
-      run: pip install -e . 
-
-    - uses: actions/checkout@v3
-      with:
-        submodules: true
-
-    - name: Build package
-      run: python setup.py bdist_wheel
-
-    - uses: actions/upload-artifact@v3
-      with:
-        name: dist
-        path: ./dist
-
-
 
   publish-testpypi:
-    needs: [build-ubuntu, build-windows, build-mac, build-mac-m1]
+    needs: [build-ubuntu, build-windows, build-mac]
     runs-on: ubuntu-20.04
 
     steps:

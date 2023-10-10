@@ -49,6 +49,7 @@ find_package (Python REQUIRED COMPONENTS Interpreter Development.Module)
 # configure the version.h.in file
 add_custom_target(
     cm_config_version ALL
+    COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_BINARY_DIR}/generated/inc/cm/"
     COMMAND ${Python_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/src/conf_version.h.in.py
         "${CMAKE_CURRENT_SOURCE_DIR}/inc/cm/version.h.in"
         "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH}"
@@ -58,6 +59,7 @@ add_custom_target(
 
 add_custom_target(
     cm_config_build_time ALL
+    COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_BINARY_DIR}/generated/inc/cm/"
     COMMAND ${Python_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/src/conf_build_time.h.in.py
         "${CMAKE_CURRENT_SOURCE_DIR}/inc/cm/build_time.h.in"
         "${CMAKE_BINARY_DIR}/generated/inc/cm/build_time.h"
