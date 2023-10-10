@@ -40,3 +40,4 @@ dist/*
 wheelhouse/*
 *.backup
 benchmarking/pics/*
+libSps/*
