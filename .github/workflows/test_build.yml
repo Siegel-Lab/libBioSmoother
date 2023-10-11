@@ -138,7 +138,7 @@ jobs:
         name: dist
         path: ./dist
 
-  build-mac:
+  build-mac-13:
     runs-on: macos-13
     strategy:
       fail-fast: false
@@ -180,7 +180,7 @@ jobs:
 
 
   publish-testpypi:
-    needs: [build-ubuntu, build-windows, build-mac, build-macos-13]
+    needs: [build-ubuntu, build-windows, build-mac, build-mac-13]
     runs-on: ubuntu-20.04
 
     steps:
