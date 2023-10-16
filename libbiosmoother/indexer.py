@@ -183,25 +183,44 @@ class Indexer:
         if test:
             self.set_session(["test"], True)
 
-        with open(chr_len_file_name, "r") as len_file:
-            for line in len_file:
-                chr_name, chr_len = line.split()
-                if not test or ("Chr1" in chr_name):
-                    self.append_session(["contigs", "list"], chr_name)
-                    self.append_session(["contigs", "ploidy_list"], chr_name)
-                    self.set_session(["contigs", "ploidy_map", chr_name], chr_name)
-                    self.set_session(["contigs", "ploidy_groups", chr_name], 1)
-                    self.set_session(
-                        ["contigs", "lengths", chr_name], int(chr_len) // dividend
-                    )
-                    self.append_session(["contigs", "displayed_on_x"], chr_name)
-                    self.append_session(["contigs", "displayed_on_y"], chr_name)
-                    self.append_session(["contigs", "displayed_on_x_ploidy"], chr_name)
-                    self.append_session(["contigs", "displayed_on_y_ploidy"], chr_name)
-                    self.set_session(
-                        ["contigs", "genome_size"],
-                        self.session_default["contigs"]["genome_size"] + int(chr_len),
-                    )
+        chr_len_list = []
+        if chr_len_file_name != "":
+            with open(chr_len_file_name, "r") as len_file:
+                for line in len_file:
+                    chr_name, chr_len = line.split()
+                    chr_len_list.append((chr_name, chr_len))
+        else:
+            with open(anno_path, "r") as len_file:
+                for line in len_file:
+                    if line.startswith("##sequence-region "):
+                        chr_name, chr_start, chr_end = line.split()[1:]
+                        if chr_start != "1":
+                            raise RuntimeError(
+                                "Expecting sequence-regions to start at position 1, however this region does not: " + line[:-1]
+                            )
+                        chr_len_list.append((chr_name, chr_end))
+            if len(chr_len_list) == 0:
+                raise RuntimeError(
+                    "You are using a gff file without '##sequence-region' lines. You can use this file to load annotations but you will also have to supply a contig.sizes file using the --ctg_len parameter."
+                )
+
+        for chr_name, chr_len in chr_len_list:
+            if not test or ("Chr1" in chr_name):
+                self.append_session(["contigs", "list"], chr_name)
+                self.append_session(["contigs", "ploidy_list"], chr_name)
+                self.set_session(["contigs", "ploidy_map", chr_name], chr_name)
+                self.set_session(["contigs", "ploidy_groups", chr_name], 1)
+                self.set_session(
+                    ["contigs", "lengths", chr_name], int(chr_len) // dividend
+                )
+                self.append_session(["contigs", "displayed_on_x"], chr_name)
+                self.append_session(["contigs", "displayed_on_y"], chr_name)
+                self.append_session(["contigs", "displayed_on_x_ploidy"], chr_name)
+                self.append_session(["contigs", "displayed_on_y_ploidy"], chr_name)
+                self.set_session(
+                    ["contigs", "genome_size"],
+                    self.session_default["contigs"]["genome_size"] + int(chr_len),
+                )
         self.set_session(
             ["area"],
             {

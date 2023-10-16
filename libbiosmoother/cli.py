@@ -35,8 +35,12 @@ def get_path(prefix):
 
 def init(args):
     path = args.index_prefix.replace(".smoother_index", "")
+    if len(args.ctg_len) == 0 and len(args.anno_path) == 0:
+        raise RuntimeError(
+            "Either a chromosome length file or an annotation file must be given."
+        )
     Indexer(path, strict=True).create_session(
-        args.chr_len,
+        args.ctg_len,
         args.dividend,
         args.anno_path,
         args.test,
@@ -308,18 +312,23 @@ def add_parsers(main_parser):
     def fmt_defaults(defaults):
         return " (default: " + " ".join(str(x) for x in defaults) + ")"
 
-    init_parser = main_parser.add_parser("init", help="Generate a new index for a given reference genome.")
+    init_parser = main_parser.add_parser("init", help="Generate a new index for a given reference genome.",
+                                         description="Either --anno_path or --ctg_len must be given.")
     init_parser.add_argument(
         "index_prefix",
-        help="Path where the index directory will be saved. Note: a folder with multiple files will be created.",
+        help="Path where the index directory will be saved. Note: a folder with multiple files will be created."
     )
     init_parser.add_argument(
-        "chr_len",
-        help="Path to a 2-column tab separated file containing the chromosome names and their size in basepairs. The order of chromosomes in this file will determine the order they are displayed in.",
+        "-c",
+        "--ctg_len",
+        help="Path to a 2-column tab separated file containing the contig names and their size in basepairs. The order of contigs in this file will determine the order they are displayed in. If no --anno_path is given, this parameter becomes required.",
+        nargs="?",
+        default="",
     )
     init_parser.add_argument(
-        "anno_path",
-        help="Path to a GFF file containing the annotations of the reference genome.",
+        "-a",
+        "--anno_path",
+        help="Path to a GFF file containing the annotations of the reference genome. If --ctg_len is not given this parameter becomes required and the order of contigs will be inferred from the order of '##sequence-region' lines in this GFF file.",
         nargs="?",
         default="",
     )
