@@ -1,0 +1,85 @@
+# This workflow will upload a Python Package using Twine when a release is created
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python#publishing-to-package-registries
+
+# This workflow uses actions that are not certified by GitHub.
+# They are provided by a third-party and are governed by
+# separate terms of service, privacy policy, and support
+# documentation.
+
+name: Test Python Package Publishing
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build_wheels:
+    name: Build wheels on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-20.04, windows-2019, macos-11]
+
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: true
+
+      - name: Build wheels
+        uses: pypa/cibuildwheel@v2.16.2
+        env:
+          CIBW_BUILD: [cp38-*, cp39-*, cp310-*, cp311-*]
+          CIBW_BEFORE_BUILD: pip install pybind11
+
+      - uses: actions/upload-artifact@v3
+        with:
+          path: ./wheelhouse/*.whl
+
+
+  publish-testpypi:
+    needs: [build_wheels]
+    runs-on: ubuntu-20.04
+
+    steps:
+    - uses: actions/download-artifact@v3
+      with:
+        name: wheelhouse
+        path: ./wheelhouse
+
+    - name: Publish package
+      uses: pypa/gh-action-pypi-publish@27b31702a0e7fc50959f5ad993c78deac1bdfc29
+      with:
+        user: __token__
+        password: ${{ secrets.TEST_PYPI_API_TOKEN }}
+        skip_existing: true
+        repository_url: https://test.pypi.org/legacy/
+
+
+
+  test:
+    needs: [publish-testpypi]
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+          python-version: ["3.8", "3.9", "3.10", "3.11"]
+          os: ["ubuntu-latest", "windows-latest", "macos-11", "macos-12", "macos-13"]
+
+    steps:
+    - name: Set up Python
+      uses: actions/setup-python@v3
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install package
+      run: |
+        pip install --upgrade pip
+        pip install scipy statsmodels scikit-learn
+        pip install --index-url https://test.pypi.org/simple/ libbiosmoother
+
+    - name: Import package
+      run: |
+        python -c "import libbiosmoother; print(libbiosmoother.LIB_BIO_SMOOTHER_CPP_VERSION)"
+        libbiosmoother -v

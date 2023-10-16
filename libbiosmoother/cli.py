@@ -43,6 +43,8 @@ def init(args):
         args.filterable_annotations,
         args.map_q_thresholds,
     )
+    if args.ploidy_file is not None:
+        Quarry(get_path(args.index_prefix)).set_ploidy_list(args.ploidy_file)
 
 
 def reset(args):
@@ -93,8 +95,6 @@ def repl(args):
             args.force_upper_triangle,
             args.columns,
         )
-        if args.ploidy_file is not None:
-            idx.set_ploidy_list(args.ploidy_file)
 
     w_perf(run, args)
 
@@ -350,6 +350,9 @@ def add_parsers(main_parser):
         default=10000,
         help="Divide all coordinates by this number, this corresponds to the minimal bin size that can be displayed. Larger numbers will reduce the index size and pre-processing time. (default: %(default)s)",
     )
+    init_parser.add_argument(
+        "--ploidy_file", help="File that specifies the ploidy for each chromosome."
+    )
     init_parser.set_defaults(func=init)
     init_parser.add_argument("--test", help=argparse.SUPPRESS, action="store_true")
 
@@ -439,9 +442,6 @@ def add_parsers(main_parser):
     )
     repl_parser.add_argument(
         "--only_points", help=argparse.SUPPRESS, action="store_true"
-    )
-    repl_parser.add_argument(
-        "--ploidy_file", help="File that specifies the ploidy for each chromosome."
     )
     repl_parser.add_argument("--shekelyan", help=argparse.SUPPRESS, action="store_true")
     repl_parser.add_argument("--no_groups", help=argparse.SUPPRESS, action="store_true")

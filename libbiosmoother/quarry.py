@@ -304,6 +304,7 @@ class Quarry(PartialQuarry):
     def set_ploidy_list(self, ploidy_file):
         with fileinput.input(ploidy_file) as file:
             self.set_ploidy_itr(file)
+            self.set_value(["settings", "normalization", "ploidy_last_uploaded_filename"], ploidy_file)
         return self
 
     def __isint(self, num):

@@ -156,7 +156,8 @@
         "ploidy_keep_distinct_group": true,
         "ploidy_keep_inter_group": true,
         "ploidy_remove_others": true,
-        "ploidy_remove_intra_instance_contig": true
+        "ploidy_remove_intra_instance_contig": true,
+        "ploidy_last_uploaded_filename": ""
     },
     "replicates": {
         "in_group": "sum",
