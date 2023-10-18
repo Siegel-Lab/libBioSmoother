@@ -162,6 +162,7 @@ def set_smoother(args):
             q.get_value(["area", "y_start"]),
             q.get_value(["area", "x_end"]),
             q.get_value(["area", "y_end"]),
+            report_error=lambda s: print(s, file=sys.stderr)
         )
         if not new_area[0] is None:
             q.set_value(["area", "x_start"], new_area[0])
@@ -174,7 +175,7 @@ def set_smoother(args):
         q.save_session()
     elif args.name == "settings.interface.v4c.col":
         q = Quarry(possible)
-        new_range = q.interpret_range(args.val, True)
+        new_range = q.interpret_range(args.val, True, report_error=lambda s: print(s, file=sys.stderr))
         if not new_range[0] is None:
             q.set_value(["settings", "interface", "v4c", "col_from"], new_range[0])
         if not new_range[1] is None:
@@ -182,7 +183,7 @@ def set_smoother(args):
         q.save_session()
     elif args.name == "settings.interface.v4c.row":
         q = Quarry(possible)
-        new_range = q.interpret_range(args.val, False)
+        new_range = q.interpret_range(args.val, False, report_error=lambda s: print(s, file=sys.stderr))
         if not new_range[0] is None:
             q.set_value(["settings", "interface", "v4c", "row_from"], new_range[0])
         if not new_range[1] is None:

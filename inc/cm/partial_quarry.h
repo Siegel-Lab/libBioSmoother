@@ -1392,8 +1392,9 @@ class PartialQuarry : public HasSession
     }
 
   public:
-    const pybind11::int_ interpretName( std::string sName, bool bXAxis, bool bBottom,
-                                        const std::function<void( const std::string& )>& fPyPrint )
+    const pybind11::object interpretName( std::string sName, bool bXAxis, bool bBottom,
+                                        const std::function<void( const std::string& )>& fPyPrint,
+                                        const std::function<void( const std::string& )>& fReportError )
     {
         update( NodeNames::CanvasSize, fPyPrint );
         sName = to_lower( sName );
@@ -1408,10 +1409,11 @@ class PartialQuarry : public HasSession
         const bool bFullGenome =
             !getValue<bool>( { "settings", "filters", bXAxis ? "anno_coords_col" : "anno_coords_row" } );
         size_t uiRunningPos = 0;
+        bool bOneMatchFound = false;
         for( auto xChr : vActiveChromosomes[ bXAxis ? 0 : 1 ] )
         {
             int64_t uiFistAnnoIdx = getFirstAnnoIdx( bXAxis );
-            bool bMatch = to_lower( xChr.sName ).find( sName ) != std::string::npos;
+            bool bMatch = (to_lower( xChr.sName ).find( sName ) != std::string::npos) || (to_lower( xChr.sName ) == sName);
             size_t uiLen = 0;
             if( bFullGenome )
                 uiLen = xChr.uiLength;
@@ -1422,8 +1424,10 @@ class PartialQuarry : public HasSession
                 else
                     uiLen = pIndices->vAnno.totalIntervalSize( uiFistAnnoIdx + xChr.uiActualContigId );
             }
+
             if( bMatch )
             {
+                bOneMatchFound = true;
                 if( bBottom )
                 {
                     uiMaxPos = uiRunningPos;
@@ -1433,6 +1437,12 @@ class PartialQuarry : public HasSession
                     uiMaxPos = uiRunningPos + uiLen;
             }
             uiRunningPos += uiLen;
+        }
+
+        if(!bOneMatchFound)
+        {
+            fReportError("Could not interpret '" + sName + "' as a contig");
+            return py::cast<py::none>(Py_None);
         }
 
         return pybind11::int_( uiMaxPos );

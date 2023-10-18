@@ -393,6 +393,12 @@ bool PartialQuarry::setTrackPrecursor( )
                     }
                 }
 
+        for( size_t uiI = 0; uiI < 2; uiI++ )
+        {
+            vvMinMaxTracks[ uiI ][ 1 ] = std::max( vvMinMaxTracks[ uiI ][ 0 ] + 0.0001, vvMinMaxTracks[ uiI ][ 1 ] );
+            vvMinMaxTracksNonZero[ uiI ][ 1 ] = std::max( vvMinMaxTracksNonZero[ uiI ][ 0 ] + 0.0001, 
+                                                          vvMinMaxTracksNonZero[ uiI ][ 1 ] );
+        }
 
         vTrackExportNames[ uiI ].clear( );
         vTrackExportNames[ uiI ].reserve( 20 );

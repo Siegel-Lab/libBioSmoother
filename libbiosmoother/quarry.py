@@ -314,7 +314,8 @@ class Quarry(PartialQuarry):
         except ValueError:
             return False
 
-    def __interpret_number(self, s):
+    def __interpret_number(self, s, bot=True, report_error=lambda s: None):
+        s_in = s
         if s[-1:] == "b":
             s = s[:-1]
         elif s[-2:] == "bp":
@@ -328,16 +329,20 @@ class Quarry(PartialQuarry):
             s = s[:-1]
         s = s.replace(",", "")
         if self.__isint(s):
-            return (int(s) * fac) // self.get_value(["dividend"])
+            if bot:
+                return (int(s) * fac) // self.get_value(["dividend"])
+            else:
+                return 1 + (int(s) * fac - 1) // self.get_value(["dividend"])
+        report_error("Could not interpret '" + str(s_in) + "' as a locus")
         return None
 
-    def interpret_position(self, s, on_x_axis=True, bot=True):
+    def interpret_position(self, s, on_x_axis=True, bot=True, report_error=lambda s: None):
         if s.count(":") == 0 and s.count("+-") == 1:
             x, y = s.split("+-")
-            c = self.__interpret_number(y)
+            c = self.__interpret_number(y, True, report_error=report_error)
             if not c is None and bot:
                 c = -c
-            a = self.interpret_name(x, on_x_axis, bot, lambda x: None)
+            a = self.interpret_name(x, on_x_axis, bot, lambda x: None, report_error=report_error)
             if not a is None and not c is None:
                 return [a + c]
         elif s.count(":") == 1:
@@ -347,32 +352,35 @@ class Quarry(PartialQuarry):
                 if len(y1) == 0:
                     b = 0
                 else:
-                    b = self.__interpret_number(y1)
-                c = self.__interpret_number(y2)
+                    b = self.__interpret_number(y1, bot, report_error=report_error)
+                c = self.__interpret_number(y2, True, report_error=report_error)
                 if not c is None and bot:
                     c = -c
                 a = self.interpret_name(
-                    x, on_x_axis, bot if len(y1) == 0 else True, lambda x: None
+                    x, on_x_axis, bot if len(y1) == 0 else True, lambda x: None, report_error
                 )
                 if not a is None and not b is None and not c is None:
                     return [a + b + c]
-            b = self.__interpret_number(y)
-            a = self.interpret_name(x, on_x_axis, True, lambda x: None)
+            b = self.__interpret_number(y, bot, report_error=report_error)
+            a = self.interpret_name(x, on_x_axis, True, lambda x: None, report_error)
             if not a is None and not b is None:
                 return [a + b]
 
-        a = self.__interpret_number(s)
+        # try to interpret as a number
+        a = self.__interpret_number(s, bot, report_error=lambda s: None)
         if not a is None:
             return [a]
 
         if not s is None:
-            a = self.interpret_name(s, on_x_axis, bot, lambda x: None)
+            # try to interpret as a contig name
+            a = self.interpret_name(s, on_x_axis, bot, lambda x: None, lambda s: None)
             if not a is None:
                 return [a]
 
+        report_error("Could not interpret '" + str(s) + "' as a contig:locus")
         return [None]
 
-    def interpret_range(self, s, on_x_axis=True):
+    def interpret_range(self, s, on_x_axis=True, report_error=lambda s: None):
         s = "".join(s.lower().split())
         if s.count("..") == 1 and s.count("[") <= 1 and s.count("]") <= 1:
             x, y = s.split("..")
@@ -381,37 +389,39 @@ class Quarry(PartialQuarry):
             if y[-1:] == "]":
                 y = y[:-1]
 
-            ret = self.interpret_position(x, on_x_axis, True) + self.interpret_position(
-                y, on_x_axis, False
+            ret = self.interpret_position(x, on_x_axis, True, report_error=report_error) + self.interpret_position(
+                y, on_x_axis, False, report_error=report_error
             )
         else:
             if s[:1] == "[":
                 s = s[1:]
             if s[-1:] == "]":
                 s = s[:-1]
-            ret = self.interpret_position(s, on_x_axis, True) + self.interpret_position(
-                s, on_x_axis, False
+            ret = self.interpret_position(s, on_x_axis, True, report_error=report_error) + self.interpret_position(
+                s, on_x_axis, False, report_error=lambda x: None
             )
         if not None in ret:
             ret.sort()
             if ret[1] <= ret[0]:
                 ret[1] = ret[0] + 1
+        if None in ret:
+            report_error("Could not interpret '" + str(s) + "' as a range")
         return ret
 
     def interpret_area(
-        self, s, default_start_x, default_start_y, default_end_x, default_end_y
+        self, s, default_start_x, default_start_y, default_end_x, default_end_y, report_error=lambda s: None
     ):
         # remove all space-like characters
         s = "".join(s.lower().split())
         if s.count(";") == 1 and s.count("x=") == 0 and s.count("y=") == 0:
             x, y = s.split(";")
-            return self.interpret_range(x, True) + self.interpret_range(y, False)
+            return self.interpret_range(x, True, report_error=report_error) + self.interpret_range(y, False, report_error=report_error)
 
         if s.count("x=") == 1 and s[:2] == "x=" and s.count("y=") == 0:
             s = s[2:]
-            return self.interpret_range(s, True) + [
+            return self.interpret_range(s, True, report_error=report_error) + [
                 default_start_y,
-                default_end_y,
+                default_end_y
             ]
 
         if s.count("x=") == 0 and s.count("y=") == 1 and s[:2] == "y=":
@@ -419,16 +429,16 @@ class Quarry(PartialQuarry):
             return [
                 default_start_x,
                 default_end_x,
-            ] + self.interpret_range(s, True)
+            ] + self.interpret_range(s, True, report_error=report_error)
 
         if s.count("x=") == 1 and s.count("y=") == 1:
             x_pos = s.find("x=")
             y_pos = s.find("y=")
             x = s[x_pos + 2 : y_pos] if x_pos < y_pos else s[x_pos + 2 :]
             y = s[y_pos + 2 : x_pos] if y_pos < x_pos else s[y_pos + 2 :]
-            return self.interpret_range(x, True) + self.interpret_range(y, False)
+            return self.interpret_range(x, True, report_error=report_error) + self.interpret_range(y, False, report_error=report_error)
 
-        return self.interpret_range(s, True) + self.interpret_range(s, False)
+        return self.interpret_range(s, True, report_error=report_error) + self.interpret_range(s, False, report_error=lambda s: None)
 
     def __to_readable_pos(self, x, genome_end, contig_names, contig_starts, lcs=0):
         if len(contig_names) == 0 or len(contig_starts) == 0:
