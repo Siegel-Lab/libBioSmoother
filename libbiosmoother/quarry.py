@@ -342,7 +342,7 @@ class Quarry(PartialQuarry):
             c = self.__interpret_number(y, True, report_error=report_error)
             if not c is None and bot:
                 c = -c
-            a = self.interpret_name(x, on_x_axis, bot, lambda x: None, report_error=report_error)
+            a = self.interpret_name(x, on_x_axis, bot, lambda x: None, report_error)
             if not a is None and not c is None:
                 return [a + c]
         elif s.count(":") == 1:
@@ -361,10 +361,11 @@ class Quarry(PartialQuarry):
                 )
                 if not a is None and not b is None and not c is None:
                     return [a + b + c]
-            b = self.__interpret_number(y, bot, report_error=report_error)
-            a = self.interpret_name(x, on_x_axis, True, lambda x: None, report_error)
-            if not a is None and not b is None:
-                return [a + b]
+            else:
+                b = self.__interpret_number(y, bot, report_error=report_error)
+                a = self.interpret_name(x, on_x_axis, True, lambda x: None, report_error)
+                if not a is None and not b is None:
+                    return [a + b]
 
         # try to interpret as a number
         a = self.__interpret_number(s, bot, report_error=lambda s: None)
@@ -377,7 +378,7 @@ class Quarry(PartialQuarry):
             if not a is None:
                 return [a]
 
-        report_error("Could not interpret '" + str(s) + "' as a contig:locus")
+        report_error("Could not interpret '" + str(s) + "' as 'contig:locus'")
         return [None]
 
     def interpret_range(self, s, on_x_axis=True, report_error=lambda s: None):
