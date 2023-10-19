@@ -327,7 +327,8 @@
         "connect_tracks_over_contig_borders": false,
         "center_tracks_on_bins": true,
         "zero_track_at_ends": false,
-        "tracks_log_scale": false
+        "tracks_log_scale": false,
+        "last_appplied_presetting": "default"
     },
     "filters": {
         "mapping_q": {

@@ -592,6 +592,7 @@ class PartialQuarry : public HasSession
     {
         if( this->xSession[ toPointer( vKeys ) ].is_null( ) || this->xSession[ toPointer( vKeys ) ] != json( xVal ) )
         {
+            std::vector<std::string> vPresetting = { "settings", "interface", "last_appplied_presetting" };
             if( this->xSessionTime.count( vKeys ) > 0 )
             {
                 ++uiCurrTime;
@@ -601,6 +602,8 @@ class PartialQuarry : public HasSession
 
                 // deep copy json
                 this->xSession[ "previous" ] = json::parse( this->xSession.dump( ) ); // back up previous
+
+                this->xSession[ toPointer( vPresetting ) ] = nullptr;
 
                 // change setting
                 this->xSession[ toPointer( vKeys ) ] = xVal;
@@ -627,7 +630,10 @@ class PartialQuarry : public HasSession
                 }
             }
             else
+            {
+                this->xSession[ toPointer( vPresetting ) ] = nullptr;
                 this->xSession[ toPointer( vKeys ) ] = xVal;
+            }
 #ifndef NDEBUG
             std::cout << "session updated: " << toString( vKeys ) << std::endl;
 #endif
