@@ -80,6 +80,31 @@ class Quarry(PartialQuarry):
                 file=sys.stderr,
             )
 
+        with open_default_json() as default_settings_file:
+            default_settings = json.load(default_settings_file)
+            
+            def combine_dict(a, b, previous_keys=[]):
+                r = {}
+                for k in b.keys():
+                    if isinstance(b[k], dict) and k in a:
+                        r[k] = combine_dict(a[k], b[k], previous_keys=previous_keys + [k])
+                    elif isinstance(b[k], dict):
+                        print("WARNING: the loaded index was missing the", ".".join(previous_keys + [k]), 
+                              "setting, copying it from the default settings.")
+                        r[k] = b[k]
+                    elif k in a:
+                        r[k] = a[k]
+                    else:
+                        print("WARNING: the loaded index was missing the", ".".join(previous_keys + [k]), 
+                              "setting, copying it from the default settings.")
+                        r[k] = b[k]
+                return r
+            
+            self.set_value(
+                ["settings"],
+                combine_dict(self.get_value(["settings"]), default_settings),
+            )
+
     def normalizeBinominalTestTrampoline(
         self,
         bin_values,
