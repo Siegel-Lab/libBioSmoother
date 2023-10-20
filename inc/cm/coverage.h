@@ -393,12 +393,19 @@ bool PartialQuarry::setTrackPrecursor( )
                     }
                 }
 
-        for( size_t uiI = 0; uiI < 2; uiI++ )
-        {
-            vvMinMaxTracks[ uiI ][ 1 ] = std::max( vvMinMaxTracks[ uiI ][ 0 ] + 0.0001, vvMinMaxTracks[ uiI ][ 1 ] );
-            vvMinMaxTracksNonZero[ uiI ][ 1 ] = std::max( vvMinMaxTracksNonZero[ uiI ][ 0 ] + 0.0001, 
-                                                          vvMinMaxTracksNonZero[ uiI ][ 1 ] );
-        }
+        if( vvMinMaxTracks[ uiI ][ 0 ] >= vvMinMaxTracks[ uiI ][ 1 ] )
+            vvMinMaxTracks[ uiI ][ 1 ] += 1;
+        if( vvMinMaxTracksNonZero[ uiI ][ 0 ] >= vvMinMaxTracksNonZero[ uiI ][ 1 ] )
+            vvMinMaxTracksNonZero[ uiI ][ 1 ] += 1;
+
+        if(vvMinMaxTracks[ uiI ][ 0 ] == std::numeric_limits<double>::max( ))
+            vvMinMaxTracks[ uiI ][ 0 ] = 0;
+        if(vvMinMaxTracks[ uiI ][ 1 ] == std::numeric_limits<double>::min( ))
+            vvMinMaxTracks[ uiI ][ 1 ] = 1;
+        if(vvMinMaxTracksNonZero[ uiI ][ 0 ] == std::numeric_limits<double>::max( ))
+            vvMinMaxTracksNonZero[ uiI ][ 0 ] = 1;
+        if(vvMinMaxTracksNonZero[ uiI ][ 1 ] == std::numeric_limits<double>::min( ))
+            vvMinMaxTracksNonZero[ uiI ][ 1 ] = 10;
 
         vTrackExportNames[ uiI ].clear( );
         vTrackExportNames[ uiI ].reserve( 20 );

@@ -757,17 +757,17 @@ bool PartialQuarry::normalizeIC( )
             }
             if( fMaxFlat > 0 )
             {
-                std::string sErrorWhere = std::array<std::string, 3>{ "Heatmap", "Column V4C", "Row V4C" }[ uiY ];
+                std::string sErrorWhere = std::array<std::string, 3>{ "heatmap", "V4C on rows", "V4C on columns" }[ uiY ];
                 if( vVar[ 0 ] >= fTol || vVar[ 1 ] >= fTol )
                 {
-                    setError( "iterative correction did not converge for " + sErrorWhere +
+                    setError( "iterative correction did not converge for the " + sErrorWhere +
                               " (var=" + std::to_string( vVar[ 0 ] ) + ", " + std::to_string( vVar[ 1 ] ) +
                               " mean=" + std::to_string( vMean[ 0 ] ) + ", " + std::to_string( vMean[ 1 ] ) +
                               "), showing data anyways" );
                 }
                 else if( iceMaxBias( xData, true ) == 0 || iceMaxBias( xData, false ) == 0 )
                 {
-                    setError( "iterative correction converged to zero " + sErrorWhere +
+                    setError( "iterative correction converged to zero for the " + sErrorWhere +
                               ", showing un-normalized data" );
                     for( size_t uiY = 0; uiY < 2; uiY++ )
                         for( size_t uiJ = 0; uiJ < xData.vSliceBias[ uiY ].size( ); uiJ++ )
