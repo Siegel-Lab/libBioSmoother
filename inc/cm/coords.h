@@ -1277,7 +1277,7 @@ bool PartialQuarry::setBinCoords( )
 
 bool PartialQuarry::setDecayCoords( )
 {
-    for( size_t uiY = 0; uiY < 3; uiY++ )
+    for( size_t uiY = 0; uiY < NUM_COORD_SYSTEMS; uiY++ )
         vDistDepDecCoords[ uiY ].clear( );
     if( getValue<bool>( { "settings", "normalization", "ddd" } ) ||
         getValue<bool>( { "settings", "normalization", "ddd_show" } ) )
@@ -1345,15 +1345,13 @@ bool axisCoordOverlap( const AxisCoord& rA, const AxisCoord& rB )
 }
 
 bool PartialQuarry::sampleAndMerge( size_t uiNumSamples, size_t uiI, const std::vector<AxisCoord>& rToMerge,
-                                    std::vector<AxisCoord>& rOut )
+                                    std::vector<AxisCoord>& rOut, const size_t uiSampleSize )
 {
     // create samples
     std::vector<AxisCoord> vCoordsTmp;
     if( rToMerge.size( ) > 0 )
     {
         vCoordsTmp.reserve( uiNumSamples );
-
-        const size_t uiSize = uiI == 0 ? uiBinWidth.r( ) : uiBinHeight.r( );
 
         size_t uiGenomeSize = 0;
         for( size_t uiX = 0; uiX < this->vActiveChromosomes[ uiI ].size( ); uiX++ )
@@ -1372,7 +1370,7 @@ bool PartialQuarry::sampleAndMerge( size_t uiNumSamples, size_t uiI, const std::
                     //{
                     /* .uiChromosome =*/uiX, //
                     /* .uiIndexPos =*/uiNextPos, //
-                    /* .uiIndexSize =*/uiSize, //
+                    /* .uiIndexSize =*/uiSampleSize, //
                     /* .uiActualContigId =*/this->vActiveChromosomes[ uiI ][ uiX ].uiActualContigId, //
                     /* .uiChromId =*/this->vActiveChromosomes[ uiI ][ uiX ].uiCorrectedContigId, //
                     //},
@@ -1381,7 +1379,7 @@ bool PartialQuarry::sampleAndMerge( size_t uiNumSamples, size_t uiI, const std::
                     /*.uiRegionIdx =*/SAMPLE_COORD, //
                     /*.uiIdx =*/SAMPLE_COORD //
                 } );
-                uiNextPos += std::max( uiSize, uiGenomeSize / uiNumSamples );
+                uiNextPos += std::max( uiSampleSize, uiGenomeSize / uiNumSamples );
             }
 
 
@@ -1442,8 +1440,15 @@ bool PartialQuarry::setSampleCoords( )
 
         for( size_t uiI = 0; uiI < 2; uiI++ )
         {
-            sampleAndMerge( uiNumCoords, uiI, vAxisCords[ uiI ], vSampleAxisCoords[ uiI ] );
-            sampleAndMerge( uiNumCoords, 1 - uiI, vV4cCoords[ uiI ], vSampleV4cCoords[ uiI ] );
+            sampleAndMerge( uiNumCoords, uiI, vAxisCords[ uiI ], vSampleAxisCoords[ uiI ], 
+                            uiI == 0 ? uiBinWidth.r( ) : uiBinHeight.r( ) );
+            size_t uiAddSamplsV4C = vV4cCoords[ uiI ].size() < vAxisCords[ 1 - uiI ].size()
+                                            ? vAxisCords[ 1 - uiI ].size() - vV4cCoords[ uiI ].size() 
+                                            : 0;
+            if( vV4cCoords[ uiI ].size() > 0 )
+                sampleAndMerge( uiNumCoords + uiAddSamplsV4C, 1 - uiI, 
+                                vV4cCoords[ uiI ], vSampleV4cCoords[ uiI ],
+                                vV4cCoords[ uiI ][0].uiIndexSize );
             CANCEL_RETURN;
         }
     }
@@ -1456,8 +1461,15 @@ bool PartialQuarry::setSampleCoords( )
         {
             if( ( uiI == 1 ) == bAxisIsCol )
             {
-                sampleAndMerge( uiRadiclSeqSamples, uiI, vAxisCords[ uiI ], vSampleAxisCoords[ uiI ] );
-                sampleAndMerge( uiRadiclSeqSamples, 1 - uiI, vV4cCoords[ uiI ], vSampleV4cCoords[ uiI ] );
+                sampleAndMerge( uiRadiclSeqSamples, uiI, vAxisCords[ uiI ], vSampleAxisCoords[ uiI ],
+                                uiI == 0 ? uiBinWidth.r( ) : uiBinHeight.r( ) );
+                size_t uiAddSamplsV4C = vV4cCoords[ uiI ].size() < vAxisCords[ 1 - uiI ].size()
+                                                ? vAxisCords[ 1 - uiI ].size() - vV4cCoords[ uiI ].size() 
+                                                : 0;
+                if( vV4cCoords[ uiI ].size() > 0 )
+                    sampleAndMerge( uiRadiclSeqSamples + uiAddSamplsV4C, 1 - uiI, 
+                                    vV4cCoords[ uiI ], vSampleV4cCoords[ uiI ],
+                                    vV4cCoords[ uiI ][0].uiIndexSize );
             }
             else
             {

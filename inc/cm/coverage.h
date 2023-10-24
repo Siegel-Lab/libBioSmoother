@@ -255,7 +255,7 @@ bool PartialQuarry::setTracks( )
                     // center
                     vIndexStart.append( readableBp( xCoord.uiIndexPos * uiDividend ) );
                     vIndexEnd.append( readableBp( ( xCoord.uiIndexPos + xCoord.uiIndexSize ) * uiDividend ) );
-                    vScreenPos.append( xCoord.uiScreenPos + xCoord.uiScreenSize / 2 );
+                    vScreenPos.append( xCoord.uiScreenPos + ((double)xCoord.uiScreenSize / (double)2) );
                     vValue.append( uiVal );
                 }
                 else

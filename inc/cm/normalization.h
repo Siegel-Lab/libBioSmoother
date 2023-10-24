@@ -707,6 +707,7 @@ bool PartialQuarry::normalizeIC( )
         size_t uiW = rXCoords.size( );
         size_t uiH = rYCoords.size( );
 
+
         const size_t uiMaxIters = 200;
         const double fTol = 1e-5;
         for( size_t uiI = 0; uiI < 2; uiI++ )
@@ -860,11 +861,11 @@ bool PartialQuarry::setDistDepDecayRemoved( )
                         std::numeric_limits<size_t>::max( ) )
                     {
                         CANCEL_RETURN;
-                        if( vvFlatDecay[ uiY ][ vBinCoordsSampled[ 0 ][ uiI ][ uiJ ].uiDecayCoordIndex ][ uiJ ] > 0 )
+                        if( vvFlatDecay[ uiY ][ vBinCoordsSampled[ uiY ][ uiI ][ uiJ ].uiDecayCoordIndex ][ uiJ ] > 0 )
                             vvNormalizedDDD[ uiY ][ uiI ][ uiJ ] =
                                 (double)vvPloidyValues[ uiY ][ uiI ][ uiJ ] /
                                 (double)
-                                    vvFlatDecay[ uiY ][ vBinCoordsSampled[ 0 ][ uiI ][ uiJ ].uiDecayCoordIndex ][ uiJ ];
+                                    vvFlatDecay[ uiY ][ vBinCoordsSampled[ uiY ][ uiI ][ uiJ ].uiDecayCoordIndex ][ uiJ ];
                         else
                             vvNormalizedDDD[ uiY ][ uiI ][ uiJ ] = 0;
                     }

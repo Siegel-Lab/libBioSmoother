@@ -408,7 +408,23 @@ class Quarry(PartialQuarry):
 
     def interpret_range(self, s, on_x_axis=True, report_error=lambda s: None):
         s = "".join(s.lower().split())
-        if s.count("..") == 1 and s.count("[") <= 1 and s.count("]") <= 1:
+        if s.count("..") == 1 and s.count(":") == 1 and s.index(":") < s.index("..") and s.count("[") <= 1 and s.count("]") <= 1:
+            s2, z = s.split("..")
+            x, y = s2.split(":")
+            if x[:1] == "[":
+                x = x[1:]
+            if z[-1:] == "]":
+                z = z[:-1]
+
+            a = self.interpret_name(x, on_x_axis, True, lambda x: None, report_error)
+            b = self.__interpret_number(y, True, report_error=report_error)
+            c = self.__interpret_number(z, False, report_error=report_error)
+            ret = [None, None]
+            if not a is None and not b is None:
+                ret[0] = a + b
+            if not a is None and not c is None:
+                ret[1] = a + c
+        elif s.count("..") == 1 and s.count("[") <= 1 and s.count("]") <= 1:
             x, y = s.split("..")
             if x[:1] == "[":
                 x = x[1:]
