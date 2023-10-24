@@ -26,11 +26,13 @@ jobs:
         with:
           repository: Siegel-Lab/libSps
           submodules: true
+          path: libSps
           #ref: v0.3.7
 
       - uses: actions/checkout@v3
         with:
           submodules: true
+          path: libBioSmoother
 
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.16.2
@@ -39,6 +41,8 @@ jobs:
           CIBW_BEFORE_BUILD: 'pip install pybind11 && pip install -e ../libSps -vvv'
           MACOSX_DEPLOYMENT_TARGET : '10.13'
           CIBW_ARCHS_MACOS: "x86_64 universal2 arm64"
+        with:
+          path: libBioSmoother
 
       - uses: actions/upload-artifact@v3
         with:
