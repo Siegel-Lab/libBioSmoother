@@ -38,7 +38,7 @@ libbiosmoother export t_brucei_hi_c-c -f png
 ## Full Documentation
 
 Since [Smoother](https://www.github.com/Siegel-Lab/smoother "Smoother GitHub") and libSmoother are designed as one package, they share documentation.
-Hence, for more information and in-depth instructions, check out the [Smoother's manual](https://biosmoother.readthedocs.io/ "Smoother's Manual").
+Hence, for more information and in-depth instructions, check out [Smoother's manual](https://biosmoother.readthedocs.io/ "Smoother's Manual").
 
 ## Cite
 
