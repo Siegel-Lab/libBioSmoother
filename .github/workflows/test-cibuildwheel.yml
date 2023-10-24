@@ -42,7 +42,7 @@ jobs:
           MACOSX_DEPLOYMENT_TARGET : '10.13'
           CIBW_ARCHS_MACOS: "x86_64 universal2 arm64"
         with:
-          path: libBioSmoother
+          package-dir: libBioSmoother
 
       - uses: actions/upload-artifact@v3
         with:
