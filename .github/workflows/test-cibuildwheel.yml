@@ -26,13 +26,11 @@ jobs:
         with:
           repository: Siegel-Lab/libSps
           submodules: true
-          path: libSps
           #ref: v0.3.7
 
       - uses: actions/checkout@v3
         with:
           submodules: true
-          path: libBioSmoother
 
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.16.2
