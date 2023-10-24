@@ -6,7 +6,7 @@
 # separate terms of service, privacy policy, and support
 # documentation.
 
-name: Test Python Package Publishing
+name: Test cibuildwheel
 
 on:
   workflow_dispatch:
@@ -26,10 +26,8 @@ jobs:
         with:
           repository: Siegel-Lab/libSps
           submodules: true
+          path: libSps
           #ref: v0.3.7
-
-      - name: Install libSps
-        run: pip install -e . -vvv
 
       - uses: actions/checkout@v3
         with:
@@ -39,7 +37,7 @@ jobs:
         uses: pypa/cibuildwheel@v2.16.2
         env:
           CIBW_BUILD: '{cp37-*,cp38-*,cp39-*,cp310-*,cp311-*}'
-          CIBW_BEFORE_BUILD: 'pip install pybind11'
+          CIBW_BEFORE_BUILD: 'pip install pybind11 && pip install -e ${GITHUB_WORKSPACE}/libSps -vvv'
           MACOSX_DEPLOYMENT_TARGET : '10.13'
           CIBW_ARCHS_MACOS: "x86_64 universal2 arm64"
 
