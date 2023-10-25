@@ -9,7 +9,7 @@ import sysconfig
 from setuptools import Extension, setup
 from setuptools.command.build_ext import build_ext
 
-VERSION = "1.1.0"
+VERSION = "1.1.1"
 
 # Convert distutils Windows platform specifiers to CMake -A arguments
 PLAT_TO_CMAKE = {
@@ -169,7 +169,7 @@ libBioSmoother's documentation is available at https://biosmoother.rtfd.io/.
         'scipy',
         'statsmodels',
         'scikit-learn',
-        'drawSvg==1.9.0',
+        'drawSvg>=1.6.0,<2.0.0',
     ],
     entry_points={
         'console_scripts': [
