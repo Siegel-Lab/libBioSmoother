@@ -20,7 +20,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-          python-version: ["3.8", "3.9", "3.10", "3.11"]
+          python-version: ["3.9"]
           os: ["macos-11"]
 
     steps:
@@ -32,8 +32,8 @@ jobs:
     - name: Install package
       run: |
         pip install --upgrade pip
-        pip install --upgrade scipy statsmodels scikit-learn setuptools
-        pip install --index-url https://test.pypi.org/simple/ libbiosmoother
+        pip install scipy statsmodels scikit-learn
+        pip install --index-url https://test.pypi.org/simple/ libbiosmoother==1.1.0 -vvv
 
     - name: Import package
       run: |
