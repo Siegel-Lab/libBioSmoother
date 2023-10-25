@@ -34,6 +34,7 @@ jobs:
           CIBW_BEFORE_BUILD: 'pip install pybind11 wheel && pip install git+https://github.com/Siegel-Lab/libSps.git -vvv'
           MACOSX_DEPLOYMENT_TARGET : '10.13'
           CIBW_ARCHS_MACOS: "x86_64 universal2 arm64"
+          CIBW_ARCHS_LINUX: "x86_64"
 
       - uses: actions/upload-artifact@v3
         with:
