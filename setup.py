@@ -60,6 +60,10 @@ class CMakeBuild(build_ext):
             cmake_args.append(
                 "-DMAX_NUM_FILTER_ANNOTATIONS=" + os.environ["LIB_BIO_SMOOTHER_MAX_NUM_FILTER_ANNOTATIONS"]
             )
+        if "SPS_WITH_STXXL" in os.environ:
+            cmake_args.append("-DWITH_STXXL =" + os.environ["SPS_WITH_STXXL"])
+        if "SPS_UNROLL_FOR_ALL_COMBINATIONS" in os.environ:
+            cmake_args.append("-DUNROLL_FOR_ALL_COMBINATIONS =" + os.environ["SPS_UNROLL_FOR_ALL_COMBINATIONS"])
         build_args = []
         # Adding CMake arguments set as environment variable
         # (needed e.g. to build for ARM OSx on conda-forge)
