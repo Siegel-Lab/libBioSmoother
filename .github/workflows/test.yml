@@ -6,7 +6,7 @@
 # separate terms of service, privacy policy, and support
 # documentation.
 
-name: Test cibuildwheel
+name: Test pypi
 
 on:
   workflow_dispatch:
@@ -32,7 +32,7 @@ jobs:
     - name: Install package
       run: |
         pip install --upgrade pip
-        pip install scipy statsmodels scikit-learn setuptools
+        pip install scipy statsmodels scikit-learn setuptools>=40.8.0
         pip install --index-url https://test.pypi.org/simple/ libbiosmoother
 
     - name: Import package
