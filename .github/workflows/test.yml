@@ -33,7 +33,7 @@ jobs:
       run: |
         pip install --upgrade pip
         pip install scipy statsmodels scikit-learn
-        pip install --index-url https://test.pypi.org/simple/ libbiosmoother==1.1.0 -vvv
+        pip install --index-url https://test.pypi.org/simple/ libbiosmoother==1.1.0 -vvv --no-deps
 
     - name: Import package
       run: |
