@@ -46,6 +46,7 @@ except ImportError:
 import json
 import sys
 import fileinput
+import math
 
 
 def open_default_json():
@@ -332,9 +333,9 @@ class Quarry(PartialQuarry):
             self.set_value(["settings", "normalization", "ploidy_last_uploaded_filename"], ploidy_file)
         return self
 
-    def __isint(self, num):
+    def __isfloat(self, num):
         try:
-            int(num)
+            float(num)
             return True
         except ValueError:
             return False
@@ -346,18 +347,28 @@ class Quarry(PartialQuarry):
         elif s[-2:] == "bp":
             s = s[:-2]
         fac = 1
+        if len(s) > 0 and s[-1] == "g":
+            fac = 1000000000
+            s = s[:-1]
         if len(s) > 0 and s[-1] == "m":
             fac = 1000000
             s = s[:-1]
         if len(s) > 0 and s[-1] == "k":
             fac = 1000
             s = s[:-1]
+        if len(s) > 0 and s[-1] == "h":
+            fac = 100
+            s = s[:-1]
+        if len(s) > 1 and s[-2:] == "da":
+            fac = 10
+            s = s[:-2]
         s = s.replace(",", "")
-        if self.__isint(s):
+        if self.__isfloat(s):
+            val = (float(s) * fac) / self.get_value(["dividend"])
             if bot:
-                return (int(s) * fac) // self.get_value(["dividend"])
+                return int(math.floor(val))
             else:
-                return 1 + (int(s) * fac - 1) // self.get_value(["dividend"])
+                return int(math.ceil(val))
         report_error("Could not interpret '" + str(s_in) + "' as a locus")
         return None
 
