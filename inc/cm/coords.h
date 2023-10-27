@@ -868,12 +868,15 @@ bool PartialQuarry::setAnnoFilters( )
 
     std::vector<std::string> vFilterable = getValue<std::vector<std::string>>( { "annotation", "filterable" } );
 
-    const bool bAnnoCoordsIsFilterable = std::find( vFilterable.begin( ), vFilterable.end( ), sCoordAnno ) != vFilterable.end( );
+    const bool bAnnoCoordsIsFilterable =
+        std::find( vFilterable.begin( ), vFilterable.end( ), sCoordAnno ) != vFilterable.end( );
 
-    if( (bAnnoCoordsCol || bAnnoCoordsRow) && bAnnoCoordsIsFilterable && 
-        getValue<std::string>( { "settings", "filters", "multiple_annos_in_bin" } ) == "combine")
-        setError( "Using 'combine' for 'multiple annotations in a bin' in combination with an non-filterable annotation coordinate system, will render wrong interactions. Switch 'multiple annotations in a bin' to another option." );
-    
+    if( ( bAnnoCoordsCol || bAnnoCoordsRow ) && bAnnoCoordsIsFilterable &&
+        getValue<std::string>( { "settings", "filters", "multiple_annos_in_bin" } ) == "combine" )
+        setError( "Using 'combine' for 'multiple annotations in a bin' in combination with an non-filterable "
+                  "annotation coordinate system, will render wrong interactions. Switch 'multiple annotations in a "
+                  "bin' to another option." );
+
     if( bAnnoCoordsCol && bAnnoCoordsIsFilterable )
         vFilterAbsentX.push_back( sCoordAnno );
     if( bAnnoCoordsRow && bAnnoCoordsIsFilterable )
@@ -909,6 +912,10 @@ bool PartialQuarry::setAnnoFilters( )
         }
     }
 
+    if( vFilterPresentX.size( ) > 0 || vFilterPresentY.size( ) > 0 || vFilterAbsentX.size( ) > 0 ||
+        vFilterAbsentY.size( ) > 0 )
+        checkForFilters( "annotation", "no_category", []( const DatasetFilters& rX ) { return rX.bHasCategory; } );
+
     END_RETURN;
 }
 
@@ -941,6 +948,10 @@ bool PartialQuarry::setMappingQuality( )
 
     uiMapQMin = 255 - uiMapQMin;
     uiMapQMax = 255 - uiMapQMax;
+
+    if( uiMapQMin != 0 || uiMapQMax != 255 )
+        checkForFilters( "mapping quality", "no_map_q", []( const DatasetFilters& rX ) { return rX.bHasMapQ; } );
+
     END_RETURN;
 }
 
@@ -1004,6 +1015,11 @@ bool PartialQuarry::setDirectionality( )
     }
     else
         throw std::logic_error( "unknown directionality setting" );
+
+
+    if( sDir != "all" )
+        checkForFilters( "directionality", "no_strand", []( const DatasetFilters& rX ) { return rX.bHasStrand; } );
+
     END_RETURN;
 }
 
@@ -1440,15 +1456,14 @@ bool PartialQuarry::setSampleCoords( )
 
         for( size_t uiI = 0; uiI < 2; uiI++ )
         {
-            sampleAndMerge( uiNumCoords, uiI, vAxisCords[ uiI ], vSampleAxisCoords[ uiI ], 
+            sampleAndMerge( uiNumCoords, uiI, vAxisCords[ uiI ], vSampleAxisCoords[ uiI ],
                             uiI == 0 ? uiBinWidth.r( ) : uiBinHeight.r( ) );
-            size_t uiAddSamplsV4C = vV4cCoords[ uiI ].size() < vAxisCords[ 1 - uiI ].size()
-                                            ? vAxisCords[ 1 - uiI ].size() - vV4cCoords[ uiI ].size() 
-                                            : 0;
-            if( vV4cCoords[ uiI ].size() > 0 )
-                sampleAndMerge( uiNumCoords + uiAddSamplsV4C, 1 - uiI, 
-                                vV4cCoords[ uiI ], vSampleV4cCoords[ uiI ],
-                                vV4cCoords[ uiI ][0].uiIndexSize );
+            size_t uiAddSamplsV4C = vV4cCoords[ uiI ].size( ) < vAxisCords[ 1 - uiI ].size( )
+                                        ? vAxisCords[ 1 - uiI ].size( ) - vV4cCoords[ uiI ].size( )
+                                        : 0;
+            if( vV4cCoords[ uiI ].size( ) > 0 )
+                sampleAndMerge( uiNumCoords + uiAddSamplsV4C, 1 - uiI, vV4cCoords[ uiI ], vSampleV4cCoords[ uiI ],
+                                vV4cCoords[ uiI ][ 0 ].uiIndexSize );
             CANCEL_RETURN;
         }
     }
@@ -1463,13 +1478,12 @@ bool PartialQuarry::setSampleCoords( )
             {
                 sampleAndMerge( uiRadiclSeqSamples, uiI, vAxisCords[ uiI ], vSampleAxisCoords[ uiI ],
                                 uiI == 0 ? uiBinWidth.r( ) : uiBinHeight.r( ) );
-                size_t uiAddSamplsV4C = vV4cCoords[ uiI ].size() < vAxisCords[ 1 - uiI ].size()
-                                                ? vAxisCords[ 1 - uiI ].size() - vV4cCoords[ uiI ].size() 
-                                                : 0;
-                if( vV4cCoords[ uiI ].size() > 0 )
-                    sampleAndMerge( uiRadiclSeqSamples + uiAddSamplsV4C, 1 - uiI, 
-                                    vV4cCoords[ uiI ], vSampleV4cCoords[ uiI ],
-                                    vV4cCoords[ uiI ][0].uiIndexSize );
+                size_t uiAddSamplsV4C = vV4cCoords[ uiI ].size( ) < vAxisCords[ 1 - uiI ].size( )
+                                            ? vAxisCords[ 1 - uiI ].size( ) - vV4cCoords[ uiI ].size( )
+                                            : 0;
+                if( vV4cCoords[ uiI ].size( ) > 0 )
+                    sampleAndMerge( uiRadiclSeqSamples + uiAddSamplsV4C, 1 - uiI, vV4cCoords[ uiI ],
+                                    vSampleV4cCoords[ uiI ], vV4cCoords[ uiI ][ 0 ].uiIndexSize );
             }
             else
             {
@@ -1671,7 +1685,7 @@ void PartialQuarry::regCoords( )
                   ComputeNode{ /*.sNodeName =*/"mapping_quality_setting",
                                /*.sNodeDesc =*/"Extract the mapping quality setting from the settings json.",
                                /*.fFunc =*/&PartialQuarry::setMappingQuality,
-                               /*.vIncomingFunctions =*/{ },
+                               /*.vIncomingFunctions =*/{ NodeNames::DatasetIdPerRepl, NodeNames::ActiveCoverage },
                                /*.vIncomingSession =*/
                                { { "settings", "filters", "mapping_q", "val_min" },
                                  { "settings", "filters", "mapping_q", "val_max" },
@@ -1683,7 +1697,7 @@ void PartialQuarry::regCoords( )
                   ComputeNode{ /*.sNodeName =*/"directionality_setting",
                                /*.sNodeDesc =*/"Extract the directionality settin from the settings json.",
                                /*.fFunc =*/&PartialQuarry::setDirectionality,
-                               /*.vIncomingFunctions =*/{ },
+                               /*.vIncomingFunctions =*/{ NodeNames::DatasetIdPerRepl, NodeNames::ActiveCoverage },
                                /*.vIncomingSession =*/{ { "settings", "filters", "directionality" } },
                                /*.vSessionsIncomingInPrevious =*/{ },
                                /*bHidden =*/true } );
@@ -1716,23 +1730,25 @@ void PartialQuarry::regCoords( )
                                /*.vSessionsIncomingInPrevious =*/{ { "dividend" } },
                                /*bHidden =*/false } );
 
-    registerNode( NodeNames::AnnoFilters,
-                  ComputeNode{ /*.sNodeName =*/"anno_filters",
-                               /*.sNodeDesc =*/"Extract the annotation filters from the settings json.",
-                               /*.fFunc =*/&PartialQuarry::setAnnoFilters,
-                               /*.vIncomingFunctions =*/{ NodeNames::ActiveChromLength },
-                               /*.vIncomingSession =*/
-                               { { "annotation", "filterable" },
-                                 { "annotation", "filter_present_x" },
-                                 { "annotation", "filter_present_y" },
-                                 { "settings", "filters", "multiple_annos_in_bin" },
-                                 { "annotation", "filter_absent_x" },
-                                 { "annotation", "filter_absent_y" } },
-                               /*.vSessionsIncomingInPrevious =*/
-                               { { "contigs", "annotation_coordinates" },
-                                 { "settings", "filters", "anno_coords_row" },
-                                 { "settings", "filters", "anno_coords_col" } },
-                               /*bHidden =*/true } );
+    registerNode(
+        NodeNames::AnnoFilters,
+        ComputeNode{ /*.sNodeName =*/"anno_filters",
+                     /*.sNodeDesc =*/"Extract the annotation filters from the settings json.",
+                     /*.fFunc =*/&PartialQuarry::setAnnoFilters,
+                     /*.vIncomingFunctions =*/
+                     { NodeNames::DatasetIdPerRepl, NodeNames::ActiveCoverage, NodeNames::ActiveChromLength },
+                     /*.vIncomingSession =*/
+                     { { "annotation", "filterable" },
+                       { "annotation", "filter_present_x" },
+                       { "annotation", "filter_present_y" },
+                       { "settings", "filters", "multiple_annos_in_bin" },
+                       { "annotation", "filter_absent_x" },
+                       { "annotation", "filter_absent_y" } },
+                     /*.vSessionsIncomingInPrevious =*/
+                     { { "contigs", "annotation_coordinates" },
+                       { "settings", "filters", "anno_coords_row" },
+                       { "settings", "filters", "anno_coords_col" } },
+                     /*bHidden =*/true } );
 
     registerNode( NodeNames::DecayCoords,
                   ComputeNode{ /*.sNodeName =*/"decay_coords",

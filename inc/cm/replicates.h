@@ -43,10 +43,20 @@ bool PartialQuarry::setDatasetIdPerRepl( )
 {
     vvDatasetIdsPerReplAndChr.clear( );
     vvDatasetIdsPerReplAndChr.reserve( vActiveReplicates.size( ) );
+    vvDatasetFiltersPerIndex.clear( );
+    vvDatasetFiltersPerIndex.reserve( vActiveReplicates.size( ) );
 
     for( const std::string& sRep : vActiveReplicates )
+    {
         vvDatasetIdsPerReplAndChr.push_back(
             getValue<size_t>( { "replicates", "by_name", sRep, "first_dataset_id" } ) );
+        vvDatasetFiltersPerIndex.push_back( DatasetFilters{
+            /*bHasMapQ:*/ !getValue<bool>( { "replicates", "by_name", sRep, "no_map_q" } ),
+            /*bHasMultimappers:*/ !getValue<bool>( { "replicates", "by_name", sRep, "no_multi_map" } ),
+            /*bHasStrand:*/ !getValue<bool>( { "replicates", "by_name", sRep, "no_strand" } ),
+            /*bHasCategory:*/ !getValue<bool>( { "replicates", "by_name", sRep, "no_category" } ),
+        } );
+    }
     uiContigListSize = getValue<json>( { "contigs", "ploidy_list" } ).size( );
     END_RETURN;
 }
@@ -134,10 +144,10 @@ bool PartialQuarry::setBinValues( )
                             uiRepl,
                             vActiveChromosomes[ 0 ][ vCoords[ uiI ].uiChromosomeX ].uiActualContigId,
                             vActiveChromosomes[ 1 ][ vCoords[ uiI ].uiChromosomeY ].uiActualContigId );
-                        vVals[ uiI ] = indexCount( iDataSetId, vCoords[ uiI ].uiIndexY, vCoords[ uiI ].uiIndexX,
+                        vVals[ uiI ] = indexCount( uiRepl, iDataSetId, vCoords[ uiI ].uiIndexY, vCoords[ uiI ].uiIndexX,
                                                    vCoords[ uiI ].uiIndexY + vCoords[ uiI ].uiIndexH,
                                                    vCoords[ uiI ].uiIndexX + vCoords[ uiI ].uiIndexW, uiI == 0 );
-                        if(vVals[uiI] > 0)
+                        if( vVals[ uiI ] > 0 )
                             bOneFilledBinAtLeast = true;
                     }
                     else
@@ -153,8 +163,8 @@ bool PartialQuarry::setBinValues( )
             vActiveReplicatesTotal.push_back( symmetry( uiTot, uiTot ) );
         }
     }
-    
-    if(!bOneFilledBinAtLeast)
+
+    if( !bOneFilledBinAtLeast )
         setError( "All bins are empty." );
 
     END_RETURN;
@@ -236,7 +246,8 @@ bool PartialQuarry::setDecayValues( )
                                     size_t uiXe = std::max( uiXs + 1, (size_t)( iMyTop - iCornerPos ) / 2 );
                                     // assert( uiYe <= (size_t)iChrX );
                                     // assert( uiXe <= (size_t)iChrY );
-                                    vvVals.push_back( indexCount( iDataSetId, uiXs, uiYs, uiXe, uiYe, uiI == 0 ) );
+                                    vvVals.push_back(
+                                        indexCount( uiRepl, iDataSetId, uiXs, uiYs, uiXe, uiYe, uiI == 0 ) );
 
                                     if( vvVals.back( ) > uiMinuend )
                                         vvVals.back( ) -= uiMinuend;

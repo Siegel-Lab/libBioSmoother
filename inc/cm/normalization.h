@@ -128,9 +128,9 @@ void median_ready_sort( std::vector<double>& vX )
         // hence we place the element before the middle at the correct position as well
         // for this we use max_element, since its runtime complexity is O(n) instead of the O(n log n) of nth_element
         // swap then places the found element at the correct spot.
-        std::swap( *std::max_element( vX.begin( ), xItMiddle ), *(xItMiddle - 1) );
+        std::swap( *std::max_element( vX.begin( ), xItMiddle ), *( xItMiddle - 1 ) );
 }
-double median( const std::vector<double>& vX ) 
+double median( const std::vector<double>& vX )
 {
     if( vX.size( ) == 0 )
         return 0;
@@ -190,7 +190,7 @@ void PartialQuarry::icePreFilter( IceData& rIceData, bool bCol, size_t uiFrom, s
             vLogMargins.erase(
                 std::remove_if( vLogMargins.begin( ), vLogMargins.end( ), []( double fVal ) { return fVal == 0; } ),
                 vLogMargins.end( ) );
-            median_ready_sort(vLogMargins);
+            median_ready_sort( vLogMargins );
 
             double fMedian = median( vLogMargins );
             for( double& fVal : vMargins )
@@ -202,7 +202,7 @@ void PartialQuarry::icePreFilter( IceData& rIceData, bool bCol, size_t uiFrom, s
             double fLogMedian = median( vLogMargins );
             for( double& fVal : vLogMargins )
                 fVal = std::abs( fVal - fLogMedian );
-            median_ready_sort(vLogMargins);
+            median_ready_sort( vLogMargins );
             double fDevLogMedian = median( vLogMargins );
 
             double fCutOff = std::exp( fLogMedian - fDevLogMedian * ( (double)uiMaxMax ) );
@@ -621,14 +621,16 @@ bool PartialQuarry::setRnaAssociatedBackground( )
                             vActiveChromosomes[ bAxisIsCol ? 1 : 0 ][ uiChrY ].uiActualContigId );
 
                         vBackgroundGridSeq.back( ) +=
-                            indexCount( iDataSetId, uiStartY, uiStartX, uiEndY, uiEndX, true );
+                            indexCount( uiRepl, iDataSetId, uiStartY, uiStartX, uiEndY, uiEndX, true );
                     }
                 }
             }
     }
-    
-    if(!bAtLeastOneTransContig && bIgnoreCis)
-        setError( "You are only cis interactions for the assoc. slices normalization; however there was not a single trans interaction in the index. If your genome has only a single contig, you will have to include cis interactions in the normalization." );
+
+    if( !bAtLeastOneTransContig && bIgnoreCis )
+        setError( "You are only cis interactions for the assoc. slices normalization; however there was not a single "
+                  "trans interaction in the index. If your genome has only a single contig, you will have to include "
+                  "cis interactions in the normalization." );
 
     END_RETURN;
 }
@@ -758,7 +760,8 @@ bool PartialQuarry::normalizeIC( )
             }
             if( fMaxFlat > 0 )
             {
-                std::string sErrorWhere = std::array<std::string, 3>{ "heatmap", "V4C on rows", "V4C on columns" }[ uiY ];
+                std::string sErrorWhere =
+                    std::array<std::string, 3>{ "heatmap", "V4C on rows", "V4C on columns" }[ uiY ];
                 if( vVar[ 0 ] >= fTol || vVar[ 1 ] >= fTol )
                 {
                     setError( "iterative correction did not converge for the " + sErrorWhere +
@@ -864,8 +867,8 @@ bool PartialQuarry::setDistDepDecayRemoved( )
                         if( vvFlatDecay[ uiY ][ vBinCoordsSampled[ uiY ][ uiI ][ uiJ ].uiDecayCoordIndex ][ uiJ ] > 0 )
                             vvNormalizedDDD[ uiY ][ uiI ][ uiJ ] =
                                 (double)vvPloidyValues[ uiY ][ uiI ][ uiJ ] /
-                                (double)
-                                    vvFlatDecay[ uiY ][ vBinCoordsSampled[ uiY ][ uiI ][ uiJ ].uiDecayCoordIndex ][ uiJ ];
+                                (double)vvFlatDecay[ uiY ][ vBinCoordsSampled[ uiY ][ uiI ][ uiJ ].uiDecayCoordIndex ]
+                                                   [ uiJ ];
                         else
                             vvNormalizedDDD[ uiY ][ uiI ][ uiJ ] = 0;
                     }

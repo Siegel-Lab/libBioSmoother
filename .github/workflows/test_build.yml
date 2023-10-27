@@ -1,5 +1,5 @@
 
-name: Test Python Publish Package
+name: Test Python Publish Package @todo readd the non unrolled compilation, also check for windows if unrolling is possible
 
 on:
   workflow_dispatch:

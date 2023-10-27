@@ -10,9 +10,17 @@ except:
 
 
 def __get_header(session):
-    return "##libBioSmoother Version: " + Quarry.get_libBioSmoother_version() + "\n" + \
-           "##libSps Version: " + Quarry.get_libSps_version() + "\n" + \
-           "## " + session.get_readable_area() + "\n"
+    return (
+        "##libBioSmoother Version: "
+        + Quarry.get_libBioSmoother_version()
+        + "\n"
+        + "##libSps Version: "
+        + Quarry.get_libSps_version()
+        + "\n"
+        + "## "
+        + session.get_readable_area()
+        + "\n"
+    )
 
 
 def __conf_session(session):
@@ -279,6 +287,7 @@ def __get_transform(session, w_plane, x_plane, h_plane, y_plane):
 
     return x_transform, y_transform
 
+
 def __draw_region(session, d, sizes, print_callback=lambda s: None):
     if sizes["show_region"]:
         offset_y = 0
@@ -295,18 +304,19 @@ def __draw_region(session, d, sizes, print_callback=lambda s: None):
         if sizes["show_heat"]:
             offset_y += sizes["heatmap"]
             offset_y += sizes["margin"]
-        
+
         d.append(
             drawSvg.Text(
                 session.get_readable_area(),
                 14,
-                d.width/2,
+                d.width / 2,
                 offset_y,
                 font_family="Consolas, sans-serif",
                 text_anchor="middle",
                 dominant_baseline="bottom",
             )
         )
+
 
 def __draw_heatmap(session, d, sizes, print_callback=lambda s: None):
     if sizes["show_heat"]:
@@ -623,8 +633,18 @@ def __draw_secondary(session, d, sizes, print_callback=lambda s: None):
         if sizes["secondary_y_start"] != sizes["secondary_y_end"]:
             min_y = sizes["secondary_y_start"]
             max_y = sizes["secondary_y_end"]
-        active_anno_x = [max_x - min_x, min_x, sizes["secondary"] - stroke_width, offset + stroke_width/2]
-        active_anno_y = [max_y - min_y, min_y, sizes["secondary"] - stroke_width, offset + stroke_width/2]
+        active_anno_x = [
+            max_x - min_x,
+            min_x,
+            sizes["secondary"] - stroke_width,
+            offset + stroke_width / 2,
+        ]
+        active_anno_y = [
+            max_y - min_y,
+            min_y,
+            sizes["secondary"] - stroke_width,
+            offset + stroke_width / 2,
+        ]
 
         tracks = session.get_tracks(True, print_callback)
         __draw_lines(
@@ -709,8 +729,18 @@ def __draw_secondary(session, d, sizes, print_callback=lambda s: None):
         if sizes["secondary_y_start"] != sizes["secondary_y_end"]:
             min_y = sizes["secondary_y_start"]
             max_y = sizes["secondary_y_end"]
-        active_anno_x = [max_x - min_x, min_x, sizes["secondary"] - stroke_width, offset + stroke_width/2]
-        active_anno_y = [max_y - min_y, min_y, sizes["secondary"] - stroke_width, offset + stroke_width/2]
+        active_anno_x = [
+            max_x - min_x,
+            min_x,
+            sizes["secondary"] - stroke_width,
+            offset + stroke_width / 2,
+        ]
+        active_anno_y = [
+            max_y - min_y,
+            min_y,
+            sizes["secondary"] - stroke_width,
+            offset + stroke_width / 2,
+        ]
 
         __draw_lines(
             d,
@@ -1003,9 +1033,7 @@ def __draw_contigs(session, d, sizes, print_callback=lambda s: None):
 def __get_sizes(session):
     return {
         "show_heat": True,
-        "show_region": session.get_value(
-            ["settings", "export", "print_region"]
-        ),
+        "show_region": session.get_value(["settings", "export", "print_region"]),
         "show_coords": session.get_value(
             ["settings", "interface", "show_hide", "coords"]
         ),
@@ -1046,11 +1074,21 @@ def __get_sizes(session):
         and len(session.get_tracks(True, lambda x: None)["values"]) > 0,
         "secondary": session.get_value(["settings", "interface", "raw_size", "val"]),
         "spacing": session.get_value(["settings", "export", "spacing", "val"]),
-        "white_background": session.get_value(["settings", "export", "white_background"]),
-        "secondary_x_start": session.get_value(["settings", "export", "secondary_x_range", "val_min"]),
-        "secondary_x_end": session.get_value(["settings", "export", "secondary_x_range", "val_max"]),
-        "secondary_y_start": session.get_value(["settings", "export", "secondary_y_range", "val_min"]),
-        "secondary_y_end": session.get_value(["settings", "export", "secondary_y_range", "val_max"]),
+        "white_background": session.get_value(
+            ["settings", "export", "white_background"]
+        ),
+        "secondary_x_start": session.get_value(
+            ["settings", "export", "secondary_x_range", "val_min"]
+        ),
+        "secondary_x_end": session.get_value(
+            ["settings", "export", "secondary_x_range", "val_max"]
+        ),
+        "secondary_y_start": session.get_value(
+            ["settings", "export", "secondary_y_range", "val_min"]
+        ),
+        "secondary_y_end": session.get_value(
+            ["settings", "export", "secondary_y_range", "val_max"]
+        ),
     }
 
 
@@ -1153,15 +1191,19 @@ def get_tsv(session, print_callback=lambda s: None):
             tracks[x_axis] += "\n"
 
             for tup in session.get_track_export(x_axis, print_callback):
-                tracks[x_axis] += "\t".join(
+                tracks[x_axis] += (
+                    "\t".join(
                         [
                             "\t".join([str(y) for y in x])
                             if isinstance(x, list)
                             else str(x)
                             for x in tup
                         ]
-                    ) + "\n"
-    return heatmap, tracks[0], tracks[1] 
+                    )
+                    + "\n"
+                )
+    return heatmap, tracks[0], tracks[1]
+
 
 def export_tsv(session, print_callback=lambda s: None):
     assert_file_is_creatable(session)
@@ -1184,10 +1226,13 @@ def get_png(session):
     assert_has_draw_svg()
     return __draw(session).rasterize().pngData
 
+
 def export_png(session):
     assert_file_is_creatable(session)
     data = get_png(session)
-    with open(session.get_value(["settings", "export", "prefix"]) + ".png", "wb") as out_file:
+    with open(
+        session.get_value(["settings", "export", "prefix"]) + ".png", "wb"
+    ) as out_file:
         out_file.write(data)
 
 
@@ -1195,9 +1240,14 @@ def get_svg(session):
     assert_has_draw_svg()
     return __draw(session).asSvg()
 
+
 def export_svg(session):
     assert_file_is_creatable(session)
     data = get_svg(session)
-    
-    with open(session.get_value(["settings", "export", "prefix"]) + ".svg", "w", encoding="utf-8") as out_file:
+
+    with open(
+        session.get_value(["settings", "export", "prefix"]) + ".svg",
+        "w",
+        encoding="utf-8",
+    ) as out_file:
         out_file.write(data)

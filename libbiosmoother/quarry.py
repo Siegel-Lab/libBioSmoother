@@ -54,6 +54,61 @@ def open_default_json():
 
 
 class Quarry(PartialQuarry):
+    def __establish_backwards_compatibility(self):
+        with open_default_json() as default_settings_file:
+            default_settings = json.load(default_settings_file)
+
+            def combine_dict(a, b, previous_keys=[]):
+                r = {}
+                for k in b.keys():
+                    if isinstance(b[k], dict) and k in a:
+                        r[k] = combine_dict(
+                            a[k], b[k], previous_keys=previous_keys + [k]
+                        )
+                    elif isinstance(b[k], dict):
+                        print(
+                            "WARNING: the loaded index was missing the",
+                            ".".join(previous_keys + [k]),
+                            "setting, copying it from the default settings.",
+                        )
+                        r[k] = b[k]
+                    elif k in a:
+                        r[k] = a[k]
+                    else:
+                        print(
+                            "WARNING: the loaded index was missing the",
+                            ".".join(previous_keys + [k]),
+                            "setting, copying it from the default settings.",
+                        )
+                        r[k] = b[k]
+                return r
+
+            self.set_value(
+                ["settings"],
+                combine_dict(self.get_value(["settings"]), default_settings),
+            )
+
+        for name in self.get_value(["coverage", "list"]):
+            for entry, val in [
+                ("no_map_q", False),
+                ("no_groups", False),
+                ("no_multi_map", False),
+                ("no_category", False),
+                ("no_strand", True),
+                ("shekelyan", False),
+            ]:
+                if not self.has_value(["coverage", "by_name", name, entry]):
+                    self.set_value(["coverage", "by_name", name, entry], val)
+                    print(
+                        "WARNING: the loaded index was missing the",
+                        entry,
+                        "entry for the",
+                        name,
+                        "secondary dataset, set value to",
+                        val,
+                        ".",
+                    )
+
     def __init__(self, *args):
         PartialQuarry.__init__(self, *args)
 
@@ -81,30 +136,7 @@ class Quarry(PartialQuarry):
                 file=sys.stderr,
             )
 
-        with open_default_json() as default_settings_file:
-            default_settings = json.load(default_settings_file)
-            
-            def combine_dict(a, b, previous_keys=[]):
-                r = {}
-                for k in b.keys():
-                    if isinstance(b[k], dict) and k in a:
-                        r[k] = combine_dict(a[k], b[k], previous_keys=previous_keys + [k])
-                    elif isinstance(b[k], dict):
-                        print("WARNING: the loaded index was missing the", ".".join(previous_keys + [k]), 
-                              "setting, copying it from the default settings.")
-                        r[k] = b[k]
-                    elif k in a:
-                        r[k] = a[k]
-                    else:
-                        print("WARNING: the loaded index was missing the", ".".join(previous_keys + [k]), 
-                              "setting, copying it from the default settings.")
-                        r[k] = b[k]
-                return r
-            
-            self.set_value(
-                ["settings"],
-                combine_dict(self.get_value(["settings"]), default_settings),
-            )
+        self.__establish_backwards_compatibility()
 
     def normalizeBinominalTestTrampoline(
         self,
@@ -330,7 +362,10 @@ class Quarry(PartialQuarry):
     def set_ploidy_list(self, ploidy_file):
         with fileinput.input(ploidy_file) as file:
             self.set_ploidy_itr(file)
-            self.set_value(["settings", "normalization", "ploidy_last_uploaded_filename"], ploidy_file)
+            self.set_value(
+                ["settings", "normalization", "ploidy_last_uploaded_filename"],
+                ploidy_file,
+            )
         return self
 
     def __isfloat(self, num):
@@ -372,7 +407,9 @@ class Quarry(PartialQuarry):
         report_error("Could not interpret '" + str(s_in) + "' as a locus")
         return None
 
-    def interpret_position(self, s, on_x_axis=True, bot=True, report_error=lambda s: None):
+    def interpret_position(
+        self, s, on_x_axis=True, bot=True, report_error=lambda s: None
+    ):
         if s.count(":") == 0 and s.count("+-") == 1:
             x, y = s.split("+-")
             c = self.__interpret_number(y, True, report_error=report_error)
@@ -393,13 +430,19 @@ class Quarry(PartialQuarry):
                 if not c is None and bot:
                     c = -c
                 a = self.interpret_name(
-                    x, on_x_axis, bot if len(y1) == 0 else True, lambda x: None, report_error
+                    x,
+                    on_x_axis,
+                    bot if len(y1) == 0 else True,
+                    lambda x: None,
+                    report_error,
                 )
                 if not a is None and not b is None and not c is None:
                     return [a + b + c]
             else:
                 b = self.__interpret_number(y, bot, report_error=report_error)
-                a = self.interpret_name(x, on_x_axis, True, lambda x: None, report_error)
+                a = self.interpret_name(
+                    x, on_x_axis, True, lambda x: None, report_error
+                )
                 if not a is None and not b is None:
                     return [a + b]
 
@@ -419,7 +462,13 @@ class Quarry(PartialQuarry):
 
     def interpret_range(self, s, on_x_axis=True, report_error=lambda s: None):
         s = "".join(s.lower().split())
-        if s.count("..") == 1 and s.count(":") == 1 and s.index(":") < s.index("..") and s.count("[") <= 1 and s.count("]") <= 1:
+        if (
+            s.count("..") == 1
+            and s.count(":") == 1
+            and s.index(":") < s.index("..")
+            and s.count("[") <= 1
+            and s.count("]") <= 1
+        ):
             s2, z = s.split("..")
             x, y = s2.split(":")
             if x[:1] == "[":
@@ -442,15 +491,17 @@ class Quarry(PartialQuarry):
             if y[-1:] == "]":
                 y = y[:-1]
 
-            ret = self.interpret_position(x, on_x_axis, True, report_error=report_error) + self.interpret_position(
-                y, on_x_axis, False, report_error=report_error
-            )
+            ret = self.interpret_position(
+                x, on_x_axis, True, report_error=report_error
+            ) + self.interpret_position(y, on_x_axis, False, report_error=report_error)
         else:
             if s[:1] == "[":
                 s = s[1:]
             if s[-1:] == "]":
                 s = s[:-1]
-            ret = self.interpret_position(s, on_x_axis, True, report_error=report_error) + self.interpret_position(
+            ret = self.interpret_position(
+                s, on_x_axis, True, report_error=report_error
+            ) + self.interpret_position(
                 s, on_x_axis, False, report_error=lambda x: None
             )
         if not None in ret:
@@ -462,19 +513,27 @@ class Quarry(PartialQuarry):
         return ret
 
     def interpret_area(
-        self, s, default_start_x, default_start_y, default_end_x, default_end_y, report_error=lambda s: None
+        self,
+        s,
+        default_start_x,
+        default_start_y,
+        default_end_x,
+        default_end_y,
+        report_error=lambda s: None,
     ):
         # remove all space-like characters
         s = "".join(s.lower().split())
         if s.count(";") == 1 and s.count("x=") == 0 and s.count("y=") == 0:
             x, y = s.split(";")
-            return self.interpret_range(x, True, report_error=report_error) + self.interpret_range(y, False, report_error=report_error)
+            return self.interpret_range(
+                x, True, report_error=report_error
+            ) + self.interpret_range(y, False, report_error=report_error)
 
         if s.count("x=") == 1 and s[:2] == "x=" and s.count("y=") == 0:
             s = s[2:]
             return self.interpret_range(s, True, report_error=report_error) + [
                 default_start_y,
-                default_end_y
+                default_end_y,
             ]
 
         if s.count("x=") == 0 and s.count("y=") == 1 and s[:2] == "y=":
@@ -489,9 +548,13 @@ class Quarry(PartialQuarry):
             y_pos = s.find("y=")
             x = s[x_pos + 2 : y_pos] if x_pos < y_pos else s[x_pos + 2 :]
             y = s[y_pos + 2 : x_pos] if y_pos < x_pos else s[y_pos + 2 :]
-            return self.interpret_range(x, True, report_error=report_error) + self.interpret_range(y, False, report_error=report_error)
+            return self.interpret_range(
+                x, True, report_error=report_error
+            ) + self.interpret_range(y, False, report_error=report_error)
 
-        return self.interpret_range(s, True, report_error=report_error) + self.interpret_range(s, False, report_error=lambda s: None)
+        return self.interpret_range(
+            s, True, report_error=report_error
+        ) + self.interpret_range(s, False, report_error=lambda s: None)
 
     def __to_readable_pos(self, x, genome_end, contig_names, contig_starts, lcs=0):
         if len(contig_names) == 0 or len(contig_starts) == 0:
@@ -562,7 +625,13 @@ class Quarry(PartialQuarry):
             return "n/a"
 
     def get_readable_area(
-        self, start_x=None, start_y=None, end_x=None, end_y=None, genomic_coords=False, print=lambda x: None
+        self,
+        start_x=None,
+        start_y=None,
+        end_x=None,
+        end_y=None,
+        genomic_coords=False,
+        print=lambda x: None,
     ):
         if start_x is None:
             start_x = self.get_value(["area", "x_start"])

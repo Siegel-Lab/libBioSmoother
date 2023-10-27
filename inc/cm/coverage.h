@@ -31,15 +31,16 @@ bool PartialQuarry::setActiveCoverage( )
 }
 
 std::tuple<size_t, int64_t, size_t, size_t> PartialQuarry::makeHeapTuple( bool bCol, bool bSymPart, const size_t uiFrom,
-                                                                          const size_t uiTo, int64_t iDataSetId,
-                                                                          size_t uiStart, size_t uiEnd )
+                                                                          const size_t uiTo, const size_t uiRepl,
+                                                                          int64_t iDataSetId, size_t uiStart,
+                                                                          size_t uiEnd )
 {
     const coordinate_t uiXMin = bCol != bSymPart ? uiFrom : uiStart;
     const coordinate_t uiXMax = bCol != bSymPart ? uiTo : uiEnd;
     const coordinate_t uiYMin = bCol != bSymPart ? uiStart : uiFrom;
     const coordinate_t uiYMax = bCol != bSymPart ? uiEnd : uiTo;
 
-    const size_t uiCount = indexCount( iDataSetId, uiYMin, uiXMin, uiYMax, uiXMax, !bSymPart );
+    const size_t uiCount = indexCount( uiRepl, iDataSetId, uiYMin, uiXMin, uiYMax, uiXMax, !bSymPart );
 
     return std::make_tuple( uiCount, iDataSetId, uiStart, uiEnd );
 }
@@ -56,7 +57,7 @@ size_t PartialQuarry::getMaxCoverageFromRepl( const size_t uiChromId, const size
         const size_t uiDatasetId = getDatasetIdfromReplAndChr( uiRepl, bCol != bSymPart ? uiChromId : uiActualContigId,
                                                                bCol != bSymPart ? uiActualContigId : uiChromId );
         if( uiDatasetId != std::numeric_limits<size_t>::max( ) )
-            vHeap.push_back( makeHeapTuple( bCol, bSymPart, uiFrom, uiTo, uiDatasetId, 0,
+            vHeap.push_back( makeHeapTuple( bCol, bSymPart, uiFrom, uiTo, uiRepl, uiDatasetId, 0,
                                             vActiveChromosomes[ bCol ? 1 : 0 ][ uiI ].uiLength ) );
     }
 
@@ -70,12 +71,12 @@ size_t PartialQuarry::getMaxCoverageFromRepl( const size_t uiChromId, const size
         vHeap.pop_back( );
 
         size_t uiCenter = ( std::get<2>( xFront ) + std::get<3>( xFront ) ) / 2;
-        vHeap.push_back(
-            makeHeapTuple( bCol, bSymPart, uiFrom, uiTo, std::get<1>( xFront ), uiCenter, std::get<3>( xFront ) ) );
+        vHeap.push_back( makeHeapTuple( bCol, bSymPart, uiFrom, uiTo, uiRepl, std::get<1>( xFront ), uiCenter,
+                                        std::get<3>( xFront ) ) );
         std::push_heap( vHeap.begin( ), vHeap.end( ) );
 
-        vHeap.push_back(
-            makeHeapTuple( bCol, bSymPart, uiFrom, uiTo, std::get<1>( xFront ), std::get<2>( xFront ), uiCenter ) );
+        vHeap.push_back( makeHeapTuple( bCol, bSymPart, uiFrom, uiTo, uiRepl, std::get<1>( xFront ),
+                                        std::get<2>( xFront ), uiCenter ) );
         std::push_heap( vHeap.begin( ), vHeap.end( ) );
 
 
@@ -111,7 +112,7 @@ size_t PartialQuarry::getCoverageFromRepl( const size_t uiChromId, const size_t 
             const size_t uiXMax = bCol != bSymPart ? uiTo : vActiveChromosomes[ bCol ? 1 : 0 ][ uiI ].uiLength;
             const size_t uiYMin = bCol != bSymPart ? 0 : uiFrom;
             const size_t uiYMax = bCol != bSymPart ? vActiveChromosomes[ bCol ? 1 : 0 ][ uiI ].uiLength : uiTo;
-            uiRet += indexCount( uiDatasetId, uiYMin, uiXMin, uiYMax, uiXMax, !bSymPart );
+            uiRet += indexCount( uiRepl, uiDatasetId, uiYMin, uiXMin, uiYMax, uiXMax, !bSymPart );
         }
     }
 
@@ -140,14 +141,20 @@ bool PartialQuarry::setCoverageValues( )
             vvCoverageValues[ uiJ ].emplace_back( );
             vvCoverageValues[ uiJ ].back( ).reserve( vAxisCords[ uiJ ].size( ) );
             size_t uiFstDatasetId = getValue<json>( { "coverage", "by_name", sRep, "first_dataset_id" } );
+            DatasetFilters xCurrFilters = {
+                /*bHasMapQ:*/ !getValue<bool>( { "coverage", "by_name", sRep, "no_map_q" } ),
+                /*bHasMultimappers:*/ !getValue<bool>( { "coverage", "by_name", sRep, "no_multi_map" } ),
+                /*bHasStrand:*/ !getValue<bool>( { "coverage", "by_name", sRep, "no_strand" } ),
+                /*bHasCategory:*/ !getValue<bool>( { "coverage", "by_name", sRep, "no_category" } ),
+            };
 
             for( AxisCoord& xCoords : vAxisCords[ uiJ ] )
             {
                 CANCEL_RETURN;
 
                 int64_t iDataSetId = uiFstDatasetId + xCoords.uiActualContigId;
-                size_t uiVal =
-                    index1DCount( iDataSetId, xCoords.uiIndexPos, xCoords.uiIndexPos + xCoords.uiIndexSize, uiJ == 0 );
+                size_t uiVal = index1DCount( xCurrFilters, iDataSetId, xCoords.uiIndexPos,
+                                             xCoords.uiIndexPos + xCoords.uiIndexSize, uiJ == 0 );
 
                 if( uiVal > uiMinuend )
                     uiVal -= uiMinuend;
@@ -255,7 +262,7 @@ bool PartialQuarry::setTracks( )
                     // center
                     vIndexStart.append( readableBp( xCoord.uiIndexPos * uiDividend ) );
                     vIndexEnd.append( readableBp( ( xCoord.uiIndexPos + xCoord.uiIndexSize ) * uiDividend ) );
-                    vScreenPos.append( xCoord.uiScreenPos + ((double)xCoord.uiScreenSize / (double)2) );
+                    vScreenPos.append( xCoord.uiScreenPos + ( (double)xCoord.uiScreenSize / (double)2 ) );
                     vValue.append( uiVal );
                 }
                 else
@@ -339,7 +346,7 @@ bool PartialQuarry::setTrackPrecursor( )
                 auto uiVal = (double)vvCoverageValues[ uiI ][ uiId ][ uiX ];
                 vvMinMaxTracks[ uiI ][ 0 ] = std::min( vvMinMaxTracks[ uiI ][ 0 ], uiVal );
                 vvMinMaxTracks[ uiI ][ 1 ] = std::max( vvMinMaxTracks[ uiI ][ 1 ], uiVal );
-                if(uiVal > 0)
+                if( uiVal > 0 )
                 {
                     vvMinMaxTracksNonZero[ uiI ][ 0 ] = std::min( vvMinMaxTracksNonZero[ uiI ][ 0 ], uiVal );
                     vvMinMaxTracksNonZero[ uiI ][ 1 ] = std::max( vvMinMaxTracksNonZero[ uiI ][ 1 ], uiVal );
@@ -354,14 +361,14 @@ bool PartialQuarry::setTrackPrecursor( )
                     uiVal = std::min( (double)vRadiclSeqCoverage[ 0 ][ uiX ][ 0 ],
                                       (double)vRadiclSeqNumNonEmptyBins[ 0 ][ uiX ][ 0 ] );
                 vvMinMaxTracks[ uiI ][ 0 ] = std::min( vvMinMaxTracks[ uiI ][ 0 ], uiVal );
-                if(uiVal > 0)
+                if( uiVal > 0 )
                     vvMinMaxTracksNonZero[ uiI ][ 0 ] = std::min( vvMinMaxTracksNonZero[ uiI ][ 0 ], uiVal );
-                
+
                 if( bRadiclNormDisp )
                     uiVal = std::max( (double)vRadiclSeqCoverage[ 0 ][ uiX ][ 0 ],
                                       (double)vRadiclSeqNumNonEmptyBins[ 0 ][ uiX ][ 0 ] );
                 vvMinMaxTracks[ uiI ][ 1 ] = std::max( vvMinMaxTracks[ uiI ][ 1 ], uiVal );
-                if(uiVal > 0)
+                if( uiVal > 0 )
                     vvMinMaxTracksNonZero[ uiI ][ 1 ] = std::max( vvMinMaxTracksNonZero[ uiI ][ 1 ], uiVal );
             }
 
@@ -370,7 +377,7 @@ bool PartialQuarry::setTrackPrecursor( )
                 auto uiVal = (double)vFlat4C[ 1 - uiI ][ uiX ];
                 vvMinMaxTracks[ uiI ][ 0 ] = std::min( vvMinMaxTracks[ uiI ][ 0 ], uiVal );
                 vvMinMaxTracks[ uiI ][ 1 ] = std::max( vvMinMaxTracks[ uiI ][ 1 ], uiVal );
-                if(uiVal > 0)
+                if( uiVal > 0 )
                 {
                     vvMinMaxTracksNonZero[ uiI ][ 0 ] = std::min( vvMinMaxTracksNonZero[ uiI ][ 0 ], uiVal );
                     vvMinMaxTracksNonZero[ uiI ][ 1 ] = std::max( vvMinMaxTracksNonZero[ uiI ][ 1 ], uiVal );
@@ -386,7 +393,7 @@ bool PartialQuarry::setTrackPrecursor( )
                     auto uiVal = vIceSliceBias[ 0 ][ uiI ][ uiY ][ uiX ];
                     vvMinMaxTracks[ uiI ][ 0 ] = std::min( vvMinMaxTracks[ uiI ][ 0 ], uiVal );
                     vvMinMaxTracks[ uiI ][ 1 ] = std::max( vvMinMaxTracks[ uiI ][ 1 ], uiVal );
-                    if(uiVal > 0)
+                    if( uiVal > 0 )
                     {
                         vvMinMaxTracksNonZero[ uiI ][ 0 ] = std::min( vvMinMaxTracksNonZero[ uiI ][ 0 ], uiVal );
                         vvMinMaxTracksNonZero[ uiI ][ 1 ] = std::max( vvMinMaxTracksNonZero[ uiI ][ 1 ], uiVal );
@@ -398,13 +405,13 @@ bool PartialQuarry::setTrackPrecursor( )
         if( vvMinMaxTracksNonZero[ uiI ][ 0 ] >= vvMinMaxTracksNonZero[ uiI ][ 1 ] )
             vvMinMaxTracksNonZero[ uiI ][ 1 ] += 1;
 
-        if(vvMinMaxTracks[ uiI ][ 0 ] == std::numeric_limits<double>::max( ))
+        if( vvMinMaxTracks[ uiI ][ 0 ] == std::numeric_limits<double>::max( ) )
             vvMinMaxTracks[ uiI ][ 0 ] = 0;
-        if(vvMinMaxTracks[ uiI ][ 1 ] == std::numeric_limits<double>::min( ))
+        if( vvMinMaxTracks[ uiI ][ 1 ] == std::numeric_limits<double>::min( ) )
             vvMinMaxTracks[ uiI ][ 1 ] = 1;
-        if(vvMinMaxTracksNonZero[ uiI ][ 0 ] == std::numeric_limits<double>::max( ))
+        if( vvMinMaxTracksNonZero[ uiI ][ 0 ] == std::numeric_limits<double>::max( ) )
             vvMinMaxTracksNonZero[ uiI ][ 0 ] = 1;
-        if(vvMinMaxTracksNonZero[ uiI ][ 1 ] == std::numeric_limits<double>::min( ))
+        if( vvMinMaxTracksNonZero[ uiI ][ 1 ] == std::numeric_limits<double>::min( ) )
             vvMinMaxTracksNonZero[ uiI ][ 1 ] = 10;
 
         vTrackExportNames[ uiI ].clear( );
@@ -597,8 +604,8 @@ const std::array<double, 2> PartialQuarry::getMinMaxTracks( bool bXAxis,
     return vvMinMaxTracks[ bXAxis ? 0 : 1 ];
 }
 
-const std::array<double, 2> PartialQuarry::getMinMaxTracksNonZero( bool bXAxis,
-                                                            const std::function<void( const std::string& )>& fPyPrint )
+const std::array<double, 2>
+PartialQuarry::getMinMaxTracksNonZero( bool bXAxis, const std::function<void( const std::string& )>& fPyPrint )
 {
     update( NodeNames::Tracks, fPyPrint );
     return vvMinMaxTracksNonZero[ bXAxis ? 0 : 1 ];

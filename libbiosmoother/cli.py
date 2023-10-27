@@ -26,6 +26,7 @@ from datetime import datetime
 
 HIDE_SUBCOMMANDS_MANUAL = "SMOOTHER_HIDE_SUBCOMMANDS_MANUAL" in os.environ
 
+
 def get_path(prefix):
     for possible in [prefix, prefix + ".smoother_index"]:
         if os.path.exists(possible) and os.path.isdir(possible):
@@ -162,7 +163,7 @@ def set_smoother(args):
             q.get_value(["area", "y_start"]),
             q.get_value(["area", "x_end"]),
             q.get_value(["area", "y_end"]),
-            report_error=lambda s: print(s, file=sys.stderr)
+            report_error=lambda s: print(s, file=sys.stderr),
         )
         if not new_area[0] is None:
             q.set_value(["area", "x_start"], new_area[0])
@@ -175,7 +176,9 @@ def set_smoother(args):
         q.save_session()
     elif args.name == "settings.interface.v4c.col":
         q = Quarry(possible)
-        new_range = q.interpret_range(args.val, True, report_error=lambda s: print(s, file=sys.stderr))
+        new_range = q.interpret_range(
+            args.val, True, report_error=lambda s: print(s, file=sys.stderr)
+        )
         if not new_range[0] is None:
             q.set_value(["settings", "interface", "v4c", "col_from"], new_range[0])
         if not new_range[1] is None:
@@ -183,7 +186,9 @@ def set_smoother(args):
         q.save_session()
     elif args.name == "settings.interface.v4c.row":
         q = Quarry(possible)
-        new_range = q.interpret_range(args.val, False, report_error=lambda s: print(s, file=sys.stderr))
+        new_range = q.interpret_range(
+            args.val, False, report_error=lambda s: print(s, file=sys.stderr)
+        )
         if not new_range[0] is None:
             q.set_value(["settings", "interface", "v4c", "row_from"], new_range[0])
         if not new_range[1] is None:
@@ -313,11 +318,14 @@ def add_parsers(main_parser):
     def fmt_defaults(defaults):
         return " (default: " + " ".join(str(x) for x in defaults) + ")"
 
-    init_parser = main_parser.add_parser("init", help="Generate a new index for a given reference genome.",
-                                         description="Either --anno_path or --ctg_len must be given.")
+    init_parser = main_parser.add_parser(
+        "init",
+        help="Generate a new index for a given reference genome.",
+        description="Either --anno_path or --ctg_len must be given.",
+    )
     init_parser.add_argument(
         "index_prefix",
-        help="Path where the index directory will be saved. Note: a folder with multiple files will be created."
+        help="Path where the index directory will be saved. Note: a folder with multiple files will be created.",
     )
     init_parser.add_argument(
         "-c",
@@ -366,7 +374,9 @@ def add_parsers(main_parser):
     init_parser.set_defaults(func=init)
     init_parser.add_argument("--test", help=argparse.SUPPRESS, action="store_true")
 
-    reset_parser = main_parser.add_parser("reset", help="Reset a given index with to the default parameters.")
+    reset_parser = main_parser.add_parser(
+        "reset", help="Reset a given index with to the default parameters."
+    )
     reset_parser.add_argument(
         "index_prefix",
         help="Path to the index directory generated with the init command.",
@@ -548,7 +558,10 @@ def add_parsers(main_parser):
     export_parser.add_argument("--perf", help=argparse.SUPPRESS, action="store_true")
     export_parser.set_defaults(func=export_smoother)
 
-    set_parser = main_parser.add_parser("set", help="Set the values of different parameters in an index. This can also be done on in Smootherthe graphical user interface.")
+    set_parser = main_parser.add_parser(
+        "set",
+        help="Set the values of different parameters in an index. This can also be done on in Smootherthe graphical user interface.",
+    )
     set_parser.add_argument(
         "index_prefix",
         help="Path to the index directory generated with the init command.",
@@ -563,7 +576,10 @@ def add_parsers(main_parser):
     )
     set_parser.set_defaults(func=set_smoother)
 
-    get_parser = main_parser.add_parser("get", help="Retrieve the value of a parameter from the current session of an index. This can also be done on Smoother")
+    get_parser = main_parser.add_parser(
+        "get",
+        help="Retrieve the value of a parameter from the current session of an index. This can also be done on Smoother",
+    )
     get_parser.add_argument(
         "index_prefix",
         help="Path to the index directory generated with the init command.",
@@ -575,7 +591,9 @@ def add_parsers(main_parser):
     get_parser.set_defaults(func=get_smoother)
 
     if not HIDE_SUBCOMMANDS_MANUAL:
-        info_parser = main_parser.add_parser("par_info", argument_default=argparse.SUPPRESS)
+        info_parser = main_parser.add_parser(
+            "par_info", argument_default=argparse.SUPPRESS
+        )
         info_parser.add_argument(
             "index_prefix",
             help="Prefix that was used to create the index (see the init subcommand).",
@@ -593,7 +611,11 @@ def add_parsers(main_parser):
             help="Path to the index directory generated with the init command.",
         )
         test_parser.add_argument(
-            "-S", "--seed", help="Seed for random configurations.", default=None, type=int
+            "-S",
+            "--seed",
+            help="Seed for random configurations.",
+            default=None,
+            type=int,
         )
         test_parser.add_argument(
             "-s", "--skip_first", help="Skip the first x many test", default=0, type=int
@@ -646,7 +668,10 @@ def make_main_parser():
 def make_versioned_parser():
     parser = make_main_parser()
     parser.add_argument(
-        "-v", "--version", action="version", version=version("libbiosmoother"),
+        "-v",
+        "--version",
+        action="version",
+        version=version("libbiosmoother"),
         help="Print libSmoother's version and exit.",
     )
     parser.add_argument(

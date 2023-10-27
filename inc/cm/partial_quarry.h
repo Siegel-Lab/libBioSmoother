@@ -114,6 +114,13 @@ struct Annotation
     size_t uiChromosome;
 };
 
+struct DatasetFilters
+{
+    bool bHasMapQ;
+    bool bHasMultimappers;
+    bool bHasStrand;
+    bool bHasCategory;
+};
 
 /*
  * iterates over the indices between uiFrom and uiTo in the following order:
@@ -251,6 +258,7 @@ class PartialQuarry : public HasSession
         size_t uiLastUpdated = 0;
         size_t uiLastChecked = 0;
         std::string sError = "";
+        std::string sPrint = "";
         bool bRegistered = false;
         bool bTerminal = true;
         int64_t uiLastRuntime = 0;
@@ -320,6 +328,12 @@ class PartialQuarry : public HasSession
         vGraphData[ xCurrNodeName ].sError = sError;
     }
 
+    void addPrint( std::string sPrint )
+    {
+        assert( xCurrNodeName != NodeNames::SIZE );
+        vGraphData[ xCurrNodeName ].sPrint += sPrint + "\n";
+    }
+
     size_t update_helper( NodeNames xNodeName, const std::function<void( const std::string& )>& fPyPrint )
     {
         ComputeNode& xNode = vGraph[ xNodeName ];
@@ -361,6 +375,7 @@ class PartialQuarry : public HasSession
 
                 xCurrNodeName = xNodeName;
                 setError( "" );
+                xNodeData.sPrint = "";
 
                 auto t1 = std::chrono::high_resolution_clock::now( );
                 bool bUpdateDone = ( this->*xNode.fFunc )( );
@@ -376,6 +391,9 @@ class PartialQuarry : public HasSession
                     xNodeData.uiLastChecked = 0;
                     return 0;
                 }
+
+                if( xNodeData.sPrint.size( ) > 0 )
+                    fPyPrint( "[" + xNode.sNodeName + "] " + xNodeData.sPrint );
 
                 auto ms_int = std::chrono::duration_cast<std::chrono::milliseconds>( t2 - t1 );
                 if( uiVerbosity >= 1 )
@@ -856,64 +874,159 @@ class PartialQuarry : public HasSession
     std::array<std::vector<std::array<size_t, 2>>, NUM_COORD_SYSTEMS> vRadiclSeqNumNonEmptyBins;
 
     std::vector<size_t> vvDatasetIdsPerReplAndChr;
+    std::vector<DatasetFilters> vvDatasetFiltersPerIndex;
     size_t uiContigListSize;
 
     size_t uiIceFilterIgnoreDiags;
     std::array<std::array<std::array<std::vector<double>, 2>, 2>, NUM_COORD_SYSTEMS> vIceSliceBias;
 
-    size_t indexCount( size_t iDataSetId, size_t uiXs, size_t uiYs, size_t uiXe, size_t uiYe, bool bIsNotMirrored )
+    size_t indexCount( size_t uiDatasetIndex, size_t iDataSetId, size_t uiXs, size_t uiYs, size_t uiXe, size_t uiYe,
+                       bool bIsNotMirrored )
     {
         std::array<coordinate_t, interface_t::D - interface_t::O> vFrom;
+        std::array<coordinate_t, interface_t::D - interface_t::O> vTo;
+
         vFrom[ 0 ] = uiXs;
         vFrom[ 1 ] = uiYs;
-        vFrom[ 2 ] = uiMapQMin;
-        vFrom[ interface_t::D - interface_t::O - 2 ] = uiFromSameStrandFilter;
-        vFrom[ interface_t::D - interface_t::O - 1 ] = uiFromYStrandFilter;
-        std::array<coordinate_t, interface_t::D - interface_t::O> vTo;
         vTo[ 0 ] = uiXe;
         vTo[ 1 ] = uiYe;
-        vTo[ 2 ] = uiMapQMax;
-        vTo[ interface_t::D - interface_t::O - 2 ] = uiToSameStrandFilter;
-        vTo[ interface_t::D - interface_t::O - 1 ] = uiToYStrandFilter;
+        if( vvDatasetFiltersPerIndex[ uiDatasetIndex ].bHasMapQ )
+        {
+            vFrom[ 2 ] = uiMapQMin;
+            vTo[ 2 ] = uiMapQMax;
+        }
+        else
+        {
+            vFrom[ 2 ] = 0;
+            vTo[ 2 ] = 255;
+        }
+
+        if( vvDatasetFiltersPerIndex[ uiDatasetIndex ].bHasStrand )
+        {
+            vFrom[ interface_t::D - interface_t::O - 2 ] = uiFromSameStrandFilter;
+            vFrom[ interface_t::D - interface_t::O - 1 ] = uiFromYStrandFilter;
+            vTo[ interface_t::D - interface_t::O - 2 ] = uiToSameStrandFilter;
+            vTo[ interface_t::D - interface_t::O - 1 ] = uiToYStrandFilter;
+        }
+        else
+        {
+            vFrom[ interface_t::D - interface_t::O - 2 ] = 0;
+            vFrom[ interface_t::D - interface_t::O - 1 ] = 0;
+            vTo[ interface_t::D - interface_t::O - 2 ] = 2;
+            vTo[ interface_t::D - interface_t::O - 1 ] = 2;
+        }
 
         for( size_t uiI = 0; uiI < MAX_NUM_FILTER_ANNOTATIONS; uiI++ )
         {
-            vFrom[ 3 + uiI * 2 ] = uiFromAnnoFilter[ uiI * 2 + ( bIsNotMirrored ? 0 : 1 ) ];
-            vFrom[ 3 + uiI * 2 + 1 ] = uiFromAnnoFilter[ uiI * 2 + ( bIsNotMirrored ? 1 : 0 ) ];
+            if( vvDatasetFiltersPerIndex[ uiDatasetIndex ].bHasCategory )
+            {
+                vFrom[ 3 + uiI * 2 ] = uiFromAnnoFilter[ uiI * 2 + ( bIsNotMirrored ? 0 : 1 ) ];
+                vFrom[ 3 + uiI * 2 + 1 ] = uiFromAnnoFilter[ uiI * 2 + ( bIsNotMirrored ? 1 : 0 ) ];
 
 
-            vTo[ 3 + uiI * 2 ] = uiToAnnoFilter[ uiI * 2 + ( bIsNotMirrored ? 0 : 1 ) ];
-            vTo[ 3 + uiI * 2 + 1 ] = uiToAnnoFilter[ uiI * 2 + ( bIsNotMirrored ? 1 : 0 ) ];
+                vTo[ 3 + uiI * 2 ] = uiToAnnoFilter[ uiI * 2 + ( bIsNotMirrored ? 0 : 1 ) ];
+                vTo[ 3 + uiI * 2 + 1 ] = uiToAnnoFilter[ uiI * 2 + ( bIsNotMirrored ? 1 : 0 ) ];
+            }
+            else
+            {
+                vFrom[ 3 + uiI * 2 ] = 0;
+                vFrom[ 3 + uiI * 2 + 1 ] = 0;
+
+
+                vTo[ 3 + uiI * 2 ] = 2;
+                vTo[ 3 + uiI * 2 + 1 ] = 2;
+            }
         }
+
+        // @todo some error when trying to filter only datasets where filter is inactivated
 
         return pIndices->count( iDataSetId, vFrom, vTo, xIntersect, bOnlyMMRs, 0 );
     }
 
-    size_t index1DCount( size_t iDataSetId, size_t uiXs, size_t uiXe, bool bDisplayedOnCol )
+    size_t index1DCount( const DatasetFilters& rFilters, size_t iDataSetId, size_t uiXs, size_t uiXe,
+                         bool bDisplayedOnCol )
     {
         std::array<coordinate_t, interface_t::D - interface_t::O> vFrom;
+        std::array<coordinate_t, interface_t::D - interface_t::O> vTo;
         vFrom[ 0 ] = uiXs;
         vFrom[ 1 ] = 0;
-        vFrom[ 2 ] = uiMapQMin;
-        vFrom[ interface_t::D - interface_t::O - 2 ] = ui1DFromStrandFilter;
-        vFrom[ interface_t::D - interface_t::O - 1 ] = 0;
-        std::array<coordinate_t, interface_t::D - interface_t::O> vTo;
         vTo[ 0 ] = uiXe;
         vTo[ 1 ] = 1;
-        vTo[ 2 ] = uiMapQMax;
-        vTo[ interface_t::D - interface_t::O - 2 ] = ui1DToStrandFilter;
+
+        if( rFilters.bHasMapQ )
+        {
+            vFrom[ 2 ] = uiMapQMin;
+            vTo[ 2 ] = uiMapQMax;
+        }
+        else
+        {
+            vFrom[ 2 ] = 0;
+            vTo[ 2 ] = 255;
+        }
+
+        if( rFilters.bHasStrand )
+        {
+            vFrom[ interface_t::D - interface_t::O - 2 ] = ui1DFromStrandFilter;
+            vTo[ interface_t::D - interface_t::O - 2 ] = ui1DToStrandFilter;
+        }
+        else
+        {
+            vFrom[ interface_t::D - interface_t::O - 2 ] = 0;
+            vTo[ interface_t::D - interface_t::O - 2 ] = 2;
+        }
+
+        vFrom[ interface_t::D - interface_t::O - 1 ] = 0;
         vTo[ interface_t::D - interface_t::O - 1 ] = 1;
 
         for( size_t uiI = 0; uiI < MAX_NUM_FILTER_ANNOTATIONS; uiI++ )
         {
-            vFrom[ 3 + uiI * 2 ] = uiFromAnnoFilter[ uiI * 2 + ( bDisplayedOnCol ? 0 : 1 ) ];
+            if( rFilters.bHasCategory )
+            {
+                vFrom[ 3 + uiI * 2 ] = uiFromAnnoFilter[ uiI * 2 + ( bDisplayedOnCol ? 0 : 1 ) ];
+                vTo[ 3 + uiI * 2 ] = uiToAnnoFilter[ uiI * 2 + ( bDisplayedOnCol ? 0 : 1 ) ];
+            }
+            else
+            {
+                vFrom[ 3 + uiI * 2 ] = 0;
+                vTo[ 3 + uiI * 2 ] = 2;
+            }
+
             vFrom[ 3 + uiI * 2 + 1 ] = 0;
-            vTo[ 3 + uiI * 2 ] = uiToAnnoFilter[ uiI * 2 + ( bDisplayedOnCol ? 0 : 1 ) ];
             vTo[ 3 + uiI * 2 + 1 ] = 1;
         }
 
+        // @todo some error when trying to filter only datasets where filter is inactivated (log datasets without filter
+        // otherwise)
 
         return pIndices->count( iDataSetId, vFrom, vTo, xIntersect, bOnlyMMRs, 0 );
+    }
+
+    void checkForFilters( std::string sFilterName, std::string sFilterKey,
+                          std::function<bool( const DatasetFilters& )> fFilter )
+    {
+        bool bSomeWithFilter = false;
+        for( size_t uiI = 0; uiI < vActiveReplicates.size( ); uiI++ )
+        {
+            if( !fFilter( vvDatasetFiltersPerIndex[ uiI ] ) )
+                addPrint( "Trying to filter for " + sFilterName + ", however " + vActiveReplicates[ uiI ] +
+                          " was generated without " + sFilterName +
+                          " values. Filter will be ignored for this dataset." );
+            else
+                bSomeWithFilter = true;
+            for( uiI = 0; uiI < 2; uiI++ )
+                for( const std::string& rsCov : vActiveCoverage[ uiI ] )
+                {
+                    if( getValue<bool>( { "coverage", "by_name", rsCov, sFilterKey } ) )
+                        addPrint( "Trying to filter for " + sFilterName + ", however " + rsCov +
+                                  " was generated without " + sFilterName +
+                                  " values. Filter will be ignored for this dataset." );
+                    else
+                        bSomeWithFilter = true;
+                }
+            if( !bSomeWithFilter )
+                setError( "Trying to filter for " + sFilterName + ", however all datasets were generated without " +
+                          sFilterName + " values. Filter will be ignored." );
+        }
     }
 
     size_t getDatasetIdfromReplAndChr( size_t uiRepl, size_t uiChrX, size_t uiChrY )
@@ -1034,8 +1147,8 @@ class PartialQuarry : public HasSession
     // coverage.h
     size_t getCoverageFromRepl( const size_t, const size_t, const size_t, const size_t, bool, bool );
     // coverage.h
-    std::tuple<size_t, int64_t, size_t, size_t> makeHeapTuple( bool, bool, const size_t, const size_t, int64_t, size_t,
-                                                               size_t );
+    std::tuple<size_t, int64_t, size_t, size_t> makeHeapTuple( bool, bool, const size_t, const size_t, const size_t,
+                                                               int64_t, size_t, size_t );
 
     // coverage.h
     void regCoverage( );
@@ -1399,8 +1512,8 @@ class PartialQuarry : public HasSession
 
   public:
     const pybind11::object interpretName( std::string sName, bool bXAxis, bool bBottom,
-                                        const std::function<void( const std::string& )>& fPyPrint,
-                                        const std::function<void( const std::string& )>& fReportError )
+                                          const std::function<void( const std::string& )>& fPyPrint,
+                                          const std::function<void( const std::string& )>& fReportError )
     {
         update( NodeNames::CanvasSize, fPyPrint );
         sName = to_lower( sName );
@@ -1419,7 +1532,8 @@ class PartialQuarry : public HasSession
         for( auto xChr : vActiveChromosomes[ bXAxis ? 0 : 1 ] )
         {
             int64_t uiFistAnnoIdx = getFirstAnnoIdx( bXAxis );
-            bool bMatch = (to_lower( xChr.sName ).find( sName ) != std::string::npos) || (to_lower( xChr.sName ) == sName);
+            bool bMatch =
+                ( to_lower( xChr.sName ).find( sName ) != std::string::npos ) || ( to_lower( xChr.sName ) == sName );
             size_t uiLen = 0;
             if( bFullGenome )
                 uiLen = xChr.uiLength;
@@ -1445,10 +1559,10 @@ class PartialQuarry : public HasSession
             uiRunningPos += uiLen;
         }
 
-        if(!bOneMatchFound)
+        if( !bOneMatchFound )
         {
-            fReportError("Could not interpret '" + sName + "' as a contig");
-            return py::cast<py::none>(Py_None);
+            fReportError( "Could not interpret '" + sName + "' as a contig" );
+            return py::cast<py::none>( Py_None );
         }
 
         return pybind11::int_( uiMaxPos );

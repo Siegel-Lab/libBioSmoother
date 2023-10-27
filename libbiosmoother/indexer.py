@@ -196,7 +196,8 @@ class Indexer:
                         chr_name, chr_start, chr_end = line.split()[1:]
                         if chr_start != "1":
                             raise RuntimeError(
-                                "Expecting sequence-regions to start at position 1, however this region does not: " + line[:-1]
+                                "Expecting sequence-regions to start at position 1, however this region does not: "
+                                + line[:-1]
                             )
                         chr_len_list.append((chr_name, chr_end))
             if len(chr_len_list) == 0:
@@ -714,6 +715,12 @@ class Indexer:
         self.set_session(["coverage", "by_name", name, "first_dataset_id"], fist_id)
         self.set_session(["coverage", "by_name", name, "num_datasets"], num_itr)
         self.set_session(["coverage", "by_name", name, "total_reads"], total_reads)
+        self.set_session(["coverage", "by_name", name, "no_map_q"], no_map_q)
+        self.set_session(["coverage", "by_name", name, "no_groups"], no_groups)
+        self.set_session(["coverage", "by_name", name, "no_multi_map"], no_multi_map)
+        self.set_session(["coverage", "by_name", name, "no_category"], no_category)
+        self.set_session(["coverage", "by_name", name, "no_strand"], no_strand)
+        self.set_session(["coverage", "by_name", name, "shekelyan"], shekelyan)
 
         if total_reads == 0:
             print(
