@@ -322,6 +322,8 @@ bool PartialQuarry::setBetweenGroup( )
         iBetweenGroupSetting = 6;
     else if( sBetwGroupSetting == "div" )
         iBetweenGroupSetting = 7;
+    else if( sBetwGroupSetting == "div+" )
+        iBetweenGroupSetting = 8;
     else
         throw std::logic_error( "invalid value for between_group" );
     END_RETURN;
@@ -384,6 +386,8 @@ double PartialQuarry::getMixedValue( double uiA, double uiB )
             return uiA + uiB;
         case 7:
             return uiB > 0 ? uiA / uiB : 0;
+        case 8:
+            return (uiA + 0.000001) / (uiB + 0.000001);
         default:
             throw std::logic_error( "invalid value for between_group" );
     }

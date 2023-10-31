@@ -7,7 +7,7 @@
     },
     "replicates": {
         "in_group": ["sum", "min", "max", "dif", "mean"],
-        "between_group": ["sum", "1st", "2nd", "sub", "div", "dif"]
+        "between_group": ["sum", "1st", "2nd", "sub", "div", "div+", "dif"]
     },
     "interface": {
         "color_palette": ["Viridis256", "Plasma256", "Turbo256", "Fall", "LowToHigh"],
