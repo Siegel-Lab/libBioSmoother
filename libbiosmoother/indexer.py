@@ -382,6 +382,13 @@ class Indexer:
         count_matrix_warning_done = False
         has_upper_triangle = False
         has_lower_triangle = False
+        map_q_min = 255
+        map_q_max = 0
+        has_multimapper = False
+        categoires_min = [1] * (MAX_NUM_FILTER_ANNOTATIONS * 2)
+        categoires_max = [0] * (MAX_NUM_FILTER_ANNOTATIONS * 2)
+        strand_min = 4
+        strand_max = 0
         for idx_x, chr_x in enumerate(contigs):
             anno_ids_x = [
                 self.session_default["annotation"]["by_name"][anno] + idx_x
@@ -476,19 +483,34 @@ class Indexer:
                     else:
                         act_pos_1_e = int(pos_2_e) // self.session_default["dividend"]
                         act_pos_2_e = int(pos_1_e) // self.session_default["dividend"]
+                    if act_pos_1_e != act_pos_1_s or act_pos_2_e != act_pos_2_s:
+                        has_multimapper = True
+
                     map_q = t_dict[int(map_q)]
                     if no_map_q:
                         map_q = 1
+                    map_q_min = min(map_q_min, map_q)
+                    map_q_max = max(map_q_max, map_q)
+
                     if no_strand:
                         same_strand_idx = 0
                         y_strand_idx = 0
                     else:
                         same_strand_idx = 0 if bool(strand_1) == bool(strand_2) else 1
                         y_strand_idx = 0 if bool(strand_1) else 1
+                    strand_min = min(strand_min, same_strand_idx + y_strand_idx * 2)
+                    strand_max = max(strand_max, same_strand_idx + y_strand_idx * 2)
+
                     bin_cnt = int(bin_cnt)
 
                     cat_pos = [
                         item for sublist in zip(cat_x, cat_y) for item in sublist
+                    ]
+                    categoires_min = [
+                        min(x, y) for x, y in zip(categoires_min, cat_pos)
+                    ]
+                    categories_max = [
+                        max(x, y) for x, y in zip(categoires_max, cat_pos)
                     ]
 
                     start = [
@@ -518,10 +540,33 @@ class Indexer:
             print(
                 "Info: Detected an exclusive",
                 "lower" if has_lower_triangle else "upper",
-                "triangle matrix. Setting symmetry and axis labels.",
+                "triangle matrix. Setting symmetry and axis labels of index.",
             )
             self.session["settings"]["interface"]["axis_labels"] = "DNA_DNA"
             self.session["settings"]["filters"]["symmetry"] = "mirror"
+
+        if total_reads == 0:
+            print(
+                "WARNING: the total number of reads that were added to the index is zero! Something seems off..."
+            )
+        if not no_map_q and map_q_min == map_q_max and total_reads > 1:
+            print(
+                "WARNING: Detected only a single mapping quality value (",
+                map_q_min,
+                "). Consider using --no_map_q if this dataset should not be filterable by mapping quality.",
+            )
+        if not has_multimapper and not no_multi_map and total_reads > 1:
+            print(
+                "WARNING: Detected no multimappers. Consider using --no_multi_map if this dataset should not be filterable by multimapping.",
+            )
+        if categoires_max == categoires_min and not no_category and total_reads > 1:
+            print(
+                "WARNING: Detected only a single annotation overlap type. Consider using --no_anno if this dataset should not be filterable by annotation overlap.",
+            )
+        if strand_min == strand_max and not no_strand and total_reads > 1:
+            print(
+                "WARNING: Detected only a single strand overlap type. Consider using --no_strand if this dataset should not be filterable by strand overlap.",
+            )
 
         self.set_session(["replicates", "by_name", name, "first_dataset_id"], first_id)
         self.set_session(["replicates", "by_name", name, "num_datasets"], num_itr)
@@ -542,10 +587,6 @@ class Indexer:
         self.set_session(
             ["replicates", "by_name", name, "has_lower_triangle"], has_lower_triangle
         )
-        if total_reads == 0:
-            print(
-                "WARNING: the total number of reads that were added to the index is zero! Something seems off..."
-            )
 
         read_iterator.cleanup()
 
@@ -615,6 +656,15 @@ class Indexer:
         cnt = 0
         fist_id = None
         count_matrix_warning_done = False
+
+        map_q_min = 255
+        map_q_max = 0
+        has_multimapper = False
+        categoires_min = [1] * (MAX_NUM_FILTER_ANNOTATIONS * 2)
+        categoires_max = [0] * (MAX_NUM_FILTER_ANNOTATIONS * 2)
+        strand_min = 2
+        strand_max = 0
+
         for idx_x, chr_x in enumerate(contigs):
             anno_ids = [
                 self.session_default["annotation"]["by_name"][anno] + idx_x
@@ -677,19 +727,34 @@ class Indexer:
                     act_pos_1_e = act_pos_1_s
                 else:
                     act_pos_1_e = int(pos_1_e) // self.session_default["dividend"]
+                if act_pos_1_e != act_pos_1_s:
+                    has_multimapper = True
 
                 map_q = t_dict[int(map_q)]
                 if no_map_q:
                     map_q = 1
+                map_q_min = min(map_q_min, map_q)
+                map_q_max = max(map_q_max, map_q)
+
                 if no_strand:
                     strand_idx = 0
                 else:
                     strand_idx = 0 if bool(strand_1) else 1
+                strand_min = min(strand_min, strand_idx)
+                strand_max = max(strand_max, strand_idx)
+
                 bin_cnt = int(bin_cnt)
 
                 cat_pos = [
                     item for sublist in zip(cat, [0] * len(cat)) for item in sublist
                 ]
+                categoires_min = [
+                    min(x, y) for x, y in zip(categoires_min, cat_pos)
+                ]
+                categories_max = [
+                    max(x, y) for x, y in zip(categoires_max, cat_pos)
+                ]
+
                 start = [
                     act_pos_1_s,
                     0,
@@ -712,6 +777,30 @@ class Indexer:
             )
             if fist_id is None:
                 fist_id = id
+
+        if total_reads == 0:
+            print(
+                "WARNING: the total number of reads that were added to the index is zero! Something seems off..."
+            )
+        if not no_map_q and map_q_min == map_q_max and not total_reads > 1:
+            print(
+                "WARNING: Detected only a single mapping quality value (",
+                map_q_min,
+                "). Consider using --no_map_q if this dataset should not be filterable by mapping quality.",
+            )
+        if not has_multimapper and not no_multi_map and not total_reads > 1:
+            print(
+                "WARNING: Detected no multimappers. Consider using --no_multi_map if this dataset should not be filterable by multimapping.",
+            )
+        if categoires_max == categoires_min and not no_category and not total_reads > 1:
+            print(
+                "WARNING: Detected only a single annotation overlap type. Consider using --no_anno if this dataset should not be filterable by annotation overlap.",
+            )
+        if strand_min == strand_max and not no_strand and not total_reads > 1:
+            print(
+                "WARNING: Detected only a single strand overlap type. Consider using --no_strand if this dataset should not be filterable by strand overlap.",
+            )
+
         self.set_session(["coverage", "by_name", name, "first_dataset_id"], fist_id)
         self.set_session(["coverage", "by_name", name, "num_datasets"], num_itr)
         self.set_session(["coverage", "by_name", name, "total_reads"], total_reads)
@@ -722,10 +811,6 @@ class Indexer:
         self.set_session(["coverage", "by_name", name, "no_strand"], no_strand)
         self.set_session(["coverage", "by_name", name, "shekelyan"], shekelyan)
 
-        if total_reads == 0:
-            print(
-                "WARNING: the total number of reads that were added to the index is zero! Something seems off..."
-            )
 
         read_iterator.cleanup()
 
