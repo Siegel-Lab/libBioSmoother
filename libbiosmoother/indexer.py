@@ -385,8 +385,8 @@ class Indexer:
         map_q_min = 255
         map_q_max = 0
         has_multimapper = False
-        categoires_min = [1] * (MAX_NUM_FILTER_ANNOTATIONS * 2)
-        categoires_max = [0] * (MAX_NUM_FILTER_ANNOTATIONS * 2)
+        categoires_min = 2**(MAX_NUM_FILTER_ANNOTATIONS* 2 + 1)
+        categories_max = 0
         strand_min = 4
         strand_max = 0
         for idx_x, chr_x in enumerate(contigs):
@@ -506,12 +506,9 @@ class Indexer:
                     cat_pos = [
                         item for sublist in zip(cat_x, cat_y) for item in sublist
                     ]
-                    categoires_min = [
-                        min(x, y) for x, y in zip(categoires_min, cat_pos)
-                    ]
-                    categories_max = [
-                        max(x, y) for x, y in zip(categoires_max, cat_pos)
-                    ]
+                    cat_hash = sum(x*2**i for i, x in enumerate(cat_pos))
+                    categoires_min = min(categoires_min, cat_hash)
+                    categories_max = max(categories_max, cat_hash)
 
                     start = [
                         act_pos_1_s,
@@ -559,7 +556,7 @@ class Indexer:
             print(
                 "WARNING: Detected no multimappers. Consider using --no_multi_map if this dataset should not be filterable by multimapping.",
             )
-        if categoires_max == categoires_min and not no_category and total_reads > 1:
+        if categories_max == categoires_min and not no_category and total_reads > 1:
             print(
                 "WARNING: Detected only a single annotation overlap type. Consider using --no_anno if this dataset should not be filterable by annotation overlap.",
             )
@@ -660,8 +657,8 @@ class Indexer:
         map_q_min = 255
         map_q_max = 0
         has_multimapper = False
-        categoires_min = [1] * (MAX_NUM_FILTER_ANNOTATIONS * 2)
-        categoires_max = [0] * (MAX_NUM_FILTER_ANNOTATIONS * 2)
+        categoires_min = 2**(MAX_NUM_FILTER_ANNOTATIONS* 2 + 1)
+        categories_max = 0
         strand_min = 2
         strand_max = 0
 
@@ -748,12 +745,9 @@ class Indexer:
                 cat_pos = [
                     item for sublist in zip(cat, [0] * len(cat)) for item in sublist
                 ]
-                categoires_min = [
-                    min(x, y) for x, y in zip(categoires_min, cat_pos)
-                ]
-                categories_max = [
-                    max(x, y) for x, y in zip(categoires_max, cat_pos)
-                ]
+                cat_hash = sum(x*2**i for i, x in enumerate(cat_pos))
+                categoires_min = min(categoires_min, cat_hash)
+                categories_max = max(categories_max, cat_hash)
 
                 start = [
                     act_pos_1_s,
@@ -792,7 +786,7 @@ class Indexer:
             print(
                 "WARNING: Detected no multimappers. Consider using --no_multi_map if this dataset should not be filterable by multimapping.",
             )
-        if categoires_max == categoires_min and not no_category and not total_reads > 1:
+        if categories_max == categoires_min and not no_category and not total_reads > 1:
             print(
                 "WARNING: Detected only a single annotation overlap type. Consider using --no_anno if this dataset should not be filterable by annotation overlap.",
             )

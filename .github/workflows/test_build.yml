@@ -1,5 +1,5 @@
 
-name: Test Python Publish Package @todo readd the non unrolled compilation, also check for windows if unrolling is possible
+name: Test Python Publish Package
 
 on:
   workflow_dispatch:
@@ -34,9 +34,34 @@ jobs:
           name: dist
           path: ./wheelhouse/*.whl
 
+  build_wheels_no_unroll:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        python-version: ["cp38-*", "cp39-*", "cp310-*", "cp311-*"]
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: true
+
+      - name: Build wheels (do not unroll compiletime loops)
+        uses: pypa/cibuildwheel@v2.16.2
+        env:
+          CIBW_BUILD: ${{ matrix.python-version }}
+          CIBW_BEFORE_BUILD: 'pip install pybind11 wheel && pip install git+https://github.com/Siegel-Lab/libSps.git'
+          CIBW_ARCHS_LINUX: "i686"
+          CIBW_ENVIRONMENT: 'SPS_UNROLL_FOR_ALL_COMBINATIONS=OFF'
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: dist
+          path: ./wheelhouse/*.whl
+
 
   publish-testpypi:
-    needs: [build_wheels]
+    needs: [build_wheels, build_wheels_no_unroll]
     runs-on: ubuntu-latest
     steps:
     - uses: actions/download-artifact@v3
