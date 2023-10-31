@@ -1264,13 +1264,19 @@ bool PartialQuarry::setBinCoords( )
 {
     size_t uiManhattenDist = 1000 * getValue<size_t>( { "settings", "filters", "min_diag_dist", "val" } ) /
                              getValue<size_t>( { "dividend" } );
+    bool bShowHeatmap = getValue<bool>( {"settings", "interface", "show_hide", "heatmap"} );
+
     for( size_t uiI = 0; uiI < NUM_COORD_SYSTEMS; uiI++ )
+    {
+        vBinCoords[ uiI ].clear( );
+        vBinCoordsSampled[ uiI ].clear( );
+    }
+
+    for( size_t uiI = (bShowHeatmap ? 0 : 1); uiI < NUM_COORD_SYSTEMS; uiI++ )
     {
         const auto& rXCoords = pickXCoords( uiI );
         const auto& rYCoords = pickYCoords( uiI );
-        vBinCoords[ uiI ].clear( );
         vBinCoords[ uiI ].reserve( rXCoords.size( ) * rYCoords.size( ) );
-        vBinCoordsSampled[ uiI ].clear( );
         vBinCoordsSampled[ uiI ].reserve( rXCoords.size( ) * rYCoords.size( ) );
         for( const AxisCoord& xX : rXCoords )
             for( const AxisCoord& xY : rYCoords )
@@ -1726,7 +1732,8 @@ void PartialQuarry::regCoords( )
                                { NodeNames::AnnoFilters, NodeNames::IntersectionType, NodeNames::Symmetry,
                                  NodeNames::SampleCoords },
                                /*.vIncomingSession =*/
-                               { { "settings", "filters", "min_diag_dist", "val" } },
+                               { { "settings", "filters", "min_diag_dist", "val" },
+                                 {"settings", "interface", "show_hide", "heatmap"} },
                                /*.vSessionsIncomingInPrevious =*/{ { "dividend" } },
                                /*bHidden =*/false } );
 

@@ -83,31 +83,33 @@ class Quarry(PartialQuarry):
                         r[k] = b[k]
                 return r
 
-            self.set_value(
-                ["settings"],
-                combine_dict(self.get_value(["settings"]), default_settings),
-            )
+            if not self.get_value(["settings"]) is None:
+                self.set_value(
+                    ["settings"],
+                    combine_dict(self.get_value(["settings"]), default_settings),
+                )
 
-        for name in self.get_value(["coverage", "list"]):
-            for entry, val in [
-                ("no_map_q", False),
-                ("no_groups", False),
-                ("no_multi_map", False),
-                ("no_category", False),
-                ("no_strand", True),
-                ("shekelyan", False),
-            ]:
-                if not self.has_value(["coverage", "by_name", name, entry]):
-                    self.set_value(["coverage", "by_name", name, entry], val)
-                    print(
-                        "WARNING: the loaded index was missing the",
-                        entry,
-                        "entry for the",
-                        name,
-                        "secondary dataset, set value to",
-                        val,
-                        ".",
-                    )
+        if not self.get_value(["coverage", "list"]) is None:
+            for name in self.get_value(["coverage", "list"]):
+                for entry, val in [
+                    ("no_map_q", False),
+                    ("no_groups", False),
+                    ("no_multi_map", False),
+                    ("no_category", False),
+                    ("no_strand", True),
+                    ("shekelyan", False),
+                ]:
+                    if not self.has_value(["coverage", "by_name", name, entry]):
+                        self.set_value(["coverage", "by_name", name, entry], val)
+                        print(
+                            "WARNING: the loaded index was missing the",
+                            entry,
+                            "entry for the",
+                            name,
+                            "secondary dataset, set value to",
+                            val,
+                            ".",
+                        )
 
     def __init__(self, *args):
         PartialQuarry.__init__(self, *args)

@@ -174,6 +174,7 @@
         },
         "max_num_bins_factor": 1000,
         "show_hide": {
+            "heatmap": true,
             "axis": true,
             "coords": false,
             "regs": true,

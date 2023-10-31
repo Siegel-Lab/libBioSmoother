@@ -164,7 +164,7 @@ bool PartialQuarry::setBinValues( )
         }
     }
 
-    if( !bOneFilledBinAtLeast )
+    if( !bOneFilledBinAtLeast && vvBinValues[ 0 ].size() > 0 )
         setError( "All bins are empty." );
 
     END_RETURN;
