@@ -1,435 +1,137 @@
 {
-    "smoother_config_file_version": "The version number of this config file. Should not be changed manually.",
-    "display_name": "The display name of thi configuration, as visible in the Fil->Presetting tab.",
-    "normalization": {
-        "normalize_by": "The normalization approach for the heatmap.",
-        "normalize_by_coverage": "The normalization approach for the coverage tracks.",
-        "min_interactions": "",
-        "color_range": {
-            "min": 0,
-            "max": 1,
-            "val_min": 0.0,
-            "val_max": 1.0,
-            "step": 0.01,
-            "spinner_min_restricted": false,
-            "spinner_max_restricted": false
+    "settings": {
+        "replicates": {
+            "in_group": "combine the datasets that belong to the same group by...",
+            "between_group": "combine the two groups by..."
         },
-        "log_base": {
-            "min": 0,
-            "max": 15,
-            "val": 10.0,
-            "step": 0.1,
-            "spinner_min_restricted": false,
-            "spinner_max_restricted": false
+        "filters": {
+            "symmetry": "filter interactions for symmetry",
+            "cut_off_bin": "Remainder bins are the last bins in each contig. They are not fullsize, since usually the contig size is not an exact multiple of the bin size. Choose here how to deal with these bins.",
+            "show_contig_smaller_than_bin": "Place a bin in contigs that are smaller than the bin-size. With many small contigs, this might slow down smoother significantly.",
+            "incomplete_alignments": "Some reads map to more loci on the genome than can be reported by the aligner. In this situation the aligner may choose some strategy to report at least one of the mapping loci. We call these alignments incomplete, they can be shown using this option but may introduce a lot of noise into the heatmap.",
+            "ambiguous_mapping": "how to deal with reads that map to more than one loci",
+            "directionality": "Filter interactions by directionality.",
+            "mapping_q": {
+                "val_min": "Filter out all reads with a mapping quality that does not fall into these bounds. The mapping quality represents an aligners confidence into the correctess of an alignment. The highest possible confidence is 254 while the lowest is zero.",
+                "val_max": "Filter out all reads with a mapping quality that does not fall into these bounds. The mapping quality represents an aligners confidence into the correctess of an alignment. The highest possible confidence is 254 while the lowest is zero."
+            },
+            "min_diag_dist": "Filter out all bins closer to the diagonal than this value.",
+            "anno_coords_col": "Use annotation coordinates for the columns of the heatmap. Then, each column corresponds to a gene.",
+            "anno_coords_row": "Use annotation coordinates for the rows of the heatmap. Then, each row corresponds to a gene.",
+            "multiple_annos_in_bin": "For annotation-based coordinate systems: pick how to deal with bins that encompass multiple annotations",
+            "anno_in_multiple_bins": "For annotation-based coordinate systems: pick how to deal with annotations that fall into multiple bins."
         },
-        "p_accept": {
-            "min": 0.00,
-            "max": 0.1,
-            "val": 0.05,
-            "step": 0.01,
-            "spinner_min_restricted": true,
-            "spinner_max_restricted": false
+        "normalization": {
+            "normalize_by_coverage": "normalize the coverage tracks in various ways",
+            "scale": "scale the final values of the main heatmap; where V is the set of all values, x' a scaled and x the respective unscaled value.",
+            "ddd": "Normalize away the distance dependent decay.",
+            "ploidy_correct": "Apply ploidy correction to the heatmap data.",
+            "ploidy_keep_distinct_group": "During ploidy correction: Keep interactions from contig-pairs, where the two contigs never appear in the same ploidy group. ",
+            "ploidy_keep_inter_group": "During ploidy correction: Keep interactions from instance-pairs, where the two instances are in the same group.",
+            "ploidy_remove_others": "During ploidy correction: Remove interactions that are not explicitly kept/removed by any of the other options.",
+            "ploidy_remove_intra_instance_contig": "During ploidy correction: Remove interactions that are between two different instances of the same contig.",
+            "ploidy_coords": "Use the contig order defined by the ploidy file. Otherwise the contig order defined by the sizes file is used.",
+            "ddd_show": "Display distance dependent decay as a separate plot.",
+            "ddd_quantile": "Exclude the top and bottom x% of samples when computing the distance dependant decay average.",
+            "ice_sparse_slice_filter": "Filter out all slices where less than x percent of bins have a value larger than zero",
+            "num_ice_bins": "The number of samples to compute during IC normalization.",
+            "ice_mad_max": "",
+            "ice_min_nz": "",
+            "ice_ignore_n_diags": "",
+            "ice_show_bias": "Display the IC bias as a track.",
+            "ice_local": "Only use the visible bins to compute the IC bias.",
+            "ddd_samples": "Number of samples to compute for the distance dependant decay average. Will always try to compute as many samples as possible but never more than the maximum picked by this slider. Diagonals with less than the minimum amount will be masked out.",
+            "min_interactions": "subtract this many interactions from each bin",
+            "color_range": "range of the color scale of the main heatmap",
+            "log_base": "logarithmic base for the color scale. Set to zero for a linear scale",
+            "p_accept": "the acceptance p-value for the binominal test normalization. Does nothing for other normalizations.",
+            "grid_seq_max_bin_size": "Pick the binsize of the samples that are taken to determine Associated slices.",
+            "grid_seq_samples": "When querying the coverage of replicates, query the maximal coverage per secion instead of the full coverage of the column.",
+            "radicl_seq_samples": "Number of samples used to determine the coverage of each slice. This coverage is then used in the binominal test.",
+            "grid_seq_display_background": "Display the sampled background in the secondary data panel.",
+            "radicl_seq_display_coverage": "Display the sampled coverage in the secondary data panel.",
+            "grid_seq_axis_is_column": "If ticked, the normalization is applied column-wise, else row-wise.",
+            "radicl_seq_axis_is_column": "If ticked, the normalization is applied column-wise, else row-wise.",
+            "grid_seq_filter_intersection": "Use the minimum number of interactions between datasets (intersection) as background; otherwise use the maximum.",
+            "grid_seq_ignore_cis": "Ignore cis interactions during the computation of associated slices.",
+            "grid_seq_annotation": "Pick which annotation to compute the background for.",
+            "grid_seq_rna_filter": "Acceptable bounds for the average number of reads per kbp. ",
+            "grid_seq_dna_filter": "Acceptable bounds for the maximal number of reads per kbp. ",
+            "normalize_by": "normalize the matrix in various ways"
         },
-        "ddd": false,
-        "ddd_show": false,
-        "ice_sparse_slice_filter": {
-            "max": 100,
-            "min": 0,
-            "spinner_max_restricted": true,
-            "spinner_min_restricted": true,
-            "step": 1,
-            "val": 10.0
+        "interface": {
+            "squared_bins": "Enforce that bins are squares in the dataspace. Does nothing for coordinates systems other than the genome.",
+            "do_redraw": "Automatically redraw the heatmap when panning or zooming.",
+            "snap_bin_size": "Restrict the allowed binsizes to round numbers. Does nothing for coordinates systems other than the genome.",
+            "color_palette": "Pick the color palette for the heatmap.",
+            "axis_lables": "The axis lables to display.",
+            "update_freq": "Delay between checking if the heatmap needs to be rerendered due to panning or zooming.",
+            "zoom_redraw": "Redraw the heatmap if less than x% of the previously rendered heatmap area is visible.",
+            "add_draw_area": "Increase the rendered area by x% over the visible area. This way, panning does not trigger re-rendering immediately.",
+            "anno_size": "Size of the annotation plot.",
+            "raw_size": "Size of the coverage plot.",
+            "max_num_bins": "Number of bins to display on the heatmap. This is the main runtime deciding factor.",
+            "axis_label_max_char": "Truncate labels to this many characters.",
+            "center_tracks_on_bins": "For the secondary data panel: place the points of the line at the center of bins. If this is disabled, two line-points are drawn for every bin, one at the start one at the end.",
+            "zero_track_at_ends": "For the secondary data panel: draw an additional line-point at (0/0) and (0/end).",
+            "connect_tracks_over_contig_borders": "For the secondary data panel: connect the lines over contig borders.",
+            "tracks_log_scale": "For the secondary data panel: display the values on a log-scale",
+            "v4c": {
+                "norm_by_viewpoint_size": "",
+                "do_col": "Compute a Virtual 4C track for the columns of the heatmap.",
+                "col": "Set the Viewpoint (on the y-axis) for the Virtual 4C track of the columns.",
+                "do_row": "Compute a Virtual 4C track for the rows of the heatmap.",
+                "row": "Set the Viewpoint (on the x-axis) for the Virtual 4C track of the rows."
+            },
+            "min_bin_size": "The minimal size of bins in the main heatmap.",
+            "color_low": "The start color of the 'Low to High' palette.",
+            "color_high": "The end color of the 'Low to High' palette.",
+            "show_hide": {
+                "heatmap": "Show or hide an element of the GUI / in the exported picture.",
+                "axis": "Show or hide an element of the GUI / in the exported picture.",
+                "coords": "Show or hide an element of the GUI / in the exported picture.",
+                "regs": "Show or hide an element of the GUI / in the exported picture.",
+                "raw": "Show or hide an element of the GUI / in the exported picture.",
+                "annotation": "Show or hide an element of the GUI / in the exported picture.",
+                "tools": "Show or hide an element of the GUI / in the exported picture.",
+                "grid_lines": "Show or hide an element of the GUI / in the exported picture.",
+                "indent_line": "Show or hide an element of the GUI / in the exported picture.",
+                "contig_borders": "Show or hide an element of the GUI / in the exported picture."
+            }
         },
-        "ddd_samples": {
-            "min": 1,
-            "max": 1000,
-            "val_min": 1,
-            "val_max": 200,
-            "step": 10,
-            "spinner_min_restricted": true,
-            "spinner_max_restricted": false
-        },
-        "ddd_quantile": {
-            "min": 0,
-            "max": 100,
-            "val": 80.0,
-            "step": 1,
-            "spinner_min_restricted": true,
-            "spinner_max_restricted": true
-        },
-        "scale": "max",
-        "grid_seq_ignore_cis": true,
-        "grid_seq_samples": {
-            "min": 100,
-            "max": 10000,
-            "val": 1000,
-            "step": 100,
-            "spinner_min_restricted": true,
-            "spinner_max_restricted": false
-        },
-        "radicl_seq_samples": {
-            "min": 10,
-            "max": 1000,
-            "val": 100,
-            "step": 10,
-            "spinner_min_restricted": true,
-            "spinner_max_restricted": false
-        },
-        "ploidy_correct": true,
-        "ploidy_coords": true,
-        "grid_seq_annotation": "gene",
-        "grid_seq_axis_is_column": true,
-        "radicl_seq_axis_is_column": true,
-        "grid_seq_filter_intersection": true,
-        "grid_seq_display_background": true,
-        "grid_seq_global": false,
-        "ddd_all_samples": false,
-        "radicl_seq_display_coverage": true,
-        "radicl_local": false,
-        "ice_show_bias": false,
-        "ice_local": false,
-        "ice_ignore_n_diags": {
-            "min": 0,
-            "max": 10,
-            "val": 2,
-            "step": 1,
-            "spinner_min_restricted": true,
-            "spinner_max_restricted": false
-        },
-        "ice_min_nz": {
-            "min": 0,
-            "max": 100,
-            "val": 10,
-            "step": 10,
-            "spinner_min_restricted": true,
-            "spinner_max_restricted": false
-        },
-        "ice_mad_max": {
-            "min": 0,
-            "max": 100,
-            "val": 5,
-            "step": 1,
-            "spinner_min_restricted": true,
-            "spinner_max_restricted": false
-        },
-        "grid_seq_max_bin_size": {
-            "min": 1000,
-            "max": 100000,
-            "val": 1000,
-            "step": 1000,
-            "spinner_min_restricted": true,
-            "spinner_max_restricted": false
-        },
-        "grid_seq_rna_filter": {
-            "min": 0,
-            "max": 100000,
-            "val_min": 0,
-            "val_max": 100000,
-            "step": 1000,
-            "spinner_min_restricted": true,
-            "spinner_max_restricted": false
-        },
-        "grid_seq_dna_filter": {
-            "min": 0,
-            "max": 100000,
-            "val_min": 0,
-            "val_max": 100000,
-            "step": 1000,
-            "spinner_min_restricted": true,
-            "spinner_max_restricted": false
-        },
-        "num_ice_bins": {
-            "min": 1,
-            "max": 1000,
-            "val": 300,
-            "step": 10,
-            "spinner_min_restricted": true,
-            "spinner_max_restricted": false
-        },
-        "ploidy_keep_distinct_group": true,
-        "ploidy_keep_inter_group": true,
-        "ploidy_remove_others": true,
-        "ploidy_remove_intra_instance_contig": true
+        "export": {
+            "coords": "The size of the area coordinates are rendered in for the exported image.",
+            "contigs": "The size of the area contig names are rendered in for the exported image.",
+            "axis": "The size of the area the secondary axes are rendered in for the exported image.",
+            "secondary_stroke_width": "For the secondary data panel: set the stroke width of lines in the exported image.",
+            "export_format": "Pick the format that files shall be exported to.",
+            "do_export_full": "Export the full matrix instead of merely the visible area.",
+            "export_to_server": "",
+            "prefix": "A common prefix for exported files."
+        }
     },
     "replicates": {
-        "in_group": "sum",
-        "between_group": "sum"
+        "in_group_a": "options for combining the individual datasets",
+        "in_group_b": "options for combining the individual datasets"
     },
-    "interface": {
-        "max_num_bins": {
-            "min": 10,
-            "max": 1000,
-            "val": 50,
-            "step": 10,
-            "spinner_min_restricted": true,
-            "spinner_max_restricted": false
-        },
-        "max_num_bins_factor": 1000,
-        "show_hide": {
-            "axis": true,
-            "coords": false,
-            "regs": true,
-            "raw": true,
-            "annotation": true,
-            "tools": true,
-            "grid_lines": false,
-            "indent_line": false,
-            "contig_borders": false
-        },
-        "min_bin_size": {
-            "max": 135,
-            "min": 0,
-            "val": 27,
-            "step": 1,
-            "spinner_min_restricted": true,
-            "spinner_max_restricted": false
-        },
-        "max_undo": {
-            "min": 0,
-            "max": 100,
-            "val": 25,
-            "step": 1,
-            "spinner_min_restricted": true,
-            "spinner_max_restricted": true
-        },
-        "update_freq": {
-            "min": 0.1,
-            "max": 3,
-            "val": 0.5,
-            "step": 0.1,
-            "spinner_min_restricted": true,
-            "spinner_max_restricted": false
-        },
-        "zoom_redraw": {
-            "min": 0,
-            "max": 100,
-            "val": 90.0,
-            "step": 1,
-            "spinner_min_restricted": true,
-            "spinner_max_restricted": true
-        },
-        "add_draw_area": {
-            "min": 10,
-            "max": 500,
-            "val": 20.0,
-            "step": 10,
-            "spinner_min_restricted": true,
-            "spinner_max_restricted": false
-        },
-        "anno_size": {
-            "min": 10,
-            "max": 500,
-            "val": 50,
-            "step": 1,
-            "spinner_min_restricted": true,
-            "spinner_max_restricted": true
-        },
-        "raw_size": {
-            "min": 10,
-            "max": 500,
-            "val": 50,
-            "step": 1,
-            "spinner_min_restricted": true,
-            "spinner_max_restricted": true
-        },
-        "squared_bins": true,
-        "fixed_number_of_bins": false,
-        "fixed_num_bins_x": {
-            "max": 10000,
-            "min": 0,
-            "val": 256,
-            "step": 1,
-            "spinner_min_restricted": true,
-            "spinner_max_restricted": false
-        },
-        "fixed_num_bins_y": {
-            "max": 10000,
-            "min": 0,
-            "val": 256,
-            "step": 1,
-            "spinner_min_restricted": true,
-            "spinner_max_restricted": false
-        },
-        "fixed_bin_size": false,
-        "fixed_bin_size_x": {
-            "max": 10000,
-            "min": 1,
-            "val": 100,
-            "step": 100,
-            "spinner_min_restricted": true,
-            "spinner_max_restricted": false
-        },
-        "fixed_bin_size_y": {
-            "max": 10000,
-            "min": 1,
-            "val": 100,
-            "step": 100,
-            "spinner_min_restricted": true,
-            "spinner_max_restricted": false
-        },
-        "snap_bin_size": false,
-        "do_redraw": true,
-        "max_detailed_anno_display": 1000,
-        "min_anno_dist": 0.05,
-        "snap_factors": [
-            1,
-            1.25,
-            2.5,
-            5
-        ],
-        "color_palette": "Viridis256",
-        "annotation_color_palette": [
-            "#0072B2",
-            "#E69F00",
-            "#D55E00",
-            "#009E73",
-            "#56B4E9",
-            "#F0E442",
-            "#CC79A7"
-        ],
-        "annotation_color_palette_dark": [
-            "#004166",
-            "#996900",
-            "#8a3c00",
-            "#00523c",
-            "#1c94d9",
-            "#d4c711",
-            "#b54583"
-        ],
-        "color_low": "#000000",
-        "color_high": "#ffffff",
-        "axis_lables": "DNA_RNA",
-        "v4c": {
-            "do_col": false,
-            "col_from": 0,
-            "col_to": 10,
-            "do_row": false,
-            "row_from": 0,
-            "row_to": 10,
-            "norm_by_viewpoint_size": true
-        },
-        "axis_label_max_char": {
-            "max": 100,
-            "min": 1,
-            "val": 10,
-            "step": 1,
-            "spinner_min_restricted": true,
-            "spinner_max_restricted": false
-        },
-        "connect_tracks_over_contig_borders": false,
-        "center_tracks_on_bins": true,
-        "zero_track_at_ends": false,
-        "tracks_log_scale": false
+    "annotation": {
+        "visible_x": "Pick which annotations to display.",
+        "visible_y": "Pick which annotations to display.",
+        "filter_present_x": "Apply the annotation filter to the columns. Then only interactions that do not overlap the picked annotation on the x-axis are displayed.",
+        "filter_present_y": "Apply the annotation filter to the rows. Then only interactions that do not overlap the picked annotation on the y-axis are displayed.",
+        "filter_absent_x": "Apply the annotation filter to the columns. Then only interactions that overlap the picked annotation on the x-axis are displayed.",
+        "filter_absent_y": "Apply the annotation filter to the rows. Then only interactions that overlap the picked annotation on the y-axis are displayed."
     },
-    "filters": {
-        "mapping_q": {
-            "min": 0,
-            "max": 254,
-            "val_min": 0,
-            "val_max": 254,
-            "step": 1,
-            "spinner_min_restricted": true,
-            "spinner_max_restricted": true
-        },
-        "incomplete_alignments": true,
-        "directionality": "all",
-        "symmetry": "all",
-        "min_diag_dist": {
-            "min": 0,
-            "max": 1000,
-            "val": 0,
-            "step": 1,
-            "spinner_min_restricted": true,
-            "spinner_max_restricted": false
-        },
-        "multiple_annos_in_bin": "combine",
-        "anno_in_multiple_bins": "stretch",
-        "ambiguous_mapping": "enclosed",
-        "cut_off_bin": "larger",
-        "show_contig_smaller_than_bin": false,
-        "anno_coords_col": false,
-        "anno_coords_row": false
+    "coverage": {
+        "in_column": "pick which tracks to display on the x/y-axis and to include in the main coverage",
+        "in_row": "pick which tracks to display on the x/y-axis and to include in the main coverage"
     },
-    "export": {
-        "prefix": "export",
-        "do_export_full": false,
-        "print_region": true,
-        "export_to_server": false,
-        "white_background": true,
-        "size": {
-            "max": 5000,
-            "min": 10,
-            "val": 800.0,
-            "step": 10,
-            "spinner_min_restricted": true,
-            "spinner_max_restricted": false
-        },
-        "coords": {
-            "max": 2000,
-            "min": 0,
-            "val": 125.0,
-            "step": 25,
-            "spinner_min_restricted": true,
-            "spinner_max_restricted": false
-        },
-        "contigs": {
-            "max": 2000,
-            "min": 0,
-            "val": 125.0,
-            "step": 25,
-            "spinner_min_restricted": true,
-            "spinner_max_restricted": false
-        },
-        "axis": {
-            "max": 2000,
-            "min": 0,
-            "val": 125.0,
-            "step": 25,
-            "spinner_min_restricted": true,
-            "spinner_max_restricted": false
-        },
-        "margins": {
-            "max": 100,
-            "min": 0,
-            "val": 10.0,
-            "step": 1,
-            "spinner_min_restricted": true,
-            "spinner_max_restricted": false
-        },
-        "export_format": "tsv",
-        "secondary_stroke_width": {
-            "max": 50,
-            "min": 1,
-            "val": 2.0,
-            "step": 1,
-            "spinner_min_restricted": true,
-            "spinner_max_restricted": false
-        },
-        "spacing": {
-            "max": 100,
-            "min": 1,
-            "val": 3.0,
-            "step": 1,
-            "spinner_min_restricted": true,
-            "spinner_max_restricted": false
-        },
-        "secondary_x_range": {
-            "min": 0,
-            "max": 100,
-            "val_min": 0.0,
-            "val_max": 0.0,
-            "step": 0.1,
-            "spinner_min_restricted": false,
-            "spinner_max_restricted": false
-        },
-        "secondary_y_range": {
-            "min": 0,
-            "max": 100,
-            "val_min": 0.0,
-            "val_max": 0.0,
-            "step": 0.1,
-            "spinner_min_restricted": false,
-            "spinner_max_restricted": false
-        }
-    }
+    "contigs": {
+        "annotation_coordinates": "Pick the annotation used for the annotation coordinate system",
+        "displayed_on_x": "Pick which contigs to display.",
+        "displayed_on_y": "Pick which contigs to display.",
+        "displayed_on_x_ploidy": "Pick which contigs to display.",
+        "displayed_on_y_ploidy": "Pick which contigs to display."
+    },
+    "area": "Area that is displayed in the heatmap."
 }

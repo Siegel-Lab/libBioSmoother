@@ -1,0 +1,137 @@
+{
+    "settings": {
+        "replicates": {
+            "in_group": "Merge datasets by",
+            "between_group": "Compare datapools by"
+        },
+        "filters": {
+            "symmetry": "Symmetry",
+            "cut_off_bin": "Remainder Bin",
+            "show_contig_smaller_than_bin": "Fill contigs that are smaller than one bin",
+            "incomplete_alignments": "Show multimapping reads with incomplete mapping loci lists",
+            "ambiguous_mapping": "Multi-Mapping reads (MMR)",
+            "directionality": "Directionality",
+            "mapping_q": {
+                "val_min": "Mapping Quality: Lower Bound",
+                "val_max": "Mapping Quality: Upper Bound"
+            },
+            "min_diag_dist": "Minimum Distance from Diagonal [kbp]",
+            "anno_coords_col": "Use Annotation Coordinates for the columns",
+            "anno_coords_row": "Use Annotation Coordinates for the rows",
+            "multiple_annos_in_bin": "Multiple Annotations in Bin",
+            "anno_in_multiple_bins": "Multiple Bins for Annotation"
+        },
+        "normalization": {
+            "normalize_by_coverage": "Normalize coverage by",
+            "scale": "Color Range",
+            "ddd": "Normalize Primary data",
+            "ploidy_correct": "do correct",
+            "ploidy_keep_distinct_group": "Keep interactions from contig-pairs that never occur in the same group",
+            "ploidy_keep_inter_group": "Keep interactions from contig-pairs that are in the same group",
+            "ploidy_remove_others": "Remove interactions that are not explicitly kept by the options above",
+            "ploidy_remove_intra_instance_contig": "Remove inter-contig, intra-instance interactions",
+            "ploidy_coords": "use ploidy corrected contigs",
+            "ddd_show": "Display",
+            "ddd_quantile": "Percentile of samples to keep [%]",
+            "ice_sparse_slice_filter": "filter out slices with too many empty bins [%]",
+            "num_ice_bins": "Number of samples",
+            "ice_mad_max": "Mad Max filter",
+            "ice_min_nz": "Minimal number of non-zero bins per slice",
+            "ice_ignore_n_diags": "Ignore first n bins next to the diagonal",
+            "ice_show_bias": "Show Bias",
+            "ice_local": "Local Ic",
+            "ddd_samples": "Number of samples",
+            "min_interactions": "read-count adjustment",
+            "color_range": "Color Scale Range",
+            "log_base": "Color Scale Log Base",
+            "p_accept": "pAccept for binomial test",
+            "grid_seq_max_bin_size": "Section size max coverage [bp]",
+            "grid_seq_samples": "Number of samples",
+            "radicl_seq_samples": "Number of samples",
+            "grid_seq_display_background": "Display Background as Secondary Data",
+            "radicl_seq_display_coverage": "Display Coverage as Secondary Data",
+            "grid_seq_axis_is_column": "Compute background for columns",
+            "radicl_seq_axis_is_column": "Apply binomial test on columns",
+            "grid_seq_filter_intersection": "Use intersection between datasets",
+            "grid_seq_ignore_cis": "Ignore cis interactions",
+            "grid_seq_annotation": "Annotation type",
+            "grid_seq_rna_filter": "RNA reads per kbp bounds",
+            "grid_seq_dna_filter": "Maximal DNA reads in bin bounds",
+            "normalize_by": "Normalize heatmap by"
+        },
+        "interface": {
+            "squared_bins": "Make Bins Squares",
+            "do_redraw": "Auto Render",
+            "snap_bin_size": "Snap Bin Size",
+            "color_palette": "Color Palette",
+            "axis_lables": "Axes Labels",
+            "update_freq": "Update Frequency [seconds]",
+            "zoom_redraw": "Redraw if zoomed in by [%]",
+            "add_draw_area": "Additional Draw Area [%]",
+            "anno_size": "Annotation panel Size [pixel]",
+            "raw_size": "Secondary data panel Size [pixel]",
+            "max_num_bins": "Max number of Bins [in thousands]",
+            "axis_label_max_char": "Maximal Character of Labels",
+            "center_tracks_on_bins": "Center Tracks on Bins",
+            "zero_track_at_ends": "Zero Track at Ends",
+            "connect_tracks_over_contig_borders": "Connect Tracks over Contig Borders",
+            "tracks_log_scale": "Display Tracks on a Log Scale",
+            "v4c": {
+                "norm_by_viewpoint_size": "Normalize by viewpoint size",
+                "do_col": "Compute for columns",
+                "col": "Column Viewpoint",
+                "do_row": "Compute for rows",
+                "row": "Row Viewpoint"
+            },
+            "min_bin_size": "Minimum Bin Size",
+            "color_low": "Color Low",
+            "color_high": "Color High",
+            "show_hide": {
+                "heatmap": "Show/Hide",
+                "axis": "Show/Hide",
+                "coords": "Show/Hide",
+                "regs": "Show/Hide",
+                "raw": "Show/Hide",
+                "annotation": "Show/Hide",
+                "tools": "Show/Hide",
+                "grid_lines": "Show/Hide",
+                "indent_line": "Show/Hide",
+                "contig_borders": "Show/Hide"
+            }
+        },
+        "export": {
+            "coords": "Coordinate size",
+            "contigs": "Contig size",
+            "axis": "Secondary Axis size",
+            "secondary_stroke_width": "Secondary Stroke Width",
+            "export_format": "Format",
+            "do_export_full": "Export full matrix instead of visible region",
+            "export_to_server": "Export files to server instead of downloading them",
+            "prefix": "Output Prefix"
+        }
+    },
+    "replicates": {
+        "in_group_a": "Primary Datapools",
+        "in_group_b": "Primary Datapools"
+    },
+    "annotation": {
+        "visible_x": "Visible Annotations",
+        "visible_y": "Visible Annotations",
+        "filter_present_x": "Filter out interactions that overlap annotation",
+        "filter_present_y": "Filter out interactions that overlap annotation",
+        "filter_absent_x": "Filter out interactions that don't overlap annotation",
+        "filter_absent_y": "Filter out interactions that don't overlap annotation"
+    },
+    "coverage": {
+        "in_column": "Secondary Datapools",
+        "in_row": "Secondary Datapools"
+    },
+    "contigs": {
+        "annotation_coordinates": "Annotation Coordinate System",
+        "displayed_on_x": "Active Contigs",
+        "displayed_on_y": "Active Contigs",
+        "displayed_on_x_ploidy": "Active Contigs",
+        "displayed_on_y_ploidy": "Active Contigs"
+    },
+    "area": "Navigation Bar"
+}
