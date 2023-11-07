@@ -1,28 +1,61 @@
 {
-    "normalization": {
-        "normalize_by": ["rpm", "rpk", "radicl-seq", "grid-seq", "dont", "ice"],
-        "normalize_by_coverage": ["rpkb", "rpmb", "rpm", "rpk", "dont"],
-        "scale": ["abs", "max", "minmax", "dont"],
-        "grid_seq_annotation": ["gene"]
+    "settings": {
+        "normalization": {
+            "normalize_by": ["rpm", "rpk", "radicl-seq", "grid-seq", "dont", "ice"],
+            "normalize_by_coverage": ["rpkb", "rpmb", "rpm", "rpk", "dont"],
+            "scale": ["abs", "max", "minmax", "dont"],
+            "grid_seq_annotation": ["gene"]
+        },
+        "replicates": {
+            "in_group": ["sum", "min", "max", "dif", "mean"],
+            "between_group": ["sum", "1st", "2nd", "sub", "div", "div+", "dif"]
+        },
+        "interface": {
+            "color_palette": ["Viridis256", "Plasma256", "Turbo256", "Fall", "LowToHigh"],
+            "axis_lables": ["DNA_RNA", "RNA_DNA", "DNA_DNA", "RNA_RNA"],
+            "color_high": "color in hex notation (e.g. `#000000`)",
+            "color_low": "color in hex notation (e.g. `#000000`)",
+            "v4c": {
+                "col": "text in the navigation syntax (see the 'The Navigation bar' chaper in the manual).",
+                "row": "text in the navigation syntax (see the 'The Navigation bar' chaper in the manual)."
+            }
+        },
+        "filters": {
+            "directionality": ["all", "same", "oppo", "forw", "rev"],
+            "symmetry": ["all", "sym", "asym", "mirror"],
+            "multiple_annos_in_bin": ["combine", "first", "max_fac_pow_two", "force_separate"],
+            "anno_in_multiple_bins": ["stretch", "separate", "squeeze"],
+            "ambiguous_mapping": ["enclosed", "overlaps", "first", "last"],
+            "cut_off_bin": ["larger", "skip", "smaller", "fit_chrom_smaller", 
+                            "fit_chrom_larger", "cover_multiple"]
+        },
+        "export": {
+            "export_format": ["tsv", "png", "svg"],
+            "prefix": "`path/to/file`"
+        }
+    },
+    "annotation": {
+        "filter_absent_x": [[], ["annotation_a"], ["annotation_a", "annotation_b", "..."]],
+        "filter_absent_y": [[], ["annotation_a"], ["annotation_a", "annotation_b", "..."]],
+        "filter_present_x": [[], ["annotation_a"], ["annotation_a", "annotation_b", "..."]],
+        "filter_present_y": [[], ["annotation_a"], ["annotation_a", "annotation_b", "..."]],
+        "visible_x": [[], ["annotation_a"], ["annotation_a", "annotation_b", "..."]],
+        "visible_y": [[], ["annotation_a"], ["annotation_a", "annotation_b", "..."]]
+    },
+    "area": "text in the navigation syntax (see the 'The Navigation bar' chaper in the manual).",
+    "contigs": {
+        "annotation_coordinates": ["annotation_a", "annotation_b", "annotation_c", "..."],
+        "displayed_on_x": [[], ["contig_a"], ["contig_a", "contig_b", "..."]],
+        "displayed_on_y": [[], ["contig_a"], ["contig_a", "contig_b", "..."]],
+        "displayed_on_x_ploidy": [[], ["contig_a"], ["contig_a", "contig_b", "..."]],
+        "displayed_on_y_ploidy": [[], ["contig_a"], ["contig_a", "contig_b", "..."]]
+    },
+    "coverage": {
+        "in_column": [[], ["sec_dataset_a"], ["sec_dataset_a", "sec_dataset_b", "..."]],
+        "in_row": [[], ["sec_dataset_a"], ["sec_dataset_a", "sec_dataset_b", "..."]]
     },
     "replicates": {
-        "in_group": ["sum", "min", "max", "dif", "mean"],
-        "between_group": ["sum", "1st", "2nd", "sub", "div", "div+", "dif"]
-    },
-    "interface": {
-        "color_palette": ["Viridis256", "Plasma256", "Turbo256", "Fall", "LowToHigh"],
-        "axis_lables": ["DNA_RNA", "RNA_DNA", "DNA_DNA", "RNA_RNA"]
-    },
-    "filters": {
-        "directionality": ["all", "same", "oppo", "forw", "rev"],
-        "symmetry": ["all", "sym", "asym", "mirror"],
-        "multiple_annos_in_bin": ["combine", "first", "max_fac_pow_two", "force_separate"],
-        "anno_in_multiple_bins": ["stretch", "separate", "squeeze"],
-        "ambiguous_mapping": ["enclosed", "overlaps", "first", "last"],
-        "cut_off_bin": ["larger", "skip", "smaller", "fit_chrom_smaller", 
-                        "fit_chrom_larger", "cover_multiple"]
-    },
-    "export": {
-        "export_format": ["tsv", "png", "svg"]
+        "in_group_a": [[], ["dataset_a"], ["dataset_a", "dataset_b", "..."]],
+        "in_group_b": [[], ["dataset_a"], ["dataset_a", "dataset_b", "..."]]
     }
 }

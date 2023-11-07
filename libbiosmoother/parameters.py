@@ -8,6 +8,8 @@ except ImportError:
 def json_get(keys, d):
     t = d
     for k in keys:
+        if not k in t:
+            return None
         t = t[k]
     return t
 
@@ -54,9 +56,24 @@ def is_range_spinner(val):
 
 def __is_multi_choice(key, val, valid):
     return (
-        isinstance(val, str)
+        (isinstance(val, str) or val is None)
         and __exists(key, valid)
         and isinstance(json_get(key, valid), list)
+        and isinstance(json_get(key, valid)[0], str)
+    )
+
+def __is_list_multi_choice(key, val, valid):
+    return (
+        (isinstance(val, list) or val is None)
+        and __exists(key, valid)
+        and isinstance(json_get(key, valid), list)
+        and isinstance(json_get(key, valid)[0], list)
+    )
+
+def __is_custom(key, val, valid):
+    return (
+        __exists(key, valid)
+        and isinstance(json_get(key, valid), str)
     )
 
 
@@ -78,20 +95,32 @@ def __is_parameter(key, conf, valid):
         return True
     if __is_multi_choice(key, val, valid):
         return True
+    if __is_custom(key, val, valid):
+        return True
+    if isinstance(val, int):
+        return True
     return False
 
 
 def parameter_type(key, conf, valid):
     val = json_get(key, conf)
-    if is_spinner(val) or is_range_spinner(val):
-        if spinner_is_int(val):
-            return "`integer` (1, 2, 3, ...)"
-        else:
-            return "`float` (1, 1.5, 2, ...)"
-    if __is_checkbox(val):
-        return "`boolean` (True/False)"
+    if not val is None:
+        if is_spinner(val) or is_range_spinner(val):
+            if spinner_is_int(val):
+                return "`integer`"
+            else:
+                return "`float`"
+        if __is_checkbox(val):
+            return "`boolean`"
+        if isinstance(val, int):
+            return "`integer`"
     if __is_multi_choice(key, val, valid):
-        return "`string` (any of the accepted values)"
+        return "`string`"
+    if __is_list_multi_choice(key, val, valid):
+        return "`list`"
+    if __is_custom(key, val, valid):
+        return "`string`"
+    return "???"
 
 def list_parameters(conf, valid, curr_name=[]):
     for key in json_get(curr_name, conf).keys():
@@ -106,14 +135,22 @@ def list_parameters(conf, valid, curr_name=[]):
 
 def values_for_parameter(key, conf, valid):
     val = json_get(key, conf)
-    if __is_checkbox(val):
-        return "[True, False]"
-    if is_spinner(val):
-        return "[" + str(val["min"]) + " .. " + str(val["max"]) + "]"
-    if is_range_spinner(val):
-        return "[" + str(val["min"]) + " .. " + str(val["max"]) + "]"
+    if not val is None:
+        if __is_checkbox(val):
+            return "`True`, `False`"
+        if is_spinner(val):
+            return "`" + str(val["min"]) + " .. " + str(val["max"]) + "`"
+        if is_range_spinner(val):
+            return "`" + str(val["min"]) + " .. " + str(val["max"]) + "`"
+        if isinstance(val, int):
+            return "`0`, `1`, `2`, `3`, ..."
     if __is_multi_choice(key, val, valid):
-        return "[" + ", ".join(["'" + s + "'" for s in json_get(key, valid)]) + "]"
+        return ", ".join(["`" + s + "`" for s in json_get(key, valid)])
+    if __is_list_multi_choice(key, val, valid):
+        return ", ".join(["`[" + ", ".join(ls) + "]`" for ls in json_get(key, valid)])
+    if __is_custom(key, val, valid):
+        return json_get(key, valid)
+    return "???"
 
 
 def open_valid_json():
