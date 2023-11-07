@@ -333,13 +333,8 @@
     },
     "filters": {
         "mapping_q": {
-            "min": 0,
-            "max": 254,
             "val_min": 0,
-            "val_max": 254,
-            "step": 1,
-            "spinner_min_restricted": true,
-            "spinner_max_restricted": true
+            "val_max": 254
         },
         "incomplete_alignments": true,
         "directionality": "all",

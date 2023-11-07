@@ -150,7 +150,7 @@ libBioSmoother's documentation is available at https://biosmoother.rtfd.io/.
     """,
     packages=["libbiosmoother", "libbiosmoother.conf"],
     ext_modules=[CMakeExtension("libbiosmoothercpp")],
-    data_files=[("libbiosmoother", ["libbiosmoother/conf/default.json", "libbiosmoother/conf/valid.json", "libbiosmoother/conf/descriptions.json", "libbiosmoother/conf/button_names.json"])],
+    data_files=[("libbiosmoother", ["libbiosmoother/conf/default.json", "libbiosmoother/conf/valid.json", "libbiosmoother/conf/descriptions.json", "libbiosmoother/conf/button_names.json", "libbiosmoother/conf/button_tabs.json"])],
     include_package_data=True,
     cmdclass={"build_ext": CMakeBuild},
     extras_require={"test": "pytest"},

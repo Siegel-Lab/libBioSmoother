@@ -81,6 +81,18 @@ def __is_parameter(key, conf, valid):
     return False
 
 
+def parameter_type(key, conf, valid):
+    val = json_get(key, conf)
+    if is_spinner(val) or is_range_spinner(val):
+        if spinner_is_int(val):
+            return "`integer` (1, 2, 3, ...)"
+        else:
+            return "`float` (1, 1.5, 2, ...)"
+    if __is_checkbox(val):
+        return "`boolean` (True/False)"
+    if __is_multi_choice(key, val, valid):
+        return "`string` (any of the accepted values)"
+
 def list_parameters(conf, valid, curr_name=[]):
     for key in json_get(curr_name, conf).keys():
         if key in ["previous", "next"]:
@@ -95,24 +107,13 @@ def list_parameters(conf, valid, curr_name=[]):
 def values_for_parameter(key, conf, valid):
     val = json_get(key, conf)
     if __is_checkbox(val):
-        return [True, False]
+        return "[True, False]"
     if is_spinner(val):
-        c = (val["min"] + val["max"]) / 2
-        if spinner_is_int(val):
-            c = int(c)
-        return [val["min"], c, val["max"]]
+        return "[" + str(val["min"]) + " .. " + str(val["max"]) + "]"
     if is_range_spinner(val):
-        c = (val["min"] + val["max"]) / 2
-        if spinner_is_int(val):
-            c = int(c)
-        return [
-            (val["min"], val["min"]),  # zero range
-            (val["min"], val["max"]),  # full range
-            (val["min"], c),  # below max
-            (c, val["max"]),  # above min
-        ]
+        return "[" + str(val["min"]) + " .. " + str(val["max"]) + "]"
     if __is_multi_choice(key, val, valid):
-        return json_get(key, valid)
+        return "[" + ", ".join(["'" + s + "'" for s in json_get(key, valid)]) + "]"
 
 
 def open_valid_json():

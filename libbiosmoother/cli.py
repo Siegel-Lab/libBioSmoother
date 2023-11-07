@@ -560,7 +560,7 @@ def add_parsers(main_parser):
 
     set_parser = main_parser.add_parser(
         "set",
-        help="Set the values of different parameters in an index. This can also be done on in Smootherthe graphical user interface.",
+        help="Set the values of different parameters in an index. This can also be done on in the graphical user interface.",
     )
     set_parser.add_argument(
         "index_prefix",
@@ -578,7 +578,7 @@ def add_parsers(main_parser):
 
     get_parser = main_parser.add_parser(
         "get",
-        help="Retrieve the value of a parameter from the current session of an index. This can also be done on Smoother",
+        help="Retrieve the value of a parameter from the current session of an index. This can also be done on in the graphical user interface.",
     )
     get_parser.add_argument(
         "index_prefix",

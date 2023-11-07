@@ -58,6 +58,9 @@ def open_descriptions_json():
 def open_button_names_json():
     return (pkg_resources.files("libbiosmoother") / "conf" / "button_names.json").open("r")
 
+def open_button_tabs_json():
+    return (pkg_resources.files("libbiosmoother") / "conf" / "button_tabs.json").open("r")
+
 def open_valid_json():
     return (pkg_resources.files("libbiosmoother") / "conf" / "valid.json").open("r")
 

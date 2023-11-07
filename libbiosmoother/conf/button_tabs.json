@@ -1,0 +1,137 @@
+{
+    "settings": {
+        "replicates": {
+            "in_group": "Filter->Datapools",
+            "between_group": "Filter->Datapools"
+        },
+        "filters": {
+            "symmetry": "Filter->Coordinates",
+            "cut_off_bin": "View->Bins",
+            "show_contig_smaller_than_bin": "View->Bins",
+            "incomplete_alignments": "Filter->Mapping",
+            "ambiguous_mapping": "Filter->Mapping",
+            "directionality": "Filter->Mapping",
+            "mapping_q": {
+                "val_min": "Filter->Mapping",
+                "val_max": "Filter->Mapping"
+            },
+            "min_diag_dist": "Filter->Coordinates",
+            "anno_coords_col": "Filter->Coordinates",
+            "anno_coords_row": "Filter->Coordinates",
+            "multiple_annos_in_bin": "Filter->Coordinates",
+            "anno_in_multiple_bins": "Filter->Coordinates"
+        },
+        "normalization": {
+            "normalize_by_coverage": "Normalize->Primary",
+            "scale": "View->Color",
+            "ddd": "Normalize->DDD",
+            "ploidy_correct": "Normalize->Ploidy",
+            "ploidy_keep_distinct_group": "Normalize->Ploidy",
+            "ploidy_keep_inter_group": "Normalize->Ploidy",
+            "ploidy_remove_others": "Normalize->Ploidy",
+            "ploidy_remove_intra_instance_contig": "Normalize->Ploidy",
+            "ploidy_coords": "Normalize->Ploidy",
+            "ddd_show": "Normalize->DDD",
+            "ddd_quantile": "Normalize->DDD",
+            "ice_sparse_slice_filter": "Normalize->Primary->Ic",
+            "num_ice_bins": "Normalize->Primary->Ic",
+            "ice_mad_max": "Normalize->Primary->Ic",
+            "ice_min_nz": "Normalize->Primary->Ic",
+            "ice_ignore_n_diags": "Normalize->Primary->Ic",
+            "ice_show_bias": "Normalize->Primary->Ic",
+            "ice_local": "Normalize->Primary->Ic",
+            "ddd_samples": "Normalize->DDD",
+            "min_interactions": "Filter->Datapools",
+            "color_range": "View->Color",
+            "log_base": "View->Color",
+            "p_accept": "Normalize->Primary->Binom. test",
+            "grid_seq_max_bin_size": "Normalize->Primary->Assoc. Slices",
+            "grid_seq_samples": "Normalize->Primary->Assoc. Slices",
+            "radicl_seq_samples": "Normalize->Primary->Binom. test",
+            "grid_seq_display_background": "Normalize->Primary->Assoc. Slices",
+            "radicl_seq_display_coverage": "Normalize->Primary->Binom. test",
+            "grid_seq_axis_is_column": "Normalize->Primary->Assoc. Slices",
+            "radicl_seq_axis_is_column": "Normalize->Primary->Binom. test",
+            "grid_seq_filter_intersection": "Normalize->Primary->Assoc. Slices",
+            "grid_seq_ignore_cis": "Normalize->Primary->Assoc. Slices",
+            "grid_seq_annotation": "Normalize->Primary->Assoc. Slices",
+            "grid_seq_rna_filter": "Normalize->Primary->Assoc. Slices",
+            "grid_seq_dna_filter": "Normalize->Primary->Assoc. Slices",
+            "normalize_by": "Normalize->Primary"
+        },
+        "interface": {
+            "squared_bins": "View->Bins",
+            "do_redraw": "View->Rendering",
+            "snap_bin_size": "View->Bins",
+            "color_palette": "View->Color",
+            "axis_lables": "View->Panels",
+            "update_freq": "View->Rendering",
+            "zoom_redraw": "View->Rendering",
+            "add_draw_area": "View->Rendering",
+            "anno_size": "View->Panels",
+            "raw_size": "View->Panels",
+            "max_num_bins": "View->Bins",
+            "axis_label_max_char": "View->Panels",
+            "center_tracks_on_bins": "View->Panels",
+            "zero_track_at_ends": "View->Panels",
+            "connect_tracks_over_contig_borders": "View->Panels",
+            "tracks_log_scale": "View->Panels",
+            "v4c": {
+                "norm_by_viewpoint_size": "View->Virtual4C",
+                "do_col": "View->Virtual4C",
+                "col": "View->Virtual4C",
+                "do_row": "View->Virtual4C",
+                "row": "View->Virtual4C"
+            },
+            "min_bin_size": "View->Bins",
+            "color_low": "View->Color",
+            "color_high": "View->Color",
+            "show_hide": {
+                "heatmap": "View->Panels",
+                "axis": "View->Panels",
+                "coords": "View->Panels",
+                "regs": "View->Panels",
+                "raw": "View->Panels",
+                "annotation": "View->Panels",
+                "tools": "View->Panels",
+                "grid_lines": "View->Panels",
+                "indent_line": "View->Panels",
+                "contig_borders": "View->Panels"
+            }
+        },
+        "export": {
+            "coords": "File->Export",
+            "contigs": "File->Export",
+            "axis": "File->Export",
+            "secondary_stroke_width": "File->Export",
+            "export_format": "File->Export",
+            "do_export_full": "File->Export",
+            "export_to_server": "File->Export",
+            "prefix": "File->Export"
+        }
+    },
+    "replicates": {
+        "in_group_a": "Filter->Datapools",
+        "in_group_b": "Filter->Datapools"
+    },
+    "annotation": {
+        "visible_x": "Filter->Annotations",
+        "visible_y": "Filter->Annotations",
+        "filter_present_x": "Filter->Annotations",
+        "filter_present_y": "Filter->Annotations",
+        "filter_absent_x": "Filter->Annotations",
+        "filter_absent_y": "Filter->Annotations"
+    },
+    "coverage": {
+        "in_column": "Filter->Datapools",
+        "in_row": "Filter->Datapools"
+    },
+    "contigs": {
+        "annotation_coordinates": "Filter->Coordinates",
+        "displayed_on_x": "Filter->Coordinates",
+        "displayed_on_y": "Filter->Coordinates",
+        "displayed_on_x_ploidy": "Filter->Coordinates",
+        "displayed_on_y_ploidy": "Filter->Coordinates"
+    },
+    "area": ""
+}
