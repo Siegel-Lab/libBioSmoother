@@ -40,7 +40,7 @@
             "num_ice_bins": "The number of samples to compute during IC normalization.",
             "ice_mad_max": "Mad max filter",
             "ice_min_nz": "Minimal number of bins with non-zero values for a slice not to be blacked out during ICing",
-            "ice_ignore_n_diags": "Ignore the n closet bins to the diagonal during ICing",
+            "ice_ignore_n_diags": "Ignore the n closest bins to the diagonal during ICing",
             "ice_show_bias": "Display the IC bias as a track.",
             "ice_local": "Only use the visible bins to compute the IC bias.",
             "ddd_samples": "Number of samples to compute for the distance dependant decay average. Will always try to compute as many samples as possible but never more than the maximum picked by this slider. Diagonals with less than the minimum amount will be masked out.",

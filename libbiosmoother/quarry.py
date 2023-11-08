@@ -66,7 +66,7 @@ def open_valid_json():
 
 
 class Quarry(PartialQuarry):
-    def __establish_backwards_compatibility(self):
+    def establish_backwards_compatibility(self):
         with open_default_json() as default_settings_file:
             default_settings = json.load(default_settings_file)
 
@@ -150,7 +150,7 @@ class Quarry(PartialQuarry):
                 file=sys.stderr,
             )
 
-        self.__establish_backwards_compatibility()
+        self.establish_backwards_compatibility()
 
     def normalizeBinominalTestTrampoline(
         self,
