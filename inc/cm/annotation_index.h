@@ -65,12 +65,11 @@ template <template <typename> typename vec_gen_t> class AnnotationDescIndex
         std::vector<std::tuple<size_t, size_t, bool>> vLineSweepPos;
         std::vector<size_t> vDescID;
         vDescID.resize( vIntervalsIn.size( ) );
+        std::vector<Interval> vIntervalsCopy; // @todo remove me
         for( size_t uiI = 0; uiI < vIntervalsIn.size( ); uiI++ )
         {
-            vLineSweepPos.push_back( std::make_tuple(
-                (size_t)std::round( std::get<0>( vIntervalsIn[ uiI ] ) / (double)uiDividend ), uiI, false ) );
-            vLineSweepPos.push_back( std::make_tuple(
-                (size_t)std::round( std::get<1>( vIntervalsIn[ uiI ] ) / (double)uiDividend ), uiI, true ) );
+            vLineSweepPos.push_back( std::make_tuple( std::get<0>( vIntervalsIn[ uiI ] ) / uiDividend, uiI, false ) );
+            vLineSweepPos.push_back( std::make_tuple( (std::get<1>( vIntervalsIn[ uiI ] ) - 1) / uiDividend + 1, uiI, true ) );
             vDescID[ uiI ] = vDesc.add( std::get<2>( vIntervalsIn[ uiI ] ) );
         }
         std::sort( vLineSweepPos.begin( ), vLineSweepPos.end( ) );
@@ -105,6 +104,7 @@ template <template <typename> typename vec_gen_t> class AnnotationDescIndex
                 size_t uiNextPos = std::get<0>( vLineSweepPos[ uiJ ] );
 
                 for( size_t uiActive : xActiveIntervals )
+                {
                     vIntervals.push_back( Interval{
                         /*.uiIntervalId =*/uiIntervalId,
 
@@ -123,11 +123,16 @@ template <template <typename> typename vec_gen_t> class AnnotationDescIndex
                         /*.uiAnnoCoordsStart =*/std::get<0>( vIntervalsIn[ uiActive ] ) - uiSkippedCoords * uiDividend,
                         /*.uiAnnoCoordsEnd =*/std::get<1>( vIntervalsIn[ uiActive ] ) - uiSkippedCoords * uiDividend,
                     } );
+                    vIntervalsCopy.push_back(vIntervals.back());
+                }
                 uiIntervalCoordPos += ( uiNextPos - uiCurrPos );
                 ++uiIntervalId;
                 uiLastPos = uiNextPos;
             }
         }
+
+        assert(vIntervalsIn.size() <= vIntervals.size( ) - uiStartSize);
+
         vDatasets.push_back( Dataset{ /*.uiStart =*/uiStartSize, /*.uiEnd =*/vIntervals.size( ) } );
         return vDatasets.size( ) - 1;
     }
@@ -320,6 +325,21 @@ template <template <typename> typename vec_gen_t> class AnnotationDescIndex
         auto xEnd = end( uiDatasetId ) - 1;
 
         return xEnd->uiIntervalId + 1;
+    }
+
+    void print( size_t uiDatasetId )
+    {
+        
+        auto xStart = begin( uiDatasetId );
+        auto xEnd = end( uiDatasetId );
+
+        std::cout << "Dataset " << uiDatasetId << " has " << xEnd - xStart << " entries." << std::endl;
+        iterate( 
+            uiDatasetId, 
+            []( const std::tuple<size_t, size_t, std::string, bool>& xInterval ){
+                std::cout << std::get<0>( xInterval ) << " " << std::get<1>( xInterval ) << " " << std::get<2>( xInterval ) << " " << std::get<3>( xInterval ) << std::endl;
+                return true;
+            } );
     }
 };
 

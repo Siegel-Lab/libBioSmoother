@@ -279,6 +279,7 @@ PYBIND11_MODULE( libbiosmoothercpp, m )
         .def( "get_categories", &cm::AnnotationDescIndex<DiskVecGenerator>::getCategories, pybind11::arg( "pos" ),
               pybind11::arg( "dividend" ), pybind11::arg( "relevant" ), pybind11::arg( "interval_coords" ) = false,
               pybind11::arg( "interval_count" ) = false ) //
+        .def( "print", &cm::AnnotationDescIndex<DiskVecGenerator>::print, pybind11::arg( "dataset_id" ) ) //
         ;
 
     exportSpsInterface<true>( m );
