@@ -545,10 +545,8 @@ bool PartialQuarry::setRnaAssociatedGenesFilter( )
     if( getValue<std::string>( { "settings", "normalization", "normalize_by" } ) != "grid-seq" )
         END_RETURN;
 
-    const size_t uiRnaMin = getValue<size_t>( { "settings", "normalization", "grid_seq_rna_filter", "val_min" } );
-    const size_t uiRnaMax = getValue<size_t>( { "settings", "normalization", "grid_seq_rna_filter", "val_max" } );
-    const size_t uiDnaMin = getValue<size_t>( { "settings", "normalization", "grid_seq_dna_filter", "val_min" } );
-    const size_t uiDnaMax = getValue<size_t>( { "settings", "normalization", "grid_seq_dna_filter", "val_max" } );
+    const size_t uiRnaMin = getValue<size_t>( { "settings", "normalization", "grid_seq_rna_filter_v2", "val" } );
+    const size_t uiDnaMin = getValue<size_t>( { "settings", "normalization", "grid_seq_dna_filter_v2", "val" } );
 
     vGridSeqFiltered.reserve( vGridSeqAnnoCoverage.size( ) );
 
@@ -556,7 +554,7 @@ bool PartialQuarry::setRnaAssociatedGenesFilter( )
     {
         CANCEL_RETURN;
         vGridSeqFiltered.push_back(
-            { vArr[ 0 ] >= uiRnaMin && vArr[ 0 ] < uiRnaMax, vArr[ 1 ] >= uiDnaMin && vArr[ 1 ] < uiDnaMax } );
+            { vArr[ 0 ] >= uiRnaMin, vArr[ 1 ] >= uiDnaMin } );
     }
 
     END_RETURN;
@@ -957,10 +955,8 @@ void PartialQuarry::regNormalization( )
                                /*.fFunc =*/&PartialQuarry::setRnaAssociatedGenesFilter,
                                /*.vIncomingFunctions =*/{ NodeNames::GridSeqCoverage },
                                /*.vIncomingSession =*/
-                               { { "settings", "normalization", "grid_seq_rna_filter", "val_min" },
-                                 { "settings", "normalization", "grid_seq_rna_filter", "val_max" },
-                                 { "settings", "normalization", "grid_seq_dna_filter", "val_min" },
-                                 { "settings", "normalization", "grid_seq_dna_filter", "val_max" } },
+                               { { "settings", "normalization", "grid_seq_rna_filter_v2", "val" },
+                                 { "settings", "normalization", "grid_seq_dna_filter_v2", "val" } },
                                /*.vSessionsIncomingInPrevious =*/{ { "settings", "normalization", "normalize_by" } },
                                /*bHidden =*/false } );
 

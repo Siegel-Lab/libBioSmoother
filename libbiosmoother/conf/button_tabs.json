@@ -55,8 +55,8 @@
             "grid_seq_filter_intersection": "Normalize->Primary->Assoc. Slices",
             "grid_seq_ignore_cis": "Normalize->Primary->Assoc. Slices",
             "grid_seq_annotation": "Normalize->Primary->Assoc. Slices",
-            "grid_seq_rna_filter": "Normalize->Primary->Assoc. Slices",
-            "grid_seq_dna_filter": "Normalize->Primary->Assoc. Slices",
+            "grid_seq_rna_filter_v2": "Normalize->Primary->Assoc. Slices",
+            "grid_seq_dna_filter_v2": "Normalize->Primary->Assoc. Slices",
             "normalize_by": "Normalize->Primary"
         },
         "interface": {

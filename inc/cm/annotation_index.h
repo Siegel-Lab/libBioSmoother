@@ -69,7 +69,8 @@ template <template <typename> typename vec_gen_t> class AnnotationDescIndex
         for( size_t uiI = 0; uiI < vIntervalsIn.size( ); uiI++ )
         {
             vLineSweepPos.push_back( std::make_tuple( std::get<0>( vIntervalsIn[ uiI ] ) / uiDividend, uiI, false ) );
-            vLineSweepPos.push_back( std::make_tuple( (std::get<1>( vIntervalsIn[ uiI ] ) - 1) / uiDividend + 1, uiI, true ) );
+            vLineSweepPos.push_back(
+                std::make_tuple( ( std::get<1>( vIntervalsIn[ uiI ] ) - 1 ) / uiDividend + 1, uiI, true ) );
             vDescID[ uiI ] = vDesc.add( std::get<2>( vIntervalsIn[ uiI ] ) );
         }
         std::sort( vLineSweepPos.begin( ), vLineSweepPos.end( ) );
@@ -123,7 +124,7 @@ template <template <typename> typename vec_gen_t> class AnnotationDescIndex
                         /*.uiAnnoCoordsStart =*/std::get<0>( vIntervalsIn[ uiActive ] ) - uiSkippedCoords * uiDividend,
                         /*.uiAnnoCoordsEnd =*/std::get<1>( vIntervalsIn[ uiActive ] ) - uiSkippedCoords * uiDividend,
                     } );
-                    vIntervalsCopy.push_back(vIntervals.back());
+                    vIntervalsCopy.push_back( vIntervals.back( ) );
                 }
                 uiIntervalCoordPos += ( uiNextPos - uiCurrPos );
                 ++uiIntervalId;
@@ -131,7 +132,7 @@ template <template <typename> typename vec_gen_t> class AnnotationDescIndex
             }
         }
 
-        assert(vIntervalsIn.size() <= vIntervals.size( ) - uiStartSize);
+        assert( vIntervalsIn.size( ) <= vIntervals.size( ) - uiStartSize );
 
         vDatasets.push_back( Dataset{ /*.uiStart =*/uiStartSize, /*.uiEnd =*/vIntervals.size( ) } );
         return vDatasets.size( ) - 1;
@@ -329,17 +330,16 @@ template <template <typename> typename vec_gen_t> class AnnotationDescIndex
 
     void print( size_t uiDatasetId )
     {
-        
+
         auto xStart = begin( uiDatasetId );
         auto xEnd = end( uiDatasetId );
 
         std::cout << "Dataset " << uiDatasetId << " has " << xEnd - xStart << " entries." << std::endl;
-        iterate( 
-            uiDatasetId, 
-            []( const std::tuple<size_t, size_t, std::string, bool>& xInterval ){
-                std::cout << std::get<0>( xInterval ) << " " << std::get<1>( xInterval ) << " " << std::get<2>( xInterval ) << " " << std::get<3>( xInterval ) << std::endl;
-                return true;
-            } );
+        iterate( uiDatasetId, []( const std::tuple<size_t, size_t, std::string, bool>& xInterval ) {
+            std::cout << std::get<0>( xInterval ) << " " << std::get<1>( xInterval ) << " " << std::get<2>( xInterval )
+                      << " " << std::get<3>( xInterval ) << std::endl;
+            return true;
+        } );
     }
 };
 

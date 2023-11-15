@@ -9,15 +9,15 @@ def conf_version(in_file_name, cmake_version, out_file_name):
         return subprocess.check_output(cmd)
 
     git_commit_hash="-".join(run_command(["git", "log", "-1", "--format=%h-%ci"]).decode().split()[:2])
-    status_out = run_command(["git", "status", "-s"])
+    status_out = run_command(["git", "status", "-s"]).decode().replace("\n", ";")
     if len(status_out) > 0:
-        print("WARNING: building on dirty git repo", status_out)
+        print("WARNING: building on dirty git repo: ", status_out)
         git_status="D-"
     else:
         git_status=""
 
     os.makedirs(os.path.dirname(out_file_name), exist_ok=True)
-    print("Configuring for version:", git_status, cmake_version, git_commit_hash)
+    print("Configuring for version: ", git_status, cmake_version, git_commit_hash, sep="")
 
     # configure the new version file
     out_lines = []

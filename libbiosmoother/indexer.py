@@ -385,7 +385,7 @@ class Indexer:
         map_q_min = 255
         map_q_max = 0
         has_multimapper = False
-        categoires_min = 2**(MAX_NUM_FILTER_ANNOTATIONS* 2 + 1)
+        categoires_min = 2 ** (MAX_NUM_FILTER_ANNOTATIONS * 2 + 1)
         categories_max = 0
         strand_min = 4
         strand_max = 0
@@ -506,7 +506,7 @@ class Indexer:
                     cat_pos = [
                         item for sublist in zip(cat_x, cat_y) for item in sublist
                     ]
-                    cat_hash = sum(x*2**i for i, x in enumerate(cat_pos))
+                    cat_hash = sum(x * 2**i for i, x in enumerate(cat_pos))
                     categoires_min = min(categoires_min, cat_hash)
                     categories_max = max(categories_max, cat_hash)
 
@@ -657,7 +657,7 @@ class Indexer:
         map_q_min = 255
         map_q_max = 0
         has_multimapper = False
-        categoires_min = 2**(MAX_NUM_FILTER_ANNOTATIONS* 2 + 1)
+        categoires_min = 2 ** (MAX_NUM_FILTER_ANNOTATIONS * 2 + 1)
         categories_max = 0
         strand_min = 2
         strand_max = 0
@@ -745,7 +745,7 @@ class Indexer:
                 cat_pos = [
                     item for sublist in zip(cat, [0] * len(cat)) for item in sublist
                 ]
-                cat_hash = sum(x*2**i for i, x in enumerate(cat_pos))
+                cat_hash = sum(x * 2**i for i, x in enumerate(cat_pos))
                 categoires_min = min(categoires_min, cat_hash)
                 categories_max = max(categories_max, cat_hash)
 
@@ -804,7 +804,6 @@ class Indexer:
         self.set_session(["coverage", "by_name", name, "no_category"], no_category)
         self.set_session(["coverage", "by_name", name, "no_strand"], no_strand)
         self.set_session(["coverage", "by_name", name, "shekelyan"], shekelyan)
-
 
         read_iterator.cleanup()
 

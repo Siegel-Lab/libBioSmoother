@@ -993,7 +993,6 @@ def __draw_contigs(session, d, sizes, print_callback=lambda s: None):
             labels=contig_names_x,
         )
 
-
         d.append(
             drawSvg.Text(
                 x_label,
@@ -1064,17 +1063,15 @@ def __get_sizes(session):
         "show_region": session.get_value(["settings", "export", "print_region"]),
         "show_coords_x": session.get_value(
             ["settings", "interface", "show_hide", "coords"]
-        ) and session.get_value(
-            ["settings", "interface", "show_hide", "heatmap"]
-        ),
+        )
+        and session.get_value(["settings", "interface", "show_hide", "heatmap"]),
         "show_coords_y": session.get_value(
             ["settings", "interface", "show_hide", "coords"]
         ),
         "show_contigs_x": session.get_value(
             ["settings", "interface", "show_hide", "regs"]
-        ) and session.get_value(
-            ["settings", "interface", "show_hide", "heatmap"]
-        ),
+        )
+        and session.get_value(["settings", "interface", "show_hide", "heatmap"]),
         "show_contigs_y": session.get_value(
             ["settings", "interface", "show_hide", "regs"]
         ),
@@ -1095,9 +1092,8 @@ def __get_sizes(session):
         "margin": session.get_value(["settings", "export", "margins", "val"]),
         "show_anno_x": session.get_value(
             ["settings", "interface", "show_hide", "annotation"]
-        ) and session.get_value(
-            ["settings", "interface", "show_hide", "heatmap"]
         )
+        and session.get_value(["settings", "interface", "show_hide", "heatmap"])
         and len(session.get_annotation(False, lambda x: None)["anno_name"]) > 0,
         "show_anno_y": session.get_value(
             ["settings", "interface", "show_hide", "annotation"]
@@ -1106,9 +1102,8 @@ def __get_sizes(session):
         "annotation": session.get_value(["settings", "interface", "anno_size", "val"]),
         "show_secondary_x": session.get_value(
             ["settings", "interface", "show_hide", "raw"]
-        ) and session.get_value(
-            ["settings", "interface", "show_hide", "heatmap"]
         )
+        and session.get_value(["settings", "interface", "show_hide", "heatmap"])
         and len(session.get_tracks(False, lambda x: None)["values"]) > 0,
         "show_secondary_y": session.get_value(
             ["settings", "interface", "show_hide", "raw"]

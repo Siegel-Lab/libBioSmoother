@@ -501,70 +501,81 @@ bool PartialQuarry::setRankedSlicesCDS( )
 
     for( size_t uiI = 0; uiI < 2; uiI++ )
     {
-        vSorted[ uiI ].reserve( vGridSeqAnnoCoverage.size( ) );
+        std::vector<size_t> vIndices;
+        vIndices.reserve( vGridSeqAnnoCoverage.size( ) );
         for( size_t uiX = 0; uiX < vGridSeqAnnoCoverage.size( ); uiX++ )
-            vSorted[ uiI ].push_back( uiX );
-        std::sort( vSorted[ uiI ].begin( ), vSorted[ uiI ].end( ), [ & ]( size_t uiA, size_t uiB ) {
+            vIndices.push_back( uiX );
+
+        std::sort( vIndices.begin( ), vIndices.end( ), [ & ]( size_t uiA, size_t uiB ) {
             return vGridSeqAnnoCoverage[ uiA ][ uiI ] < vGridSeqAnnoCoverage[ uiB ][ uiI ];
         } );
+
+        vSorted[ uiI ].resize( vGridSeqAnnoCoverage.size( ) );
+        for( size_t uiX = 0; uiX < vGridSeqAnnoCoverage.size( ); uiX++ )
+            vSorted[ uiI ][ vIndices[ uiX ] ] = uiX;
     }
 
     using namespace pybind11::literals;
     pybind11::gil_scoped_acquire acquire;
 
-    for( size_t uiI = 0; uiI < 2; uiI++ )
+    pybind11::list vChrs;
+    pybind11::list vAnnoDesc;
+    pybind11::list vSampleId;
+    pybind11::list vAnnoIdx;
+    pybind11::list vIndexStart;
+    pybind11::list vIndexEnd;
+    pybind11::list vXs;
+    pybind11::list vIdxXs;
+    pybind11::list vYs;
+    pybind11::list vIdxYs;
+    pybind11::list vColors;
+    pybind11::list vScoreA;
+    pybind11::list vScoreB;
+
+    for( size_t uiX = 0; uiX < vGridSeqAnnoCoverage.size( ); uiX++ )
     {
-        pybind11::list vChrs;
-        pybind11::list vAnnoDesc;
-        pybind11::list vSampleId;
-        pybind11::list vAnnoIdx;
-        pybind11::list vIndexStart;
-        pybind11::list vIndexEnd;
-        pybind11::list vXs;
-        pybind11::list vYs;
-        pybind11::list vColors;
-        pybind11::list vScoreA;
-        pybind11::list vScoreB;
+        CANCEL_RETURN;
+        if (vGridSeqAnnoCoverage[ uiX ][ 0 ] == 0 || vGridSeqAnnoCoverage[ uiX ][ 1 ] == 0)
+            continue;
 
-        for( size_t uiX = 0; uiX < vGridSeqAnnoCoverage.size( ); uiX++ )
-        {
-            CANCEL_RETURN;
-            auto uiVal = vGridSeqAnnoCoverage[ vSorted[ uiI ][ uiX ] ][ uiI ];
+        const AnnoCoord& rSample = vGridSeqSamples[ uiX ];
+        const std::string& sChromName = this->vActiveChromosomes[ 0 ][ rSample.uiChromosome ].sName;
+        const size_t uiChromId = this->vActiveChromosomes[ 0 ][ rSample.uiChromosome ].uiActualContigId;
 
-            const AnnoCoord& rSample = vGridSeqSamples[ vSorted[ uiI ][ uiX ] ];
-            const std::string& sChromName = this->vActiveChromosomes[ 0 ][ rSample.uiChromosome ].sName;
-            const size_t uiChromId = this->vActiveChromosomes[ 0 ][ rSample.uiChromosome ].uiActualContigId;
+        const auto rIntervalIt = pIndices->vAnno.get( uiFistAnnoIdx + uiChromId, rSample.uiAnnoId );
 
-            const auto rIntervalIt = pIndices->vAnno.get( uiFistAnnoIdx + uiChromId, rSample.uiAnnoId );
+        vChrs.append( substringChr( sChromName, uiMaxChar ) );
+        vAnnoDesc.append( pIndices->vAnno.desc( *rIntervalIt ) );
+        vSampleId.append( uiX );
+        vAnnoIdx.append( rSample.uiAnnoId );
+        vIndexStart.append( readableBp( rSample.uiIndexPos * uiDividend ) );
+        vIndexEnd.append( readableBp( ( rSample.uiIndexPos + rSample.uiIndexSize ) * uiDividend ) );
 
-            vChrs.append( substringChr( sChromName, uiMaxChar ) );
-            vAnnoDesc.append( pIndices->vAnno.desc( *rIntervalIt ) );
-            vSampleId.append( vSorted[ uiI ][ uiX ] );
-            vAnnoIdx.append( rSample.uiAnnoId );
-            vIndexStart.append( readableBp( rSample.uiIndexPos * uiDividend ) );
-            vIndexEnd.append( readableBp( ( rSample.uiIndexPos + rSample.uiIndexSize ) * uiDividend ) );
+        vXs.append( vGridSeqAnnoCoverage[ uiX ][ 0 ] );
+        vIdxXs.append( vSorted[ 0 ][ uiX ] );
+        vYs.append( vGridSeqAnnoCoverage[ uiX ][ 1 ] );
+        vIdxYs.append( vSorted[ 1 ][ uiX ] );
 
-            vXs.append( uiX );
-            vYs.append( uiVal );
-
-            vColors.append( vGridSeqFiltered[ vSorted[ uiI ][ uiX ] ][ uiI ] ? ( uiI == 0 ? "#0072B2" : "#D55E00" )
-                                                                             : "grey" );
-        }
-
-        vRankedSliceCDS[ uiI ] = pybind11::dict( "chrs"_a = vChrs,
-
-                                                 "index_start"_a = vIndexStart,
-                                                 "index_end"_a = vIndexEnd,
-
-                                                 "anno_desc"_a = vAnnoDesc,
-                                                 "sample_id"_a = vSampleId,
-                                                 "anno_idx"_a = vAnnoIdx,
-
-                                                 "xs"_a = vXs,
-                                                 "ys"_a = vYs,
-
-                                                 "colors"_a = vColors );
+        // #009E73
+        vColors.append( vGridSeqFiltered[ uiX ][ 0 ] ? ( vGridSeqFiltered[ uiX ][ 1 ] ? "#009E73" : "#0072B2" )
+                                                     : ( vGridSeqFiltered[ uiX ][ 1 ] ? "#D55E00" : "#808080" ) );
     }
+
+    xRankedSliceCDS = pybind11::dict( "chrs"_a = vChrs,
+
+                                      "index_start"_a = vIndexStart,
+                                      "index_end"_a = vIndexEnd,
+
+                                      "anno_desc"_a = vAnnoDesc,
+                                      "sample_id"_a = vSampleId,
+                                      "anno_idx"_a = vAnnoIdx,
+
+                                      "xs"_a = vXs,
+                                      "ys"_a = vYs,
+                                      "idx_x"_a = vIdxXs,
+                                      "idx_y"_a = vIdxYs,
+
+                                      "colors"_a = vColors );
 
     END_RETURN;
 }
@@ -590,11 +601,10 @@ const pybind11::dict PartialQuarry::getTracks( bool bXAxis, const std::function<
     return xTracksCDS[ bXAxis ? 0 : 1 ];
 }
 
-const pybind11::dict PartialQuarry::getRankedSlices( bool bXAxis,
-                                                     const std::function<void( const std::string& )>& fPyPrint )
+const pybind11::dict PartialQuarry::getRankedSlices( const std::function<void( const std::string& )>& fPyPrint )
 {
     update( NodeNames::RankedSlicesCDS, fPyPrint );
-    return vRankedSliceCDS[ bXAxis ? 0 : 1 ];
+    return xRankedSliceCDS;
 }
 
 const std::array<double, 2> PartialQuarry::getMinMaxTracks( bool bXAxis,

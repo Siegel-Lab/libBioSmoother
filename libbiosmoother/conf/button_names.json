@@ -55,8 +55,8 @@
             "grid_seq_filter_intersection": "Use intersection between datasets",
             "grid_seq_ignore_cis": "Ignore cis interactions",
             "grid_seq_annotation": "Annotation type",
-            "grid_seq_rna_filter": "RNA reads per kbp bounds",
-            "grid_seq_dna_filter": "Maximal DNA reads in bin bounds",
+            "grid_seq_rna_filter_v2": "RNA reads per kbp minimum",
+            "grid_seq_dna_filter_v2": "Maximal DNA reads in bin minimum",
             "normalize_by": "Normalize heatmap by"
         },
         "interface": {

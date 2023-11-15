@@ -1264,7 +1264,7 @@ bool PartialQuarry::setBinCoords( )
 {
     size_t uiManhattenDist = 1000 * getValue<size_t>( { "settings", "filters", "min_diag_dist", "val" } ) /
                              getValue<size_t>( { "dividend" } );
-    bool bShowHeatmap = getValue<bool>( {"settings", "interface", "show_hide", "heatmap"} );
+    bool bShowHeatmap = getValue<bool>( { "settings", "interface", "show_hide", "heatmap" } );
 
     for( size_t uiI = 0; uiI < NUM_COORD_SYSTEMS; uiI++ )
     {
@@ -1272,7 +1272,7 @@ bool PartialQuarry::setBinCoords( )
         vBinCoordsSampled[ uiI ].clear( );
     }
 
-    for( size_t uiI = (bShowHeatmap ? 0 : 1); uiI < NUM_COORD_SYSTEMS; uiI++ )
+    for( size_t uiI = ( bShowHeatmap ? 0 : 1 ); uiI < NUM_COORD_SYSTEMS; uiI++ )
     {
         const auto& rXCoords = pickXCoords( uiI );
         const auto& rYCoords = pickYCoords( uiI );
@@ -1724,38 +1724,37 @@ void PartialQuarry::regCoords( )
                                /*.vSessionsIncomingInPrevious =*/{ },
                                /*bHidden =*/false } );
 
-    registerNode( NodeNames::BinCoords,
-                  ComputeNode{ /*.sNodeName =*/"bin_coords",
-                               /*.sNodeDesc =*/"Compute the 2D coorinates of all bins.",
-                               /*.fFunc =*/&PartialQuarry::setBinCoords,
-                               /*.vIncomingFunctions =*/
-                               { NodeNames::AnnoFilters, NodeNames::IntersectionType, NodeNames::Symmetry,
-                                 NodeNames::SampleCoords },
-                               /*.vIncomingSession =*/
-                               { { "settings", "filters", "min_diag_dist", "val" },
-                                 {"settings", "interface", "show_hide", "heatmap"} },
-                               /*.vSessionsIncomingInPrevious =*/{ { "dividend" } },
-                               /*bHidden =*/false } );
-
     registerNode(
-        NodeNames::AnnoFilters,
-        ComputeNode{ /*.sNodeName =*/"anno_filters",
-                     /*.sNodeDesc =*/"Extract the annotation filters from the settings json.",
-                     /*.fFunc =*/&PartialQuarry::setAnnoFilters,
-                     /*.vIncomingFunctions =*/
-                     { NodeNames::DatasetIdPerRepl, NodeNames::ActiveCoverage, NodeNames::ActiveChromLength },
-                     /*.vIncomingSession =*/
-                     { { "annotation", "filterable" },
-                       { "annotation", "filter_present_x" },
-                       { "annotation", "filter_present_y" },
-                       { "settings", "filters", "multiple_annos_in_bin" },
-                       { "annotation", "filter_absent_x" },
-                       { "annotation", "filter_absent_y" } },
-                     /*.vSessionsIncomingInPrevious =*/
-                     { { "contigs", "annotation_coordinates" },
-                       { "settings", "filters", "anno_coords_row" },
-                       { "settings", "filters", "anno_coords_col" } },
-                     /*bHidden =*/true } );
+        NodeNames::BinCoords,
+        ComputeNode{
+            /*.sNodeName =*/"bin_coords",
+            /*.sNodeDesc =*/"Compute the 2D coorinates of all bins.",
+            /*.fFunc =*/&PartialQuarry::setBinCoords,
+            /*.vIncomingFunctions =*/
+            { NodeNames::AnnoFilters, NodeNames::IntersectionType, NodeNames::Symmetry, NodeNames::SampleCoords },
+            /*.vIncomingSession =*/
+            { { "settings", "filters", "min_diag_dist", "val" }, { "settings", "interface", "show_hide", "heatmap" } },
+            /*.vSessionsIncomingInPrevious =*/{ { "dividend" } },
+            /*bHidden =*/false } );
+
+    registerNode( NodeNames::AnnoFilters,
+                  ComputeNode{ /*.sNodeName =*/"anno_filters",
+                               /*.sNodeDesc =*/"Extract the annotation filters from the settings json.",
+                               /*.fFunc =*/&PartialQuarry::setAnnoFilters,
+                               /*.vIncomingFunctions =*/
+                               { NodeNames::DatasetIdPerRepl, NodeNames::ActiveCoverage, NodeNames::ActiveChromLength },
+                               /*.vIncomingSession =*/
+                               { { "annotation", "filterable" },
+                                 { "annotation", "filter_present_x" },
+                                 { "annotation", "filter_present_y" },
+                                 { "settings", "filters", "multiple_annos_in_bin" },
+                                 { "annotation", "filter_absent_x" },
+                                 { "annotation", "filter_absent_y" } },
+                               /*.vSessionsIncomingInPrevious =*/
+                               { { "contigs", "annotation_coordinates" },
+                                 { "settings", "filters", "anno_coords_row" },
+                                 { "settings", "filters", "anno_coords_col" } },
+                               /*bHidden =*/true } );
 
     registerNode( NodeNames::DecayCoords,
                   ComputeNode{ /*.sNodeName =*/"decay_coords",

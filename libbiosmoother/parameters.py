@@ -62,6 +62,7 @@ def __is_multi_choice(key, val, valid):
         and isinstance(json_get(key, valid)[0], str)
     )
 
+
 def __is_list_multi_choice(key, val, valid):
     return (
         (isinstance(val, list) or val is None)
@@ -70,11 +71,9 @@ def __is_list_multi_choice(key, val, valid):
         and isinstance(json_get(key, valid)[0], list)
     )
 
+
 def __is_custom(key, val, valid):
-    return (
-        __exists(key, valid)
-        and isinstance(json_get(key, valid), str)
-    )
+    return __exists(key, valid) and isinstance(json_get(key, valid), str)
 
 
 def spinner_is_int(d):
@@ -121,6 +120,7 @@ def parameter_type(key, conf, valid):
     if __is_custom(key, val, valid):
         return "`string`"
     return "???"
+
 
 def list_parameters(conf, valid, curr_name=[]):
     for key in json_get(curr_name, conf).keys():

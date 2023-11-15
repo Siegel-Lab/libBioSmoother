@@ -164,7 +164,7 @@ bool PartialQuarry::setBinValues( )
         }
     }
 
-    if( !bOneFilledBinAtLeast && vvBinValues[ 0 ].size() > 0 )
+    if( !bOneFilledBinAtLeast && vvBinValues[ 0 ].size( ) > 0 )
         setError( "All bins are empty." );
 
     END_RETURN;
@@ -387,7 +387,7 @@ double PartialQuarry::getMixedValue( double uiA, double uiB )
         case 7:
             return uiB > 0 ? uiA / uiB : 0;
         case 8:
-            return (uiA + 0.000001) / (uiB + 0.000001);
+            return ( uiA + 0.000001 ) / ( uiB + 0.000001 );
         default:
             throw std::logic_error( "invalid value for between_group" );
     }

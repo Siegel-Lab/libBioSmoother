@@ -52,14 +52,24 @@ import math
 def open_default_json():
     return (pkg_resources.files("libbiosmoother") / "conf" / "default.json").open("r")
 
+
 def open_descriptions_json():
-    return (pkg_resources.files("libbiosmoother") / "conf" / "descriptions.json").open("r")
+    return (pkg_resources.files("libbiosmoother") / "conf" / "descriptions.json").open(
+        "r"
+    )
+
 
 def open_button_names_json():
-    return (pkg_resources.files("libbiosmoother") / "conf" / "button_names.json").open("r")
+    return (pkg_resources.files("libbiosmoother") / "conf" / "button_names.json").open(
+        "r"
+    )
+
 
 def open_button_tabs_json():
-    return (pkg_resources.files("libbiosmoother") / "conf" / "button_tabs.json").open("r")
+    return (pkg_resources.files("libbiosmoother") / "conf" / "button_tabs.json").open(
+        "r"
+    )
+
 
 def open_valid_json():
     return (pkg_resources.files("libbiosmoother") / "conf" / "valid.json").open("r")

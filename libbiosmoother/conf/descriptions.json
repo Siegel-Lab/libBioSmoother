@@ -58,8 +58,8 @@
             "grid_seq_filter_intersection": "Use the minimum number of interactions between datasets (intersection) as background; otherwise use the maximum.",
             "grid_seq_ignore_cis": "Ignore cis interactions during the computation of associated slices.",
             "grid_seq_annotation": "Pick which annotation to compute the background for.",
-            "grid_seq_rna_filter": "Acceptable bounds for the average number of reads per kbp. ",
-            "grid_seq_dna_filter": "Acceptable bounds for the maximal number of reads per kbp. ",
+            "grid_seq_rna_filter_v2": "Acceptable minimal value for the average number of reads per kbp. ",
+            "grid_seq_dna_filter_v2": "Acceptable minimal value for the maximal number of reads per kbp. ",
             "normalize_by": "normalize the matrix in various ways"
         },
         "interface": {

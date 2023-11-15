@@ -840,7 +840,7 @@ class PartialQuarry : public HasSession
     std::array<pybind11::list, 2> vActiveAnnotationCDS;
     pybind11::dict xHeatmapCDS;
     pybind11::dict xDistDepDecCDS;
-    std::array<pybind11::dict, 2> vRankedSliceCDS;
+    pybind11::dict xRankedSliceCDS;
     std::vector<std::tuple<std::string, size_t, size_t, std::string, size_t, size_t, double>> vHeatmapExport;
     std::array<std::vector<std::string>, 2> vTrackExportNames;
     std::array<std::vector<std::tuple<std::string, size_t, size_t, std::vector<double>>>, 2> vTrackExport;
@@ -1452,7 +1452,7 @@ class PartialQuarry : public HasSession
     const std::array<double, 2> getMinMaxTracksNonZero( bool, const std::function<void( const std::string& )>& );
 
     // coverage.h
-    const pybind11::dict getRankedSlices( bool, const std::function<void( const std::string& )>& );
+    const pybind11::dict getRankedSlices( const std::function<void( const std::string& )>& );
 
     size_t getLongestCommonSuffix( const std::function<void( const std::string& )>& fPyPrint )
     {

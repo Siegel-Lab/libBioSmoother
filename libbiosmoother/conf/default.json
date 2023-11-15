@@ -127,20 +127,18 @@
             "spinner_min_restricted": true,
             "spinner_max_restricted": false
         },
-        "grid_seq_rna_filter": {
+        "grid_seq_rna_filter_v2": {
             "min": 0,
             "max": 100000,
-            "val_min": 0,
-            "val_max": 100000,
+            "val": 0,
             "step": 1000,
             "spinner_min_restricted": true,
             "spinner_max_restricted": false
         },
-        "grid_seq_dna_filter": {
+        "grid_seq_dna_filter_v2": {
             "min": 0,
             "max": 100000,
-            "val_min": 0,
-            "val_max": 100000,
+            "val": 0,
             "step": 1000,
             "spinner_min_restricted": true,
             "spinner_max_restricted": false
