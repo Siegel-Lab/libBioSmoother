@@ -266,6 +266,8 @@ PYBIND11_MODULE( libbiosmoothercpp, m )
         .def( "save_session", &cm::PartialQuarry::saveSession ) //
         .def( "can_save", &cm::PartialQuarry::canSave ) //
         .def( "get_runtimes", &cm::PartialQuarry::getRuntimes ) //
+        .def( "get_num_prefix_sums", &cm::PartialQuarry::getNumPrefixSums ) //
+        .def( "get_num_changing_prefix_sums", &cm::PartialQuarry::getNumChangingPrefixSums ) //
 
         .def( "normalizeBinominalTestTrampoline", &cm::ContectMappingPublicist::normalizeBinominalTestTrampoline ) //
         .def( "normalizeCoolerTrampoline", &cm::ContectMappingPublicist::normalizeCoolerTrampoline ) //

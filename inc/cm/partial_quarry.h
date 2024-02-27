@@ -1665,6 +1665,17 @@ class PartialQuarry : public HasSession
 
         return vRet;
     }
+
+    
+    size_t getNumPrefixSums() const
+    {
+        return pIndices->getNumPrefixSums();
+    }
+
+    size_t getNumChangingPrefixSums() const
+    {
+        return pIndices->getNumChangingPrefixSums();
+    }
 };
 
 template <> pybind11::object PartialQuarry::getValue( std::vector<std::string> vKeys )

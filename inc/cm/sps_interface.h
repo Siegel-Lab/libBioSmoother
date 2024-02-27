@@ -197,6 +197,16 @@ template <bool CACHED> class SpsInterface : public HasSession
     {
         return pIndex->getNumOverlays( iDataSetId );
     }
+
+    size_t getNumPrefixSums() const
+    {
+        return pIndex->totalNumPrefixSums();
+    }
+
+    size_t getNumChangingPrefixSums() const
+    {
+        return pIndex->getNumChangingPrefixSums();
+    }
 };
 
 
