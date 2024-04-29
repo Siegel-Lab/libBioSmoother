@@ -145,7 +145,7 @@ def setup_col_converter(
 
 
 def parse_tsv(
-    in_filename, test, chr_filter, make_line_format, default_cols, progress_print=print
+    in_filename, test, chr_filter, make_line_format, default_cols, allow_col_change=False, progress_print=print
 ):
     line_format = make_line_format(default_cols)
     with fileinput.input(in_filename) as in_file_1:
@@ -168,7 +168,8 @@ def parse_tsv(
             if len(line) == 0:
                 continue
             if line[:9] == "#columns:":
-                line_format = make_line_format(line[9:].strip().split())
+                if allow_col_change:
+                    line_format = make_line_format(line[9:].strip().split())
                 # next line of code will make sure that this line of the input file is not read as actual data
             if line[0] == "#":
                 continue
@@ -206,6 +207,7 @@ def parse_heatmap(
     chr_filter,
     progress_print=print,
     columns=["chr1", "pos1", "chr2", "pos2"],
+    allow_col_change=False
 ):
     def make_converter(columns_in):
         col_converter = setup_col_converter(
@@ -267,6 +269,7 @@ def parse_heatmap(
         chr_filter,
         make_converter,
         columns,
+        allow_col_change,
         progress_print=progress_print,
     )
 
@@ -343,6 +346,7 @@ def group_reads(
     no_groups=False,
     test=False,
     columns=["chr1", "pos1", "chr2", "pos2"],
+    allow_col_change=False,
 ):
     curr_read_name = None
     curr_count = None
@@ -388,7 +392,7 @@ def group_reads(
         tags,
         strands,
         cnt,
-    ) in parse_func(in_filename, test, chr_filter, progress_print, columns):
+    ) in parse_func(in_filename, test, chr_filter, progress_print, columns, allow_col_change):
         if (
             (curr_read_name in [None, ".", "", "-"] or read_name != curr_read_name)
             and len(group) > 0
@@ -450,6 +454,7 @@ def chr_order_heatmap(
     do_force_upper_triangle=False,
     progress_print=print,
     columns=["chr1", "pos1", "chr2", "pos2"],
+    allow_col_change=False,
 ):
     prefix = index_prefix + "/.tmp." + __make_filename_save(dataset_name)
     chrs = {}
@@ -476,6 +481,7 @@ def chr_order_heatmap(
         no_groups,
         test,
         columns,
+        allow_col_change
     ):
         chr_1, chr_2 = chrs_
         if chr_1 not in chrs:
@@ -544,6 +550,7 @@ def chr_order_coverage(
     test=False,
     progress_print=print,
     columns=["chr", "pos"],
+    allow_col_change=False,
 ):
     prefix = index_prefix + "/.tmp." + __make_filename_save(dataset_name)
     chrs = {}
@@ -566,6 +573,7 @@ def chr_order_coverage(
         no_groups,
         test,
         columns,
+        allow_col_change
     ):
         if chrs_[0] not in chrs:
             chrs[chrs_[0]] = []

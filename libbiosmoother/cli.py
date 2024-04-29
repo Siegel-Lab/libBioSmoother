@@ -26,6 +26,22 @@ from datetime import datetime
 
 HIDE_SUBCOMMANDS_MANUAL = "SMOOTHER_HIDE_SUBCOMMANDS_MANUAL" in os.environ
 
+REPL_C_DEFAULT = [
+    "[readID]",
+    "chr1",
+    "pos1",
+    "chr2",
+    "pos2",
+    "[strand1]",
+    "[strand2]",
+    "[.]",
+    "[mapq1]",
+    "[mapq2]",
+    "[xa1]",
+    "[xa2]",
+    "[cnt]",
+]
+NORM_C_DEFAULTS = ["[readID]", "chr", "pos", "[strand]", "[mapq]", "[xa]", "[cnt]"]
 
 def get_path(prefix):
     for possible in [prefix, prefix + ".smoother_index"]:
@@ -84,6 +100,13 @@ def w_perf(func, args):
 def repl(args):
     idx = Indexer(get_path(args.index_prefix))
 
+    if args.columns is None:
+        cols = REPL_C_DEFAULT
+        allow_col_change = True
+    else:
+        cols = args.columns
+        allow_col_change = False
+
     def run():
         idx.add_replicate(
             args.path,
@@ -98,7 +121,8 @@ def repl(args):
             not args.strand,
             args.shekelyan,
             args.force_upper_triangle,
-            args.columns,
+            cols,
+            allow_col_change
         )
 
     w_perf(run, args)
@@ -106,6 +130,13 @@ def repl(args):
 
 def norm(args):
     idx = Indexer(get_path(args.index_prefix))
+    
+    if args.columns is None:
+        cols = NORM_C_DEFAULTS
+        allow_col_change = True
+    else:
+        cols = args.columns
+        allow_col_change = False
 
     def run():
         idx.add_normalization(
@@ -120,7 +151,8 @@ def norm(args):
             args.no_anno,
             not args.strand,
             args.shekelyan,
-            args.columns,
+            cols,
+            allow_col_change
         )
 
     w_perf(run, args)
@@ -425,28 +457,13 @@ def add_parsers(main_parser):
         action="store_true",
         help="Do store strand information. (default: off)",
     )
-    defaults = [
-        "[readID]",
-        "chr1",
-        "pos1",
-        "chr2",
-        "pos2",
-        "[strand1]",
-        "[strand2]",
-        "[.]",
-        "[mapq1]",
-        "[mapq2]",
-        "[xa1]",
-        "[xa2]",
-        "[cnt]",
-    ]
     repl_parser.add_argument(
         "-C",
         "--columns",
         nargs="*",
-        default=defaults,
+        default=None,
         # type=str,
-        help="Define the order of columns of the input pairs file. Valid column names are: 'readId', 'chr1', 'chr2', 'pos1', 'pos2', 'strand1', 'strand2', 'mapq1', 'mapq2', 'xa1', 'xa2', 'cnt', and '.'. Specify the columns as a space separated list: '-C chr1 pos1 [xa1]'. Column names in squared brackets indicate optional columns (e.g. '[mapq1] [mapq2]'). Optional columns must not appear in all lines of the input file. 'chr1', 'chr2', 'pos1' and 'pos2' must be defined and cannot be optional columns. If a row in the input file has less columns than defined, optional columns will be ignored starting from the end. If a row in the input file contains more than the given columns, the superfluous columns will be ignored starting from the end. Columns defined as '.' or '[.]' will be ignored. Lines in the input file that start with '#columns:' will change this parameter for all following lines."
+        help="Define the order of columns of the input pairs file. Valid column names are: 'readId', 'chr1', 'chr2', 'pos1', 'pos2', 'strand1', 'strand2', 'mapq1', 'mapq2', 'xa1', 'xa2', 'cnt', and '.'. Specify the columns as a space separated list: '-C chr1 pos1 [xa1]'. Column names in squared brackets indicate optional columns (e.g. '[mapq1] [mapq2]'). Optional columns must not appear in all lines of the input file. 'chr1', 'chr2', 'pos1' and 'pos2' must be defined and cannot be optional columns. If a row in the input file has less columns than defined, optional columns will be ignored starting from the end. If a row in the input file contains more than the given columns, the superfluous columns will be ignored starting from the end. Columns defined as '.' or '[.]' will be ignored. Lines in the input file that start with '#columns:' will set this parameter for all following lines, if the parameter has not been specified on the command line.."
         + fmt_defaults(defaults),
     )
     repl_parser.add_argument(
@@ -517,15 +534,14 @@ def add_parsers(main_parser):
         action="store_true",
         help="Do store strand information. This will make the index larger. (default: off)",
     )
-    defaults = ["[readID]", "chr", "pos", "[strand]", "[mapq]", "[xa]", "[cnt]"]
     norm_parser.add_argument(
         "-C",
         "--columns",
         nargs="*",
-        default=defaults,
+        default=None,
         type=str,
-        help="Define the order of columns of the input file. Valid column names are: 'readId', 'chr', 'pos', 'strand', 'mapq', 'xa', 'cnt', and '.'. Specify the columns as a space separated list: '-C chr pos [xa]'. Column names in squared brackets indicate optional columns (e.g. '[mapq] [xa]'). Optional columns must not appear in all lines of the input file. 'chr' and 'pos' must be defined and cannot be optional columns. If a row in the input file has less columns than defined, optional columns will be ignored starting from the end. If a row in the input file contains more than the given columns, the superfluous columns will be ignored starting from the end. Columns defined as '.' or '[.]' will be ignored. Lines in the input file that start with '#columns:' will change this parameter for all following lines."
-        + fmt_defaults(defaults),
+        help="Define the order of columns of the input file. Valid column names are: 'readId', 'chr', 'pos', 'strand', 'mapq', 'xa', 'cnt', and '.'. Specify the columns as a space separated list: '-C chr pos [xa]'. Column names in squared brackets indicate optional columns (e.g. '[mapq] [xa]'). Optional columns must not appear in all lines of the input file. 'chr' and 'pos' must be defined and cannot be optional columns. If a row in the input file has less columns than defined, optional columns will be ignored starting from the end. If a row in the input file contains more than the given columns, the superfluous columns will be ignored starting from the end. Columns defined as '.' or '[.]' will be ignored. Lines in the input file that start with '#columns:' will set this parameter for all following lines, if the parameter has not been specified on the command line."
+        + fmt_defaults(NORM_C_DEFAULTS),
     )
     norm_parser.add_argument("--shekelyan", help=argparse.SUPPRESS, action="store_true")
     norm_parser.add_argument("--no_groups", help=argparse.SUPPRESS, action="store_true")

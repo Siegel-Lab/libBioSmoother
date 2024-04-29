@@ -340,6 +340,7 @@ class Indexer:
         shekelyan=False,
         force_upper_triangle=False,
         columns=["chr1", "pos1", "chr2", "pos2"],
+        allow_col_change=False,
     ):
         if not self.name_unique(name):
             raise RuntimeError(
@@ -372,6 +373,7 @@ class Indexer:
             force_upper_triangle,
             lambda *x: self.progress_print("loading", *x),
             columns,
+            allow_col_change
         )
         t_dict = self.get_map_q_thresholds()
         total_reads = 0
@@ -608,6 +610,7 @@ class Indexer:
         no_strand=False,
         shekelyan=False,
         columns=["chr", "pos"],
+        allow_col_change=False,
     ):
         if not self.name_unique(name):
             raise RuntimeError(
@@ -645,6 +648,7 @@ class Indexer:
             "test" in self.session_default,
             lambda *x: self.progress_print("loading", *x),
             columns,
+            allow_col_change
         )
         t_dict = self.get_map_q_thresholds()
         total_reads = 0

@@ -116,8 +116,22 @@ fig1 () {
     show_chr_8
     libbiosmoother set $HIC_INDEX settings.normalization.ddd true
     libbiosmoother export $HIC_INDEX -p pics/fig1b_right_bottom $EXPORT_PARAMS
+
+    # extra image: show ICE bias
+    echo "extra image: show ICE bias"
+    default_hi_c
+    show_chr_8
+    libbiosmoother set $HIC_INDEX settings.normalization.ice_show_bias true
+    libbiosmoother set $HIC_INDEX settings.interface.show_hide.axis true
+    libbiosmoother set $HIC_INDEX settings.interface.show_hide.raw true
+    libbiosmoother set $HIC_INDEX replicates.in_group_a "WT"
+    libbiosmoother set $HIC_INDEX replicates.in_group_b ""
+    libbiosmoother set $HIC_INDEX coverage.in_column ""
+    libbiosmoother set $HIC_INDEX settings.interface.raw_size.val 500
+    libbiosmoother set $HIC_INDEX settings.export.secondary_stroke_width.val 10
+    libbiosmoother export $HIC_INDEX -p pics/fig_extra $EXPORT_PARAMS
 }
-# fig1
+fig1
 
 
 
@@ -329,7 +343,7 @@ fig2 () {
     libbiosmoother set $RADICL_INDEX settings.normalization.normalize_by radicl-seq
     libbiosmoother export $RADICL_INDEX -p pics/extra_1_binom_test $EXPORT_PARAMS
 }
-fig2
+# fig2
 
 
 echo "done"
