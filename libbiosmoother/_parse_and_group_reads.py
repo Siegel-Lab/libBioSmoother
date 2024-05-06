@@ -614,18 +614,39 @@ def parse_annotations(annotation_file):
             if line[0] == "#":
                 continue
             # parse file colum
-            (
-                chrom,
-                db_name,
-                annotation_type,
-                from_pos,
-                to_pos,
-                _,
-                strand,
-                _,
-                extras,
-                *opt,
-            ) = line.split("\t")
+            eles = line.split("\t")
+            if len(eles) < 8:
+                raise RuntimeError(
+                    "The annotation file must have at least 8 columns. But the given file has only "
+                    + str(len(eles))
+                    + " columns in the line \"" + line + "\"."
+                )
+                
+            if len(eles) >= 9:
+                (
+                    chrom,
+                    db_name,
+                    annotation_type,
+                    from_pos,
+                    to_pos,
+                    _,
+                    strand,
+                    _,
+                    extras,
+                    *opt,
+                ) = eles
+            if len(eles) == 8:
+                (
+                    chrom,
+                    db_name,
+                    annotation_type,
+                    from_pos,
+                    to_pos,
+                    _,
+                    strand,
+                    _
+                ) = eles
+                extras = ""
             yield annotation_type, chrom, int(from_pos), int(to_pos), extras.replace(
                 ";", "\n"
             ).replace("%2C", ","), strand == "+"

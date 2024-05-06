@@ -41,6 +41,7 @@ class Indexer:
                     break
         if self.prefix is None:
             raise RuntimeError("the given index", prefix, "does not exist.")
+        self.progress_print("working on index", self.prefix, force_print=True)
         self.indices = None
         self.session_default = {}
         self.session = {}
@@ -308,6 +309,7 @@ class Indexer:
         self.session["settings"] = default_json
 
         self.save_session()
+        self.progress_print("done initializing.", force_print=True)
 
     def name_unique(self, name):
         return (
@@ -560,7 +562,7 @@ class Indexer:
             )
         if categories_max == categoires_min and not no_category and total_reads > 1:
             print(
-                "WARNING: Detected only a single annotation overlap type. Consider using --no_anno if this dataset should not be filterable by annotation overlap.",
+                "WARNING: All interactions had the same annotation overlap (i.e. all interactions are overlapping some gene OR all interactions are overlapping nothing. NOT: some interactions are overlapping a gene and some others are overlapping nothing). Consider using --no_anno if this dataset should not be filterable by annotation overlap.",
             )
         if strand_min == strand_max and not no_strand and total_reads > 1:
             print(
