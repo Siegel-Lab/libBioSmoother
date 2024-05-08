@@ -43,6 +43,7 @@ REPL_C_DEFAULT = [
 ]
 NORM_C_DEFAULTS = ["[readID]", "chr", "pos", "[strand]", "[mapq]", "[xa]", "[cnt]"]
 
+
 def get_path(prefix):
     for possible in [prefix, prefix + ".smoother_index"]:
         if os.path.exists(possible) and os.path.isdir(possible):
@@ -122,7 +123,7 @@ def repl(args):
             args.shekelyan,
             args.force_upper_triangle,
             cols,
-            allow_col_change
+            allow_col_change,
         )
 
     w_perf(run, args)
@@ -130,7 +131,7 @@ def repl(args):
 
 def norm(args):
     idx = Indexer(get_path(args.index_prefix))
-    
+
     if args.columns is None:
         cols = NORM_C_DEFAULTS
         allow_col_change = True
@@ -152,7 +153,7 @@ def norm(args):
             not args.strand,
             args.shekelyan,
             cols,
-            allow_col_change
+            allow_col_change,
         )
 
     w_perf(run, args)

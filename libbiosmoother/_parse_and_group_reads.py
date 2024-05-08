@@ -145,7 +145,13 @@ def setup_col_converter(
 
 
 def parse_tsv(
-    in_filename, test, chr_filter, make_line_format, default_cols, allow_col_change=False, progress_print=print
+    in_filename,
+    test,
+    chr_filter,
+    make_line_format,
+    default_cols,
+    allow_col_change=False,
+    progress_print=print,
 ):
     line_format = make_line_format(default_cols)
     with fileinput.input(in_filename) as in_file_1:
@@ -207,7 +213,7 @@ def parse_heatmap(
     chr_filter,
     progress_print=print,
     columns=["chr1", "pos1", "chr2", "pos2"],
-    allow_col_change=False
+    allow_col_change=False,
 ):
     def make_converter(columns_in):
         col_converter = setup_col_converter(
@@ -392,7 +398,9 @@ def group_reads(
         tags,
         strands,
         cnt,
-    ) in parse_func(in_filename, test, chr_filter, progress_print, columns, allow_col_change):
+    ) in parse_func(
+        in_filename, test, chr_filter, progress_print, columns, allow_col_change
+    ):
         if (
             (curr_read_name in [None, ".", "", "-"] or read_name != curr_read_name)
             and len(group) > 0
@@ -481,7 +489,7 @@ def chr_order_heatmap(
         no_groups,
         test,
         columns,
-        allow_col_change
+        allow_col_change,
     ):
         chr_1, chr_2 = chrs_
         if chr_1 not in chrs:
@@ -573,7 +581,7 @@ def chr_order_coverage(
         no_groups,
         test,
         columns,
-        allow_col_change
+        allow_col_change,
     ):
         if chrs_[0] not in chrs:
             chrs[chrs_[0]] = []
@@ -619,9 +627,11 @@ def parse_annotations(annotation_file):
                 raise RuntimeError(
                     "The annotation file must have at least 8 columns. But the given file has only "
                     + str(len(eles))
-                    + " columns in the line \"" + line + "\"."
+                    + ' columns in the line "'
+                    + line
+                    + '".'
                 )
-                
+
             if len(eles) >= 9:
                 (
                     chrom,
@@ -636,16 +646,7 @@ def parse_annotations(annotation_file):
                     *opt,
                 ) = eles
             if len(eles) == 8:
-                (
-                    chrom,
-                    db_name,
-                    annotation_type,
-                    from_pos,
-                    to_pos,
-                    _,
-                    strand,
-                    _
-                ) = eles
+                (chrom, db_name, annotation_type, from_pos, to_pos, _, strand, _) = eles
                 extras = ""
             yield annotation_type, chrom, int(from_pos), int(to_pos), extras.replace(
                 ";", "\n"

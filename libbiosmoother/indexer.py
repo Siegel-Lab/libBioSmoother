@@ -375,7 +375,7 @@ class Indexer:
             force_upper_triangle,
             lambda *x: self.progress_print("loading", *x),
             columns,
-            allow_col_change
+            allow_col_change,
         )
         t_dict = self.get_map_q_thresholds()
         total_reads = 0
@@ -650,7 +650,7 @@ class Indexer:
             "test" in self.session_default,
             lambda *x: self.progress_print("loading", *x),
             columns,
-            allow_col_change
+            allow_col_change,
         )
         t_dict = self.get_map_q_thresholds()
         total_reads = 0

@@ -1666,15 +1666,15 @@ class PartialQuarry : public HasSession
         return vRet;
     }
 
-    
-    size_t getNumPrefixSums() const
+
+    size_t getNumPrefixSums( ) const
     {
-        return pIndices->getNumPrefixSums();
+        return pIndices->getNumPrefixSums( );
     }
 
-    size_t getNumChangingPrefixSums() const
+    size_t getNumChangingPrefixSums( ) const
     {
-        return pIndices->getNumChangingPrefixSums();
+        return pIndices->getNumChangingPrefixSums( );
     }
 };
 

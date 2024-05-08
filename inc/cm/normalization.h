@@ -553,8 +553,7 @@ bool PartialQuarry::setRnaAssociatedGenesFilter( )
     for( const auto& vArr : vGridSeqAnnoCoverage )
     {
         CANCEL_RETURN;
-        vGridSeqFiltered.push_back(
-            { vArr[ 0 ] >= uiRnaMin, vArr[ 1 ] >= uiDnaMin } );
+        vGridSeqFiltered.push_back( { vArr[ 0 ] >= uiRnaMin, vArr[ 1 ] >= uiDnaMin } );
     }
 
     END_RETURN;

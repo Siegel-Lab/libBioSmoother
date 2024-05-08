@@ -535,7 +535,7 @@ bool PartialQuarry::setRankedSlicesCDS( )
     for( size_t uiX = 0; uiX < vGridSeqAnnoCoverage.size( ); uiX++ )
     {
         CANCEL_RETURN;
-        if (vGridSeqAnnoCoverage[ uiX ][ 0 ] == 0 || vGridSeqAnnoCoverage[ uiX ][ 1 ] == 0)
+        if( vGridSeqAnnoCoverage[ uiX ][ 0 ] == 0 || vGridSeqAnnoCoverage[ uiX ][ 1 ] == 0 )
             continue;
 
         const AnnoCoord& rSample = vGridSeqSamples[ uiX ];
