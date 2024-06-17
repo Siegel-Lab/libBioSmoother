@@ -15,6 +15,14 @@ from importlib.metadata import version
 from .quarry import Quarry
 from .quarry import open_default_json
 import sys
+try:
+    from .cooler_interface import CoolerIterator
+
+    HAS_COOLER_ITERATOR = True
+except ImportError:
+    # Error handling
+    HAS_COOLER_ITERATOR = False
+    pass
 
 MAP_Q_MAX = 255
 
@@ -545,6 +553,7 @@ class Indexer:
             )
             self.session["settings"]["interface"]["axis_labels"] = "DNA_DNA"
             self.session["settings"]["filters"]["symmetry"] = "mirror"
+            # @todo this should update default.json as well
 
         if total_reads == 0:
             print(
@@ -593,6 +602,180 @@ class Indexer:
 
         if not keep_points:
             self.indices.clear_points_and_desc()
+
+        self.save_session()
+
+        self.progress_print("done generating dataset.", force_print=True)
+
+    def add_cool(
+        self,
+        path,
+        name,
+        group="a",
+        no_category=False,
+        shekelyan=False,
+        force_upper_triangle=False,
+    ):
+        if not self.name_unique(name):
+            raise RuntimeError(
+                "The dataset name you provide must be unique but is not. "
+                + "Use the <list> command to see all datasets."
+            )
+
+        self.progress_print("generating replicate from cool (Note: this data will not be filterable on-the-fly as the required information for these filters is absent from cool files.)...", force_print=True)
+
+        self.append_session(["replicates", "list"], name)
+        self.set_session(
+            ["replicates", "by_name", name],
+            {"ids": {}, "path": path, "ice_col": {}, "ice_row": {}},
+        )
+        if group in ["a", "both"]:
+            self.append_session(["replicates", "in_group_a"], name)
+        if group in ["b", "both"]:
+            self.append_session(["replicates", "in_group_b"], name)
+
+        contigs = self.session_default["contigs"]["list"]
+
+        cool_iterator = CoolerIterator(path, self.session_default["dividend"])
+        t_dict = self.get_map_q_thresholds()
+        total_reads = 0
+
+        num_itr = len(contigs) * len(contigs)
+        cnt = 0
+        first_id = None
+        has_upper_triangle = False
+        has_lower_triangle = False
+        categoires_min = 2 ** (MAX_NUM_FILTER_ANNOTATIONS * 2 + 1)
+        categories_max = 0
+        for idx_x, chr_x in enumerate(contigs):
+            anno_ids_x = [
+                self.session_default["annotation"]["by_name"][anno] + idx_x
+                for anno in self.session_default["annotation"]["filterable"]
+            ]
+            for idx_y, chr_y in enumerate(contigs):
+                anno_ids_y = [
+                    self.session_default["annotation"]["by_name"][anno] + idx_y
+                    for anno in self.session_default["annotation"]["filterable"]
+                ]
+                cnt += 1
+                self.progress_print(
+                    "generating heatmap for contig-pair",
+                    chr_x,
+                    chr_y + ".",
+                    cnt,
+                    "of",
+                    str(num_itr) + ":",
+                    str(round(100 * cnt / num_itr, 2)) + "%",
+                )
+                for (
+                    _,
+                    pos_2,
+                    _,
+                    pos_1,
+                    bin_cnt,
+                ) in cool_iterator.iterate(chr_x, chr_y):
+                    if idx_x > idx_y or (idx_x == idx_y and pos_1 > pos_2):
+                        has_lower_triangle = True
+                    if idx_x < idx_y or (idx_x == idx_y and pos_1 < pos_2):
+                        has_upper_triangle = True
+                    total_reads += 1
+                    if no_category:
+                        cat_x = [0] * MAX_NUM_FILTER_ANNOTATIONS
+                        cat_y = cat_x
+                    else:
+                        cat_x = [
+                            0 if x else 1
+                            for x in self.indices.anno.get_categories(
+                                [pos_1],
+                                self.session_default["dividend"],
+                                anno_ids_x,
+                            )
+                        ] + [0] * (MAX_NUM_FILTER_ANNOTATIONS - len(anno_ids_x))
+                        cat_y = [
+                            0 if x else 1
+                            for x in self.indices.anno.get_categories(
+                                [pos_2],
+                                self.session_default["dividend"],
+                                anno_ids_y,
+                            )
+                        ] + [0] * (MAX_NUM_FILTER_ANNOTATIONS - len(anno_ids_y))
+                    act_pos_1 = int(pos_1) // self.session_default["dividend"]
+                    act_pos_2 = int(pos_2) // self.session_default["dividend"]
+
+                    map_q = 1
+                    same_strand_idx = 0
+                    y_strand_idx = 0
+
+                    cat_pos = [
+                        item for sublist in zip(cat_x, cat_y) for item in sublist
+                    ]
+                    cat_hash = sum(x * 2**i for i, x in enumerate(cat_pos))
+                    categoires_min = min(categoires_min, cat_hash)
+                    categories_max = max(categories_max, cat_hash)
+
+                    start = [
+                        act_pos_1,
+                        act_pos_2,
+                        MAP_Q_MAX - map_q - 1,
+                        *cat_pos,
+                        same_strand_idx,
+                        y_strand_idx,
+                    ]
+                    end = [
+                        act_pos_1,
+                        act_pos_2,
+                        MAP_Q_MAX - map_q - 1,
+                        *cat_pos,
+                        same_strand_idx,
+                        y_strand_idx,
+                    ]
+                    self.indices.insert(start, end, bin_cnt)
+                id = self.indices.generate(
+                    fac=-2 if shekelyan else -1, verbosity=GENERATE_VERBOSITY
+                )
+                if first_id is None:
+                    first_id = id
+
+        if has_lower_triangle != has_upper_triangle and first_id == 0:
+            print(
+                "Info: Detected an exclusive",
+                "lower" if has_lower_triangle else "upper",
+                "triangle matrix. Setting symmetry and axis labels of index.",
+            )
+            self.session["settings"]["interface"]["axis_labels"] = "DNA_DNA"
+            self.session["settings"]["filters"]["symmetry"] = "mirror"
+            # @todo this should update default.json as well
+
+        if total_reads == 0:
+            print(
+                "WARNING: the total number of reads that were added to the index is zero! Something seems off..."
+            )
+        if categories_max == categoires_min and not no_category and total_reads > 1:
+            print(
+                "WARNING: All interactions had the same annotation overlap (i.e. all interactions are overlapping some gene OR all interactions are overlapping nothing. NOT: some interactions are overlapping a gene and some others are overlapping nothing). Consider using --no_anno if this dataset should not be filterable by annotation overlap.",
+            )
+
+        self.set_session(["replicates", "by_name", name, "first_dataset_id"], first_id)
+        self.set_session(["replicates", "by_name", name, "num_datasets"], num_itr)
+        self.set_session(["replicates", "by_name", name, "total_reads"], total_reads)
+        self.set_session(["replicates", "by_name", name, "no_map_q"], True)
+        self.set_session(["replicates", "by_name", name, "no_groups"], False)
+        self.set_session(["replicates", "by_name", name, "no_multi_map"], True)
+        self.set_session(["replicates", "by_name", name, "no_category"], no_category)
+        self.set_session(["replicates", "by_name", name, "no_strand"], True)
+        self.set_session(["replicates", "by_name", name, "shekelyan"], shekelyan)
+        self.set_session(
+            ["replicates", "by_name", name, "force_upper_triangle"],
+            force_upper_triangle,
+        )
+        self.set_session(
+            ["replicates", "by_name", name, "has_upper_triangle"], has_upper_triangle
+        )
+        self.set_session(
+            ["replicates", "by_name", name, "has_lower_triangle"], has_lower_triangle
+        )
+
+        self.indices.clear_points_and_desc()
 
         self.save_session()
 

@@ -36,3 +36,17 @@ def icing(bin_values, axis_size):
         ret.append(v * bias[i // axis_size] * bias[i % axis_size])
     os.remove(".tmp.cooler")
     return ret
+
+class CoolerIterator:
+    def __init__(self, cooler_path, bin_size=None):
+        self.clr = cooler.Cooler(cooler_path)
+        if not bin_size is None and self.clr.binsize != bin_size:
+            raise ValueError("bin size of cooler file do not match the base resolution of the smoother index.")
+
+    def iterate(self, chr_x, chr_y):
+        # print(chr_x, chr_y)
+        if chr_x not in self.clr.chromnames or chr_y not in self.clr.chromnames:
+            return
+        for idx, row in self.clr.matrix(balance=False, as_pixels=True, 
+                                        join=True, sparse=True).fetch(chr_x, chr_y).iterrows():
+            yield row["chrom1"], row["start1"], row["chrom2"], row["start2"], row["count"]

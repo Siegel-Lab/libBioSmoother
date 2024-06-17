@@ -619,6 +619,8 @@ def get_filesize(path):
 def parse_annotations(annotation_file):
     with fileinput.input(annotation_file) as in_file_1:
         for line in in_file_1:
+            if len(line) <= 1:
+                continue
             if line[0] == "#":
                 continue
             # parse file colum

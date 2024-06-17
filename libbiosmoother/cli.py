@@ -129,6 +129,22 @@ def repl(args):
     w_perf(run, args)
 
 
+def cool(args):
+    idx = Indexer(get_path(args.index_prefix))
+
+    def run():
+        idx.add_cool(
+            args.path,
+            args.name,
+            args.group,
+            args.no_anno,
+            args.shekelyan,
+            args.force_upper_triangle
+        )
+
+    w_perf(run, args)
+
+
 def norm(args):
     idx = Indexer(get_path(args.index_prefix))
 
@@ -483,6 +499,40 @@ def add_parsers(main_parser):
     )
     repl_parser.add_argument("--shekelyan", help=argparse.SUPPRESS, action="store_true")
     repl_parser.add_argument("--no_groups", help=argparse.SUPPRESS, action="store_true")
+
+    cool_parser = main_parser.add_parser(
+        "cool", help="Add data for a sample or replicate to an index from a cooler file. Note: The information necessary to apply filters (e.g. the mapping quality of reads) is not stored in cool files, therefore filters will be disabled for datasets created from cool files."
+    )
+    cool_parser.add_argument(
+        "index_prefix",
+        help="Path to the index directory generated with the init command.",
+    )
+    cool_parser.add_argument(
+        "path", help="Path to the input pairs file containing the interactions."
+    )
+    cool_parser.add_argument("name", help="Name for the new replicate or sample.")
+    cool_parser.add_argument(
+        "-g",
+        "--group",
+        default="a",
+        choices=["a", "b", "both", "neither"],
+        help="Analysis group or condition for the new replicate. This can also be modified in the GUI. Options are: 'a', 'b', 'both', 'neither'. (default: %(default)s)",
+    )
+    cool_parser.add_argument(
+        "-a",
+        "--no_anno",
+        action="store_true",
+        help="Do not store annotation information. (default: off)",
+    )
+    cool_parser.add_argument(
+        "-u",
+        "--force_upper_triangle",
+        action="store_true",
+        help="Move all interactions to the upper triangle and keep the lower triangle empty. Enable this option for symmetric data (e.g., Hi-C) with a non-redundant and non-sorted input pairs file. If the input file has sorted pairs, or the data is asymmetric (e.g., RD-SPRITE) this option is not needed. (default: off)",
+    )
+    cool_parser.set_defaults(func=cool)
+    cool_parser.add_argument("--perf", help=argparse.SUPPRESS, action="store_true")
+    cool_parser.add_argument("--shekelyan", help=argparse.SUPPRESS, action="store_true")
 
     norm_parser = main_parser.add_parser(
         "track",
