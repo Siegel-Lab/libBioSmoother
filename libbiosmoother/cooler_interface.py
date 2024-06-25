@@ -1,6 +1,7 @@
 from pandas import DataFrame
 import cooler
 import os
+import sys
 
 
 def icing(bin_values, axis_size):
@@ -40,12 +41,21 @@ def icing(bin_values, axis_size):
 class CoolerIterator:
     def __init__(self, cooler_path, bin_size=None):
         self.clr = cooler.Cooler(cooler_path)
+        self.non_existant_chr_warning_delivered = False
         if not bin_size is None and self.clr.binsize != bin_size:
             raise ValueError("bin size of cooler file do not match the base resolution of the smoother index.")
 
     def iterate(self, chr_x, chr_y):
         # print(chr_x, chr_y)
         if chr_x not in self.clr.chromnames or chr_y not in self.clr.chromnames:
+            if not self.non_existant_chr_warning_delivered:
+                if chr_x not in self.clr.chromnames:
+                    print("Warning: Chromosome of index does not exist in cooler file: ", 
+                        chr_x, "existing chr names are: ", self.clr.chromnames, file=sys.stderr)
+                if chr_y not in self.clr.chromnames:
+                    print("Warning: Chromosome of index does not exist in cooler file: ", 
+                        chr_y, "existing chr names are: ", self.clr.chromnames, file=sys.stderr)
+                self.non_existant_chr_warning_delivered = True
             return
         for idx, row in self.clr.matrix(balance=False, as_pixels=True, 
                                         join=True, sparse=True).fetch(chr_x, chr_y).iterrows():

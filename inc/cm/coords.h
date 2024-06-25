@@ -740,10 +740,10 @@ bool PartialQuarry::setActiveChrom( )
         vActualToCorrected[ rChr.uiActualContigId ].push_back( rChr.uiCorrectedContigId );
         vActualContigs.insert( rChr.uiActualContigId );
     }
-    vvbActualContigsShareGroup.resize( vActualContigs.size( ) );
+    vvbActualContigsShareGroup.resize( vFullChromosomeList.size( ) );
     for( size_t uiX : vActualContigs )
     {
-        vvbActualContigsShareGroup[ uiX ].resize( vActualContigs.size( ) );
+        vvbActualContigsShareGroup[ uiX ].resize( vFullChromosomeList.size( ) );
         for( size_t uiY : vActualContigs )
         {
             bool bShareGroup = false;
@@ -753,6 +753,8 @@ bool PartialQuarry::setActiveChrom( )
                         vFullChromosomeList[ uiyCorr ].uiPloidyGroupId )
                         bShareGroup = true;
 
+            assert( uiX < vvbActualContigsShareGroup.size( ) );
+            assert( uiY < vvbActualContigsShareGroup[ uiX ].size( ) );
             vvbActualContigsShareGroup[ uiX ][ uiY ] = bShareGroup;
         }
     }
