@@ -126,6 +126,11 @@ def setup_col_converter(
             for col_name in dropped_cols
         ]
 
+    n = non_opt_cols - 1
+    while columns[n] not in necessary_columns:
+        col_converter[n] = col_converter[n + 1][:-1]
+        n -= 1
+
     def convert(cols):
         n = min(len(cols), len(columns))
         if n not in col_converter:
@@ -231,8 +236,9 @@ def parse_heatmap(
                 "xa1",
                 "xa2",
                 "cnt",
+                "pair_type"
             ],
-            ["-", ".", "0", ".", "0", "+", "+", "*", "*", "", "", "1"],
+            ["-", ".", "0", ".", "0", "+", "+", "*", "*", "", "", "1", "UU"],
             ["chr1", "pos1", "chr2", "pos2"],
             {
                 "chrom1": "chr1",
@@ -256,6 +262,7 @@ def parse_heatmap(
                 xa1,
                 xa2,
                 cnt,
+                pair_type,
             ) = col_converter(cols)
             return (
                 readid,

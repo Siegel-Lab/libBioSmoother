@@ -480,8 +480,8 @@ def add_parsers(main_parser):
         nargs="*",
         default=None,
         # type=str,
-        help="Define the order of columns of the input pairs file. Valid column names are: 'readId', 'chr1', 'chr2', 'pos1', 'pos2', 'strand1', 'strand2', 'mapq1', 'mapq2', 'xa1', 'xa2', 'cnt', and '.'. Specify the columns as a space separated list: '-C chr1 pos1 [xa1]'. Column names in squared brackets indicate optional columns (e.g. '[mapq1] [mapq2]'). Optional columns must not appear in all lines of the input file. 'chr1', 'chr2', 'pos1' and 'pos2' must be defined and cannot be optional columns. If a row in the input file has less columns than defined, optional columns will be ignored starting from the end. If a row in the input file contains more than the given columns, the superfluous columns will be ignored starting from the end. Columns defined as '.' or '[.]' will be ignored. Lines in the input file that start with '#columns:' will set this parameter for all following lines, if the parameter has not been specified on the command line.."
-        + fmt_defaults(defaults),
+        help="Define the order of columns of the input pairs file. Valid column names are: 'readId', 'chr1', 'chr2', 'pos1', 'pos2', 'strand1', 'strand2', 'mapq1', 'mapq2', 'xa1', 'xa2', 'cnt', 'pair_type', and '.'. Specify the columns as a space separated list: '-C chr1 pos1 [xa1]'. Column names in squared brackets indicate optional columns (e.g. '[mapq1] [mapq2]'). Optional columns must not appear in all lines of the input file. 'chr1', 'chr2', 'pos1' and 'pos2' must be defined and cannot be optional columns. If a row in the input file has less columns than defined, optional columns will be ignored starting from the end. If a row in the input file contains more than the given columns, the superfluous columns will be ignored starting from the end. Columns defined as '.' or '[.]' will be ignored. Lines in the input file that start with '#columns:' will set this parameter for all following lines, if the parameter has not been specified on the command line."
+        + fmt_defaults(REPL_C_DEFAULT),
     )
     repl_parser.add_argument(
         "-u",
