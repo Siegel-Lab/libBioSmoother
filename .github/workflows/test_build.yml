@@ -71,7 +71,7 @@ jobs:
     - name: Install package
       run: |
         pip install --upgrade pip
-        pip install scipy statsmodels scikit-learn
+        pip install scipy statsmodels scikit-learn setuptools
         pip install --index-url https://test.pypi.org/simple/ libbiosmoother
 
     - name: Import package
