@@ -159,7 +159,7 @@ def norm(args):
         idx.add_normalization(
             args.path,
             args.name,
-            args.group,
+            args.axis,
             args.no_groups,
             args.keep_points,
             args.only_points,

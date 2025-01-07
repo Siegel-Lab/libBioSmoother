@@ -41,3 +41,4 @@ wheelhouse/*
 *.backup
 benchmarking/pics/*
 libSps/*
+.broken_git
