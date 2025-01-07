@@ -318,7 +318,7 @@ def force_upper_triangle(
 
 
 def parse_track(
-    in_filename, test, chr_filter, progress_print=print, columns=["chr", "pos"]
+    in_filename, test, chr_filter, progress_print=print, columns=["chr", "pos"], allow_col_change=False
 ):
     def make_converter(columns_in):
         col_converter = setup_col_converter(
@@ -346,6 +346,7 @@ def parse_track(
         chr_filter,
         make_converter,
         columns,
+        allow_col_change,
         progress_print=progress_print,
     )
 
