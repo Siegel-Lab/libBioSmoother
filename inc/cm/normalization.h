@@ -822,9 +822,10 @@ bool PartialQuarry::setNormalized( )
     {
         vvNormalized[ uiY ].clear( );
         vvNormalized[ uiY ].reserve( vvNormalizedDDD[ uiY ].size( ) );
-        for( size_t uiX = 0; uiX < 2; uiX++ )
-            for( size_t uiI = 0; uiI < 2; uiI++ )
-                vIceSliceBias[ uiY ][ uiX ][ uiI ].clear( );
+        if( vvNormalizedDDD[ uiY ].size( ) > 0 )
+            for( size_t uiX = 0; uiX < 2; uiX++ )
+                for( size_t uiI = 0; uiI < 2; uiI++ )
+                    vIceSliceBias[ uiY ][ uiX ][ uiI ].clear( );
     }
 
     const std::string sNorm = getValue<std::string>( { "settings", "normalization", "normalize_by" } );
@@ -852,33 +853,35 @@ bool PartialQuarry::setDistDepDecayRemoved( )
     if( getValue<bool>( { "settings", "normalization", "ddd" } ) )
     {
         for( size_t uiY = 0; uiY < NUM_COORD_SYSTEMS; uiY++ )
-        {
-            vvNormalizedDDD[ uiY ].resize( vvPloidyValues[ uiY ].size( ) );
-            assert( vBinCoordsSampled[ uiY ].size( ) <= vvPloidyValues[ uiY ].size( ) );
-            for( size_t uiI = 0; uiI < vBinCoordsSampled[ uiY ].size( ); uiI++ )
-                for( size_t uiJ = 0; uiJ < 2; uiJ++ )
-                    if( vBinCoordsSampled[ uiY ][ uiI ][ uiJ ].uiDecayCoordIndex !=
-                        std::numeric_limits<size_t>::max( ) )
-                    {
-                        CANCEL_RETURN;
-                        if( vvFlatDecay[ uiY ][ vBinCoordsSampled[ uiY ][ uiI ][ uiJ ].uiDecayCoordIndex ][ uiJ ] > 0 )
-                            vvNormalizedDDD[ uiY ][ uiI ][ uiJ ] =
-                                (double)vvPloidyValues[ uiY ][ uiI ][ uiJ ] /
-                                (double)vvFlatDecay[ uiY ][ vBinCoordsSampled[ uiY ][ uiI ][ uiJ ].uiDecayCoordIndex ]
-                                                   [ uiJ ];
-                        else
-                            vvNormalizedDDD[ uiY ][ uiI ][ uiJ ] = 0;
-                    }
-        }
+            if( vvPloidyValues[ uiY ].size( ) > 0 )
+            {
+                vvNormalizedDDD[ uiY ].resize( vvPloidyValues[ uiY ].size( ) );
+                assert( vBinCoordsSampled[ uiY ].size( ) <= vvPloidyValues[ uiY ].size( ) );
+                for( size_t uiI = 0; uiI < vBinCoordsSampled[ uiY ].size( ); uiI++ )
+                    for( size_t uiJ = 0; uiJ < 2; uiJ++ )
+                        if( vBinCoordsSampled[ uiY ][ uiI ][ uiJ ].uiDecayCoordIndex !=
+                            std::numeric_limits<size_t>::max( ) )
+                        {
+                            CANCEL_RETURN;
+                            if( vvFlatDecay[ uiY ][ vBinCoordsSampled[ uiY ][ uiI ][ uiJ ].uiDecayCoordIndex ][ uiJ ] > 0 )
+                                vvNormalizedDDD[ uiY ][ uiI ][ uiJ ] =
+                                    (double)vvPloidyValues[ uiY ][ uiI ][ uiJ ] /
+                                    (double)vvFlatDecay[ uiY ][ vBinCoordsSampled[ uiY ][ uiI ][ uiJ ].uiDecayCoordIndex ]
+                                                    [ uiJ ];
+                            else
+                                vvNormalizedDDD[ uiY ][ uiI ][ uiJ ] = 0;
+                        }
+            }
     }
     else
         for( size_t uiY = 0; uiY < 3; uiY++ )
-        {
-            vvNormalizedDDD[ uiY ].resize( vvPloidyValues[ uiY ].size( ) );
-            for( size_t uiI = 0; uiI < vBinCoordsSampled[ uiY ].size( ); uiI++ )
-                for( size_t uiJ = 0; uiJ < 2; uiJ++ )
-                    vvNormalizedDDD[ uiY ][ uiI ][ uiJ ] = (double)vvPloidyValues[ uiY ][ uiI ][ uiJ ];
-        }
+            if( vvPloidyValues[ uiY ].size( ) > 0 )
+            {
+                vvNormalizedDDD[ uiY ].resize( vvPloidyValues[ uiY ].size( ) );
+                for( size_t uiI = 0; uiI < vBinCoordsSampled[ uiY ].size( ); uiI++ )
+                    for( size_t uiJ = 0; uiJ < 2; uiJ++ )
+                        vvNormalizedDDD[ uiY ][ uiI ][ uiJ ] = (double)vvPloidyValues[ uiY ][ uiI ][ uiJ ];
+            }
     END_RETURN;
 }
 

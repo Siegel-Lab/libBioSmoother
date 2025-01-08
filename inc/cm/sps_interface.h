@@ -98,6 +98,7 @@ class HasSession
             o << xSession << std::endl;
         else
             throw std::runtime_error( "Could not save the current session to file." );
+        o.close();
     }
 
     HasSession& operator=( const HasSession& rOther )
