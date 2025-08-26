@@ -9,7 +9,7 @@ import sysconfig
 from setuptools import Extension, setup
 from setuptools.command.build_ext import build_ext
 
-VERSION = "1.6.3"
+VERSION = "1.6.4"
 
 # Convert distutils Windows platform specifiers to CMake -A arguments
 PLAT_TO_CMAKE = {
@@ -52,8 +52,8 @@ class CMakeBuild(build_ext):
             f"-DCMAKE_LIBRARY_OUTPUT_DIRECTORY={extdir}{os.sep}",
             f"-DPython_EXECUTABLE={sys.executable}",
             f"-DCMAKE_BUILD_TYPE={cfg}",  # not used on MSVC, but no harm
-            f"-DPython_LIBRARY={sysconfig.get_config_var('LIBDIR')}", # @todo these can cause issued apparently
-            f"-DPython_INCLUDE_DIR={sysconfig.get_path('include')}", # @todo these can cause issued apparently
+            f"-DPython_LIBRARY={sysconfig.get_config_var('LIBDIR')}", # @todo these can cause issues apparently
+            f"-DPython_INCLUDE_DIR={sysconfig.get_path('include')}", # @todo these can cause issues apparently
             f"-DLIB_BIO_SMOOTHER_VERSION={VERSION}",
         ]
         if "LIB_BIO_SMOOTHER_MAX_NUM_FILTER_ANNOTATIONS" in os.environ:

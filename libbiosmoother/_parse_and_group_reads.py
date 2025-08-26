@@ -159,6 +159,7 @@ def parse_tsv(
     progress_print=print,
 ):
     line_format = make_line_format(default_cols)
+    chr_warning_printed = set()
     with fileinput.input(in_filename) as in_file_1:
         cnt = 0
         file_pos = 0
@@ -193,6 +194,14 @@ def parse_tsv(
             cont = False
             for chr_ in chrs:
                 if not chr_ in chr_filter:
+                    if chr_ not in chr_warning_printed:
+                        print(
+                            "WARNING: ignoring read(s) from file '"
+                            + in_filename
+                            + "' as their contig '" + 
+                            chr_ + "' is not in the index."
+                        )
+                        chr_warning_printed.add(chr_)
                     cont = True
             if cont:
                 continue
