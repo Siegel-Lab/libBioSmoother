@@ -416,7 +416,8 @@ std::vector<ChromDesc> activeChromList( std::map<std::string, size_t>& xChromLen
                                         const std::vector<std::string>& xPloidyOrder,
                                         const std::vector<std::string>& xChromOrder,
                                         std::map<std::string, std::string>& xPloidyMap,
-                                        std::map<std::string, size_t>& xPloidyGroups )
+                                        std::map<std::string, size_t>& xPloidyGroups,
+                                        std::vector<std::string>& vErrors )
 {
     std::vector<ChromDesc> vRet;
     vRet.reserve( xChromDisp.size( ) );
@@ -436,7 +437,8 @@ std::vector<ChromDesc> activeChromList( std::map<std::string, size_t>& xChromLen
                                           /*uiActualContigId = */ uiActualContigId,
                                           /*uiPloidyGroupId = */ xPloidyGroups[ sReadableName ] } );
         else
-            setError( "chromosome " + sReadableName + " not found." );
+            vErrors.emplace_back( "chromosome " + sReadableName + " not found." );
+            // PartialQuarry::setError( "chromosome " + sReadableName + " not found." );
     }
     return vRet;
 }
@@ -721,15 +723,18 @@ bool PartialQuarry::setActiveChrom( )
     std::string sPloidySuffix = bPloidyCords ? "" : "_ploidy";
     auto vPloidyList = getValue<std::vector<std::string>>( { "contigs", "ploidy_list" } );
     auto bCorrect = getValue<bool>( { "settings", "normalization", "ploidy_correct" } );
+    std::vector<std::string> vErrors;
     for( bool bX : { true, false } )
         this->vActiveChromosomes[ bX ? 0 : 1 ] =
             activeChromList( vLengths,
                              getValue<std::vector<std::string>>( { "contigs", bX ? "displayed_on_x" + sPloidySuffix
                                                                                  : "displayed_on_y" + sPloidySuffix } ),
-                             vPloidyList, vList, xPloidyMap, xPloidyGroups );
+                             vPloidyList, vList, xPloidyMap, xPloidyGroups, vErrors );
 
     std::vector<ChromDesc> vFullChromosomeList =
-        activeChromList( vLengths, vList, vPloidyList, vList, xPloidyMap, xPloidyGroups );
+        activeChromList( vLengths, vList, vPloidyList, vList, xPloidyMap, xPloidyGroups, vErrors );
+    for( const auto& sErr : vErrors )
+        PartialQuarry::setError( sErr );
     // compute ploidy counts
     this->vPloidyCounts.clear( );
     uiFullContigListSize = vFullChromosomeList.size( );
