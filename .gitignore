@@ -4,6 +4,7 @@ build_dbg/*
 build_test/*
 build_benchmark/*
 build_tmp/*
+build_old_master/*
 build_install/*
 build/*
 *.bin

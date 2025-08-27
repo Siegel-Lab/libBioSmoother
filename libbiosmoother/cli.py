@@ -66,7 +66,7 @@ def init(args):
         args.map_q_thresholds,
     )
     if args.ploidy_file is not None:
-        Quarry(get_path(args.index_prefix)).set_ploidy_list(args.ploidy_file)
+        Quarry(get_path(args.index_prefix)).set_ploidy_list(args.ploidy_file, print)
 
 
 def reset(args):
@@ -139,7 +139,7 @@ def cool(args):
             args.group,
             args.no_anno,
             args.shekelyan,
-            args.force_upper_triangle
+            args.force_upper_triangle,
         )
 
     w_perf(run, args)
@@ -360,7 +360,7 @@ def benchmark_runtime_smoother(args):
 
 
 def ploidy_smoother(args):
-    Quarry(get_path(args.index_prefix)).set_ploidy_list(args.ploidy_file)
+    Quarry(get_path(args.index_prefix)).set_ploidy_list(args.ploidy_file, report_error=print)
 
 
 def add_parsers(main_parser):
@@ -501,7 +501,8 @@ def add_parsers(main_parser):
     repl_parser.add_argument("--no_groups", help=argparse.SUPPRESS, action="store_true")
 
     cool_parser = main_parser.add_parser(
-        "cool", help="Add data for a sample or replicate to an index from a cooler file. Note: The information necessary to apply filters (e.g. the mapping quality of reads) is not stored in cool files, therefore filters will be disabled for datasets created from cool files."
+        "cool",
+        help="Add data for a sample or replicate to an index from a cooler file. Note: The information necessary to apply filters (e.g. the mapping quality of reads) is not stored in cool files, therefore filters will be disabled for datasets created from cool files.",
     )
     cool_parser.add_argument(
         "index_prefix",

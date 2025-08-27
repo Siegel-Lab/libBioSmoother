@@ -863,11 +863,13 @@ bool PartialQuarry::setDistDepDecayRemoved( )
                             std::numeric_limits<size_t>::max( ) )
                         {
                             CANCEL_RETURN;
-                            if( vvFlatDecay[ uiY ][ vBinCoordsSampled[ uiY ][ uiI ][ uiJ ].uiDecayCoordIndex ][ uiJ ] > 0 )
+                            if( vvFlatDecay[ uiY ][ vBinCoordsSampled[ uiY ][ uiI ][ uiJ ].uiDecayCoordIndex ][ uiJ ] >
+                                0 )
                                 vvNormalizedDDD[ uiY ][ uiI ][ uiJ ] =
                                     (double)vvPloidyValues[ uiY ][ uiI ][ uiJ ] /
-                                    (double)vvFlatDecay[ uiY ][ vBinCoordsSampled[ uiY ][ uiI ][ uiJ ].uiDecayCoordIndex ]
-                                                    [ uiJ ];
+                                    (double)
+                                        vvFlatDecay[ uiY ][ vBinCoordsSampled[ uiY ][ uiI ][ uiJ ].uiDecayCoordIndex ]
+                                                   [ uiJ ];
                             else
                                 vvNormalizedDDD[ uiY ][ uiI ][ uiJ ] = 0;
                         }

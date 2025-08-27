@@ -198,8 +198,9 @@ def parse_tsv(
                         print(
                             "WARNING: ignoring read(s) from file '"
                             + in_filename
-                            + "' as their contig '" + 
-                            chr_ + "' is not in the index."
+                            + "' with the contig '"
+                            + chr_
+                            + "', as this contig is not part of the index."
                         )
                         chr_warning_printed.add(chr_)
                     cont = True
@@ -245,7 +246,7 @@ def parse_heatmap(
                 "xa1",
                 "xa2",
                 "cnt",
-                "pair_type"
+                "pair_type",
             ],
             ["-", ".", "0", ".", "0", "+", "+", "*", "*", "", "", "1", "UU"],
             ["chr1", "pos1", "chr2", "pos2"],
@@ -327,7 +328,12 @@ def force_upper_triangle(
 
 
 def parse_track(
-    in_filename, test, chr_filter, progress_print=print, columns=["chr", "pos"], allow_col_change=False
+    in_filename,
+    test,
+    chr_filter,
+    progress_print=print,
+    columns=["chr", "pos"],
+    allow_col_change=False,
 ):
     def make_converter(columns_in):
         col_converter = setup_col_converter(

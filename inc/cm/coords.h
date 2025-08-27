@@ -427,12 +427,16 @@ std::vector<ChromDesc> activeChromList( std::map<std::string, size_t>& xChromLen
             (size_t)( std::find( xPloidyOrder.begin( ), xPloidyOrder.end( ), sDatasetName ) - xPloidyOrder.begin( ) );
         size_t uiIdx =
             (size_t)( std::find( xChromOrder.begin( ), xChromOrder.end( ), sReadableName ) - xChromOrder.begin( ) );
-        vRet.emplace_back( ChromDesc{ /*.sName =*/sReadableName,
-                                      /*.uiUnadjustedLength =*/xChromLen[ sDatasetName ],
-                                      /*uiLength =*/0,
-                                      /*uiId = */ uiIdx,
-                                      /*uiActualContigId = */ uiActualContigId,
-                                      /*uiPloidyGroupId = */ xPloidyGroups[ sReadableName ] } );
+        if( xPloidyGroups.find( sReadableName ) != xPloidyGroups.end( ) &&
+            xChromLen.find( sDatasetName ) != xChromLen.end( ) )
+            vRet.emplace_back( ChromDesc{ /*.sName =*/sReadableName,
+                                          /*.uiUnadjustedLength =*/xChromLen[ sDatasetName ],
+                                          /*uiLength =*/0,
+                                          /*uiId = */ uiIdx,
+                                          /*uiActualContigId = */ uiActualContigId,
+                                          /*uiPloidyGroupId = */ xPloidyGroups[ sReadableName ] } );
+        else
+            setError( "chromosome " + sReadableName + " not found." );
     }
     return vRet;
 }

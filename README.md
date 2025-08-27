@@ -43,4 +43,5 @@ Hence, for more information and in-depth instructions, check out [Smoother's man
 ## Cite
 
 If you use Smoother in your research, please cite:
-@todo
+
+Markus R Schmidt, Anna Barcons-Simon, Claudia Rabuffo, T Nicolai Siegel, Smoother: on-the-fly processing of interactome data using prefix sums, Nucleic Acids Research, Volume 52, Issue 5, 21 March 2024, Page e23, https://doi.org/10.1093/nar/gkae008

@@ -336,7 +336,7 @@ class Quarry(PartialQuarry):
         # trigger the cpp copy constructor
         return Quarry(super(PartialQuarry, self))
 
-    def set_ploidy_itr(self, ploidy_iterator):
+    def set_ploidy_itr(self, ploidy_iterator, report_error=lambda s: None):
         ploidy_map = {}
         ploidy_list = []
         ploidy_groups = {}
@@ -352,24 +352,24 @@ class Quarry(PartialQuarry):
                     continue
                 chr_from, chr_to = line.split()
                 if chr_to in ploidy_map:
-                    print(
-                        "ERROR: The target contig name",
-                        chr_to,
-                        "occurs multiple times in the input file. Hence, the given ploidy file is not valid and will be ignored.",
+                    report_error(
+                        "ERROR: The target contig name" +
+                        str(chr_to) +
+                        "occurs multiple times in the input file. Hence, the given ploidy file is not valid and will be ignored."
                     )
                     return
                 if chr_from not in self.get_value(["contigs", "ploidy_list"]):
-                    print(
-                        "WARNING: The source contig name",
-                        chr_from,
-                        "does not occur in the dataset. It will be ignored.",
+                    report_error(
+                        "WARNING: The source contig name" +
+                        str(chr_from) +
+                        "does not occur in the dataset. It will be ignored."
                     )
                     continue
                 if chr_from in curr_ploidy_group:
-                    print(
-                        "WARNING: The source contig name",
-                        chr_from,
-                        "occurs multiple times in the same ploidy group. Is this really what you want?",
+                    report_error(
+                        "WARNING: The source contig name" +
+                        str(chr_from) +
+                        "occurs multiple times in the same ploidy group. Is this really what you want?"
                     )
                     continue
                 ploidy_map[chr_to] = chr_from
@@ -383,9 +383,9 @@ class Quarry(PartialQuarry):
         self.set_value(["contigs", "ploidy_groups"], ploidy_groups)
         self.save_session()
 
-    def set_ploidy_list(self, ploidy_file):
+    def set_ploidy_list(self, ploidy_file, report_error=lambda s: None):
         with fileinput.input(ploidy_file) as file:
-            self.set_ploidy_itr(file)
+            self.set_ploidy_itr(file, report_error=report_error)
             self.set_value(
                 ["settings", "normalization", "ploidy_last_uploaded_filename"],
                 ploidy_file,

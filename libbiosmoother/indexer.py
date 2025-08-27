@@ -15,6 +15,7 @@ from importlib.metadata import version
 from .quarry import Quarry
 from .quarry import open_default_json
 import sys
+
 try:
     from .cooler_interface import CoolerIterator
 
@@ -622,7 +623,10 @@ class Indexer:
                 + "Use the <list> command to see all datasets."
             )
 
-        self.progress_print("generating replicate from cool (Note: this data will not be filterable on-the-fly as the required information for these filters is absent from cool files.)...", force_print=True)
+        self.progress_print(
+            "generating replicate from cool (Note: this data will not be filterable on-the-fly as the required information for these filters is absent from cool files.)...",
+            force_print=True,
+        )
 
         self.append_session(["replicates", "list"], name)
         self.set_session(
